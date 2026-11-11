@@ -234,7 +234,7 @@
   <div id="replayWrap"><video id="replay" playsinline controls></video><div id="noVideo">持ち帰った映像はありません</div></div>
   <button id="skipBtn">再生をとばして「いいね」を見る</button>
   <div id="evWrap"><div id="evTotal"><span class="lk">いいね</span><b><i class="like"></i><span id="evScore">0</span></b></div><div id="evList"></div></div>
-  <div class="rowBtns"><button id="saveBtn">動画を保存・共有</button><button class="pri" id="againBtn">もう一度入る</button></div>
+  <div class="rowBtns"><button id="saveBtn">保存・SNSに投稿</button><button class="pri" id="againBtn">もう一度入る</button></div>
   <div id="saveMsg"></div>
   <div id="musicCred" style="display:none;font-size:11px;color:#9a9a9a;line-height:1.6;margin:6px 4px 0;text-align:center"></div>
   <button class="credBtn" data-cred>使用素材・クレジット</button>
@@ -270,6 +270,7 @@ const CONFIG = {
   battery: { start: 100, idlePerSec: 0.20 / 1.5, recPerSec: 0.75 / 1.5 }, // 減り切るまでの時間を以前の1.5倍に（録画中は合計0.5%/秒）
   recMaxSec: 120,   // 持ち帰れる録画は通算120秒
   walkSpeed: 2.0,
+  spiderChaseMul: 1.1,   // 蜘蛛女の追跡速度（主人公の何倍か）
   stepLen: 0.66,
   eyeHeight: 1.55,
   fov1x: 62,
@@ -1725,7 +1726,7 @@ function initAudio() {
   A.pa = ctx.createBiquadFilter(); A.pa.type = 'bandpass'; A.pa.frequency.value = 1400; A.pa.Q.value = 0.6;
   const paSh = ctx.createWaveShaper(); const cv = new Float32Array(256); for (let i = 0; i < 256; i++) { const x = i / 128 - 1; cv[i] = Math.tanh(x * 2.2); } paSh.curve = cv;
   A.pa.connect(paSh); A.paOut = ctx.createGain(); A.paOut.gain.value = 0.8; paSh.connect(A.paOut);
-  A.paSpk = [V(0, 2.5, -10), V(0, 2.5, -26), V(10, 2.5, -31.5), V(20.5, 2.5, -18), V(10, 2.5, -6.5), V(7, 2.5, -1)].map(p => { const pn = panAt(p, 2.5, 0.8); A.paOut.connect(pn); return pn; });
+  A.paSpk = [V(0, 2.5, -10), V(0, 2.5, -26), V(10, 2.5, -31.5), V(20.5, 2.5, -18), V(10, 2.5, -6.5), V(7, 2.5, -1)].map(p => { const pn = panAt(p, 2.5, 0.8, undefined, 0); A.paOut.connect(pn); return pn; });
   startAmbience();
   loadSfx();
 }
@@ -1737,20 +1738,22 @@ function makeIR(sec) {
 function noiseBuf(sec) { const ctx = A.ctx, len = (ctx.sampleRate * sec) | 0, b = ctx.createBuffer(1, len, ctx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1; return b; }
 function setP(p, v) { if (p.positionX) { p.positionX.value = v.x; p.positionY.value = v.y; p.positionZ.value = v.z; } else p.setPosition(v.x, v.y, v.z); }
 // 距離による減衰はゆるめ（スマホのスピーカーでも遠くの音が届くように）。方向と壁越しのこもりで距離感を出す
-function panAt(pos, ref = 1.2, roll = 1.3, dest) { const p = A.ctx.createPanner(); p.panningModel = 'HRTF'; p.distanceModel = 'inverse'; p.refDistance = Math.max(ref, 1) * A.distRef; p.rolloffFactor = roll * A.distRoll; p.maxDistance = 80; setP(p, pos); p.connect(dest || A.ambDest || A.bus); return p; }
+// 使い終わった音の配線を外す（外さないと、iPhoneでは鳴り終わった音も処理され続け、長く遊ぶと音が割れて止まる）
+function freeLater(sec, ...nodes) { setTimeout(() => { for (const n of nodes) { if (n && n !== A.bus && n !== A.master && n !== A.verb && n !== A.muffle) try { n.disconnect(); } catch (e) { } } }, Math.max(0, sec) * 1000); }
+function panAt(pos, ref = 1.2, roll = 1.3, dest, life = 12) { const p = A.ctx.createPanner(); if (life > 0) freeLater(life, p); p.panningModel = 'HRTF'; p.distanceModel = 'inverse'; p.refDistance = Math.max(ref, 1) * A.distRef; p.rolloffFactor = roll * A.distRoll; p.maxDistance = 80; setP(p, pos); p.connect(dest || A.ambDest || A.bus); return p; }
 function envG(g, t, a, peak, d) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); }
 function nb(dest, { t, f = 1000, q = 1, type = 'bandpass', a = 0.002, peak = 0.5, d = 0.08, rate = 1, f1 }) {
   const ctx = A.ctx; t = t ?? ctx.currentTime;
   const s = ctx.createBufferSource(); s.buffer = A.noise; s.playbackRate.value = rate;
   const fl = ctx.createBiquadFilter(); fl.type = type; fl.frequency.setValueAtTime(f, t); if (f1) fl.frequency.exponentialRampToValueAtTime(f1, t + a + d); fl.Q.value = q;
   const g = ctx.createGain(); s.connect(fl); fl.connect(g); g.connect(dest); envG(g, t, a, peak, d);
-  s.start(t, Math.random() * 2); s.stop(t + a + d + 0.05); return g;
+  s.start(t, Math.random() * 2); s.stop(t + a + d + 0.05); freeLater(t - ctx.currentTime + a + d + 0.4, g); return g;
 }
 function tn(dest, { t, type = 'sine', f0, f1, dur, peak, a = 0.003 }) {
   const ctx = A.ctx; t = t ?? ctx.currentTime;
   const o = ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(f0, t); if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
   const g = ctx.createGain(); o.connect(g); g.connect(dest); envG(g, t, a, peak, dur);
-  o.start(t); o.stop(t + a + dur + 0.05); return o;
+  o.start(t); o.stop(t + a + dur + 0.05); freeLater(t - ctx.currentTime + a + dur + 0.4, g); return o;
 }
 // ── 声（フォルマントの簡易合成）
 const PH = { a: [780, 1220, 2600], i: [300, 2250, 3000], u: [340, 1250, 2400], e: [470, 1850, 2600], o: [470, 860, 2500], n: [280, 1600, 2600], m: [270, 1100, 2400] };
@@ -1778,6 +1781,7 @@ function speak(dest, seq, { t, f0 = 240, whisper = false, gain = 0.5, breath = 0
   }
   vAmp.gain.setTargetAtTime(0, tt, 0.02); nAmp.gain.setTargetAtTime(0, tt, 0.02); fAmp.gain.setTargetAtTime(0, tt, 0.02);
   for (const n of [osc, vib, ns, fs]) { n.start(t); n.stop(tt + 0.2); }
+  freeLater(tt - ctx.currentTime + 0.6, out);
   return total;
 }
 const WORDS = {
@@ -1812,10 +1816,10 @@ const SND = {
     for (let i = 0; i < 5; i++) nb(p, { t: t + 0.05 + i * rnd(0.03, 0.06), f: rnd(1200, 2600), q: 4, peak: 0.18 * vol, d: 0.03 }); },
   hit() { if (!A.ctx) return; const t = A.ctx.currentTime; tn(A.bus, { t, f0: 70, f1: 38, dur: 0.18, peak: 1.0 }); nb(A.bus, { t, f: 1800, q: 0.7, a: 0.001, peak: 0.8, d: 0.08 }); },
   breath(side = 0.6, vol = 1) { if (!A.ctx) return; const t = A.ctx.currentTime; let d = A.bus;
-    if (A.ctx.createStereoPanner) { const sp = A.ctx.createStereoPanner(); sp.pan.value = side; sp.connect(A.master); d = sp; }
+    if (A.ctx.createStereoPanner) { const sp = A.ctx.createStereoPanner(); sp.pan.value = side; sp.connect(A.master); d = sp; freeLater(2, sp); }
     nb(d, { t, f: 1600, f1: 2600, q: 0.7, a: 0.45, peak: 0.35 * vol, d: 0.18 }); },
   pant(pos) { if (!A.ctx) return; const t = A.ctx.currentTime; const p = panAt(pos, 0.8, 1.4); for (let i = 0; i < 6; i++) nb(p, { t: t + i * 0.42, f: i % 2 ? 1400 : 1900, q: 0.8, a: 0.08, peak: 0.25, d: 0.18 }); },
-  scream() { if (!A.ctx) return; const t = A.ctx.currentTime; const ctx = A.ctx; const out = ctx.createGain(); out.connect(A.bus);
+  scream() { if (!A.ctx) return; const t = A.ctx.currentTime; const ctx = A.ctx; const out = ctx.createGain(); out.connect(A.bus); freeLater(2.5, out);
     envG(out, t, 0.02, 0.6, 1.2);
     for (const [f, ty] of [[620, 'sawtooth'], [930, 'sawtooth'], [1240, 'square']]) {
       const o = ctx.createOscillator(); o.type = ty; o.frequency.setValueAtTime(f, t); o.frequency.linearRampToValueAtTime(f * 1.25, t + 0.25); o.frequency.linearRampToValueAtTime(f * 0.88, t + 1.15);
@@ -1849,7 +1853,7 @@ const SND = {
   clatter(pos) { if (!A.ctx) return; const t = A.ctx.currentTime; const p = panAt(pos, 1, 1); for (let i = 0; i < 4; i++) nb(p, { t: t + i * 0.05, f: rnd(600, 1400), q: 3, peak: 0.25, d: 0.05 }); },
   voice(pos, word, opt = {}) { if (!A.ctx) return 0; const dest = opt.muffle ? A.muffle : (pos ? panAt(pos, opt.ref || 0.8, opt.roll || 1.2) : (opt.ear ? earDest(opt.side ?? 0.5) : A.bus)); return speak(dest, WORDS[word] || word, opt); },
 };
-function earDest(side) { if (A.ctx.createStereoPanner) { const sp = A.ctx.createStereoPanner(); sp.pan.value = side; sp.connect(A.master); return sp; } return A.master; }
+function earDest(side, life = 15) { if (A.ctx.createStereoPanner) { const sp = A.ctx.createStereoPanner(); sp.pan.value = side; sp.connect(A.master); if (life > 0) freeLater(life, sp); return sp; } return A.master; }
 // 緊張のノイズ（育てて、急に切る）
 const tension = { g: null, src: null };
 function tensionStart(sec = 5, peak = 0.05) {
@@ -1862,7 +1866,7 @@ function tensionStart(sec = 5, peak = 0.05) {
 }
 function tensionCut(quiet) {
   if (tension.sfx) { const t = A.ctx.currentTime, g = tension.sfx.g.gain; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(0.0001, t + 0.03); try { tension.sfx.s.stop(t + 0.05); } catch (e) { } tension.sfx = null; }
-  if (!tension.g) return; const t = A.ctx.currentTime; tension.g.gain.cancelScheduledValues(t); tension.g.gain.setValueAtTime(quiet ? 0.0001 : tension.g.gain.value, t); tension.g.gain.linearRampToValueAtTime(0.0001, t + 0.03); for (const s of tension.src) s.stop(t + 0.1); tension.g = null; }
+  if (!tension.g) return; const t = A.ctx.currentTime; tension.g.gain.cancelScheduledValues(t); tension.g.gain.setValueAtTime(quiet ? 0.0001 : tension.g.gain.value, t); tension.g.gain.linearRampToValueAtTime(0.0001, t + 0.03); for (const s of tension.src) s.stop(t + 0.1); freeLater(0.3, tension.g); tension.g = null; }
 // 環境を静かにする（無音の時間）
 function hush(sec, level = 0.0) { world.hushUntil = Math.max(world.hushUntil, world.t + sec); world.hushLevel = level; }
 
@@ -1884,20 +1888,20 @@ function startAmbience() {
     const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 100 + rnd(-0.5, 0.5);
     const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 400; f.Q.value = 2;
     const g = ctx.createGain(); g.gain.value = t.state === 'half' ? 0.02 : 0.035;
-    o.connect(f); f.connect(g); g.connect(panAt(t.pos, 0.6, 1.6, amb.hum)); o.start(); t.hum = g;
+    o.connect(f); f.connect(g); g.connect(panAt(t.pos, 0.6, 1.6, amb.hum, 0)); o.start(); t.hum = g;
   }
   const ws = ctx.createBufferSource(); ws.buffer = A.noise; ws.loop = true; ws.playbackRate.value = 0.6;
   const wb = ctx.createBiquadFilter(); wb.type = 'bandpass'; wb.frequency.value = 420; wb.Q.value = 0.6;
   amb.wind = ctx.createGain(); amb.wind.gain.value = 0.007;
   const lfo = ctx.createOscillator(); lfo.frequency.value = 0.09; const lg = ctx.createGain(); lg.gain.value = 0.005; lfo.connect(lg); lg.connect(amb.wind.gain); lfo.start();
-  ws.connect(wb); wb.connect(amb.wind); amb.wind.connect(panAt(V(0, 1.6, 9), 2.0, 0.45)); amb.wind.connect(panAt(V(24, 1.6, -18), 2.0, 0.6)); ws.start();
+  ws.connect(wb); wb.connect(amb.wind); amb.wind.connect(panAt(V(0, 1.6, 9), 2.0, 0.45, undefined, 0)); amb.wind.connect(panAt(V(24, 1.6, -18), 2.0, 0.6, undefined, 0)); ws.start();
   // 玄関の外：秋の虫（鈴虫の「リーン」、コオロギの「コロコロ…」、松虫の「チンチロリン」）。間をあけて鳴き、うっすら聞こえる程度
   amb.bugs = ctx.createGain(); amb.bugs.gain.value = 0;
   const bf = ctx.createBiquadFilter(); bf.type = 'lowpass'; bf.frequency.value = 6000; amb.bugs.connect(bf); bf.connect(A.bus);
   amb.aki = [];
   const AKI = [['suzu', -2.6, 11], ['koro', 2.2, 10], ['koro', -0.8, 13], ['matsu', 3.4, 12.5], ['suzu', 1.2, 14]];
   for (const [kind, x, z] of AKI) {
-    const out = ctx.createGain(); out.gain.value = 0; out.connect(panAt(V(x, 0.2, z), 1.5, 1.0, amb.bugs));
+    const out = ctx.createGain(); out.gain.value = 0; out.connect(panAt(V(x, 0.2, z), 1.5, 1.0, amb.bugs, 0));
     const f0 = kind === 'suzu' ? rnd(4100, 4500) : kind === 'koro' ? rnd(3800, 4300) : rnd(3300, 3700);
     const o = ctx.createOscillator(); o.frequency.value = f0; const o2 = ctx.createOscillator(); o2.frequency.value = f0 * 2.01;
     const g2 = ctx.createGain(); g2.gain.value = 0.12; o2.connect(g2);
@@ -1908,7 +1912,7 @@ function startAmbience() {
   // 渡り廊下の窓の外：鈴虫（窓に近づくとうっすら）
   amb.suzu = [];
   for (const z of [-26, -19.5, -12.5]) {
-    const out = ctx.createGain(); out.gain.value = 0; out.connect(panAt(V(23.2, 0.3, z), 0.7, 2.0));
+    const out = ctx.createGain(); out.gain.value = 0; out.connect(panAt(V(23.2, 0.3, z), 0.7, 2.0, undefined, 0));
     const o = ctx.createOscillator(); o.frequency.value = rnd(4150, 4500); const o2 = ctx.createOscillator(); o2.frequency.value = o.frequency.value * 2.01;
     const g2 = ctx.createGain(); g2.gain.value = 0.15; o2.connect(g2);
     const am = ctx.createGain(); am.gain.value = 0; const m = ctx.createOscillator(); m.type = 'triangle'; m.frequency.value = rnd(36, 44); const mg = ctx.createGain(); mg.gain.value = 0.5;
@@ -2027,7 +2031,9 @@ function playSfx(id, { pos, ref = 1, roll = 1.2, gain = 1, rate = 1, lowpass, de
   const g = ctx.createGain(); g.gain.value = gain * (SFX_GAIN[id] || 1);
   let node = s, f = null; if (lowpass) { f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lowpass; s.connect(f); node = f; }
   node.connect(g);
-  g.connect(dest || (ear !== undefined ? earDest(ear) : pos ? panAt(pos, ref, roll) : A.bus));
+  const own = dest ? null : (ear !== undefined ? earDest(ear, 0) : pos ? panAt(pos, ref, roll, undefined, 0) : null);
+  g.connect(dest || own || A.bus);
+  s.addEventListener('ended', () => { for (const n of [g, own]) if (n) try { n.disconnect(); } catch (e) { } });   // 鳴り終わったら配線を外す
   const at = ctx.currentTime + delay; if (dur) s.start(at, offset, dur); else s.start(at, offset); return { s, g, f };
 }
 
@@ -2074,10 +2080,7 @@ Object.assign(SFX_GAIN, { chase_voice: 1.0 });
    ========================================================= */
 // 自分の足音：一歩ずつ実移動に同期。場所で返りが違う（廊下は長く奥まで、教室は短く、トイレは硬く近い）
 function stepRoom(z) {
-  if (z === 'T') return { wet: 0.75, d: 0.011, dg: 0.42 };
-  if (z === 'R2' || z === 'R3') return { wet: 0.14, d: 0.03, dg: 0.08 };
-  if (z === 'E') return { wet: 0.3, d: 0.05, dg: 0.12 };
-  return { wet: 0.55, d: 0.11, dg: 0.2 };   // 廊下・渡り廊下
+  return { wet: 0.32, d: 0.06, dg: 0.1 };   // 2026-11-12 場所で大きさが変わらないよう、どこでも同じ返りに統一
 }
 function stepMineSfx(vol = 1) {
   if (!hasSfx('player_step_2')) return false;
@@ -2087,8 +2090,8 @@ function stepMineSfx(vol = 1) {
   const wet = ctx.createGain(); wet.gain.value = R.wet; g.connect(wet); wet.connect(A.verb);
   const dl = ctx.createDelay(0.3); dl.delayTime.value = R.d; const dg = ctx.createGain(); dg.gain.value = R.dg; const dlp = ctx.createBiquadFilter(); dlp.type = 'lowpass'; dlp.frequency.value = 3500;
   g.connect(dl); dl.connect(dlp); dlp.connect(dg); dg.connect(A.master);
-  playSfx('player_step_' + (A.stepI + 1), { dest: g, gain: vol * rnd(0.82, 1), rate: rnd(0.96, 1.04), lowpass: 3200 });
-  setTimeout(() => { try { g.disconnect(); } catch (e) { } }, 4000);
+  playSfx('player_step_' + (A.stepI + 1), { dest: g, gain: 0.6 * vol * rnd(0.82, 1), rate: rnd(0.96, 1.04), lowpass: 3200 });
+  freeLater(4, g, wet, dg);
   return true;
 }
 // 鋭いノイズ一発（叫びと重なっても割れないように少し抑える）
@@ -2142,7 +2145,7 @@ function raspStart() {
   s.connect(lp); lp.connect(g); g.connect(p); p.connect(A.bus); s.start(0, rnd(0, 10));
   Object.assign(RASP, { on: true, src: s, p, lp, g });
 }
-function raspStop() { if (!RASP.on) return; try { RASP.g.gain.setTargetAtTime(0, A.ctx.currentTime, 0.05); RASP.src.stop(A.ctx.currentTime + 0.3); } catch (e) { } RASP.on = false; }
+function raspStop() { if (!RASP.on) return; try { RASP.g.gain.setTargetAtTime(0, A.ctx.currentTime, 0.05); RASP.src.stop(A.ctx.currentTime + 0.3); } catch (e) { } freeLater(0.5, RASP.p); RASP.on = false; }
 function raspPos(out = V()) { return WD.borrowed && SG.root.visible ? sgHead(out) : out.set(WD.pos.x, WD.pos.y + 1.5, WD.pos.z); }
 function raspUpdate(dt) {
   if (!A.ctx) return;
@@ -2184,7 +2187,8 @@ const CBGM = { src: null, g: null, t0: 0, lock: 0, BPM: 130, OFF: 0.09 };
 function cbgmUpdate(dt) {
   const U = postMat.uniforms;
   if (CH.state === 'off') CBGM.selfSeen = false;   // 追跡ごとに一度だけ、インカメラに映った瞬間の効果音
-  const want = world.state === 'play' && !CAP.on ? (CH.state === 'chase' ? 1 : CH.state !== 'off' ? 0.35 : 0) : 0;
+  const spCh = typeof SP !== 'undefined' && (SP.st === 'chase' || SP.st === 'drop' || SP.st === 'latch');
+  const want = world.state === 'play' && !CAP.on ? (CH.state === 'chase' || spCh ? 1 : CH.state !== 'off' ? 0.35 : 0) : 0;
   // 見つかると速く上がり、外れるとゆっくり下がる
   CBGM.lock = want > CBGM.lock ? Math.min(want, CBGM.lock + dt / 0.5) : Math.max(want, CBGM.lock - dt / (want > 0 ? 2.5 : 4));
   if (A.ctx && hasSfx('chase_bgm')) {
@@ -2193,7 +2197,7 @@ function cbgmUpdate(dt) {
       const g = A.ctx.createGain(); g.gain.value = 0; s.connect(g); g.connect(A.master); s.start(); CBGM.src = s; CBGM.g = g; CBGM.t0 = A.ctx.currentTime;
     }
     if (CBGM.g) CBGM.g.gain.setTargetAtTime(CBGM.lock * SFX_GAIN.chase_bgm, A.ctx.currentTime, 0.08);
-    if (CBGM.src && CBGM.lock <= 0.001 && CH.state === 'off') { try { CBGM.src.stop(); } catch (e) { } CBGM.src = null; CBGM.g = null; }
+    if (CBGM.src && CBGM.lock <= 0.001 && CH.state === 'off' && !spCh) { try { CBGM.src.stop(); } catch (e) { } freeLater(0.2, CBGM.g); CBGM.src = null; CBGM.g = null; }
   }
   // 曲の拍に合わせて縁が脈打つ（拍の頭で強く、すぐ引く）
   let pulse = 0;
@@ -2241,7 +2245,7 @@ function cvoiceUpdate(dt) {
     const ctx = A.ctx; const s = ctx.createBufferSource(); s.buffer = A.buf.chase_voice; s.loop = true;   // 一重のループ
     const g = ctx.createGain(); g.gain.value = 0.0001;
     const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 12000;
-    const p = panAt(sgHead(V()), 1.0, 1.25, A.bus); s.connect(g); g.connect(f); f.connect(p);
+    const p = panAt(sgHead(V()), 1.0, 1.25, A.bus, 0); s.connect(g); g.connect(f); f.connect(p);
     s.start(0, Math.random() * s.buffer.duration); Object.assign(v, { src: s, g, f, p, on: true });
     g.gain.setTargetAtTime(SFX_GAIN.chase_voice || 1, ctx.currentTime, 0.04);
   }
@@ -3745,7 +3749,7 @@ function ambDest(pos, room) {
   const wet = ctx.createGain(); wet.gain.value = Math.min(1.1, (0.12 + d * 0.035) * (room === 'T' ? 1.8 : room === 'A' || room === 'B' ? 1.3 : 1));
   const wl = ctx.createBiquadFilter(); wl.type = 'lowpass'; wl.frequency.value = 3200;
   D.connect(wl); wl.connect(wet); wet.connect(A.verb);
-  setTimeout(() => { try { D.disconnect(); } catch (e) {} }, 9000);
+  freeLater(9, D, dry, wet);
   return D;
 }
 function ambSnd(pos, room, fn) { const D = ambDest(pos, room); A.ambDest = D; try { fn(); } finally { A.ambDest = null; } return D; }
@@ -4087,15 +4091,15 @@ const TAP = {
       const ctx = A.ctx; const s = ctx.createBufferSource(); s.buffer = A.buf.tap_running; s.loop = true;
       const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 7000;
       const g = ctx.createGain(); g.gain.value = 0; g.gain.setTargetAtTime(SFX_GAIN.tap_running, ctx.currentTime, silentStart ? 0.01 : 0.06);
-      s.connect(lp); lp.connect(g); g.connect(panAt(h, 0.7, 1.15));
+      const pn = panAt(h, 0.7, 1.15, undefined, 0); s.connect(lp); lp.connect(g); g.connect(pn);
       const wet = ctx.createGain(); wet.gain.value = 0.35; g.connect(wet); wet.connect(A.verb);   // タイルの硬い残響
-      s.start(0, rnd(0, 8)); Object.assign(this, { src: s, g, lp });
+      s.start(0, rnd(0, 8)); Object.assign(this, { src: s, g, lp, pn, wet });
     }
   },
   close() {
     if (!this.on) return; this.on = false; water.on = false; world.faucetClosedAt = world.t;
     if (this.mesh) { this.mesh.visible = false; this.splash.visible = false; }   // 水筋と音を同時に止める
-    if (this.src) { const t = A.ctx.currentTime; this.g.gain.cancelScheduledValues(t); this.g.gain.setTargetAtTime(0, t, 0.035); this.src.stop(t + 0.25); this.src = null; }
+    if (this.src) { const t = A.ctx.currentTime; this.g.gain.cancelScheduledValues(t); this.g.gain.setTargetAtTime(0, t, 0.035); this.src.stop(t + 0.25); freeLater(0.4, this.pn, this.wet); this.src = null; }
     const sk = this.sk; setTimeout(() => SND.drip(this.hit(sk), 0.5), 650);
     if (this.left) { this.left = false; GG.candidate('tap'); }
   },
@@ -4284,30 +4288,48 @@ const MF = {
 defEvent('cornerFace', {
   tier: 'big', zones: ['A', 'B'], weight: 0.8, minT: 20,
   ready() {
+    if (!SG.ready || WD.borrowed || CH.state !== 'off' || CAP.on) return false;
     const fz = camFwd();
     if (player.z < -26.5 && player.z > -29.6 && Math.abs(player.x) < 1.4 && fz.z < -0.4) { this.spot = { p: V(2.25, 0, -31.2), face: -Math.PI / 2 }; return !clearLine(V(2.25, 1.5, -31.2)); }   // 廊下A→B
     if (player.x > 3.2 && player.x < 6.5 && player.z < -30 && fz.x < -0.4) { this.spot = { p: V(0.35, 0, -29.3), face: Math.PI * 0.85 }; return !clearLine(V(0.35, 1.5, -29.3)); }   // 廊下B→A
     return false;
   },
-  start() { if (!this.spot) this.spot = { p: V(2.25, 0, -31.2), face: -Math.PI / 2 }; borrowWoman(); woman.setHollow(true); woman.c.pose = 'stand'; woman.root.position.copy(this.spot.p); woman.root.rotation.set(0, this.spot.face, 0); this.st = 'wait'; this.t = 0; },
+  // 2026-11-12 角の先に立つのは、捕獲やクマの演出と同じ「怖い顔」の女子高生（口が裂けて開く）
+  head() { return this.spot.p.clone().setY(1.52); },
+  start() {
+    if (!this.spot) this.spot = { p: V(2.25, 0, -31.2), face: -Math.PI / 2 };
+    WD.borrow(); sgSetOpacity(1); sgPlay('Scare_MouthOpen', 0); sgEmissive(0x3a2424); SG.root.scale.setScalar(1.05);
+    sgPlaceHead(this.head()); this.st = 'wait'; this.t = 0; this.gone = 0; this.near = 0;
+  },
   update(dt) {
-    this.t += dt; const hp = headWorld(woman, V());
+    this.t += dt; if (this.st === 'wait') sgPlaceHead(this.head()); const hp = sgHead(V());
     if (this.st === 'wait') {
-      const a = aimHead(woman, camera.position); woman.c.headYaw = a.yaw; woman.c.headPitch = a.pitch;
+      SG.ovYaw = Math.sin(world.t * 7) * 0.04; SG.ovRoll = 0.25 + Math.sin(world.t * 3) * 0.05;   // 首だけが少し傾いて震える
       const n = ndc(hp);
       if (n.z < 1 && Math.abs(n.x) < 0.75 && Math.abs(n.y) < 0.8 && clearLine(hp)) {   // 目視した瞬間
         this.st = 'hit'; this.t = 0;
         playSfx('capture_scream', { pos: hp.clone(), ref: 1.0, roll: 1.1, gain: 1.0, dur: 0.75, offset: 0.03 }) || SND.scream(); jumpSting('jump_a', 0.9, 3);
         if (rec.active) award('cornerFace', '角の先に立っていた顔', 70);
       }
-      if (this.t > 40 || Math.hypot(player.x - woman.root.position.x, player.z - woman.root.position.z) > 14) { releaseWoman(); woman.setHollow(false); return true; }
+      if (this.t > 40 || Math.hypot(player.x - this.spot.p.x, player.z - this.spot.p.z) > 14) return true;
     } else if (this.st === 'hit') {
-      if (this.t > 0.16 && !this.gone) { this.gone = 1; noiseHit(1); postMat.uniforms.stat.value = 0.75; postMat.uniforms.tear.value = 0.55; world.vhs = 0.8; setOpacity(woman, 0); }
-      if (this.t > 0.4) { postMat.uniforms.stat.value = 0; postMat.uniforms.tear.value = 0; return true; }
+      // 目が合った瞬間、目の前（顔が画面いっぱい）まで一気に詰めてくる → 頭だけが不連続に狂う → ノイズで消える
+      const U = postMat.uniforms;
+      if (!this.gone) {
+        if (!this.near) { this.near = 1; SG.root.scale.setScalar(1.15); SND.hit(); world.vhs = 1; U.tear.value = 0.5; this.pt = 0; this.pi = 0; }
+        F2.placeSG(Math.max(0.55, 0.7 - this.t * 0.12)); focus.override = 0.6;
+        this.pt -= dt; if (this.pt <= 0) { this.pi = (this.pi + 1 + ((Math.random() * 2) | 0)) % 3; this.pt = rnd(0.07, 0.16); }
+        const P = [[0.5, -0.3, 0.35], [-0.6, 0.25, -0.5], [0.1, 0.5, 0.9]][this.pi]; SG.ovYaw = P[0]; SG.ovPitch = P[1]; SG.ovRoll = P[2];
+        U.stat.value = screamGap() ? 0.7 : 0; U.tear.value = rnd(0.05, 0.3); world.vhs = Math.max(world.vhs, 0.7);
+        if (rec.active && seen(sgHead(V()), { maxD: 2.5, margin: 1.2 })) award('cornerFaceNear', '角から目の前まで迫った顔', 60);
+      }
+      if (this.t > 0.95 && !this.gone) { this.gone = 1; noiseHit(1); U.stat.value = 0.8; U.tear.value = 0.6; world.vhs = 0.8; }
+      if (this.gone) { U.stat.value = Math.random() < 0.7 ? 0.85 : 0.2; U.tear.value = rnd(0.3, 0.7); sgSetOpacity(Math.random() < 0.4 && this.t < 1.15 ? 1 : 0); }
+      if (this.t > 1.25) { U.stat.value = 0; U.tear.value = 0; sgSetOpacity(0); focus.override = null; return true; }
     }
     return false;
   },
-  cleanup() { this.gone = 0; woman.setHollow(false); releaseWoman(); },
+  cleanup() { this.gone = 0; this.near = 0; focus.override = null; SG.root.scale.setScalar(1); SG.ovYaw = SG.ovPitch = SG.ovRoll = 0; sgEmissive(0x2a1010); if (WD.borrowed) WD.release(true); },
 });
 
 /* =========================================================
@@ -4371,6 +4393,7 @@ const RED = {
       if (this.t > this.dur) this.end();
       return;
     }
+    return;   // 2026-11-12 赤いライトの演出はなし（ユーザーの希望）
     if (this.n >= 2 || !AMB.quiet() || world.selfie) return;
     this.next -= dt; if (this.next > 0) return; this.next = rnd(45, 90);
     if (chance(0.7)) this.start();
@@ -4699,6 +4722,10 @@ F2.updStairFace = function (dt) {
 /* 3. クマを見た後に振り向くと、徘徊女性が間近に */
 F2.updTeddyScare = function (dt) {
   const S = this.st; const U = postMat.uniforms;
+  // 2026-11-12 トイレ：20回ノックの個室が開いて5秒たったら、振り返った瞬間に同じ顔が出る
+  if (!S.toiletArmed && typeof KN !== 'undefined' && KN.openAt && world.t - KN.openAt > 5 && (S.scare === 'wait' || S.scare === 'done') && playerZone() === 'T' && player.lv === 0) {
+    S.toiletArmed = true; S.after = S.scare; S.scare = 'seen'; S.zone = 'T'; S.tp = V(10.9, 1.2, KN.stall.zc); S.lastYaw = undefined; S.prevYaw = undefined;
+  }
   if (S.scare === 'wait') {
     if (!this.teddy || !this.teddy.visible || !this.st.bed || this.st.bed.out !== 'teddy') return;
     const b = this.beds.find(x => x.i === this.plan.bedClosed); if (b.duv < 0.95) return;
@@ -4709,7 +4736,7 @@ F2.updTeddyScare = function (dt) {
     // ベッドから背後へ振り向き始めたら（クマが画面の外へ出て、さらに回っている）
     const to = S.tp.clone().sub(camera.position).setY(0).normalize(); const f = camFwd().setY(0).normalize();
     const turn = Math.abs(Math.atan2(Math.sin(player.yaw - (S.lastYaw ?? player.yaw)), Math.cos(player.yaw - (S.lastYaw ?? player.yaw)))) / Math.max(dt, 1e-3); S.prevYaw = S.lastYaw; S.lastYaw = player.yaw;
-    if (playerZone() !== 'C') { S.scare = 'done'; return; }
+    if (playerZone() !== (S.zone || 'C')) { S.scare = S.after || 'done'; S.zone = null; S.after = null; return; }
     if (f.dot(to) < -0.35 && turn > 0.6 && SG.ready && !WD.borrowed && CH.state === 'off' && !CAP.on && !world.selfie && S.chair !== 'run') {
       S.scare = 'face'; S.st = 0; F2.busy = true; WD.borrow(); sgPlay('Scare_MouthOpen', 0); sgSetOpacity(1); SG.root.scale.setScalar(1.15); sgEmissive(0x3a2424);
       S.poses = [[0.5, -0.3, 0.35], [-0.6, 0.25, -0.5], [0.1, 0.5, 0.9]]; S.pi = 0; S.pt = 0;
@@ -4723,11 +4750,11 @@ F2.updTeddyScare = function (dt) {
     F2.yawOff = S.tdir * 0.22 * smooth(0, 0.12, S.st);   // 振り向きの終わり10〜15°だけ、表示用のカメラで補助（ジャイロの基準は触らない）
     this.placeSG(Math.max(0.5, 0.62 - S.st * 0.1)); focus.override = 0.6;
     U.stat.value = screamGap() ? 0.7 : 0; U.tear.value = rnd(0.05, 0.3); world.vhs = Math.max(world.vhs, 0.7);
-    if (seen(sgHead(V()), { maxD: 2.5, margin: 1.2 })) award('f2turnFace', '振り向いた目の前の顔', 95);
+    if (seen(sgHead(V()), { maxD: 2.5, margin: 1.2 })) award(S.zone === 'T' ? 'tTurnFace' : 'f2turnFace', S.zone === 'T' ? '個室のあとに振り向いた目の前の顔' : '振り向いた目の前の顔', 95);
     if (S.st > 1.0) { S.scare = 'noise'; S.st = 0; noiseHit(1); }
   } else if (S.scare === 'noise') {
     S.st += dt; U.stat.value = Math.random() < 0.7 ? 0.85 : 0.2; U.tear.value = rnd(0.3, 0.7); sgSetOpacity(Math.random() < 0.4 ? 1 : 0);
-    if (S.st > 0.3) { F2.yawOff = 0; U.stat.value = 0; U.tear.value = 0; sgSetOpacity(0); SG.root.scale.setScalar(1); SG.ovYaw = SG.ovPitch = SG.ovRoll = 0; sgEmissive(0x2a1010); focus.override = null; WD.release(true); S.scare = 'done'; F2.busy = false; world.lastEventEnd = world.t; world.quietUntil = world.t + 20; }
+    if (S.st > 0.3) { F2.yawOff = 0; U.stat.value = 0; U.tear.value = 0; sgSetOpacity(0); SG.root.scale.setScalar(1); SG.ovYaw = SG.ovPitch = SG.ovRoll = 0; sgEmissive(0x2a1010); focus.override = null; WD.release(true); S.scare = S.after || 'done'; S.after = null; S.zone = null; F2.busy = false; world.lastEventEnd = world.t; world.quietUntil = world.t + 20; }
   }
 };
 F2.placeSG = function (d) { const f = camFwd(); f.y = 0; f.normalize(); const p = camera.position.clone().addScaledVector(f, d); p.y = camera.position.y - 0.05; sgPlaceHead(p); };
@@ -4986,7 +5013,7 @@ function spFacePos(out = V()) { SP.wrap.updateMatrixWorld(true); return SP.faceO
 /* ---------- 1周ぶんの準備（巣は毎周はじめから実在） ---------- */
 SP.reset = function () {
   for (const w of this.webs) w.o.parent && w.o.parent.remove(w.o);
-  this.webs = []; this.st = 'none'; this.flag = false; this.decided = false; this.lastWarp = -99; this.lastDrop = -99; this.stepStop(true);
+  this.webs = []; this.st = 'none'; this.flag = false; this.decided = false; this.over = false; this.noChaseUntil = 0; this.lastWarp = -99; this.lastDrop = -99; this.stepStop(true);
   if (!this.webSrc) return;
   const r = f2rng('webs');
   const pickFrom = list => list.splice((r() * list.length) | 0, 1)[0];
@@ -5010,7 +5037,7 @@ SP.reset = function () {
 /* ---------- 足音（天井の個体位置から。歩いている間だけ） ---------- */
 SP.stepStop = function (hard) {
   const s = this.step; if (!s || !A.ctx) { this.step = null; return; }
-  const t = A.ctx.currentTime; s.g.gain.cancelScheduledValues(t); s.g.gain.setValueAtTime(s.g.gain.value, t); s.g.gain.linearRampToValueAtTime(0.0001, t + (hard ? 0.012 : 0.08)); try { s.s.stop(t + 0.1); } catch (e) { }
+  const t = A.ctx.currentTime; s.g.gain.cancelScheduledValues(t); s.g.gain.setValueAtTime(s.g.gain.value, t); s.g.gain.linearRampToValueAtTime(0.0001, t + (hard ? 0.012 : 0.08)); try { s.s.stop(t + 0.1); } catch (e) { } freeLater(0.3, s.p);
   this.step = null;
 };
 SP.stepUpdate = function (dt, walking) {
@@ -5020,9 +5047,10 @@ SP.stepUpdate = function (dt, walking) {
     const ctx = A.ctx; const s = ctx.createBufferSource(); s.buffer = A.buf.spider_steps;
     const g = ctx.createGain(); g.gain.value = 0.0001; g.gain.linearRampToValueAtTime(1.0 * (SFX_GAIN.spider_steps || 1), ctx.currentTime + 0.05);
     const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 9000;
-    const p = panAt(fp, 0.9, 1.15, A.bus); s.connect(g); g.connect(f); f.connect(p);
-    { const D = s.buffer.duration, len = Math.min(D, rnd(2.5, 5)); s.start(0, rnd(0, Math.max(0, D - len)), len); }   // 長い録音から毎回違う部分を数秒だけ const me = { s, g, f, p }; this.step = me;
-    s.onended = () => { if (this.step === me) { this.step = null; this.stepGap = world.t + rnd(0.25, 0.9); } };   // 3秒の実録を連打せず、間を挟む
+    const p = panAt(fp, 0.9, 1.15, A.bus, 0); s.connect(g); g.connect(f); f.connect(p);
+    { const D = s.buffer.duration, len = Math.min(D, rnd(2.5, 5)); s.start(0, rnd(0, Math.max(0, D - len)), len); }   // 長い録音から毎回違う部分を数秒だけ
+    const me = { s, g, f, p }; this.step = me;
+    s.onended = () => { freeLater(0.1, p); if (this.step === me) { this.step = null; this.stepGap = world.t + rnd(0.25, 0.9); } };   // 3秒の実録を連打せず、間を挟む
   }
   if (!walking && this.step) this.stepStop(false);
   const s = this.step; if (!s) return;
@@ -5078,6 +5106,8 @@ SP.update = function (dt) {
     const dH = Math.hypot(player.x - this.pos.x, player.z - this.pos.z);
     // 頭上の顔
     if (this.lv === player.lv && player.pitch > 0.3 && seen(fp, { maxD: 6 })) award('spHead', '天井から逆さに見下ろす蜘蛛女の顔', 60);
+    // 見つかったら追ってくる（同じ階・近い・天井から主人公が見通せる）
+    if (this.spotted(dH)) { this.startChase(); return; }
     if (this.st === 'crawl') {
       if (!this.tgt) this.newTarget();
       const d = V(this.tgt.x - this.pos.x, 0, this.tgt.z - this.pos.z); const L = d.length();
@@ -5107,6 +5137,8 @@ SP.update = function (dt) {
     this.stepUpdate(dt, this.st === 'crawl');
     // 垂れた髪の中に入り込まないよう、真下へは近づきすぎない
     if (this.lv === player.lv && !stairZone(player.x, player.z)) { const dx = player.x - this.pos.x, dz = player.z - this.pos.z, dd = Math.hypot(dx, dz); if (dd < 0.7 && dd > 1e-4) { const [nx, nz] = collide(this.pos.x + dx / dd * 0.7, this.pos.z + dz / dd * 0.7); player.x = nx; player.z = nz; } }
+  } else if (this.st === 'chase') {
+    this.updChase(dt, fp);
   } else if (this.st === 'drop') {
     const k = clamp(this.t / 0.42, 0, 1), e = k * k * (3 - 2 * k);
     const [P1, Q1] = this.latchPose(); this.wrap.position.lerpVectors(this.P0, P1, e); this.wrap.quaternion.slerpQuaternions(this.Q0, Q1, e); this.wrap.updateMatrixWorld(true);
@@ -5122,7 +5154,9 @@ SP.update = function (dt) {
       world.vhs = Math.max(world.vhs, 0.6); focus.override = 0.4;
     }
     if (this.hit && seen(fp, { maxD: 1.5, margin: 1.3 })) award('spLatch', '顔の前で閉じる蜘蛛女の脚', 180);
-    if (this.t > 1.2) { this.st = 'peel'; this.t = 0; spPlay('PeelAway', 0.08); this.P0 = this.wrap.position.clone(); this.Q0 = this.wrap.quaternion.clone(); focus.override = null;
+    if (this.hit && this.t > 0.85) { const U = postMat.uniforms; U.stat.value = Math.random() < 0.6 ? 0.8 : 0.2; U.tear.value = rnd(0.2, 0.7); world.vhs = 1; }
+    if (this.t > 1.2) { this.gameOver(); return; }   // 2026-11-12 蜘蛛女に襲われたら、そこで終わり
+    if (this.t > 99) { this.st = 'peel'; this.t = 0; spPlay('PeelAway', 0.08); this.P0 = this.wrap.position.clone(); this.Q0 = this.wrap.quaternion.clone(); focus.override = null;
       const up = V(player.x, spCeil(this.lv), player.z).addScaledVector(camFwd().setY(0).normalize(), 0.6); this.backTo = up; }
   } else if (this.st === 'peel') {
     const k = clamp(this.t / 0.58, 0, 1), e = k * k * (3 - 2 * k);
@@ -5144,6 +5178,67 @@ SP.latchPose = function () {
   this.wrap.updateMatrixWorld(true); const local = this.wrap.worldToLocal(spFacePos(V()));   // いまの姿勢での顔の位置（ラッパー基準）
   const off = local.applyQuaternion(Q);
   return [tgt.sub(off), Q];
+};
+
+/* ---------- 追跡：見つけると天井を這って追ってくる（主人公の1.1倍の速さ。曲がり角では減速するので、角を使えば振り切れる） ---------- */
+SP.hiddenNow = function () { return player.hidden || HIDE.lk || (world.inStall && world.inStall.locked); };
+SP.spotted = function (dH) {
+  if (this.lv !== player.lv || world.t < (this.noChaseUntil || 0) || world.t - this.spawnT < 4 || this.hiddenNow() || CAP.on || world.outro > 0 || stairZone(player.x, player.z)) return false;
+  if (dH > 8) return false;
+  const p = V(this.pos.x, this.pos.y - 0.35, this.pos.z);
+  return clearLine(p, [this.wrap]);
+};
+SP.startChase = function () {
+  this.st = 'chase'; this.t = 0; this.lostT = 0; this.cpath = []; this.repath = 0; this.armDrop = false;
+  spPlay('CeilingCrawl', 0.1);
+  playSfx('throat_rasp', { pos: this.pos.clone(), ref: 1.0, roll: 1.1, gain: 0.9, dur: 1.2 });
+  if (TEST || DEV) console.log('SPIDER chase');
+};
+SP.endChase = function () {
+  // 見失ったら、この階のいちばん近い巣へ戻る（壁を這い抜けないよう、その場で巣へ移る）
+  const mine = this.webs.filter(w => w.def.lv === this.lv); const list = mine.length ? mine : this.webs;
+  const w = list.reduce((a, b) => (Math.hypot(a.touch.x - this.pos.x, a.touch.z - this.pos.z) < Math.hypot(b.touch.x - this.pos.x, b.touch.z - this.pos.z) ? a : b));
+  const vis = seen(spFacePos(V()), { maxD: 12 });
+  this.web = w; this.lv = w.def.lv; if (!vis) { this.pos.copy(w.touch).addScaledVector(w.inward, 0.6); this.apply(); }
+  this.st = 'crawl'; this.tgt = vis ? w.touch.clone() : null; this.toWeb = vis; this.t = 0; this.noChaseUntil = world.t + 15; this.lastWarp = world.t;
+  if (TEST || DEV) console.log('SPIDER lost');
+};
+SP.updChase = function (dt, fp) {
+  this.t += 0;
+  const same = this.lv === player.lv && !stairZone(player.x, player.z);
+  const hid = this.hiddenNow();
+  const see = same && !hid && clearLine(V(this.pos.x, this.pos.y - 0.35, this.pos.z), [this.wrap]);
+  this.lostT = see ? 0 : this.lostT + dt;
+  if (!same || hid ? this.lostT > 2.5 : this.lostT > 6) { this.endChase(); return; }
+  const dH = Math.hypot(player.x - this.pos.x, player.z - this.pos.z);
+  if (same && !hid && dH < 0.85) { this.startDrop(); return; }   // 追いつかれた
+  // 行き先：まっすぐ行けるなら主人公へ、壁や窓をはさむなら通路（戸口）づたいに
+  let tx = player.x, tz = player.z;
+  if (segBlocked(this.pos.x, this.pos.z, player.x, player.z, this.lv)) {
+    this.repath -= dt;
+    if (this.repath <= 0 || !this.cpath.length) { this.repath = 0.5; const y = this.lv ? LH : 0; this.cpath = navPath(nearestNode(this.pos.x, this.pos.z, undefined, y), nearestNode(player.x, player.z, undefined, y)).map(k => nodePos(k)); }
+    while (this.cpath.length && (Math.hypot(this.cpath[0].x - this.pos.x, this.cpath[0].z - this.pos.z) < 0.35 || (this.cpath.length > 1 && !segBlocked(this.pos.x, this.pos.z, this.cpath[1].x, this.cpath[1].z, this.lv)))) this.cpath.shift();
+    if (this.cpath.length) { tx = this.cpath[0].x; tz = this.cpath[0].z; }
+  } else this.cpath = [];
+  const want = Math.atan2(tx - this.pos.x, tz - this.pos.z);
+  const dh = Math.atan2(Math.sin(want - this.yaw), Math.cos(want - this.yaw));
+  this.yaw += clamp(dh, -3.2 * dt, 3.2 * dt);
+  const turnSlow = Math.abs(dh) > 0.9 ? 0.4 : Math.abs(dh) > 0.45 ? 0.75 : 1;   // 曲がる時は大きく減速
+  const sp = CONFIG.walkSpeed * CONFIG.spiderChaseMul * turnSlow;
+  const nx = this.pos.x + Math.sin(this.yaw) * sp * dt, nz = this.pos.z + Math.cos(this.yaw) * sp * dt;
+  if (!segBlocked(this.pos.x, this.pos.z, nx, nz, this.lv, 0.05)) { this.pos.x = nx; this.pos.z = nz; }
+  this.pos.y = spCeil(this.lv);
+  spPlay('CeilingCrawl'); this.apply(); this.stepUpdate(dt, true);
+  if (rec.active && seen(fp, { maxD: 9 })) awardCont('spChase', '天井を這って追ってくる蜘蛛女', 12, dt, 120);
+};
+SP.gameOver = function () {
+  if (this.over) return; this.over = true; this.stepStop(true);
+  const U = postMat.uniforms; U.black.value = 1; U.stat.value = 0; U.tear.value = 0; this.wrap.visible = false; focus.override = null;
+  if (A.ctx) { A.master.gain.cancelScheduledValues(A.ctx.currentTime); A.master.gain.setValueAtTime(0, A.ctx.currentTime + 0.02); }
+  world.state = 'over';
+  if (rec.active) stopRec('capture');
+  $('#hud').classList.add('off'); $('#actBtn').classList.remove('show');
+  finalizeRec().then(blobs => { capturedBlobs = blobs.filter(b => b && b.size > 0); showResult(capturedBlobs); $('#resTitle').textContent = '映像はここで途切れている'; $('#resMeta').textContent = `撮影 ${fmt(rec.time)}　蜘蛛女に捕まった`; });
 };
 
 /* =========================================================
@@ -5306,7 +5401,7 @@ const KN = { last: -9 };
 KN.reset = function () {
   this.st = stalls[4]; const st = this.st;
   if (!st.occupied) { st.occupied = true; st.angle = 0; setStall(st, true, true, true); }
-  st.knockN = 0; st.slow = 0; st.knobTarget = undefined; st.opened = false; this.ph = 'idle'; this.last = 0; this.stall = st;
+  st.knockN = 0; st.slow = 0; st.knobTarget = undefined; st.opened = false; this.openAt = 0; this.ph = 'idle'; this.last = 0; this.stall = st;
 };
 KN.knock = function (st) {
   const now = performance.now(); if (now - this.last < 260 || this.ph !== 'idle') return;   // 長押し・タッチの重複は一回
@@ -5324,7 +5419,7 @@ KN.update = function (dt) {
   }
   if (this.ph === 'creak' && this.t > 0.55) {   // その直後に、扉がギィ……とゆっくり開く
     this.ph = 'opening'; this.t = 0; playSfx('swivel_creak', { pos: lp, ref: 0.8, gain: 1.0 }) || SND.creak(lp, 0.8, 0.45);
-    st.occupied = false; st.slow = 0.9; st.target = -1.45; st.col.on = false; st.opened = true;
+    st.occupied = false; st.slow = 0.9; st.target = -1.45; st.col.on = false; st.opened = true; this.openAt = world.t;
   }
   if (this.ph === 'creak' || this.ph === 'opening') { if (rec.active && seen(V(10.5, 1.2, st.zc), { maxD: 6 })) award('stall20', '20回目のノックで開いた個室', 60); }
   if (this.ph === 'opening') { this.keepOut(); if (this.t > 3.5) { this.ph = 'open'; st.slow = 0; } }
@@ -5743,13 +5838,21 @@ function seekTo(t) {
 function durOf(url) { return new Promise(r => { const e = document.createElement('video'); e.preload = 'metadata'; e.onloadedmetadata = () => r(isFinite(e.duration) ? e.duration : 0); e.onerror = () => r(0); e.src = url; }); }
 // 音楽室のピアノ（月の光）の録音のクレジット：結果画面と共有に添える
 const MUSIC_CREDIT = '音楽室のピアノ：Claude Debussy「Clair de lune」演奏 Laurens Goedhart（2011） CC BY 3.0 https://creativecommons.org/licenses/by/3.0/ 出典 Wikimedia Commons（45秒を抜粋・モノラル化・MP3化）';
+function shareText() {
+  const total = evidence.reduce((a, e) => a + e.pts, 0);
+  const here = /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host) ? location.origin + location.pathname : 'https://hisimk.github.io/yutuber/';
+  return `旧校舎で撮れた映像　いいね${total}\n#幽tuber\n${here}` + (F2.clairHeard ? `\n\n${MUSIC_CREDIT}` : '');
+}
 $('#saveBtn').addEventListener('click', async () => {
   if (!resultBlobs.length) return; const msg = $('#saveMsg');
   const ext = (resultBlobs[0].type || rec.mime).includes('mp4') ? 'mp4' : 'webm';
   const st = new Date(); const name = n => `yutuber_${st.getMonth() + 1}${String(st.getDate()).padStart(2, '0')}_${String(st.getHours()).padStart(2, '0')}${String(st.getMinutes()).padStart(2, '0')}${n ? '_' + n : ''}.${ext}`;
   try { if (window.claude && typeof window.claude.use === 'function') { const dl = await window.claude.use('downloads'); if (dl) { for (let i = 0; i < resultBlobs.length; i++) await dl.save({ filename: name(resultBlobs.length > 1 ? i + 1 : 0), data: resultBlobs[i] }); msg.textContent = '保存しました'; return; } } }
   catch (e) { if (e && e.code === 'declined') { msg.textContent = '保存をやめました'; return; } }
-  try { const files = resultBlobs.map((b, i) => new File([b], name(resultBlobs.length > 1 ? i + 1 : 0), { type: b.type || `video/${ext}` })); if (navigator.canShare && navigator.canShare({ files })) { await navigator.share(Object.assign({ files, title: '幽tuber' }, F2.clairHeard ? { text: MUSIC_CREDIT } : {})); return; } }
+  // SNSに投稿：共有シートからX・Instagram・TikTok・LINEなどを選べる。投稿文（#幽tuber）は自動で添え、念のためコピーもしておく
+  const post = shareText();
+  try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(post).then(() => { msg.textContent = '投稿文（#幽tuber）をコピーしました。アプリで消えていたら貼り付けてください'; }).catch(() => { }); } catch (e) { }
+  try { const files = resultBlobs.map((b, i) => new File([b], name(resultBlobs.length > 1 ? i + 1 : 0), { type: b.type || `video/${ext}` })); if (navigator.canShare && navigator.canShare({ files })) { await navigator.share({ files, title: '幽tuber', text: post }); return; } }
   catch (e) { if (e && e.name === 'AbortError') return; }
   try { resultBlobs.forEach((b, i) => { const a = document.createElement('a'); a.href = resultUrls[i]; a.download = name(resultBlobs.length > 1 ? i + 1 : 0); document.body.appendChild(a); a.click(); a.remove(); }); msg.textContent = 'ダウンロードを開始しました。始まらない場合は、再生画面のメニューから保存してください。'; }
   catch (e) { msg.textContent = 'この画面では保存できませんでした。'; }
@@ -5766,6 +5869,9 @@ $('#optMic').addEventListener('click', () => { opt.mic = !opt.mic; $('#optMic').
    ・初回タップで音を有効化（それだけでは探索を始めない）。既に有効なら表示時から鳴らす
    ・環境音は本編と同じAudioContext・同じSource（initAudioは一度だけ）。タイトルSEはスピーカーだけに出し、録画には入れない */
 $('#titleLogo').src = TITLE_LOGO;
+// iPhoneで音が途中で止まった（電話・通知・ほかのアプリの音などで中断された）ときは、次に画面に触れた時に音を再開する
+for (const ev of ['touchstart', 'pointerdown']) document.addEventListener(ev, () => { if (A.ctx && A.ctx.state !== 'running' && world.state !== 'title') A.ctx.resume().catch(() => { }); }, { passive: true, capture: true });
+setInterval(() => { if (A.ctx && A.ctx.state !== 'running' && world.state === 'play' && !document.hidden) A.ctx.resume().catch(() => { }); }, 1500);
 function ensureAudio() { if (!A.ctx) initAudio(); if (A.ctx && A.ctx.state !== 'running' && A.ctx.resume) A.ctx.resume().catch(() => { }); return !!A.ctx; }
 const TSE = { src: null, g: null, timer: 0, tok: 0 }; if (TEST) window.__TSE = TSE;
 function titleSePlay() {
@@ -5883,7 +5989,7 @@ if (DEV) {
   ];
   for (const [l, f] of btns) { const b = document.createElement('button'); b.textContent = l; b.addEventListener('click', e => { e.stopPropagation(); f(); }); b.addEventListener('pointerdown', e => e.stopPropagation()); dev.appendChild(b); }
 }
-if (TEST) window.__G = { CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
+if (TEST) window.__G = { shareText, CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
 loadSG().then(() => Promise.all([setupGlbHuman(woman, GHOST_B64), setupGlbHuman(avatar, PROT_B64)])).then(() => loadF2()).then(() => loadSpider()).then(() => loadHands()).then(() => { $('#loading').remove(); try { ensureAudio(); if (A.ctx && A.ctx.state === 'running') titleSeKick(); } catch (e) { } });
 requestAnimationFrame(tick);
 // 効果音の大きさ（端末に保存。プレイ中・録画の両方に効く）
