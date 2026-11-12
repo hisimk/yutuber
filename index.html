@@ -51,8 +51,9 @@
   .zb{width:40px;height:40px;border-radius:50%;border:none;background:rgba(40,40,40,.7);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0;font-variant-numeric:tabular-nums}
   .zb.on{color:#ffd60a;font-size:13px;transform:scale(1.08)}
   #recBtn{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--sab) + 34px);width:80px;height:80px;border-radius:50%;border:4px solid #fff;background:transparent;padding:0;display:flex;align-items:center;justify-content:center}
-  #recBtn i{display:block;width:64px;height:64px;border-radius:50%;background:#ff3b30;transition:all .18s ease}
-  #recBtn.on i{width:30px;height:30px;border-radius:6px}
+  #recBtn{-webkit-appearance:none;appearance:none;overflow:hidden;isolation:isolate}
+  #recBtn i{display:block;width:64px;height:64px;border-radius:50%;background:#ff3b30;transform:translateZ(0) scale(1);transition:transform .18s ease,border-radius .18s ease;will-change:transform}
+  #recBtn.on i{transform:translateZ(0) scale(.469);border-radius:13px}   /* 30px角・角丸6px相当 */
   #recBtn.full i{background:#666}
   #exitBtn{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--sab) + 186px);display:none;font-size:14px;font-weight:700;padding:10px 18px;border-radius:20px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.6);color:#fff;white-space:nowrap}
   #exitBtn.show{display:block}
@@ -320,6 +321,24 @@
   #paSub.low{color:#c9c2b8;transform:translateY(2px) scaleY(.96)}
   #paSub.glitch{animation:paGl .5s steps(6) forwards}
   @keyframes paGl{0%{opacity:1;transform:translateX(0);filter:none}20%{transform:translateX(-6px) skewX(12deg);filter:blur(1px)}40%{transform:translateX(5px);opacity:.6;letter-spacing:.3em}60%{transform:translateX(-3px) scaleY(1.4);opacity:.8}80%{opacity:.2;filter:blur(3px)}100%{opacity:0}}
+
+  /* 撮れ高が入った瞬間の「いいね」ポップ（2026-11-13）：白でふくらみ、ふくらみ切る頃にレア度の色とエフェクトへ。約1秒 */
+  #likePops{position:fixed;left:0;top:0;width:0;height:0;pointer-events:none;z-index:40}
+  .lpop{position:fixed;width:40px;height:40px;margin:-20px 0 0 -20px;display:flex;align-items:center;justify-content:center;pointer-events:none}
+  .lpop .like{font-size:24px;color:#fff;opacity:0;transform:scale(.2);animation:lpIn 1s cubic-bezier(.2,.8,.3,1) forwards}
+  @keyframes lpIn{
+    0%{opacity:0;transform:scale(.2) rotate(-12deg);color:#fff;filter:none}
+    22%{opacity:1;transform:scale(1.25) rotate(6deg);color:#fff;filter:drop-shadow(0 0 2px #fff)}
+    38%{transform:scale(1.0) rotate(0);color:var(--rc);filter:drop-shadow(0 0 var(--gw) var(--rc))}
+    72%{opacity:1;transform:scale(1.04) translateY(-1px);color:var(--rc);filter:drop-shadow(0 0 var(--gw) var(--rc))}
+    100%{opacity:0;transform:scale(.85) translateY(-12px);color:var(--rc);filter:drop-shadow(0 0 2px var(--rc))}}
+  .lpop.SS .like{animation:lpIn 1s cubic-bezier(.2,.8,.3,1) forwards,lpRain .5s linear .3s infinite}
+  @keyframes lpRain{from{filter:hue-rotate(0deg) drop-shadow(0 0 10px #ff9ae6) saturate(1.6)}to{filter:hue-rotate(360deg) drop-shadow(0 0 10px #ff9ae6) saturate(1.6)}}
+  .lpop .ring{position:absolute;left:50%;top:50%;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;border:1.5px solid var(--rc);opacity:0;animation:lpRing .7s ease-out .3s forwards}
+  @keyframes lpRing{0%{opacity:.9;transform:scale(.6)}100%{opacity:0;transform:scale(1.65)}}
+  .lpop.SS .ring{border-color:#fff;box-shadow:0 0 10px #ff9ae6,inset 0 0 8px #8fd9ff}
+  .lpop .sp{position:absolute;left:50%;top:50%;font-size:9px;line-height:1;color:var(--rc);opacity:0;text-shadow:0 0 6px var(--rc);animation:lpSp .62s ease-out .3s forwards}
+  @keyframes lpSp{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}25%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1)}}
 </style>
 </head>
 <body>
@@ -2798,11 +2817,11 @@ function closeBonus(extra) {
   e.acc += extra; e.pts = Math.floor(e.acc);
 }
 function awardCont(key, label, pps, dt, cap = 200) {
-  let e = contAw[key]; if (!e) { e = contAw[key] = { t: rec.time, label, pts: 0, acc: 0, sec: 0, key }; evidence.push(e); }
+  let e = contAw[key]; if (!e) { e = contAw[key] = { t: rec.time, label, pts: 0, acc: 0, sec: 0, key }; evidence.push(e); likePop(e); }
   const add = Math.min(cap - e.acc, pps * dt); e.acc = Math.min(cap, e.acc + pps * dt); e.sec += dt; e.pts = Math.floor(e.acc); e.label = `${label}（${Math.round(e.sec)}秒）`;
   if (add > 0 && closeUp()) closeBonus(add * (CLOSE.mul - 1));
 }
-function award(key, label, pts) { if (awarded.has(key)) return; { const a = AW_TABLE[awBase(key)]; if (a) pts = a[1]; } awarded.set(key, true); evidence.push({ t: rec.time, label, pts, key }); if (closeUp()) closeBonus(pts * (CLOSE.mul - 1)); if (TEST || DEV) console.log('EVIDENCE', key, rec.time.toFixed(2)); }
+function award(key, label, pts) { if (awarded.has(key)) return; { const a = AW_TABLE[awBase(key)]; if (a) pts = a[1]; } awarded.set(key, true); const ev = { t: rec.time, label, pts, key }; evidence.push(ev); likePop(ev); if (closeUp()) closeBonus(pts * (CLOSE.mul - 1)); if (TEST || DEV) console.log('EVIDENCE', key, rec.time.toFixed(2)); }
 function accum(key, cond, dt, need) { if (!cond) return false; evAcc[key] = (evAcc[key] || 0) + dt; return evAcc[key] >= need; }
 const _v = V(), _dir = V(), ray = new THREE.Raycaster();
 function onScreen(pos, margin = 1) { _v.copy(pos).project(camera); return _v.z < 1 && _v.z > -1 && Math.abs(_v.x) <= margin && Math.abs(_v.y) <= margin; }
@@ -5664,7 +5683,7 @@ SP.spotted = function (dH) {
   return clearLine(p, [this.wrap]);
 };
 SP.startChase = function () {
-  this.st = 'chase'; this.t = 0; this.lostT = 0; this.cpath = []; this.repath = 0; this.armDrop = false;
+  this.gy = this.lv ? LH : 0; this.st = 'chase'; this.t = 0; this.lostT = 0; this.cpath = []; this.repath = 0; this.armDrop = false;
   spPlay('CeilingCrawl', 0.1);
   playSfx('throat_rasp', { pos: this.pos.clone(), ref: 1.0, roll: 1.1, gain: 0.9, dur: 1.2 });
   if (TEST || DEV) console.log('SPIDER chase');
@@ -5673,36 +5692,52 @@ SP.endChase = function () {
   // 見失ったら、この階のいちばん近い巣へ戻る（壁を這い抜けないよう、その場で巣へ移る）
   const mine = this.webs.filter(w => w.def.lv === this.lv); const list = mine.length ? mine : this.webs;
   const w = list.reduce((a, b) => (Math.hypot(a.touch.x - this.pos.x, a.touch.z - this.pos.z) < Math.hypot(b.touch.x - this.pos.x, b.touch.z - this.pos.z) ? a : b));
-  const vis = seen(spFacePos(V()), { maxD: 12 });
+  const vis = !stairZone(this.pos.x, this.pos.z) && seen(spFacePos(V()), { maxD: 12 });
   this.web = w; this.lv = w.def.lv; if (!vis) { this.pos.copy(w.touch).addScaledVector(w.inward, 0.6); this.apply(); }
   this.st = 'crawl'; this.tgt = vis ? w.touch.clone() : null; this.toWeb = vis; this.t = 0; this.noChaseUntil = world.t + 15; this.lastWarp = world.t;
   if (TEST || DEV) console.log('SPIDER lost');
 };
 SP.updChase = function (dt, fp) {
-  this.t += 0;
-  const same = this.lv === player.lv && !stairZone(player.x, player.z);
+  // 2026-11-13 階段も追ってくる：別の階・階段にいる主人公へも、階段づたいに這って追う。
+  // 階段の中では足もとの段の高さ＋2.4mあたり（頭上すれすれ）を這い、階に出たらその階の天井へ戻る
+  if (this.gy === undefined) this.gy = this.lv ? LH : 0;
+  const inStair = !!stairZone(this.pos.x, this.pos.z);
   const hid = this.hiddenNow();
-  const see = same && !hid && clearLine(V(this.pos.x, this.pos.y - 0.35, this.pos.z), [this.wrap]);
+  const sp3 = V(this.pos.x, this.pos.y - 0.35, this.pos.z);
+  const see = !hid && Math.abs(sp3.y - camera.position.y) < 3.2 && clearLine(sp3, [this.wrap]);
   this.lostT = see ? 0 : this.lostT + dt;
-  if (!same || hid ? this.lostT > 2.5 : this.lostT > 6) { this.endChase(); return; }
+  if (hid ? this.lostT > 2.5 : this.lostT > 6) { this.lv = this.gy > 1.6 ? 1 : 0; this.endChase(); return; }
   const dH = Math.hypot(player.x - this.pos.x, player.z - this.pos.z);
-  if (same && !hid && dH < 0.85) { this.startDrop(); return; }   // 追いつかれた
-  // 行き先：まっすぐ行けるなら主人公へ、壁や窓をはさむなら通路（戸口）づたいに
+  if (!hid && dH < 0.85 && Math.abs((this.pos.y - 0.9) - camera.position.y) < 1.3) { this.lv = this.gy > 1.6 ? 1 : 0; this.startDrop(); return; }   // 追いつかれた（階段の上でも）
+  // 行き先：同じ階でまっすぐ行けるなら主人公へ。壁・別の階・階段をはさむなら通路づたい（階段の道も含む）
+  const pStair = !!stairZone(player.x, player.z), pLv = player.y > 1.6 ? 1 : 0;
+  const direct = !inStair && !pStair && pLv === this.lv && !segBlocked(this.pos.x, this.pos.z, player.x, player.z, this.lv);
   let tx = player.x, tz = player.z;
-  if (segBlocked(this.pos.x, this.pos.z, player.x, player.z, this.lv)) {
+  if (!direct) {
     this.repath -= dt;
-    if (this.repath <= 0 || !this.cpath.length) { this.repath = 0.5; const y = this.lv ? LH : 0; this.cpath = navPath(nearestNode(this.pos.x, this.pos.z, undefined, y), nearestNode(player.x, player.z, undefined, y)).map(k => nodePos(k)); }
-    while (this.cpath.length && (Math.hypot(this.cpath[0].x - this.pos.x, this.cpath[0].z - this.pos.z) < 0.35 || (this.cpath.length > 1 && !segBlocked(this.pos.x, this.pos.z, this.cpath[1].x, this.cpath[1].z, this.lv)))) this.cpath.shift();
+    const pn = nearestNode(player.x, player.z, undefined, player.y);
+    if (!this.cpath.length || pn !== this.pNode || this.repath <= 0) {   // 主人公の近くの点が変わった時（か2秒ごと）だけ道を引き直す。毎回引き直すと踊り場で行ったり来たりした
+      this.repath = 2; this.pNode = pn; this.cpath = navPath(nearestNode(this.pos.x, this.pos.z, undefined, this.gy), pn).map(k => nodePos(k));
+      const h = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+      if (this.cpath.length > 1 && h(this.pos, this.cpath[1]) < h(this.cpath[0], this.cpath[1])) this.cpath.shift();   // 最初の点がすでに後ろなら飛ばす
+    }
+    const near = q => Math.hypot(q.x - this.pos.x, q.z - this.pos.z) < 0.4;   // 階段の途中は段の高さが道の点とずれるので、平面の距離だけで判定
+    while (this.cpath.length && (near(this.cpath[0]) || (!inStair && this.cpath.length > 1 && Math.abs(this.cpath[1].y - this.gy) < 0.5 && !stairZone(this.cpath[1].x, this.cpath[1].z) && !segBlocked(this.pos.x, this.pos.z, this.cpath[1].x, this.cpath[1].z, this.lv)))) this.cpath.shift();
     if (this.cpath.length) { tx = this.cpath[0].x; tz = this.cpath[0].z; }
   } else this.cpath = [];
   const want = Math.atan2(tx - this.pos.x, tz - this.pos.z);
   const dh = Math.atan2(Math.sin(want - this.yaw), Math.cos(want - this.yaw));
   this.yaw += clamp(dh, -3.2 * dt, 3.2 * dt);
   const turnSlow = Math.abs(dh) > 0.9 ? 0.4 : Math.abs(dh) > 0.45 ? 0.75 : 1;   // 曲がる時は大きく減速
-  const sp = CONFIG.walkSpeed * CONFIG.spiderChaseMul * turnSlow;
+  const sp = CONFIG.walkSpeed * CONFIG.spiderChaseMul * turnSlow * (inStair ? 0.85 : 1);
   const nx = this.pos.x + Math.sin(this.yaw) * sp * dt, nz = this.pos.z + Math.cos(this.yaw) * sp * dt;
-  if (!segBlocked(this.pos.x, this.pos.z, nx, nz, this.lv, 0.05)) { this.pos.x = nx; this.pos.z = nz; }
-  this.pos.y = spCeil(this.lv);
+  const toStair = !!stairZone(nx, nz);
+  if (inStair || toStair || !segBlocked(this.pos.x, this.pos.z, nx, nz, this.lv, 0.05)) { this.pos.x = nx; this.pos.z = nz; }
+  // 高さ：階段では段の高さに合わせ、階に出たらその階の天井へ
+  this.gy = groundAt(this.pos.x, this.pos.z, this.gy + 0.3);
+  if (!stairZone(this.pos.x, this.pos.z)) { this.lv = this.gy > 1.6 ? 1 : 0; this.gy = this.lv ? LH : 0; }
+  const ty = stairZone(this.pos.x, this.pos.z) ? Math.min(this.gy + 2.45, LH + HT - 0.05) : spCeil(this.lv);
+  this.pos.y += (ty - this.pos.y) * Math.min(1, dt * 6);
   spPlay('CeilingCrawl'); this.apply(); this.stepUpdate(dt, true);
   if (rec.active && seen(fp, { maxD: 9 })) awardCont('spChase', '天井を這って追ってくるクモ女', 12, dt, 120);
 };
@@ -6495,13 +6530,39 @@ const PIANO = {
     // タッチ：押した鍵と、指を滑らせて入った鍵を鳴らす
     const held = new Map();
     const keyAt = (x, y) => { const e = document.elementFromPoint(x, y); const k = e && e.closest && e.closest('.pk'); return k && K.contains(k) ? k : null; };
-    const press = (id, k) => { if (!k) return; if (held.get(id) === k) return; const pk = held.get(id); if (pk) pk.classList.remove('on'); held.set(id, k); k.classList.add('on'); this.note(+k.dataset.m); };
-    const release = id => { const k = held.get(id); if (k) k.classList.remove('on'); held.delete(id); };
+    const press = (id, k) => { if (!k) return; if (held.get(id) === k) return; const pk = held.get(id); if (pk) { pk.classList.remove('on'); this.ovUp(+pk.dataset.m); } held.set(id, k); k.classList.add('on'); this.ovDown(+k.dataset.m); this.note(+k.dataset.m); };
+    const release = id => { const k = held.get(id); if (k) { k.classList.remove('on'); this.ovUp(+k.dataset.m); } held.delete(id); };
     K.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); try { K.setPointerCapture(e.pointerId); } catch (_) {} press(e.pointerId, keyAt(e.clientX, e.clientY)); });
     K.addEventListener('pointermove', e => { if (!held.has(e.pointerId)) return; e.preventDefault(); const k = keyAt(e.clientX, e.clientY); if (k) press(e.pointerId, k); });
     for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) K.addEventListener(t, e => release(e.pointerId));
     for (const t of ['touchstart', 'touchmove', 'touchend', 'pointerdown', 'pointerup', 'click']) el.addEventListener(t, e => e.stopPropagation());
     el.querySelector('#pnQuit').addEventListener('click', e => { e.stopPropagation(); this.exit(); });
+  },
+  /* 録画用の鍵盤（2026-11-13）：録画は3Dの画面だけを撮るので、画面の下の方に同じ鍵盤を描き、押した鍵を光らせる */
+  ovHeld: {}, ovLit: {},
+  ovDown(m) { this.ovHeld[m] = true; this.ovLit[m] = 1; this.ovDirty = true; },
+  ovUp(m) { delete this.ovHeld[m]; this.ovDirty = true; },
+  ovBuild() {
+    if (this.ov) return;
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 256; const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 1), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false, toneMapped: false }));
+    mesh.renderOrder = 10; mesh.visible = false; postScene.add(mesh); this.ov = { c, g: c.getContext('2d'), tex, mesh };
+  },
+  ovUpdate(dt) {
+    if (!this.on) { if (this.ov) this.ov.mesh.visible = false; return; }
+    this.ovBuild(); const O = this.ov; O.mesh.visible = true;
+    // 画面の幅いっぱい・下から少し上。鍵盤の縦横比は保つ
+    const W = innerWidth, H = innerHeight, kh = 2 * (W * 0.25) / H; O.mesh.scale.set(1, kh, 1); O.mesh.position.set(0, -1 + kh / 2 + 0.06, 0);
+    let fade = false; for (const m in this.ovLit) { if (this.ovHeld[m]) continue; this.ovLit[m] -= dt / 0.35; if (this.ovLit[m] <= 0) delete this.ovLit[m]; fade = true; }
+    if (!fade && !this.ovDirty && O.drawn) return; this.ovDirty = false; O.drawn = true;
+    const g = O.g, w = O.c.width, h = O.c.height; g.clearRect(0, 0, w, h);
+    const whites = []; for (let m = this.LO; m <= this.HI; m++) if (![1, 3, 6, 8, 10].includes(m % 12)) whites.push(m);
+    const ww = w / whites.length, lit = m => this.ovHeld[m] ? 1 : (this.ovLit[m] || 0);
+    const mix = (a, b, k) => a.map((v, i) => Math.round(v + (b[i] - v) * k));
+    g.fillStyle = 'rgba(0,0,0,0.55)'; g.fillRect(0, 0, w, h);
+    whites.forEach((m, i) => { const c = mix([236, 232, 222], [255, 211, 77], lit(m)); g.fillStyle = `rgb(${c})`; g.fillRect(i * ww + 2, 4, ww - 4, h - 8); });
+    whites.forEach((m, i) => { const b = m + 1; if (b > this.HI || ![1, 3, 6, 8, 10].includes(b % 12)) return; const c = mix([22, 22, 26], [255, 190, 40], lit(b)); g.fillStyle = `rgb(${c})`; g.fillRect((i + 1) * ww - ww * 0.31, 4, ww * 0.62, h * 0.6); });
+    O.tex.needsUpdate = true;
   },
   canOffer() {
     return player.lv === 1 && F2.piano && F2.pianoP && F2.st && F2.st.piano !== 'play' && !player.hidden && !CAP.on && !world.capture && !world.dark && SP.st !== 'drop' && SP.st !== 'latch';
@@ -6528,6 +6589,7 @@ const PIANO = {
     if (!this.on) return; this.on = false;
     this.el.classList.remove('show'); $('#hud').classList.remove('piano');
     for (const k of this.el.querySelectorAll('.pk.on')) k.classList.remove('on');
+    this.ovHeld = {}; this.ovLit = {}; if (this.ov) this.ov.mesh.visible = false;
     if (world.state === 'piano') { world.state = 'play'; lastT = performance.now(); }
   },
   // 横画面にする：縦持ちのままなら鍵盤ごと90度回して表示（スマホを横にして弾く）。端末が横向きならそのまま
@@ -6573,6 +6635,7 @@ const PIANO = {
       while (live.length >= 8) { const [k, v] = live.shift(); try { v.g.gain.cancelScheduledValues(t); v.g.gain.setTargetAtTime(0.0001, t, 0.05); v.s.stop(t + 0.3); } catch (e) {} delete this.voices[k]; }
       this.voices[m] = { s, g, at: t }; s.onended = () => { try { g.disconnect(); } catch (e) {} if (this.voices[m] && this.voices[m].s === s) delete this.voices[m]; };
     } else this.synth(m, t);
+    this.ovLit[m] = 1; this.ovDirty = true;   // 録画用の鍵盤を光らせる
     if (rec.active) award('pianoPlay', 'ピアノを弾く', 10);   // 録画中に鍵盤を鳴らしたら（一周に一度）
     this.judge(m % 12, performance.now() / 1000);
   },
@@ -6882,7 +6945,7 @@ function peekingBroadcast() {
 }
 defEvent('paCall', {
   tier: 'mid', weight: 0, minT: 0, maxT: 0,   // ふだんの抽選には入れない（下の PACALL.chosen で1周に1回だけ）
-  ready() { return peekingBroadcast() && CH.state === 'off' && !world.dark; },
+  ready() { return CH.state === 'off' && !world.dark && world.state === 'play' && !CAP.on; },   /* 2026-11-13：放送室を覗かなくても、校内のどこにいても流れる */
   start() {
     this.ph = 'chime'; this.t = 0;
     const kana = /^[\u3041-\u309f\u30a0-\u30ffー\s]+$/;
@@ -6917,9 +6980,9 @@ defEvent('paCall', {
   cleanup() { if (this.ph !== 'after') PASUB.hide(); },
 });
 PACALL.chosen = false;
-PACALL.plan = function () {   // 1周に1回：半分の確率で、この周回は放送室を覗くと呼ばれる
-  this.chosen = EV2.includes('paCall') || chance(0.5); world.nurseCall = false;
-  if (this.chosen && !DIR.plan.includes('paCall')) { const e = EV.paCall; e.planned = true; e.done = false; e.omened = false; e.notBefore = 0; DIR.plan.push('paCall'); }
+PACALL.plan = function () {   // 1周に1回：25%の確率で、この周回のどこかで呼ばれる（場所は問わない）
+  this.chosen = EV2.includes('paCall') || chance(0.25); world.nurseCall = false;
+  if (this.chosen && !DIR.plan.includes('paCall')) { const e = EV.paCall; e.planned = true; e.done = false; e.omened = false; e.notBefore = EV2.includes('paCall') ? 0 : rnd(30, 150); DIR.plan.push('paCall'); }
 };
 
 /* =========================================================
@@ -7329,6 +7392,7 @@ function render() {
   if (world.selfie) { SELF.pose(); cam = selfCam; avatar.root.visible = true; }
   postMat.uniforms.near.value = cam.near;   // 被写界深度の距離計算をそのカメラに合わせる
   renderer.setRenderTarget(rt); renderer.render(scene, cam); avatar.root.visible = av;
+  { const now = performance.now(); PIANO.ovUpdate(Math.min(0.1, (now - (PIANO.ovT || now)) / 1000)); PIANO.ovT = now; }   // 録画に入る鍵盤
   renderer.setRenderTarget(null); renderer.render(postScene, postCam);
 }
 function idleCam(now) {
@@ -7373,8 +7437,8 @@ function escape() {
   if (world.state !== 'play') return;
   const chased = (CH.state === 'chase' || CH.state === 'search' || CH.state === 'hunt') || (typeof SP !== 'undefined' && SP.st === 'chase');
   world.state = 'end'; if (DIR.active) DIR.end(DIR.active);
-  award('alive', 'いのちだいじに', 50);
-  if (chased) award('chaseOut', '追われながら生還', 50);   // 追跡中に帰還   // 帰還ボーナス
+  if (rec.active) award('alive', 'いのちだいじに', 50);   /* 2026-11-13：脱出の瞬間を録画しているときだけ */
+  if (chased && rec.active) award('chaseOut', '追われながら生還', 50);   // 追跡中に帰還   // 帰還ボーナス
   if (rec.active) stopRec('end');
   $('#hud').classList.add('off'); postMat.uniforms.black.value = 1; render();
   if (A.ctx) A.master.gain.setTargetAtTime(0.0, A.ctx.currentTime, 0.5);
@@ -7389,6 +7453,32 @@ $('#exitBtn').addEventListener('click', e => { e.stopPropagation(); if (world.ou
 // レア度（出やすさ）：SS・S・A・B・C・D。決め打ちのもの以外は、いいね数の大きさから
 const RANK_COL = { SS: '#ff9ae6', S: '#ffd34d', A: '#ff5a5a', B: '#4fb3ff', C: '#5fd38a', D: '#9a9aa0' };   // SSは虹色（ここは枠のほのかな色）
 const RANK_FIX = { clairPlay: 'A', akuryo: 'SS', paCall: 'A', nursePeek: 'A', nekoPiano: 'S', twinkle: 'S', requiem: 'SS', nekomata: 'A', uwaWalk: 'SS', spLatch: 'SS', stall20: 'SS', spWarp: 'SS', uwaSeen: 'S', selfieShoulder: 'S', capture: 'B', alive: 'D', chaseOut: 'A', chaseRec: 'C', chaseSelfie: 'A', spChase: 'A', close: 'C' };
+/* ---------- 撮れ高の「いいね」ポップ（2026-11-13） ----------
+   カメラ切替ボタンの左に出す。続けて入った時は少しずらして順番に */
+const LIKEPOP = { q: [], busy: 0 };
+function likePop(e) {
+  if (world.state !== 'play' && world.state !== 'piano') return;
+  LIKEPOP.q.push(e); if (LIKEPOP.q.length === 1 && performance.now() > LIKEPOP.busy) likePopNext();
+}
+function likePopNext() {
+  const e = LIKEPOP.q[0]; if (!e) return;
+  let host = $('#likePops'); if (!host) { host = document.createElement('div'); host.id = 'likePops'; document.body.appendChild(host); }
+  const b = $('#camBtn'), r = b ? b.getBoundingClientRect() : { left: innerWidth - 70, top: 120, width: 44, height: 44 };
+  const rk = rankOf(e), col = { SS: '#ff9ae6', S: '#ffd34d', A: '#ff5a5a', B: '#4fb3ff', C: '#5fd38a', D: '#cfcfd4' }[rk] || '#fff';
+  const gw = { SS: '12px', S: '10px', A: '8px', B: '6px', C: '5px', D: '2px' }[rk] || '4px';
+  const el = document.createElement('div'); el.className = 'lpop ' + rk;
+  const g = $('#cap'), gr = g && g.getBoundingClientRect().width ? g.getBoundingClientRect().right : r.left - 50; el.style.left = ((gr + r.left) / 2) + 'px'; el.style.top = (r.top + r.height / 2) + 'px'; el.style.setProperty('--rc', col); el.style.setProperty('--gw', gw);
+  let h = '<i class="like"></i>';
+  if (rk !== 'D') h += '<span class="ring"></span>';
+  const nSp = { SS: 10, S: 7, A: 4 }[rk] || 0;   // キラキラは高いレア度だけ
+  for (let i = 0; i < nSp; i++) { const a = (i / nSp) * Math.PI * 2 + Math.random() * 0.4, d = 15 + Math.random() * 7; const c = rk === 'SS' ? ['#ff9ae6', '#8fd9ff', '#fff59a', '#a6ffb0', '#d7a6ff'][i % 5] : col;
+    h += `<span class="sp" style="--dx:${(Math.cos(a) * d).toFixed(1)}px;--dy:${(Math.sin(a) * d).toFixed(1)}px;color:${c};text-shadow:0 0 6px ${c};animation-delay:${(0.28 + Math.random() * 0.08).toFixed(2)}s">✦</span>`; }
+  el.innerHTML = h; host.appendChild(el);
+  el.querySelector('.like').addEventListener('animationend', ev => { if (ev.animationName === 'lpIn') el.remove(); });
+  setTimeout(() => el.remove(), 4000);   /* 念のための後片付け */
+  LIKEPOP.busy = performance.now() + 380;
+  setTimeout(() => { LIKEPOP.q.shift(); if (LIKEPOP.q.length) likePopNext(); }, 380);
+}
 function rankOf(e) { const k = awBase(e.key); if (AW_TABLE[k]) return AW_TABLE[k][0]; if (RANK_FIX[k]) return RANK_FIX[k]; const p = e.pts; return p >= 90 ? 'S' : p >= 60 ? 'A' : p >= 40 ? 'B' : p >= 20 ? 'C' : 'D'; }
 // SSレアは、カードが見えた時にキランと光る（見え直すたびに）
 const RANK_IO = 'IntersectionObserver' in window ? new IntersectionObserver(es => { for (const en of es) { const d = en.target; if (!d.classList.contains('r-ss') && !d.classList.contains('r-s')) continue;
