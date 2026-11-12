@@ -2005,7 +2005,7 @@ function initAudio() {
   A.out = ctx.createBiquadFilter(); A.out.type = 'lowpass'; A.out.frequency.value = 22000; A.out.Q.value = 0.5;   // ロッカー内でくぐもらせる
   // 小さい音を持ち上げ、叫びは抑える（スマホのスピーカー向け）。録画にも同じ音が入る
   A.comp = ctx.createDynamicsCompressor(); A.comp.threshold.value = -28; A.comp.knee.value = 12; A.comp.ratio.value = 4; A.comp.attack.value = 0.004; A.comp.release.value = 0.25;
-  A.makeup = ctx.createGain(); A.makeup.gain.value = 1.6;
+  A.makeup = ctx.createGain(); A.makeup.gain.value = 1.0;   // 2026-11-13 実機で全体に大きすぎたので1.6→1.0
   A.master.connect(A.comp); A.comp.connect(A.makeup); A.makeup.connect(A.out); A.out.connect(ctx.destination);
   A.rec = ctx.createMediaStreamDestination ? ctx.createMediaStreamDestination() : null;
   if (A.rec) A.out.connect(A.rec);
@@ -6567,8 +6567,11 @@ const PIANO = {
     const prev = this.voices[m]; if (prev) { try { prev.g.gain.cancelScheduledValues(t); prev.g.gain.setTargetAtTime(0.0001, t, 0.03); prev.s.stop(t + 0.2); } catch (e) {} }   // 同じ鍵をもう一度：前の音を止める
     if (buf) {
       const s = ctx.createBufferSource(); s.buffer = buf; s.playbackRate.value = Math.pow(2, (m - best[0]) / 12);
-      const g = ctx.createGain(); g.gain.value = 0.95; s.connect(g); g.connect(A.bus); s.start(t);
-      this.voices[m] = { s, g }; s.onended = () => { try { g.disconnect(); } catch (e) {} if (this.voices[m] && this.voices[m].s === s) delete this.voices[m]; };
+      const g = ctx.createGain(); g.gain.value = 0.32; s.connect(g); g.connect(A.bus); s.start(t);   // 2026-11-13 0.95→0.32：連打すると音が重なって音量の自動調整が強くかかり、全体がこもったように小さくなっていた
+      // 鳴っている音が多すぎる時は、古いものから消す（最大8音）
+      const live = Object.entries(this.voices).filter(([k, v]) => v && v.at !== undefined).sort((a, b) => a[1].at - b[1].at);
+      while (live.length >= 8) { const [k, v] = live.shift(); try { v.g.gain.cancelScheduledValues(t); v.g.gain.setTargetAtTime(0.0001, t, 0.05); v.s.stop(t + 0.3); } catch (e) {} delete this.voices[k]; }
+      this.voices[m] = { s, g, at: t }; s.onended = () => { try { g.disconnect(); } catch (e) {} if (this.voices[m] && this.voices[m].s === s) delete this.voices[m]; };
     } else this.synth(m, t);
     if (rec.active) award('pianoPlay', 'ピアノを弾く', 10);   // 録画中に鍵盤を鳴らしたら（一周に一度）
     this.judge(m % 12, performance.now() / 1000);
@@ -7379,7 +7382,7 @@ function escape() {
 }
 $('#exitBtn').addEventListener('click', e => { e.stopPropagation(); if (world.outro !== 0 || world.exitWait) return; $('#exitBtn').classList.remove('show');
   const go = () => { world.exitWait = false; if (world.outro === 0) { world.outro = 1.0001; SND.rattle(V(0, 1.2, 6.0), 1.4); } };
-  if (!BELL.done && BELL.ring(true)) { world.exitWait = true; setTimeout(go, 1900); } else go();   // 早く帰っても、鈴が未再生なら帰還の手前で一度だけ
+  go();   // 2026-11-13 帰る直前に鳴らしていた鈴（チーン）はやめた
 });
 
 /* ---------- 帰還後：再生・撮れ高・保存 ---------- */
