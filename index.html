@@ -312,6 +312,11 @@
   .colItem.r-ss:not(.unk){border:1.5px solid transparent;background:linear-gradient(160deg,#1a1520,#121214 60%) padding-box,linear-gradient(100deg,#ff6b8b,#ffb35c,#ffe66b,#7dffa8,#6bd8ff,#9a8bff,#ff7ae0,#ff6b8b) border-box;background-size:100% 100%,300% 100%;animation:rbBorder 3.2s linear infinite,rbGlow 2.4s ease-in-out infinite}
   .colItem.r-s:not(.unk){background:linear-gradient(160deg,#1b1810,#121214 55%)}
   .ev .newTag{position:absolute;right:11px;bottom:11px;font-size:9px;font-weight:800;color:#111;background:#ffd34d;border-radius:4px;padding:1px 5px;letter-spacing:.08em}
+  #paSub{position:fixed;left:8%;right:8%;top:46%;z-index:25;text-align:center;font-size:19px;font-weight:700;color:#f2eee6;letter-spacing:.06em;line-height:1.5;text-shadow:0 0 6px #000,0 0 14px #000,0 2px 2px #000;pointer-events:none;opacity:0;transition:opacity .25s}
+  #paSub.show{opacity:1}
+  #paSub.low{color:#c9c2b8;transform:translateY(2px) scaleY(.96)}
+  #paSub.glitch{animation:paGl .5s steps(6) forwards}
+  @keyframes paGl{0%{opacity:1;transform:translateX(0);filter:none}20%{transform:translateX(-6px) skewX(12deg);filter:blur(1px)}40%{transform:translateX(5px);opacity:.6;letter-spacing:.3em}60%{transform:translateX(-3px) scaleY(1.4);opacity:.8}80%{opacity:.2;filter:blur(3px)}100%{opacity:0}}
 </style>
 </head>
 <body>
@@ -354,6 +359,7 @@
   <div class="sub">夜の旧校舎で、決定的瞬間を撮って帰る</div>
   <div class="opts">
     <div class="opt"><div>チャンネル名</div><input id="chName" maxlength="16" placeholder="心霊チャンネル"></div>
+    <div class="opt"><div>よみがな<small>校内放送で呼ばれる名前</small></div><input id="chYomi" maxlength="20" placeholder="しんれいちゃんねる"></div>
   </div>
   <button class="go" id="goBtn">旧校舎に入る</button>
   <button class="colBtn" id="colBtn">撮れ高コレクション</button>
@@ -363,6 +369,7 @@
 
 <div id="itemModal"><img id="imImg" alt=""><div id="imTitle"></div><div id="imDesc"></div><div id="imTap">タップして進める。</div></div>
 <div id="itemFlash"></div>
+<div id="paSub"></div>
 <div id="settings">
   <div class="setBox">
     <div class="setHead"><span id="setTitle">設定</span><span id="setPaused">一時停止中</span></div>
@@ -370,7 +377,7 @@
       <div class="opt" id="setGyro"><div>ジャイロで見回す<small>スマホの向きで視点が動きます</small></div><div class="sw"></div></div>
       <div class="opt" id="setBright"><div>明るさ<small>入口の景色を見ながら合わせます</small></div><div class="val"><span id="brightVal">0</span> ›</div></div>
       <div class="opt col" id="setMicRow"><div class="optTop" id="setMic"><div>実況マイク<small>録画中の自分の声も動画に入ります</small></div><div class="sw"></div></div><div id="micMeter"><div id="micMeterFill"></div></div><div id="micNote"></div></div>
-      <div class="opt"><div>言語 / Language</div><div class="seg" id="langSeg"><button data-lang="ja">日本語</button><button data-lang="en">English</button></div></div>
+      <div class="opt" id="setLang"><div>言語 / Language</div><div class="seg" id="langSeg"><button data-lang="ja">日本語</button><button data-lang="en">English</button></div></div>
       <button class="setLink" id="setCol">撮れ高コレクション</button>
       <button class="setLink" id="setHome">スタート画面にもどる</button>
       <button class="go" id="setClose">ゲームにもどる</button>
@@ -843,7 +850,7 @@ const EN = {
   '洗面器に溜まっていく赤': 'Red filling the sink', '画面を覆う顔': 'A face covering the screen', '画面端の頬と髪': 'A cheek and hair at the edge of the frame', '目が合って飛び込む顔': 'A face lunging the moment your eyes met',
   '真っ赤に染まった蛍光灯': 'Lights turned blood red', '窓にドンと付いた赤い手形': 'A red handprint slammed on the window', '窓の外を頭から落ちていく女子高生': 'A schoolgirl falling head-first past the window',
   '窓一面を埋めていく手形': 'Handprints covering the window', '窓辺から一斉に飛び立つカラス': 'Crows taking off from the windowsill', '肖像画のベートーベンがまばたきした': 'Beethoven’s portrait blinked',
-  '脚を広げて落ちてくるクモ女の全身': 'The Spider Woman dropping with legs spread', '街灯の下に立つ人影': 'A figure under the streetlight', '襲われる瞬間': 'The moment of the attack', '生きて帰る': 'Made it out alive', '追われながら生還': 'Escaped while being chased', 'レア': 'RARE', '校内放送で呼ばれた自分の名前': 'Your name called over the PA', 'ロッカーの中にいたもう1人': 'Someone else in the locker', '撮れ高コレクション': 'Footage Collection', '閉じる': 'Close', 'まだ撮れていない': 'Not captured yet', 'ピアノを弾く': 'Play the piano', '天井に広がる大量の血の染み': 'A huge bloodstain spreading across the ceiling', '猫ふんじゃったを弾く': 'Played "The Flea Waltz"', 'きらきら星を弾く': 'Played "Twinkle Twinkle Little Star"', 'やめる': 'Stop', '月の光を演奏する': 'Played Clair de lune', '怪異に捧げるレクイエム': 'A requiem for the haunting', '拍手が聞こえる…': 'Applause…', '月の光（冒頭）': 'Clair de lune (opening)', '誰も履いていない上履き': 'Indoor shoes with no one in them', 'インカメに映った、歩く上履き': 'Empty indoor shoes walking, caught on the selfie cam', 'リザルトの確認：3秒後に帰還します': 'Result preview: returning in 3 seconds', '鍵を入手した': 'Got the keys', '大体なんでも開けられる': 'Opens almost anything', 'おまもりを入手した': 'Got an omamori charm', '襲われても1度だけ助かる': 'Saves you once if you get caught', 'モバイルバッテリーを入手した': 'Got a power bank', 'スマホの充電を少し回復する': 'Recharges your phone a little', 'タップして進める。': 'Tap to continue.', '鍵がかかっている': "It's locked", '非常口から外に出られる': 'You can get out through the emergency exit', 'おまもりが身代わりになった': 'The omamori took the hit for you', '鍵を拾う': 'Pick up the keys', 'おまもりを拾う': 'Pick up the omamori', 'モバイルバッテリーを拾う': 'Pick up the power bank', '非常口を開ける': 'Open the emergency exit', '放送室の扉を開ける': 'Open the broadcast room door', 'ロッカーを開ける': 'Open the locker', '街灯の猫又': 'The two-tailed cat under the streetlight', '怪異を超接写ボーナス': 'Extreme close-up bonus',
+  '脚を広げて落ちてくるクモ女の全身': 'The Spider Woman dropping with legs spread', '街灯の下に立つ人影': 'A figure under the streetlight', '襲われる瞬間': 'The moment of the attack', '生きて帰る': 'Made it out alive', '追われながら生還': 'Escaped while being chased', 'レア': 'RARE', '保健室の奥に立つ背中': 'A back turned at the far end of the nurse\'s office', '保健室の入口から真横に覗く顔': 'A sideways face peeking in at the nurse\'s office door', 'よみがな': 'Name reading (kana)', '校内放送で呼ばれる名前': 'How the PA calls you (Japanese kana)', '校内放送で呼ばれた自分の名前': 'Your name called over the PA', 'ロッカーの中にいたもう1人': 'Someone else in the locker', '撮れ高コレクション': 'Footage Collection', '閉じる': 'Close', 'まだ撮れていない': 'Not captured yet', 'ピアノを弾く': 'Play the piano', '天井に広がる大量の血の染み': 'A huge bloodstain spreading across the ceiling', '猫ふんじゃったを弾く': 'Played "The Flea Waltz"', 'きらきら星を弾く': 'Played "Twinkle Twinkle Little Star"', 'やめる': 'Stop', '月の光を演奏する': 'Played Clair de lune', '怪異に捧げるレクイエム': 'A requiem for the haunting', '拍手が聞こえる…': 'Applause…', '月の光（冒頭）': 'Clair de lune (opening)', '誰も履いていない上履き': 'Indoor shoes with no one in them', 'インカメに映った、歩く上履き': 'Empty indoor shoes walking, caught on the selfie cam', 'リザルトの確認：3秒後に帰還します': 'Result preview: returning in 3 seconds', '鍵を入手した': 'Got the keys', '大体なんでも開けられる': 'Opens almost anything', 'おまもりを入手した': 'Got an omamori charm', '襲われても1度だけ助かる': 'Saves you once if you get caught', 'モバイルバッテリーを入手した': 'Got a power bank', 'スマホの充電を少し回復する': 'Recharges your phone a little', 'タップして進める。': 'Tap to continue.', '鍵がかかっている': "It's locked", '非常口から外に出られる': 'You can get out through the emergency exit', 'おまもりが身代わりになった': 'The omamori took the hit for you', '鍵を拾う': 'Pick up the keys', 'おまもりを拾う': 'Pick up the omamori', 'モバイルバッテリーを拾う': 'Pick up the power bank', '非常口を開ける': 'Open the emergency exit', '放送室の扉を開ける': 'Open the broadcast room door', 'ロッカーを開ける': 'Open the locker', '街灯の猫又': 'The two-tailed cat under the streetlight', '怪異を超接写ボーナス': 'Extreme close-up bonus',
   '角から目の前まで迫った顔': 'A face rushing at you from the corner', '角の先に立っていた顔': 'A face waiting around the corner', '誰もいないピアノの蓋が叩きつけられた': 'The empty piano’s lid slammed shut',
   '誰もいない椅子の座面が回った': 'An empty chair’s seat spun', '近づいてくる濡れた足跡': 'Wet footprints approaching', '追われながら回し続けた': 'Kept rolling while being chased',
   '通路の椅子がひとりでに動いた': 'A chair in the aisle moved by itself', '鏡の中だけに映る背後の女子高生': 'A schoolgirl behind you, only in the mirror', '鏡の中で勝手に閉まる戸': 'A door closing by itself in the mirror',
@@ -4074,6 +4081,7 @@ const DIR = {
     for (const id of EV2) if (EV[id] && !chosen.includes(id)) chosen.push(id);   // ?ev2=イベント名 で必ず起こす（確認用）
     for (const id of chosen) { const e = EV[id]; e.planned = true; e.done = false; e.omened = false; e.notBefore = DEV || EV2.includes(id) ? 0 : rnd(e.minT, Math.max(e.minT, e.maxT)); e.variant = e.pickVariant ? e.pickVariant() : null; e.onPlan && e.onPlan(); }
     this.plan = chosen;
+    if (typeof PACALL !== 'undefined' && PACALL.plan) PACALL.plan();   // 校内放送：1周に1回、放送室を覗いた時
     if (DEV || TEST) console.log('PLAN', chosen.map(id => id + '@' + Math.round(EV[id].notBefore)).join(', '));
   },
   start(e) {
@@ -5089,7 +5097,7 @@ F2.updStairFace = function (dt) {
     if (playerZone() !== s.id || player.y < 1.2 || player.y > 2.9) return;
     if (!f2free() || !SG.ready || WD.borrowed || CH.state !== 'off' || CAP.on) return;
     if (onScreen(V(-1.5, LH + 1.5, edge + 0.1), 1.3)) return;   // 見ていない間に置く
-    WD.borrow(); sgSetOpacity(1); sgPlay('Scare_MouthOpen', 0); sgEmissive(0x7a5a58); SG.root.scale.setScalar(1.02);   // 暗い階段の上でも顔が分かるよう、少し白く浮かせる
+    WD.borrow(); sgSetOpacity(1); sgPlay('Scare_MouthOpen', 0); sgEmissive(0x3a2424); SG.root.scale.setScalar(1.02);   // ほかの場面の逆さ女と同じ色に（以前は白く浮かせていて薄く見えた）
     SG.ovRoll = 0.5; sgPlaceHead(peek(0)); S.face = 'armed'; S.faceT = 0; F2.busy = true; f2hold(6);
   } else if (S.face === 'armed') {
     S.faceT += dt; f2hold(4); SG.ovRoll = 0.5 + Math.sin(world.t * 2.3) * 0.04; sgPlaceHead(peek(0)); const hp = sgHead(V());
@@ -6041,7 +6049,7 @@ const ITEM = {
     // 置き場所
     this.add('key', V(0, 0, 0), 1);
     this.add('omamori', this.lockLk ? lkP(this.lockLk, 0, 1.0, -0.22) : V(0, 0, 0), 1);
-    this.add('battery', V(27.55, 0.9, -32.25), 0);
+    this.add('battery', V(29.25, 0.14, -30.35), 0);   // 放送室の右奥の床
   },
   add(id, pos, lv) {
     const m = new THREE.SpriteMaterial({ transparent: true, depthWrite: false, opacity: 0.95, fog: false, toneMapped: false });
@@ -6653,7 +6661,7 @@ const COL = {
     ['spWarp', '巣に触れたクモ女が別の巣へ移った瞬間', 100], ['spHead', '天井から逆さに見下ろすクモ女の顔', 60], ['spDrop', '脚を広げて落ちてくるクモ女の全身', 140], ['spLatch', '顔の前で閉じるクモ女の脚', 180], ['spChase', '天井を這って追ってくるクモ女', 12],
     ['hpFirst', '窓にドンと付いた赤い手形', 40], ['hpBarrage', '窓一面を埋めていく手形', 60], ['boardGlyph', '黒板に走る「タスケテ」の殴り書き', 50], ['boardFill', '板を埋めていく「タスケテ」', 60], ['stall20', '20回目のノックで開いた個室', 60],
     ['hand', '天井から垂れる灰色の手', 25], ['hand', '壁から生えた灰色の手', 25], ['nekomata', '街灯の猫又', 100], ['uwaSeen', '誰も履いていない上履き', 30], ['uwaWalk', 'インカメに映った、歩く上履き', 100],
-    ['ceilBleed', '天井に広がる大量の血の染み', 70], ['paCall', '校内放送で呼ばれた自分の名前', 90], ['lockerTwo', 'ロッカーの中にいたもう1人', 90], ['pianoPlay', 'ピアノを弾く', 10], ['clairPlay', '月の光を演奏する', 30], ['requiem', '怪異に捧げるレクイエム', 50], ['nekoPiano', '猫ふんじゃったを弾く', 30], ['twinkle', 'きらきら星を弾く', 20],
+    ['ceilBleed', '天井に広がる大量の血の染み', 70], ['paCall', '校内放送で呼ばれた自分の名前', 90], ['nurseBack', '保健室の奥に立つ背中', 30], ['nursePeek', '保健室の入口から真横に覗く顔', 80], ['lockerTwo', 'ロッカーの中にいたもう1人', 90], ['pianoPlay', 'ピアノを弾く', 10], ['clairPlay', '月の光を演奏する', 30], ['requiem', '怪異に捧げるレクイエム', 50], ['nekoPiano', '猫ふんじゃったを弾く', 30], ['twinkle', 'きらきら星を弾く', 20],
     ['chaseRec', '追われながら回し続けた', 4], ['chaseSelfie', 'インカメラに追ってくる姿', 8], ['close', '怪異を超接写ボーナス', 10], ['chaseOut', '追われながら生還', 50], ['alive', '生きて帰る', 10],
   ],
   data: null,
@@ -6766,31 +6774,115 @@ const PACALL = {
   cutVoice() { if (this.vg && A.ctx) { const t = A.ctx.currentTime; this.vg.gain.setValueAtTime(1, t); this.vg.gain.linearRampToValueAtTime(0, t + 0.12); } },   // 声だけを途中で切る（ノイズは残る）
   unlock() { },
 };
+// 字幕（画面の中央）
+const PASUB = {
+  show(t, low) { const el = $('#paSub'); el.classList.remove('glitch'); el.classList.toggle('low', !!low); el.textContent = t; el.classList.add('show'); },
+  glitch() { const el = $('#paSub'); el.classList.add('glitch'); setTimeout(() => this.hide(), 520); },
+  hide() { const el = $('#paSub'); el.classList.remove('show', 'glitch', 'low'); },
+};
+// 放送室を覗いている（廊下から窓・扉ごしに見ている／中にいる）
+function peekingBroadcast() {
+  if (player.lv !== 0 || player.hidden) return false;
+  if (player.x > 26 && player.z < -30 && player.z > -33) return true;
+  if (player.x < 22.5 || player.x > 26 || player.z < -33 || player.z > -29.8) return false;
+  const c = V(27.8, 1.3, -31.6), d = c.clone().sub(camera.position); const dl = d.length(); d.multiplyScalar(1 / dl);
+  return dl < 5.5 && camFwd().dot(d) > 0.82;
+}
 defEvent('paCall', {
-  tier: 'mid', weight: 0.4, minT: 30,
-  ready() { return player.lv === 0 && !player.hidden && CH.state === 'off' && !(player.x > 26 && player.z < -30) && !world.dark; },
+  tier: 'mid', weight: 0, minT: 0, maxT: 0,   // ふだんの抽選には入れない（下の PACALL.chosen で1周に1回だけ）
+  ready() { return peekingBroadcast() && CH.state === 'off' && !world.dark; },
   start() {
-    this.ph = 'chime'; this.t = 0; this.name = world.channel || '心霊チャンネル';
+    this.ph = 'chime'; this.t = 0;
+    const kana = /^[\u3041-\u309f\u30a0-\u30ffー\s]+$/;
+    const yomi = (world.yomi || '').trim(), raw = (world.chRaw || '').trim();
+    // 読む名前：よみがな → かなのチャンネル名 → 決まった名前（英語版は「しんれいチャンネル」）
+    this.say = yomi && kana.test(yomi) ? yomi : raw && kana.test(raw) ? raw : (LANG === 'en' ? 'しんれいチャンネル' : 'しんれいちゃんねる');
+    this.disp = LANG === 'en' ? (raw && /^[\x20-\x7e]+$/.test(raw) ? raw : 'Shinrei Channel') : (raw || 'しんれいちゃんねる');
     if (!playSfx('pa_chime', { dest: A.pa, gain: 1 })) SND.chime && SND.chime();
-    hush && hush(11, 0.35);   // 周りの音を少し下げる
+    hush && hush(12, 0.35);
   },
   update(dt) {
-    this.t += dt;
-    if (this.ph === 'chime' && this.t > 4.1) {   // 「◯◯さん。◯◯さん。今すぐ、」
-      this.ph = 'call'; this.t = 0; const n = this.name;
-      this.d1 = PACALL.say(`${n}さん。${n}さん。いますぐ、`, { f0: 235, fall: 0.93 });
+    this.t += dt; const en = LANG === 'en', K = 1 / 1.2;   // 読む速さ：1.2倍
+    if (this.ph === 'chime' && this.t > 4.1) {   // 「◯◯さん。◯◯さん。」
+      this.ph = 'name'; this.t = 0; this.d = PACALL.say(`${this.say}さん。${this.say}さん。`, { f0: 235, fall: 0.94, k: K });
+      PASUB.show(en ? `${this.disp}... ${this.disp}...` : `${this.disp}さん、${this.disp}さん、`);
     }
-    if (this.ph === 'call' && this.t > this.d1 + 0.05) {   // 「保健室まで」：声が低く沈み、ゆっくりに
-      this.ph = 'down'; this.t = 0; this.d2 = PACALL.say('ほけんしつまで', { f0: 190, fall: 0.45, k: 1.6, gain: 0.95 });
+    if (this.ph === 'name' && this.t > this.d + 0.03) {   // 「いますぐ、」
+      this.ph = 'now'; this.t = 0; this.d = PACALL.say('いますぐ、', { f0: 228, fall: 0.9, k: K });
+      PASUB.show(en ? 'Come right now...' : '今すぐ、');
     }
-    if (this.ph === 'down' && this.t > this.d2 * 0.72) {   // 「〜室まで」あたりでノイズが走って途切れる
-      PACALL.noise(1.0); PACALL.cutVoice(); this.ph = 'after'; this.t = 0;
-      world.nurseCall = true;   // 保健室のイベントのフラグ（あとで考える）
+    if (this.ph === 'now' && this.t > this.d + 0.03) {   // 「ほけんしつまで」：声が低く沈み、ゆっくりに
+      this.ph = 'down'; this.t = 0; this.d = PACALL.say('ほけんしつまで', { f0: 190, fall: 0.45, k: 1.6 * K, gain: 0.95 });
+      PASUB.show(en ? "to the nurse's off—" : '保健室まで……', true);
+    }
+    if (this.ph === 'down' && this.t > this.d * 0.72) {   // 「〜室まで」あたりでノイズが走って途切れる
+      PACALL.noise(1.0); PACALL.cutVoice(); PASUB.glitch(); this.ph = 'after'; this.t = 0;
+      if (!world.nurseCall) { world.nurseCall = true; NURSE.arm(); }   // 保健室のイベントが起きるようになる
       if (rec.active) award('paCall', '校内放送で呼ばれた自分の名前', 90);
     }
     return this.ph === 'after' && this.t > 3;
   },
-  cleanup() { },
+  cleanup() { if (this.ph !== 'after') PASUB.hide(); },
+});
+PACALL.chosen = false;
+PACALL.plan = function () {   // 1周に1回：半分の確率で、この周回は放送室を覗くと呼ばれる
+  this.chosen = EV2.includes('paCall') || chance(0.5); world.nurseCall = false;
+  if (this.chosen && !DIR.plan.includes('paCall')) { const e = EV.paCall; e.planned = true; e.done = false; e.omened = false; e.notBefore = 0; DIR.plan.push('paCall'); }
+};
+
+/* =========================================================
+   保健室：呼ばれたあと（校内放送のフラグ）
+   ・保健室の奥に、こちらに背中を向けて立つ女子高生。近づくと、すっと消える
+   ・消えた瞬間、保健室の入口の高い位置に、真横（90度）に傾けた怖い顔が覗いている
+   ・カメラに入れると衝撃音とノイズとともに消える
+   ・背中を一度もカメラに入れずに近づいた時は、何も起きない
+   ========================================================= */
+const NURSE = { arm() { const e = EV.nurse; if (!e || DIR.plan.includes('nurse')) { if (e) { e.done = false; e.notBefore = 0; } return; } e.planned = true; e.done = false; e.omened = true; e.notBefore = 0; DIR.plan.push('nurse'); } };
+defEvent('nurse', {
+  tier: 'mid', weight: 0, woman: true, minT: 0, maxT: 0, zones: ['A', 'C'],
+  spot: { p: V(-7.1, 0, -13.5) },
+  ready() { if (!world.nurseCall || player.lv !== 0) return false; const sp = V(-7.1, 1.4, -13.5); return Math.hypot(player.x + 1.5, player.z + 13.5) < 7 && camera.position.distanceTo(sp) > 4 && !onScreen(sp, 1.15); },
+  start() {
+    this.st = 'back'; this.t = 0; this.seenBack = false;
+    borrowWoman(); const c = woman.c; c.pose = 'stand'; c.headPitch = 0.08;
+    woman.root.position.set(-7.1, 0, -13.5); woman.root.rotation.y = -Math.PI / 2; setOpacity(woman, 1);   // 奥（西）を向いて、背中をこちらに
+  },
+  placePeek() {   // 入口の枠（廊下側）から、高い位置に真横の顔
+    borrowWoman(); const c = woman.c; c.pose = 'peek'; c.poseT = 3; c.snap = true; c.peekRoll = 0.75; c.headRoll = 1.45; c.headYaw = -0.2;   // 体は入口の北側の壁の陰、頭だけ真横に倒して入口へ
+    woman.faceMat.map = TX.faceGhost; woman.faceMat.needsUpdate = true;
+    const hp = V(-1.6, 1.86, -12.95);
+    woman.root.position.set(-1.1, 0, -12.4); woman.root.rotation.y = -Math.PI / 2; animHuman(woman, 0.016); woman.root.updateMatrixWorld(true);
+    const h = headWorld(woman, V()); woman.root.position.x += hp.x - h.x; woman.root.position.z += hp.z - h.z; woman.root.position.y += hp.y - h.y; setOpacity(woman, 1);
+  },
+  update(dt) {
+    this.t += dt;
+    if (this.st === 'back') {
+      const bp = V(-7.1, 1.2, -13.5);
+      if (rec.active && seen(bp, { maxD: 9 })) { this.seenBack = true; award('nurseBack', '保健室の奥に立つ背中', 30); }
+      else if (onScreen(bp, 0.9) && clearLine(bp)) this.seenBack = true;
+      if (Math.hypot(player.x + 7.1, player.z + 13.5) < 2.7) {   // 近づくと、すっと消える
+        this.st = 'fade'; this.t = 0;
+      }
+      if (this.t > 120 || player.lv !== 0) return true;
+    } else if (this.st === 'fade') {
+      setOpacity(woman, Math.max(0, 1 - this.t / 0.35));
+      if (this.t > 0.35) { if (!this.seenBack) return true; this.placePeek(); this.st = 'door'; this.t = 0; }   // 背中を映していなければ何も起きない
+    } else if (this.st === 'door') {
+      const hp = headWorld(woman, V()), n = ndc(hp);
+      if (n.z < 1 && Math.abs(n.x) < 0.75 && Math.abs(n.y) < 0.75 && clearLine(hp)) {   // カメラに入った瞬間
+        jumpSting('jump_a', 0.9, 2.6) || SND.hit(); world.vhs = Math.max(world.vhs, 0.5);
+        if (rec.active) award('nursePeek', '保健室の入口から真横に覗く顔', 80);
+        this.st = 'hit'; this.t = 0; noiseHit(0.9);
+      }
+      if (this.t > 30) return true;
+    } else if (this.st === 'hit') {
+      const U = postMat.uniforms; U.tear.value = rnd(0.35, 0.7); U.stat.value = Math.random() < 0.6 ? 0.7 : 0.2; world.vhs = 0.9;
+      setOpacity(woman, Math.random() < 0.35 && this.t < 0.18 ? 1 : 0);
+      if (this.t > 0.3) { U.tear.value = 0; U.stat.value = 0; return true; }
+    }
+    return false;
+  },
+  cleanup() { const U = postMat.uniforms; U.tear.value = 0; U.stat.value = 0; world.nurseCall = false; woman.c.peekRoll = undefined; releaseWoman(); },
 });
 
 /* =========================================================
@@ -6842,6 +6934,49 @@ const LK2 = {
     if (this.ph === 'off') return;
     if (!awarded.has('lockerTwo') && this.seenT <= 0.3) MISS.n++;   // 出たのに撮れなかった
     const U = postMat.uniforms; U.stat.value = 0; sgSetOpacity(0); SG.ovRoll = 0; SG.ovYaw = 0; if (WD.borrowed) WD.release(true); this.ph = 'off';
+  },
+};
+
+/* =========================================================
+   クモ女の声（いいねには関係しない）
+   ・音程が乱高下する声。一音ずつ高さが変わり、ときどき音と音の間が少し空く（言い直しはしない）
+   ・たまに「たべる」、ときどきチャンネル名を呼び捨てで（よみがな欄の読み方で）
+   ・天井を這っている間ときどき、追ってくる間はひんぱんに。クモ女の位置から聞こえる（録画にも入る）
+   ========================================================= */
+const SPV = {
+  next: 6,
+  WORDS: ['どこ', 'どこ', 'いる', 'いた', 'みつけた', 'どこにいるの', 'こっち', 'まって', 'おいで', 'みてる', 'あそぼ', 'どこ'],
+  // 一つの言葉を、一音ずつ途切れ途切れに。各音の高さはばらばら
+  plan(word) {   // 言い直しはしない。ふだんは続けて、ときどき音と音の間が少し空く
+    const out = [], ms = [];
+    const h = PACALL.toHira(word); for (let i = 0; i < h.length; i++) { if ('ゃゅょ'.includes(h[i + 1])) { ms.push(h[i] + h[i + 1]); i++; } else ms.push(h[i]); }
+    for (let i = 0; i < ms.length; i++) out.push({ m: ms[i], gap: Math.random() < 0.12 ? rnd(0.15, 0.3) : rnd(0.02, 0.06), low: word === 'たべる' && i === ms.length - 1 });   // 「みつけた」が聞きやすかった程度の間
+    return out;
+  },
+  taberu() { return this.plan('たべる'); },
+  // 一音ずつ、音の高さを乱高下させて話す。dest は鳴らす先。話し終わるまでの秒数を返す
+  speakFrags(dest, frags, t0) {
+    let t = t0;
+    for (const f of frags) {
+      // 振れ幅は「みつけた」が聞きやすかった程度：ふだんは中くらいの高さで上下し、ときどきだけ高く跳ねる
+      const hi = Math.random() < 0.15, f0 = f.low ? rnd(95, 125) : hi ? rnd(340, 430) : rnd(170, 310);
+      const fall = f.low ? 0.6 : Math.random() < 0.5 ? rnd(1.1, 1.45) : rnd(0.7, 0.92);   // 上がるか、落ちるか
+      const d = speak(dest, PACALL.seq(f.m, f.low ? 1.6 : rnd(0.95, 1.3)), { t, f0, fall, gain: rnd(0.55, 0.7), breath: 0.3 });
+      t += d + f.gap;
+    }
+    return t - t0;
+  },
+  // 呼ぶ名前（さん付けなし）：よみがな → かなのチャンネル名 → しんれいちゃんねる（英語版は しんれいチャンネル）
+  name() { const kana = /^[\u3041-\u309f\u30a0-\u30ffー\s]+$/, y = (world.yomi || '').trim(), r = (world.chRaw || '').trim(); return y && kana.test(y) ? y : r && kana.test(r) ? r : (LANG === 'en' ? 'しんれいチャンネル' : 'しんれいちゃんねる'); },
+  utter(dest, t0) { const x = Math.random(); const frags = x < 0.18 ? this.taberu() : x < 0.4 ? this.plan(this.name()) : this.plan(pick(this.WORDS)); return this.speakFrags(dest, frags, t0); },
+  update(dt) {
+    if (!A.ctx || world.state !== 'play' || !SP.ready || !SP.pos) return;
+    if (!['crawl', 'chase', 'hang'].includes(SP.st) || SP.lv !== player.lv) return;
+    const d = camera.position.distanceTo(SP.pos); if (d > 16) return;
+    this.next -= dt; if (this.next > 0) return;
+    const chase = SP.st === 'chase'; this.next = chase ? rnd(3.5, 6.5) : rnd(8, 15);
+    const pn = panAt(SP.pos.clone(), 1.0, 1.1, undefined, 0);   // クモ女の位置から（その時の位置に固定）
+    const len = this.utter(pn, A.ctx.currentTime + 0.05); freeLater(len + 2, pn);
   },
 };
 
@@ -7022,7 +7157,7 @@ function tick(now) {
       if (n.z < 1 && Math.abs(n.x) < 0.95 && Math.abs(n.y) < 0.95 && h.distanceTo(camera.position) < 12) { awardCont('chaseSelfie', 'インカメラに追ってくる姿', 8, dt); if (!CBGM.selfSeen) { CBGM.selfSeen = true; jumpSting('jump_b', 0.9, 4); } }
     }
   }
-  DIR.update(dt); AMB.update(dt); SELF.update(dt); MD.update(dt); MF.update(dt); POLT.update(dt); STREETFIG.update(dt); RED.update(dt); MG.update(dt); raspUpdate(dt); cbgmUpdate(dt); chaseHead(dt); DOORS2.update(dt); TAP.update(dt); F2.update(dt); SP.update(dt); TEN.update(dt); GG.update(dt); NEKO.update(dt); ITEM.update(dt); UWA.update(dt); MISS.update(); LK2.update(dt);
+  DIR.update(dt); AMB.update(dt); SELF.update(dt); MD.update(dt); MF.update(dt); POLT.update(dt); STREETFIG.update(dt); RED.update(dt); MG.update(dt); raspUpdate(dt); cbgmUpdate(dt); chaseHead(dt); DOORS2.update(dt); TAP.update(dt); F2.update(dt); SP.update(dt); TEN.update(dt); GG.update(dt); NEKO.update(dt); ITEM.update(dt); UWA.update(dt); MISS.update(); LK2.update(dt); SPV.update(dt);
   updateDrops(dt);
   animHuman(woman, dt);
   // 環境音
@@ -7146,7 +7281,7 @@ $('#exitBtn').addEventListener('click', e => { e.stopPropagation(); if (world.ou
 /* ---------- 帰還後：再生・撮れ高・保存 ---------- */
 // レア度（出やすさ）：SS・S・A・B・C・D。決め打ちのもの以外は、いいね数の大きさから
 const RANK_COL = { SS: '#ff9ae6', S: '#ffd34d', A: '#ff5a5a', B: '#4fb3ff', C: '#5fd38a', D: '#9a9aa0' };   // SSは虹色（ここは枠のほのかな色）
-const RANK_FIX = { paCall: 'S', lockerTwo: 'S', nekoPiano: 'SS', twinkle: 'SS', requiem: 'SS', nekomata: 'SS', uwaWalk: 'SS', spLatch: 'SS', stall20: 'SS', spWarp: 'SS', uwaSeen: 'S', selfieShoulder: 'S', capture: 'B', alive: 'D', chaseOut: 'A', chaseRec: 'C', chaseSelfie: 'A', spChase: 'A', close: 'C' };
+const RANK_FIX = { paCall: 'A', nursePeek: 'A', lockerTwo: 'S', nekoPiano: 'SS', twinkle: 'SS', requiem: 'SS', nekomata: 'SS', uwaWalk: 'SS', spLatch: 'SS', stall20: 'SS', spWarp: 'SS', uwaSeen: 'S', selfieShoulder: 'S', capture: 'B', alive: 'D', chaseOut: 'A', chaseRec: 'C', chaseSelfie: 'A', spChase: 'A', close: 'C' };
 function rankOf(e) { const k = (e.key || '').replace(/\d+$/, ''); if (RANK_FIX[k]) return RANK_FIX[k]; const p = e.pts; return p >= 90 ? 'S' : p >= 60 ? 'A' : p >= 40 ? 'B' : p >= 20 ? 'C' : 'D'; }
 // SSレアは、カードが見えた時にキランと光る（見え直すたびに）
 const RANK_IO = 'IntersectionObserver' in window ? new IntersectionObserver(es => { for (const en of es) { const d = en.target; if (!d.classList.contains('r-ss') && !d.classList.contains('r-s')) continue;
@@ -7301,6 +7436,7 @@ const SET = {
       this.wasRec = rec.active; if (rec.active) stopRec('pause');
       if (A.ctx) { this.masterV = A.master.gain.value || 0.9; A.master.gain.cancelScheduledValues(A.ctx.currentTime); A.master.gain.setTargetAtTime(0, A.ctx.currentTime, 0.05); }
     }
+    $('#setLang').style.display = this.paused ? 'none' : '';   // 言語はスタート画面の設定でだけ変えられる
     $('#setPaused').style.display = this.paused ? '' : 'none'; $('#setHome').style.display = this.paused ? '' : 'none';
     $('#setClose').textContent = TR(this.paused ? 'ゲームにもどる' : '閉じる');
     this.homeArm = 0; $('#setHome').classList.remove('warn'); $('#setHome').textContent = TR('スタート画面にもどる');
@@ -7426,6 +7562,7 @@ $('#goBtn').addEventListener('click', () => {
   recSetup();
   try { navigator.wakeLock && navigator.wakeLock.request('screen').catch(() => { }); } catch (e) { }
   world.channel = ($('#chName').value || '').trim() || '心霊チャンネル';
+  world.chRaw = ($('#chName').value || '').trim(); world.yomi = ($('#chYomi').value || '').trim();
   WD.init(); DIR.planRun(); SELF.reset(); MD.reset(); DOORS2.reset(); TAP.reset(); F2.reset(); SP.reset(); NEKO.reset(); ITEM.reset(); UWA.reset(); LK2.reset(); TEN.reset(); GG.reset(); POLT.reset(); MF.reset(); STREETFIG.reset(); RED.reset(); MG.reset();
   $('#start').classList.remove('show');
   world.state = 'intro'; world.battery = CONFIG.battery.start; world.batUsed = Math.max(0, 100 - CONFIG.battery.start);
@@ -7528,7 +7665,7 @@ if (DEV) {
   ];
   for (const [l, f] of btns) { const b = document.createElement('button'); b.textContent = l; b.addEventListener('click', e => { e.stopPropagation(); f(); }); b.addEventListener('pointerdown', e => e.stopPropagation()); dev.appendChild(b); }
 }
-if (TEST) window.__G = { LK2, PACALL, award, COL, MISS, TAP, sinks, awarded, PIANO, UWA, selfCam, avatar, ITEM, escape, FL, HANDS, NEKO, stairH, SET, MIC, opt, snapEntrance, makeResultImage, shareText, CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
+if (TEST) window.__G = { SPV, speak, LK2, PACALL, award, COL, MISS, TAP, sinks, awarded, PIANO, UWA, selfCam, avatar, ITEM, escape, FL, HANDS, NEKO, stairH, SET, MIC, opt, snapEntrance, makeResultImage, shareText, CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
 loadSG().then(() => Promise.all([setupGlbHuman(woman, GHOST_B64), setupGlbHuman(avatar, PROT_B64)])).then(() => loadF2()).then(() => loadSpider()).then(() => NEKO.load()).then(() => UWA.load()).then(() => loadHands()).then(() => { $('#loading').remove(); try { ensureAudio(); if (A.ctx && A.ctx.state === 'running') titleSeKick(); } catch (e) { } });
 requestAnimationFrame(tick);
 // 効果音の大きさ（端末に保存。プレイ中・録画の両方に効く）
