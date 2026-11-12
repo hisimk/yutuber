@@ -137,6 +137,40 @@
   .sw{width:50px;height:30px;border-radius:15px;background:#3a3a3e;position:relative;flex:none;transition:background .2s}
   .sw::after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .2s}
   .opt.on .sw{background:#34c759}.opt.on .sw::after{left:23px}
+  .gearBtn{display:flex;align-items:center;gap:6px;height:38px;min-width:38px;justify-content:center;padding:0 8px;border-radius:19px;background:rgba(0,0,0,.45);border:1.5px solid rgba(255,255,255,.55);color:#fff;font-size:13px}
+  #gearBtn{width:38px;padding:0}
+  #startGear{position:absolute;left:14px;top:calc(var(--sat) + 14px);padding:0 12px 0 9px;z-index:2}
+  #fxBtn,#wvBtn,#ltBtn{display:none}
+  #settings{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:rgba(4,4,6,.86);padding:calc(var(--sat) + 16px) 16px calc(var(--sab) + 16px);overflow-y:auto}
+  #settings.show{display:flex}
+  .setBox{width:100%;max-width:380px;display:flex;flex-direction:column;gap:8px}
+  .setHead{display:flex;align-items:baseline;justify-content:space-between;margin:0 4px 6px}
+  #setTitle{font-family:"Shippori Mincho",serif;font-size:22px;letter-spacing:.2em}
+  #setPaused{font-size:12px;color:#ffd60a;letter-spacing:.1em}
+  #setMain{display:flex;flex-direction:column;gap:8px}
+  .opt.col{flex-direction:column;align-items:stretch;gap:8px}
+  .optTop{display:flex;justify-content:space-between;align-items:center}
+  #setMicRow.on .sw{background:#34c759}#setMicRow.on .sw::after{left:23px}
+  #micMeter{height:8px;border-radius:4px;background:#26262a;overflow:hidden;display:none}
+  #setMicRow.on #micMeter{display:block}
+  #micMeterFill{height:100%;width:0;background:#34c759;transition:width .06s linear}
+  #micNote{font-size:11px;color:#8a867f;display:none}
+  #setMicRow.on #micNote{display:block}
+  .val{color:#cfcac0;font-size:15px;font-variant-numeric:tabular-nums}
+  .seg{display:flex;border:1px solid #3a3a3e;border-radius:9px;overflow:hidden}
+  .seg button{background:none;border:none;color:#cfcac0;font-size:13px;padding:7px 11px}
+  .seg button.on{background:#e9e4da;color:#111;font-weight:700}
+  .setLink{margin-top:6px;background:none;border:1px solid #3a3a3e;border-radius:12px;color:#e9e4da;font-size:14px;padding:12px}
+  .setLink.warn{border-color:#ff453a;color:#ff453a}
+  #setClose{margin-top:8px;align-self:center}
+  #setBrightPane{display:none;flex-direction:column;gap:10px;align-items:center}
+  #settings.bright #setMain{display:none}#settings.bright #setBrightPane{display:flex}
+  #brightCv{width:100%;max-width:300px;aspect-ratio:9/16;border-radius:10px;background:#000}
+  .brightNote{font-size:12px;color:#cfcac0;text-align:center;line-height:1.6}
+  #brightRange{width:100%}
+  .brightBtns{display:flex;gap:10px;width:100%}
+  .brightBtns button{flex:1;font-size:14px;font-weight:700;padding:12px;border-radius:12px;border:1px solid #3a3a3e;background:#18181b;color:#fff}
+  .brightBtns button.pri{background:#e9e4da;color:#111}
   .go{font-size:17px;font-weight:700;padding:15px 40px;border-radius:30px;border:none;background:#e9e4da;color:#111;letter-spacing:.1em}
   .howto{font-size:12px;color:#8a867f;line-height:1.85;margin-top:20px;max-width:340px;text-align:left}
   #result{justify-content:flex-start}
@@ -190,7 +224,8 @@
 <div id="stick"><b></b></div>
 <div id="hud" class="off">
   <div id="topL">
-    <button class="chip btn" id="gyroBtn">ジャイロ</button>
+    <button class="btn gearBtn" id="gearBtn" aria-label="設定"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    <button class="chip btn" id="gyroBtn" style="display:none">ジャイロ</button>
     <button class="chip btn" id="centerBtn" style="display:none">正面</button>
   </div>
   <div id="rec"><span class="dot"></span><span class="lbl">REC</span><span id="recTime">00:00</span></div>
@@ -218,12 +253,10 @@
 <div id="devInfo"></div>
 
 <div class="screen show" id="start">
+  <button class="btn gearBtn" id="startGear" aria-label="設定"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>設定</span></button>
   <h1 class="title logoTitle"><img id="titleLogo" alt="幽tuber 撮レ高狙エ"></h1>
   <div class="sub">夜の旧校舎で、決定的瞬間を撮って帰る</div>
   <div class="opts">
-    <div class="opt" id="optGyro"><div>ジャイロで見回す<small>スマホの向きで視点が動きます</small></div><div class="sw"></div></div>
-    <div class="opt" id="optMic"><div>実況マイクON<small>録画中の自分の声も動画に入ります</small></div><div class="sw"></div></div>
-    <div class="opt"><div>効果音の大きさ<small>遠くの物音や笑い声が聞こえにくい時は右へ</small></div><input id="fxVol" type="range" min="0.4" max="2.5" step="0.1" value="1" style="width:42%"></div>
     <div class="opt"><div>チャンネル名</div><input id="chName" maxlength="16" placeholder="心霊チャンネル"></div>
   </div>
   <button class="go" id="goBtn">旧校舎に入る</button>
@@ -237,13 +270,33 @@
   </div>
 </div>
 
+<div id="settings">
+  <div class="setBox">
+    <div class="setHead"><span id="setTitle">設定</span><span id="setPaused">一時停止中</span></div>
+    <div id="setMain">
+      <div class="opt" id="setGyro"><div>ジャイロで見回す<small>スマホの向きで視点が動きます</small></div><div class="sw"></div></div>
+      <div class="opt" id="setBright"><div>明るさ<small>入口の景色を見ながら合わせます</small></div><div class="val"><span id="brightVal">0</span> ›</div></div>
+      <div class="opt col" id="setMicRow"><div class="optTop" id="setMic"><div>実況マイク<small>録画中の自分の声も動画に入ります</small></div><div class="sw"></div></div><div id="micMeter"><div id="micMeterFill"></div></div><div id="micNote"></div></div>
+    <div class="opt"><div>効果音の大きさ<small>遠くの物音や笑い声が聞こえにくい時は右へ</small></div><input id="fxVol" type="range" min="0.4" max="2.5" step="0.1" value="1" style="width:42%"></div>
+      <div class="opt"><div>言語 / Language</div><div class="seg" id="langSeg"><button data-lang="ja">日本語</button><button data-lang="en">English</button></div></div>
+      <button class="setLink" id="setHome">スタート画面にもどる</button>
+      <button class="go" id="setClose">ゲームにもどる</button>
+    </div>
+    <div id="setBrightPane">
+      <canvas id="brightCv"></canvas>
+      <div class="brightNote" id="brightNote">廊下の奥の暗がりが、うっすら見分けられる明るさに合わせてください</div>
+      <input id="brightRange" type="range" min="-5" max="5" step="1" value="0">
+      <div class="brightBtns"><button id="brightReset">標準に戻す</button><button class="pri" id="brightDone">決定</button></div>
+    </div>
+  </div>
+</div>
 <div id="intro"><canvas id="introCv"></canvas><div class="skip">タップでスキップ</div></div>
 <div class="screen" id="result">
   <h2 id="resTitle">帰還</h2>
   <div class="meta" id="resMeta"></div>
   <div id="likeHero"><i class="like" id="likeIcon"></i><b id="evScore">0</b></div>
   <div id="likeSub">いいね</div>
-  <div id="replayWrap"><video id="replay" playsinline controls preload="metadata"></video><div id="noVideo">持ち帰った映像はありません</div></div>
+  <div id="replayWrap"><video id="replay" playsinline controls preload="auto"></video><div id="noVideo">持ち帰った映像はありません</div></div>
   <div id="evWrap"><div id="evHead"><span>いいねの内訳</span><span id="evCount"></span></div><div id="evList"></div></div>
   <div class="rowBtns"><button id="saveBtn">動画を保存・投稿</button><button id="imgBtn">結果を画像で保存</button></div>
   <div class="rowBtns"><button class="pri" id="againBtn">もう一度入る</button></div>
@@ -344,14 +397,14 @@ const postMat = new THREE.ShaderMaterial({
     tColor: { value: rt.texture }, tDepth: { value: rt.depthTexture },
     res: { value: new THREE.Vector2(4, 4) },
     focus: { value: 3 }, dof: { value: 0.3 }, soft: { value: 0 }, time: { value: 0 },
-    exposure: { value: 1 }, vig: { value: 0 }, caEdge: { value: 0.142 }, caMid: { value: 0.018 }, caFlat: { value: 2.7 }, bleed: { value: 4.2 }, pix: { value: 4.5 }, blurK: { value: 0 }, grainK: { value: 0.15 }, sat: { value: 0.82 },   /* 画質の基本設定 */ tint: { value: new THREE.Vector3(1, 1, 1) }, vhs: { value: 0 }, grain: { value: 1 }, black: { value: 1 }, tear: { value: 0 }, stat: { value: 0 },
+    exposure: { value: 1 }, bright: { value: 1 }, vig: { value: 0 }, caEdge: { value: 0.142 }, caMid: { value: 0.018 }, caFlat: { value: 2.7 }, bleed: { value: 4.2 }, pix: { value: 4.5 }, blurK: { value: 0 }, grainK: { value: 0.15 }, sat: { value: 0.82 },   /* 画質の基本設定 */ tint: { value: new THREE.Vector3(1, 1, 1) }, vhs: { value: 0 }, grain: { value: 1 }, black: { value: 1 }, tear: { value: 0 }, stat: { value: 0 },
     near: { value: camera.near }, far: { value: camera.far },
   },
   vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.0,1.0); }`,
   fragmentShader: `
     varying vec2 vUv;
     uniform sampler2D tColor; uniform sampler2D tDepth;
-    uniform vec2 res; uniform vec3 tint; uniform float vig; uniform float caEdge, caMid, caFlat, bleed, pix, blurK, grainK, sat; uniform float focus, dof, soft, time, exposure, vhs, grain, black, near, far, tear, stat;
+    uniform vec2 res; uniform vec3 tint; uniform float vig; uniform float caEdge, caMid, caFlat, bleed, pix, blurK, grainK, sat; uniform float bright; uniform float focus, dof, soft, time, exposure, vhs, grain, black, near, far, tear, stat;
     float lin(float z){ float n=z*2.0-1.0; return 2.0*near*far/(far+near-n*(far-near)); }
     float hash(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453); }
     void main(){
@@ -393,7 +446,7 @@ const postMat = new THREE.ShaderMaterial({
       col+=n*grain*grainK*(0.018+0.085*(1.0-smoothstep(0.0,0.30,l)));
       col+=vhs*band*0.10*hash(vUv*res+time);
       vec2 q=vUv-0.5; col*=1.0-dot(q,q)*1.1;
-      col=pow(max(col,0.0), vec3(1.0/2.2));
+      col=pow(max(col,0.0), vec3(1.0/(2.2*bright)));   // 明るさ設定（中間の暗さだけを持ち上げる。黒は黒のまま）
       float sn=hash(vUv*res*0.5+floor(time*30.0));
       col=mix(col, vec3(sn)*vec3(0.9,0.95,1.0)*(0.6+0.4*step(0.5,fract(vUv.y*res.y*0.25))), stat);
       col*=1.0-black;
@@ -629,6 +682,91 @@ function plane(w, h, mat, x, y, z, ry = 0, rx = 0, o = {}) {
   const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
   m.position.set(x, y + (o.parent ? 0 : BUILD_Y), z); m.rotation.order = 'YXZ'; m.rotation.y = ry; m.rotation.x = rx; m.receiveShadow = o.recv !== false;
   (o.parent || scene).add(m); return m;
+}
+
+/* ---------- 言語（日本語／English）：画面の文言は T() で英語に置き換える。英語の表が無い文言は日本語のまま ---------- */
+let LANG = 'ja'; try { const l = localStorage.getItem('yt_lang'); if (l === 'en' || l === 'ja') LANG = l; } catch (e) { }
+const EN = {
+  // スタート・設定
+  '夜の旧校舎で、決定的瞬間を撮って帰る': 'Film the decisive moment in the old school at night — and make it out',
+  'チャンネル名': 'Channel name', '心霊チャンネル': 'Ghost Channel', '旧校舎に入る': 'Enter the old school', '使用素材・クレジット': 'Assets & credits',
+  '・画面の左下を押すと移動スティック。右側をなぞると見回す': '• Press the lower left to move. Swipe the right side to look around',
+  '・倍率ボタン（.5／1／2／3）で画角を切り替え': '• Use the zoom buttons (.5 / 1 / 2 / 3) to change the view',
+  '・赤いボタンで録画開始／停止。持ち帰れるのは通算120秒（画面上の「残容量」で残りが分かります）': '• The red button starts/stops recording. You can bring back 120 seconds in total (see “Storage” at the top)',
+  '・電池は録画中に早く減ります。玄関まで自分の足で戻ること': '• The battery drains faster while recording. Walk back to the entrance yourself',
+  '・イヤホン推奨': '• Headphones recommended',
+  '設定': 'Settings', '一時停止中': 'Paused', 'ジャイロで見回す': 'Look with gyro', 'スマホの向きで視点が動きます': 'Tilt your phone to look around',
+  '明るさ': 'Brightness', '入口の景色を見ながら合わせます': 'Adjust while looking at the entrance', '実況マイク': 'Commentary mic', '録画中の自分の声も動画に入ります': 'Your voice is recorded into the video',
+  '効果音の大きさ': 'Sound effects volume', '遠くの物音や笑い声が聞こえにくい時は右へ': 'Slide right if distant sounds are hard to hear',
+  'スタート画面にもどる': 'Back to title', 'ゲームにもどる': 'Resume', '閉じる': 'Close',
+  'もう一度押すとスタート画面にもどります（録画は消えます）': 'Tap again to go back to the title (your footage will be lost)',
+  '廊下の奥の暗がりが、うっすら見分けられる明るさに合わせてください': 'Adjust until you can just barely make out the darkness at the end of the hall',
+  '標準に戻す': 'Default', '決定': 'OK', '話すとメーターが動きます': 'The meter moves when you speak', 'マイクの許可を待っています…': 'Waiting for microphone permission…',
+  // ゲーム中
+  '残容量': 'Storage', '引き戸を開けて外へ出る': 'Slide the door open and leave', 'タップでスキップ': 'Tap to skip', 'カメラ切替': 'Switch camera', '録画': 'Record', '正面': 'Center',
+  '左下を押して歩く／右側をなぞって見回す': 'Hold lower left to walk / swipe right side to look',
+  'いま向いている方向を正面にしました': 'Set the current direction as forward',
+  'この環境では映像を保存できません（撮れ高の記録は続きます）': 'Video can’t be saved here (likes are still counted)',
+  'この画面ではセンサーが使えません。スワイプ操作で遊べます': 'Motion sensor unavailable here. Use swipe controls',
+  'センサーがありません。スワイプ操作で遊べます': 'No motion sensor. Use swipe controls', 'センサーが使えないため、スワイプ操作にしました': 'Motion sensor unavailable, switched to swipe',
+  'センサーが使えません。スワイプ操作で遊べます': 'Motion sensor unavailable. Use swipe controls', 'センサーの許可がないため、スワイプ操作で遊べます': 'No sensor permission. Use swipe controls',
+  'マイクが使えないため、ゲーム音だけを録ります': 'Mic unavailable — recording game audio only', 'マイクの許可がないため、ゲーム音だけを録ります': 'No mic permission — recording game audio only',
+  '実況マイクON（録画中の声だけが動画に入ります）': 'Commentary mic ON (your voice is recorded only while filming)',
+  '撮影できる時間を使い切りました（探索は続けられます）': 'Storage full (you can keep exploring)',
+  'カーテンを開ける': 'Open curtain', 'ノックする': 'Knock', 'ロッカーに隠れる': 'Hide in locker', '布団をめくる': 'Pull back the covers', '戸を開ける': 'Open door', '扉を開ける': 'Open door',
+  '引き戸を開ける': 'Open sliding door', '引き戸を閉める': 'Close sliding door', '鍵を開ける': 'Unlock', '鍵をかける': 'Lock', '蛇口を閉める': 'Turn off tap', '蛇口をひねる': 'Turn on tap',
+  'ロッカーから出る': 'Leave locker',
+  '怪奇現象を': 'Capture the paranormal', 'カメラに収めろ！': 'on camera!',
+  // 結果
+  '決定的瞬間は映っていなかった': 'No decisive moment was caught',
+  '帰還': 'Escaped', '映像はここで途切れている': 'The footage ends here', '回収された映像': 'Recovered footage', 'カメラが壊れる直前まで': 'Until just before the camera broke',
+  '最後まで回っていた映像': 'Footage that kept rolling to the end', '蜘蛛女に捕まった': 'Caught by the Spider Woman', '（暗闇から生還）': ' (survived the dark)',
+  'いいね': 'Likes', 'いいねの内訳': 'Likes breakdown', '持ち帰った映像はありません': 'No footage brought back', 'この環境では映像を書き出せませんでした（撮れ高のみ）': 'Video couldn’t be exported here (likes only)',
+  '決定的瞬間は映っていなかった。空振りの廊下も記録です。': 'No decisive moment was caught. An empty hallway is a record too.',
+  '動画を保存・投稿': 'Save / post video', '結果を画像で保存': 'Save result image', 'もう一度入る': 'Go back in',
+  '保存しました': 'Saved', '保存をやめました': 'Canceled', 'ダウンロードを開始しました': 'Download started', 'この画面では保存できませんでした。': 'Couldn’t save on this screen.',
+  'ダウンロードを開始しました。始まらない場合は、再生画面のメニューから保存してください。': 'Download started. If it doesn’t, save from the video player menu.',
+  '投稿文（#幽tuber）をコピーしました。アプリで消えていたら貼り付けてください': 'Post text (#幽tuber) copied. Paste it if the app drops it', '画像を作っています…': 'Creating image…',
+  '捕まった': 'Caught', '追いつかれた。カメラはそこで壊れた。': 'It caught up. The camera broke right there.', '撮った映像は持ち帰れなかった。': 'None of your footage made it back.', '残った映像を見る': 'Watch what remains',
+  // いいねの出来事
+  '20回目のノックで開いた個室': 'The stall that opened on the 20th knock', '2階の窓の外を滑っていく女子高生': 'A schoolgirl gliding past a 2F window', 'こちらを向くマイク': 'The microphone turning toward you',
+  'こっちを見た？': 'Did it look at me?', 'つま先が戸の奥へ引っ込む': 'Toes pulling back behind the door', 'ひとりでにめくれるページ': 'A page turning by itself', 'ひとりでに数センチ開く引き戸': 'A sliding door opening a few inches by itself',
+  'めくった布団の中': 'Under the covers', 'インカメラに追ってくる姿': 'A figure chasing you in the selfie cam', 'インカメラの肩越しの顔': 'A face over your shoulder in the selfie cam',
+  'ガラスに残った、構えたままの自分': 'Your reflection, still holding the camera', 'シーツに残る古い血の染み': 'An old bloodstain on the sheets', 'スリットを横切る赤い布': 'Red cloth crossing the slit window',
+  'レンズ前に割り込む顔': 'A face cutting in front of the lens', 'レンズ前のまつ毛と頬': 'Eyelashes and a cheek right at the lens', '一列手前に立つ制服': 'A uniform standing one row closer',
+  '一度だけ点いた赤ランプ': 'The red lamp that lit just once', '仕切りの上から覗く逆さ顔': 'An upside-down face peeking over the partition', '個室のあとに振り向いた目の前の顔': 'The face right there when you turned from the stall',
+  '倒れていたほうき': 'A fallen broom', '勝手に回る内鍵': 'A lock turning by itself', '右足の跡だけがこちらを向く': 'Only the right footprint faces you', '吐息で曇る窓': 'A window fogging with breath',
+  '外から開いた扉の前に立つ女': 'A woman at the door opened from outside', '外灯の下を横切る影': 'A shadow crossing under the outside light', '天井から垂れる灰色の手': 'Gray hands hanging from the ceiling',
+  '壁から生えた灰色の手': 'Gray hands growing from the wall', '天井から逆さに見下ろす蜘蛛女の顔': 'The Spider Woman looking down from the ceiling', '天井の角を曲がる上履きの裏': 'Shoe soles turning the ceiling corner',
+  '天井を這って追ってくる蜘蛛女': 'The Spider Woman crawling after you', '小窓に残る五本の指跡': 'Five finger marks on the small window', '巣に触れた蜘蛛女が別の巣へ移った瞬間': 'The Spider Woman jumping to another web',
+  '布団の中のクマ': 'A teddy bear under the covers', '床に落ちていたチョーク': 'Chalk on the floor', '床に落ちる血の滴と広がる波紋': 'Blood dripping and rippling on the floor',
+  '復電の一瞬に立つ女': 'A woman standing as the power returns', '戸口から真横に覗く顔': 'A face peeking sideways from the doorway', '戸口に揃った上履き': 'Indoor shoes lined up at the doorway',
+  '扉の内側を伝う血の筋': 'Blood running down the inside of the door', '振り返ったレンズの前の顔': 'A face in the lens when you turned', '振り返った女子生徒の黒い目': 'The black eyes of a girl who turned around',
+  '振り返った目の前の巨大な顔': 'A giant face right behind you', '振り向いた目の前の顔': 'The face right there when you turned', '排水口の暗がりの片目': 'An eye in the dark of the drain',
+  '掲示板を読む女': 'A woman reading the notice board', '教室に立つ制服姿': 'A uniformed figure in the classroom', '数センチ開いたロッカー': 'A locker open a few inches',
+  '明るくなった一瞬、鏡の中の背後に立つ女': 'In a flash of light, a woman behind you in the mirror', '暗がりを滑る赤いマントの女': 'The woman in the red cloak gliding in the dark',
+  '曇った窓の外で息を整える姿': 'A figure catching its breath outside the fogged window', '机から落ちて割れた一輪挿し': 'A vase knocked off a desk', '机の間を詰めてくる': 'Closing in between the desks',
+  '板を埋めていく「タスケテ」': '“HELP ME” filling the board', '黒板に走る「タスケテ」の殴り書き': '“HELP ME” scrawled across the blackboard', '棚から一冊ずつ落ちる本': 'Books falling off the shelf one by one',
+  '洗面器に溜まっていく赤': 'Red filling the sink', '画面を覆う顔': 'A face covering the screen', '画面端の頬と髪': 'A cheek and hair at the edge of the frame', '目が合って飛び込む顔': 'A face lunging the moment your eyes met',
+  '真っ赤に染まった蛍光灯': 'Lights turned blood red', '窓にドンと付いた赤い手形': 'A red handprint slammed on the window', '窓の外を頭から落ちていく女子高生': 'A schoolgirl falling head-first past the window',
+  '窓一面を埋めていく手形': 'Handprints covering the window', '窓辺から一斉に飛び立つカラス': 'Crows taking off from the windowsill', '肖像画のベートーベンがまばたきした': 'Beethoven’s portrait blinked',
+  '脚を広げて落ちてくる蜘蛛女の全身': 'The Spider Woman dropping with legs spread', '街灯の下に立つ人影': 'A figure under the streetlight', '襲われる瞬間': 'The moment of the attack',
+  '角から目の前まで迫った顔': 'A face rushing at you from the corner', '角の先に立っていた顔': 'A face waiting around the corner', '誰もいないピアノの蓋が叩きつけられた': 'The empty piano’s lid slammed shut',
+  '誰もいない椅子の座面が回った': 'An empty chair’s seat spun', '近づいてくる濡れた足跡': 'Wet footprints approaching', '追われながら回し続けた': 'Kept rolling while being chased',
+  '通路の椅子がひとりでに動いた': 'A chair in the aisle moved by itself', '鏡の中だけに映る背後の女子高生': 'A schoolgirl behind you, only in the mirror', '鏡の中で勝手に閉まる戸': 'A door closing by itself in the mirror',
+  '鏡の中の自分だけが遅れて動く': 'Your reflection moving a beat late', '開きかけの隙間に入る逆さの笑顔': 'An upside-down grin in the half-open gap', '階段の上の角から覗く顔': 'A face peeking from the top of the stairs',
+  '隣の通気孔から笑い声': 'Laughter from the next vent', '顔の前で閉じる蜘蛛女の脚': 'The Spider Woman’s legs closing on your face', '天井を這って追ってくる蜘蛛女（': 'The Spider Woman crawling after you (',
+};
+function TR(s) {
+  if (LANG !== 'en' || typeof s !== 'string' || !s) return s;
+  const k = s.trim(); if (EN[k] !== undefined) return s.replace(k, EN[k]);
+  let m;
+  if ((m = k.match(/^(.*)（(\d+)秒）$/))) return TR(m[1]) + ` (${m[2]}s)`;
+  if ((m = k.match(/^撮影 (\S+)　(.*)$/))) return `Footage ${m[1]}　` + TR(m[2]);
+  if ((m = k.match(/^電池残り (\d+)%(.*)$/))) return `Battery ${m[1]}%` + TR(m[2]);
+  if ((m = k.match(/^(\d+)件　← スライド →$/))) return `${m[1]} clips　← swipe →`;
+  if ((m = k.match(/^ほか (\d+) 件$/))) return `+${m[1]} more`;
+  return s;
 }
 
 
@@ -5819,7 +5957,7 @@ function showResult(blobs) {
   if (!evs.length) list.innerHTML = '<div class="ev none">決定的瞬間は映っていなかった。空振りの廊下も記録です。</div>';
   for (const e of evs) { const d = document.createElement('div'); d.className = 'ev'; d.innerHTML = `<span class="t">${fmt(e.t)}</span><span class="n">${e.label}</span><span class="p"><i class="like"></i>${e.pts}</span>`; d.addEventListener('click', () => seekTo(e.t)); list.appendChild(d); }
   const v = $('#replay');
-  if (resultUrls.length) { $('#noVideo').style.display = 'none'; v.style.display = ''; segIdx = 0; v.src = resultUrls[0] + '#t=0.1'; $('#saveBtn').disabled = false; }   // 自動では再生しない（最初のコマだけ見せる）
+  if (resultUrls.length) { $('#noVideo').style.display = 'none'; v.style.display = ''; segIdx = 0; v.src = resultUrls[0]; v.load(); v.addEventListener('loadeddata', () => { try { if (v.paused && v.currentTime < 0.05) v.currentTime = 0.05; } catch (e) { } }, { once: true }); $('#saveBtn').disabled = false; }   // 自動では再生しない（最初のコマだけ見せる）。iPhoneでは保存した動画のURLに「#t=」を付けると再生できなくなるので付けない
   else { v.removeAttribute('src'); v.style.display = 'none'; $('#noVideo').style.display = 'flex'; $('#noVideo').textContent = rec.time > 0 && !rec.available ? 'この環境では映像を書き出せませんでした（撮れ高のみ）' : '持ち帰った映像はありません'; $('#saveBtn').disabled = true; }
   $('#saveMsg').textContent = ''; $('#result').classList.add('show'); $('#result').scrollTop = 0;
   RBGM.start(); likeCount(total);
@@ -5863,7 +6001,7 @@ const MUSIC_CREDIT = '音楽室のピアノ：Claude Debussy「Clair de lune」�
 function shareText() {
   const total = evidence.reduce((a, e) => a + e.pts, 0);
   const here = /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host) ? location.origin + location.pathname : 'https://hisimk.github.io/yutuber/';
-  return `旧校舎で撮れた映像　いいね${total}\n#幽tuber\n${here}` + (F2.clairHeard ? `\n\n${MUSIC_CREDIT}` : '');
+  return (LANG === 'en' ? `Footage from the old school — ${total} likes` : `旧校舎で撮れた映像　いいね${total}`) + `\n#幽tuber\n${here}` + (F2.clairHeard ? `\n\n${MUSIC_CREDIT}` : '');
 }
 $('#saveBtn').addEventListener('click', async () => {
   if (!resultBlobs.length) return; const msg = $('#saveMsg');
@@ -5896,19 +6034,19 @@ async function makeResultImage() {
   g.font = `800 150px ${sans}`; const tw = g.measureText(String(total)).width, iw = 150, gap = 34, x0 = (W - (iw + gap + tw)) / 2;
   if (like) g.drawImage(like, x0, 440, iw, iw * like.height / like.width);
   g.fillStyle = '#fff'; g.textAlign = 'left'; g.fillText(String(total), x0 + iw + gap, 568);
-  g.textAlign = 'center'; g.fillStyle = '#9a958c'; g.font = `30px ${sans}`; g.fillText('い い ね', W / 2, 640);
+  g.textAlign = 'center'; g.fillStyle = '#9a958c'; g.font = `30px ${sans}`; g.fillText(LANG === 'en' ? 'L I K E S' : 'い い ね', W / 2, 640);
   // 内訳
   const evs = evidence.slice().sort((a, b) => a.t - b.t); const maxRows = 10, rows = evs.slice(0, maxRows); let y = 720;
   g.strokeStyle = 'rgba(255,255,255,.12)'; g.lineWidth = 2; g.beginPath(); g.moveTo(90, y - 34); g.lineTo(W - 90, y - 34); g.stroke();
-  if (!rows.length) { g.fillStyle = '#8a867f'; g.font = `30px ${sans}`; g.fillText('決定的瞬間は映っていなかった', W / 2, y + 30); }
+  if (!rows.length) { g.fillStyle = '#8a867f'; g.font = `30px ${sans}`; g.fillText(TR('決定的瞬間は映っていなかった'), W / 2, y + 30); }
   for (const e of rows) {
     g.textAlign = 'left'; g.fillStyle = '#ffd60a'; g.font = `700 28px ${sans}`; g.fillText(fmt(e.t), 90, y);
-    g.fillStyle = '#e9e4da'; g.font = `30px ${sans}`; let lb = e.label; while (g.measureText(lb).width > 640 && lb.length > 4) lb = lb.slice(0, -2) + '…'; g.fillText(lb, 200, y);
+    g.fillStyle = '#e9e4da'; g.font = `30px ${sans}`; let lb = TR(e.label); while (g.measureText(lb).width > 640 && lb.length > 4) lb = lb.slice(0, -2) + '…'; g.fillText(lb, 200, y);
     g.textAlign = 'right'; g.font = `700 30px ${sans}`; g.fillText(String(e.pts), W - 90, y);
     if (like) g.drawImage(like, W - 90 - g.measureText(String(e.pts)).width - 42, y - 26, 32, 32 * like.height / like.width);
     y += 52;
   }
-  if (evs.length > maxRows) { g.textAlign = 'center'; g.fillStyle = '#8a867f'; g.font = `26px ${sans}`; g.fillText(`ほか ${evs.length - maxRows} 件`, W / 2, y + 4); }
+  if (evs.length > maxRows) { g.textAlign = 'center'; g.fillStyle = '#8a867f'; g.font = `26px ${sans}`; g.fillText(TR(`ほか ${evs.length - maxRows} 件`), W / 2, y + 4); }
   g.textAlign = 'center'; g.fillStyle = '#e9e4da'; g.font = `700 36px ${sans}`; g.fillText('#幽tuber', W / 2, H - 70);
   return new Promise(ok => c.toBlob(ok, 'image/png'));
 }
@@ -5933,8 +6071,114 @@ $('#overVideo').addEventListener('click', () => { $('#over').classList.remove('s
 
 /* ---------- 開始 ---------- */
 const opt = { gyro: false, mic: false };
-$('#optGyro').addEventListener('click', () => { opt.gyro = !opt.gyro; $('#optGyro').classList.toggle('on', opt.gyro); });
-$('#optMic').addEventListener('click', () => { opt.mic = !opt.mic; $('#optMic').classList.toggle('on', opt.mic); });
+try { const sv = JSON.parse(localStorage.getItem('yt_settings') || '{}'); if (sv.gyro) opt.gyro = true; if (sv.mic) opt.mic = true; if (typeof sv.bright === 'number') opt.bright = sv.bright; } catch (e) { }
+if (opt.bright === undefined) opt.bright = 0;
+function saveOpts() { try { localStorage.setItem('yt_settings', JSON.stringify({ gyro: opt.gyro, mic: opt.mic, bright: opt.bright })); } catch (e) { } }
+const brightK = v => Math.pow(1.09, v);   // 明るさ：-5〜+5 の段階 → 画面の中間の明るさの持ち上げ量
+postMat.uniforms.bright.value = brightK(opt.bright);
+
+/* ---------- 設定画面（左上の歯車／スタート画面の歯車）。ゲーム中に開くと一時停止 ---------- */
+const SET = {
+  open: false, paused: false, wasRec: false, masterV: 0.9, homeArm: 0, raf: 0,
+  show() {
+    if (this.open) return; this.open = true;
+    const inGame = world.state === 'play';
+    if (inGame) {
+      this.paused = true; world.state = 'paused'; input.sx = input.sy = 0;
+      this.wasRec = rec.active; if (rec.active) stopRec('pause');
+      if (A.ctx) { this.masterV = A.master.gain.value || 0.9; A.master.gain.cancelScheduledValues(A.ctx.currentTime); A.master.gain.setTargetAtTime(0, A.ctx.currentTime, 0.05); }
+    }
+    $('#setPaused').style.display = this.paused ? '' : 'none'; $('#setHome').style.display = this.paused ? '' : 'none';
+    $('#setClose').textContent = TR(this.paused ? 'ゲームにもどる' : '閉じる');
+    this.homeArm = 0; $('#setHome').classList.remove('warn'); $('#setHome').textContent = TR('スタート画面にもどる');
+    this.sync(); $('#settings').classList.remove('bright'); $('#settings').classList.add('show'); this.meter();
+  },
+  hide() {
+    if (!this.open) return; this.open = false; cancelAnimationFrame(this.raf);
+    $('#settings').classList.remove('show', 'bright');
+    if (this.paused) {
+      this.paused = false; world.state = 'play';
+      if (A.ctx) { A.master.gain.cancelScheduledValues(A.ctx.currentTime); A.master.gain.setTargetAtTime(this.masterV, A.ctx.currentTime, 0.08); }
+      if (this.wasRec) startRec(); this.wasRec = false;
+    }
+  },
+  sync() {
+    $('#setGyro').classList.toggle('on', !!opt.gyro);
+    $('#setMicRow').classList.toggle('on', !!opt.mic);
+    $('#brightVal').textContent = (opt.bright > 0 ? '+' : '') + opt.bright;
+    for (const b of document.querySelectorAll('#langSeg button')) b.classList.toggle('on', b.dataset.lang === LANG);
+  },
+  // マイクの入力メーター
+  meter() {
+    cancelAnimationFrame(this.raf); const buf = new Float32Array(512);
+    const step = () => {
+      if (!this.open) return; let w = 0;
+      if (MIC.an) { MIC.an.getFloatTimeDomainData(buf); let s = 0; for (let i = 0; i < buf.length; i++) s += buf[i] * buf[i]; w = Math.min(100, Math.sqrt(s / buf.length) * 900); }
+      $('#micMeterFill').style.width = w.toFixed(0) + '%';
+      this.raf = requestAnimationFrame(step);
+    };
+    this.raf = requestAnimationFrame(step);
+  },
+};
+// マイク：オンにした時点で許可をもらい、録画には実況として入れる（スピーカーには返さない）。メーター用の解析も同じ入力から
+const MIC = { an: null, src: null };
+function micOn() {
+  const note = $('#micNote');
+  if (rec.mic) { note.textContent = TR('話すとメーターが動きます'); return; }
+  if (!ensureAudio() || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !A.rec) { note.textContent = TR('マイクが使えないため、ゲーム音だけを録ります'); return; }
+  note.textContent = TR('マイクの許可を待っています…');
+  navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).then(s => {
+    if (!opt.mic) { s.getTracks().forEach(t => t.stop()); return; }
+    rec.mic = s; MIC.src = A.ctx.createMediaStreamSource(s); rec.micGain = A.ctx.createGain(); rec.micGain.gain.value = rec.active ? 1 : 0;
+    MIC.src.connect(rec.micGain); rec.micGain.connect(A.rec);
+    MIC.an = A.ctx.createAnalyser(); MIC.an.fftSize = 512; MIC.src.connect(MIC.an);
+    note.textContent = TR('話すとメーターが動きます');
+  }).catch(() => { opt.mic = false; saveOpts(); SET.sync(); note.textContent = TR('マイクの許可がないため、ゲーム音だけを録ります'); toast(TR('マイクの許可がないため、ゲーム音だけを録ります')); });
+}
+function micOff() {
+  if (rec.mic) { rec.mic.getTracks().forEach(t => t.stop()); }
+  for (const n of [MIC.src, rec.micGain, MIC.an]) if (n) try { n.disconnect(); } catch (e) { }
+  rec.mic = null; rec.micGain = null; MIC.src = null; MIC.an = null;
+}
+for (const id of ['#gearBtn', '#startGear']) { const el = $(id); for (const ev of ['pointerdown', 'touchstart']) el.addEventListener(ev, e => e.stopPropagation(), { passive: true }); el.addEventListener('click', e => { e.stopPropagation(); ensureAudio(); SET.show(); }); }
+for (const ev of ['pointerdown', 'pointermove', 'pointerup', 'touchstart', 'touchmove']) $('#settings').addEventListener(ev, e => e.stopPropagation(), { passive: true });
+$('#setClose').addEventListener('click', () => SET.hide());
+$('#setGyro').addEventListener('click', () => {
+  opt.gyro = !opt.gyro; saveOpts(); SET.sync();
+  if (SET.paused) { if (opt.gyro) enableGyro(); else disableGyro(); }
+});
+$('#setMic').addEventListener('click', () => { opt.mic = !opt.mic; saveOpts(); SET.sync(); if (opt.mic) micOn(); else micOff(); });
+$('#setHome').addEventListener('click', () => {
+  if (!SET.homeArm) { SET.homeArm = 1; $('#setHome').classList.add('warn'); $('#setHome').textContent = TR('もう一度押すとスタート画面にもどります（録画は消えます）'); return; }
+  location.reload();
+});
+for (const b of document.querySelectorAll('#langSeg button')) b.addEventListener('click', () => { setLang(b.dataset.lang); SET.sync(); $('#setClose').textContent = TR(SET.paused ? 'ゲームにもどる' : '閉じる'); $('#setHome').textContent = TR('スタート画面にもどる'); });
+// 明るさ：入口の静止画を、今の明るさで見せながら合わせる
+const BRIGHT = { img: null };
+function snapEntrance() {
+  const U = postMat.uniforms; const keep = { black: U.black.value, exposure: U.exposure.value, focus: U.focus.value, bright: U.bright.value, stat: U.stat.value, tear: U.tear.value, vhs: world.vhs, fov: camera.fov };
+  const cp = camera.position.clone(), cq = camera.quaternion.clone(), sf = world.selfie; world.selfie = false;
+  camera.position.set(0, 1.5, 3.2); camera.rotation.set(-0.02, 0, 0); camera.fov = CONFIG.fov1x; camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+  U.black.value = 0; U.exposure.value = 1.2; U.focus.value = 8; U.bright.value = 1; U.stat.value = 0; U.tear.value = 0; world.vhs = 0;
+  render();
+  const src = renderer.domElement, c = document.createElement('canvas'); const h = 640, w = Math.round(h * 9 / 16); c.width = w; c.height = h;
+  const sw = src.width, sh = src.height, k = Math.max(w / sw, h / sh); const g = c.getContext('2d'); g.drawImage(src, (w - sw * k) / 2, (h - sh * k) / 2, sw * k, sh * k);
+  BRIGHT.img = g.getImageData(0, 0, w, h);
+  camera.position.copy(cp); camera.quaternion.copy(cq); camera.fov = keep.fov; camera.updateProjectionMatrix(); camera.updateMatrixWorld(); world.selfie = sf;
+  Object.assign(U.black, { value: keep.black }); U.exposure.value = keep.exposure; U.focus.value = keep.focus; U.bright.value = keep.bright; U.stat.value = keep.stat; U.tear.value = keep.tear; world.vhs = keep.vhs;
+  render();   // 一時停止中の画面を元に戻す
+}
+function drawBright() {
+  const cv = $('#brightCv'), im = BRIGHT.img; if (!im) return; cv.width = im.width; cv.height = im.height;
+  const k = 1 / brightK(opt.bright), lut = new Uint8ClampedArray(256); for (let i = 0; i < 256; i++) lut[i] = Math.round(255 * Math.pow(i / 255, k));
+  const out = new ImageData(new Uint8ClampedArray(im.data), im.width, im.height), d = out.data; for (let i = 0; i < d.length; i += 4) { d[i] = lut[d[i]]; d[i + 1] = lut[d[i + 1]]; d[i + 2] = lut[d[i + 2]]; }
+  cv.getContext('2d').putImageData(out, 0, 0);
+}
+function setBright(v) { opt.bright = v; postMat.uniforms.bright.value = brightK(v); $('#brightRange').value = v; drawBright(); SET.sync(); }
+$('#setBright').addEventListener('click', () => { try { snapEntrance(); } catch (e) { console.warn(e); } $('#settings').classList.add('bright'); setBright(opt.bright); });
+$('#brightRange').addEventListener('input', () => setBright(parseInt($('#brightRange').value, 10)));
+$('#brightReset').addEventListener('click', () => setBright(0));
+$('#brightDone').addEventListener('click', () => { saveOpts(); $('#settings').classList.remove('bright'); SET.sync(); });
 /* ---------- タイトル：ロゴと音 ----------
    ・初回タップで音を有効化（それだけでは探索を始めない）。既に有効なら表示時から鳴らす
    ・環境音は本編と同じAudioContext・同じSource（initAudioは一度だけ）。タイトルSEはスピーカーだけに出し、録画には入れない */
@@ -5964,7 +6208,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) retur
 $('#goBtn').addEventListener('click', () => {
   if (opt.gyro) enableGyro();
   ensureAudio(); titleSeStop(0.35);
-  if (opt.mic) setupMic();
+  if (opt.mic && !rec.mic) micOn();
   recSetup();
   try { navigator.wakeLock && navigator.wakeLock.request('screen').catch(() => { }); } catch (e) { }
   world.channel = ($('#chName').value || '').trim() || '心霊チャンネル';
@@ -5987,8 +6231,9 @@ const INTRO = {
     const el = $('#intro'), cv = $('#introCv'), cx = cv.getContext('2d');
     const dpr = Math.min(2, devicePixelRatio || 1), W = innerWidth, H = innerHeight;
     cv.width = W * dpr; cv.height = H * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const lines = ['怪奇現象を', 'カメラに収めろ！'];
-    const fs = Math.min(44, W * 0.8 / 8.4), lh = fs * 1.55;
+    const lines = ['怪奇現象を', 'カメラに収めろ！'].map(TR);
+    let fs = Math.min(44, W * 0.8 / 8.4); { const g0 = document.createElement('canvas').getContext('2d'); g0.font = `800 ${fs}px "Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif`; const mw = Math.max(...lines.map(l => g0.measureText(l).width)); if (mw > W * 0.86) fs *= W * 0.86 / mw; }
+    const lh = fs * 1.55;
     // 文字だけを別の紙に描いておき、ずらしたり色を分けたりして貼る
     const tx = document.createElement('canvas'); tx.width = W * dpr; tx.height = H * dpr; const t = tx.getContext('2d'); t.setTransform(dpr, 0, 0, dpr, 0, 0);
     t.font = `800 ${fs}px "Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif`; t.textAlign = 'center'; t.textBaseline = 'middle'; t.fillStyle = '#e9e4da';
@@ -6059,7 +6304,7 @@ if (DEV) {
   ];
   for (const [l, f] of btns) { const b = document.createElement('button'); b.textContent = l; b.addEventListener('click', e => { e.stopPropagation(); f(); }); b.addEventListener('pointerdown', e => e.stopPropagation()); dev.appendChild(b); }
 }
-if (TEST) window.__G = { makeResultImage, shareText, CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
+if (TEST) window.__G = { SET, MIC, opt, snapEntrance, makeResultImage, shareText, CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
 loadSG().then(() => Promise.all([setupGlbHuman(woman, GHOST_B64), setupGlbHuman(avatar, PROT_B64)])).then(() => loadF2()).then(() => loadSpider()).then(() => loadHands()).then(() => { $('#loading').remove(); try { ensureAudio(); if (A.ctx && A.ctx.state === 'running') titleSeKick(); } catch (e) { } });
 requestAnimationFrame(tick);
 // 効果音の大きさ（端末に保存。プレイ中・録画の両方に効く）
@@ -6184,6 +6429,30 @@ function ltBuild() {
 ltBuild();
 for (const el of [$('#ltPanel'), $('#ltBtn')]) for (const ev of ['pointerdown', 'pointermove', 'pointerup', 'touchstart', 'touchmove']) el.addEventListener(ev, e => e.stopPropagation(), { passive: true });
 hudTap($('#ltBtn'), () => { $('#fxPanel').classList.remove('show'); $('#wvPanel').classList.remove('show'); $('#ltPanel').classList.toggle('show'); });
+/* ---------- 言語の切り替え：画面の文字（あとから書き換わる文字も含む）を TR() で置き換える ---------- */
+const I18N = { orig: new WeakMap(), skip: el => el && el.closest && el.closest('#credList,#dev,#devInfo,script,style,svg') };
+function trNode(n) {
+  if (n.nodeType !== 3) return; if (I18N.skip(n.parentElement)) return;
+  if (n.__tr !== undefined && n.nodeValue === n.__tr) return;   // 自分で書き換えた直後
+  const o = n.nodeValue; I18N.orig.set(n, o); const out = TR(o);
+  n.__tr = out; if (out !== o) n.nodeValue = out;
+}
+function trTree(root) {
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) {
+    if (LANG === 'ja') { const o = I18N.orig.get(n); if (o !== undefined && n.nodeValue === n.__tr && o !== n.nodeValue) { n.__tr = o; n.nodeValue = o; } continue; }
+    if (n.__tr !== undefined && n.nodeValue === n.__tr) { const o = I18N.orig.get(n); if (o !== undefined) { const out = TR(o); if (out !== n.nodeValue) { n.__tr = out; n.nodeValue = out; } } continue; }
+    trNode(n);
+  }
+  for (const el of root.querySelectorAll('[placeholder],[aria-label]')) for (const at of ['placeholder', 'aria-label']) {
+    if (!el.hasAttribute(at)) continue; const key = 'data-ja-' + at; if (!el.hasAttribute(key)) el.setAttribute(key, el.getAttribute(at));
+    el.setAttribute(at, LANG === 'en' ? TR(el.getAttribute(key)) : el.getAttribute(key));
+  }
+}
+function setLang(l) { LANG = l === 'en' ? 'en' : 'ja'; try { localStorage.setItem('yt_lang', LANG); } catch (e) { } document.documentElement.lang = LANG; trTree(document.body); }
+new MutationObserver(ms => { if (LANG !== 'en') return; for (const m of ms) { if (m.type === 'characterData') trNode(m.target); else for (const a of m.addedNodes) { if (a.nodeType === 3) trNode(a); else if (a.nodeType === 1 && !I18N.skip(a)) trTree(a); } } })
+  .observe(document.body, { childList: true, subtree: true, characterData: true });
+if (LANG === 'en') setLang('en');
+
 </script>
 </body>
 </html>
