@@ -172,7 +172,12 @@
   .brightBtns button{flex:1;font-size:14px;font-weight:700;padding:12px;border-radius:12px;border:1px solid #3a3a3e;background:#18181b;color:#fff}
   .brightBtns button.pri{background:#e9e4da;color:#111}
   .go{font-size:17px;font-weight:700;padding:15px 40px;border-radius:30px;border:none;background:#e9e4da;color:#111;letter-spacing:.1em}
-  .howto{font-size:12px;color:#8a867f;line-height:1.85;margin-top:20px;max-width:340px;text-align:left}
+  .howto{font-size:12.5px;color:#f2efe8;line-height:1.85;margin-top:22px;max-width:340px;text-align:left}
+  .howto .hh{color:#ff3b30;font-weight:800;letter-spacing:.25em;font-size:14px;margin-bottom:4px}
+  .howto em{font-style:normal;color:#ff3b30;font-weight:700}
+  #credClose{margin-top:20px;font-size:15px;font-weight:700;padding:12px 36px;border-radius:24px;border:none;background:#e9e4da;color:#111}
+  #credList .site{font-size:15px;padding:6px 0;border-bottom:1px solid #222}
+  #credList .need{font-size:11px;color:#9a958c;margin-top:14px;line-height:1.7}
   #result{justify-content:flex-start}
   #result h2{font-family:"Shippori Mincho",serif;font-size:15px;font-weight:600;letter-spacing:.2em;margin:2px 0 2px;color:#cfcac0}
   #result .meta{font-size:11px;color:#8a867f;margin-bottom:6px;text-align:center}
@@ -261,13 +266,7 @@
   </div>
   <button class="go" id="goBtn">旧校舎に入る</button>
   <button class="credBtn" data-cred>使用素材・クレジット</button>
-  <div class="howto">
-    ・画面の左下を押すと移動スティック。右側をなぞると見回す<br>
-    ・倍率ボタン（.5／1／2／3）で画角を切り替え<br>
-    ・赤いボタンで録画開始／停止。持ち帰れるのは通算120秒（画面上の「残容量」で残りが分かります）<br>
-    ・電池は録画中に早く減ります。玄関まで自分の足で戻ること<br>
-    ・イヤホン推奨
-  </div>
+  <div class="howto" id="howto"></div>
 </div>
 
 <div id="settings">
@@ -277,7 +276,6 @@
       <div class="opt" id="setGyro"><div>ジャイロで見回す<small>スマホの向きで視点が動きます</small></div><div class="sw"></div></div>
       <div class="opt" id="setBright"><div>明るさ<small>入口の景色を見ながら合わせます</small></div><div class="val"><span id="brightVal">0</span> ›</div></div>
       <div class="opt col" id="setMicRow"><div class="optTop" id="setMic"><div>実況マイク<small>録画中の自分の声も動画に入ります</small></div><div class="sw"></div></div><div id="micMeter"><div id="micMeterFill"></div></div><div id="micNote"></div></div>
-    <div class="opt"><div>効果音の大きさ<small>遠くの物音や笑い声が聞こえにくい時は右へ</small></div><input id="fxVol" type="range" min="0.4" max="2.5" step="0.1" value="1" style="width:42%"></div>
       <div class="opt"><div>言語 / Language</div><div class="seg" id="langSeg"><button data-lang="ja">日本語</button><button data-lang="en">English</button></div></div>
       <button class="setLink" id="setHome">スタート画面にもどる</button>
       <button class="go" id="setClose">ゲームにもどる</button>
@@ -750,7 +748,7 @@ const EN = {
   '洗面器に溜まっていく赤': 'Red filling the sink', '画面を覆う顔': 'A face covering the screen', '画面端の頬と髪': 'A cheek and hair at the edge of the frame', '目が合って飛び込む顔': 'A face lunging the moment your eyes met',
   '真っ赤に染まった蛍光灯': 'Lights turned blood red', '窓にドンと付いた赤い手形': 'A red handprint slammed on the window', '窓の外を頭から落ちていく女子高生': 'A schoolgirl falling head-first past the window',
   '窓一面を埋めていく手形': 'Handprints covering the window', '窓辺から一斉に飛び立つカラス': 'Crows taking off from the windowsill', '肖像画のベートーベンがまばたきした': 'Beethoven’s portrait blinked',
-  '脚を広げて落ちてくる蜘蛛女の全身': 'The Spider Woman dropping with legs spread', '街灯の下に立つ人影': 'A figure under the streetlight', '襲われる瞬間': 'The moment of the attack',
+  '脚を広げて落ちてくる蜘蛛女の全身': 'The Spider Woman dropping with legs spread', '街灯の下に立つ人影': 'A figure under the streetlight', '襲われる瞬間': 'The moment of the attack', '生きて帰る': 'Made it out alive',
   '角から目の前まで迫った顔': 'A face rushing at you from the corner', '角の先に立っていた顔': 'A face waiting around the corner', '誰もいないピアノの蓋が叩きつけられた': 'The empty piano’s lid slammed shut',
   '誰もいない椅子の座面が回った': 'An empty chair’s seat spun', '近づいてくる濡れた足跡': 'Wet footprints approaching', '追われながら回し続けた': 'Kept rolling while being chased',
   '通路の椅子がひとりでに動いた': 'A chair in the aisle moved by itself', '鏡の中だけに映る背後の女子高生': 'A schoolgirl behind you, only in the mirror', '鏡の中で勝手に閉まる戸': 'A door closing by itself in the mirror',
@@ -1853,7 +1851,7 @@ function sgPlaceHead(p, faceTo = camera.position) {   // 顔の位置がpにな�
    音（合成。校舎の音・足音・声）
    ========================================================= */
 const A = { ctx: null, distRef: 2.2, distRoll: 0.6, fxVol: 1.0, FX_BASE: 2.2 };   // 効果音の基準の大きさ（スライダー1.0のとき）
-try { const v = parseFloat(localStorage.getItem('gekou_fxVol')); if (v > 0) A.fxVol = v; } catch (e) { }
+// 効果音の大きさの設定は廃止（2026-11-12）。以前保存した値も使わない
 function initAudio() {
   const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
   const ctx = A.ctx = new AC();
@@ -5773,6 +5771,7 @@ function tick(now) {
   player.stepAcc += moved; player.bob += moved * 9.5;
   if (player.stepAcc > CONFIG.stepLen) { player.stepAcc = 0; SND.stepMine(); for (const f of stepListeners) f(); }
   if (player.z < -15 || player.x > 10 || player.lv === 1) world.visitedDeep = true;
+  if (!world.leftDoor && Math.hypot(player.x - 0, player.z - 3.4) > 3) world.leftDoor = true;   // 玄関から3m以上歩いた
   // 手持ちの揺れ
   shakeT += dt;
   const walkAmt = clamp(player.speed / CONFIG.walkSpeed, 0, 1);
@@ -5843,7 +5842,7 @@ function tick(now) {
     updateSuzumushi(dt);
   }
   // 玄関
-  const atDoor = player.z > 4.1 && world.visitedDeep && !player.hidden && !world.capture;
+  const atDoor = player.z > 4.1 && world.leftDoor && rec.time > 0.3 && !player.hidden && !world.capture;   // 2026-11-12 帰れる条件：3m歩いた＋少しでも録画した
   $('#exitBtn').classList.toggle('show', atDoor && !world.dark && world.outro === 0);
   if (world.dark && player.z > 4.6) escape();
   if (world.outro > 1.9) escape();
@@ -5933,6 +5932,7 @@ function caught() { CAP.start(); }
 function escape() {
   if (world.state !== 'play') return;
   world.state = 'end'; if (DIR.active) DIR.end(DIR.active);
+  award('alive', '生きて帰る', 10);   // 帰還ボーナス
   if (rec.active) stopRec('end');
   $('#hud').classList.add('off'); postMat.uniforms.black.value = 1; render();
   if (A.ctx) A.master.gain.setTargetAtTime(0.0, A.ctx.currentTime, 0.5);
@@ -5997,7 +5997,7 @@ function seekTo(t) {
 }
 function durOf(url) { return new Promise(r => { const e = document.createElement('video'); e.preload = 'metadata'; e.onloadedmetadata = () => r(isFinite(e.duration) ? e.duration : 0); e.onerror = () => r(0); e.src = url; }); }
 // 音楽室のピアノ（月の光）の録音のクレジット：結果画面と共有に添える
-const MUSIC_CREDIT = '音楽室のピアノ：Claude Debussy「Clair de lune」演奏 Laurens Goedhart（2011） CC BY 3.0 https://creativecommons.org/licenses/by/3.0/ 出典 Wikimedia Commons（45秒を抜粋・モノラル化・MP3化）';
+const MUSIC_CREDIT = '音楽室のピアノ：Clair de lune（Debussy／演奏 Laurens Goedhart・CC BY 3.0）';
 function shareText() {
   const total = evidence.reduce((a, e) => a + e.pts, 0);
   const here = /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host) ? location.origin + location.pathname : 'https://hisimk.github.io/yutuber/';
@@ -6314,7 +6314,13 @@ requestAnimationFrame(tick);
 function showCredits() {
   const esc = s => String(s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const L = $('#credList'); L.innerHTML = '';
-  for (const c of SFX_CREDITS) {
+  // 2026-11-12 サイト名だけを並べる（作者・ライセンスの表記が必要な素材だけ、下に小さく）
+  const sites = ['Freesound', 'BigSoundBank', 'Wikimedia Commons', 'Google Fonts', 'three.js'];
+  for (const n of sites) { const d = document.createElement('div'); d.className = 'site'; d.textContent = n; L.appendChild(d); }
+  const need = document.createElement('div'); need.className = 'need';
+  need.innerHTML = (LANG === 'en' ? 'Attribution (CC BY):<br>' : '表記が必要な素材（CC BY）：<br>') + 'Clair de lune — Claude Debussy / Laurens Goedhart (CC BY 3.0)<br>Scream — FreqMan (CC BY 4.0)';
+  L.appendChild(need);
+  for (const c of (false ? SFX_CREDITS : [])) {
     const d = document.createElement('div'); d.className = 'c';
     d.innerHTML = `<b>${esc(c.title)}</b>${c.author ? ' — ' + esc(c.author) : ''}<br>${c.source ? `<a href="${esc(c.source)}" target="_blank" rel="noopener">${esc(c.source)}</a><br>` : ''}${esc(c.license)}${c.licenseUrl ? ` — <a href="${esc(c.licenseUrl)}" target="_blank" rel="noopener">${esc(c.licenseUrl)}</a>` : ''}${c.edit ? `<br><span class="e">変更：${esc(c.edit)}</span>` : ''}`;
     L.appendChild(d);
@@ -6429,8 +6435,43 @@ function ltBuild() {
 ltBuild();
 for (const el of [$('#ltPanel'), $('#ltBtn')]) for (const ev of ['pointerdown', 'pointermove', 'pointerup', 'touchstart', 'touchmove']) el.addEventListener(ev, e => e.stopPropagation(), { passive: true });
 hudTap($('#ltBtn'), () => { $('#fxPanel').classList.remove('show'); $('#wvPanel').classList.remove('show'); $('#ltPanel').classList.toggle('show'); });
+/* ---------- スタート画面の「あそびかた」：スマホとPCで書き分ける（大事なところだけ赤） ---------- */
+const IS_TOUCH = (window.matchMedia && matchMedia('(pointer: coarse)').matches) || 'ontouchstart' in window;
+function renderHowto() {
+  const J = LANG !== 'en';
+  const head = J ? 'あそびかた' : 'HOW TO PLAY';
+  const L = J ? (IS_TOUCH ? [
+    'さまざまな<em>心霊現象をカメラに収めて</em>ください。',
+    '画面の<em>左下を触ると移動スティック</em>。<em>右側を触ると視点操作</em>。',
+    '<em>赤いボタンで録画開始／停止</em>。録画時間は<em>通算120秒</em>（画面上の「残容量」で残りが分かります）',
+    '電池は録画中に早く減ります。<em>玄関まで自分の足で戻り帰還</em>することもできます。',
+    'イヤホン推奨',
+  ] : [
+    'さまざまな<em>心霊現象をカメラに収めて</em>ください。',
+    '<em>W・A・S・Dキーで移動</em>。<em>マウスでドラッグ</em>（または矢印キー）で視点操作。',
+    '<em>Rキー</em>または<em>赤いボタンで録画開始／停止</em>。録画時間は<em>通算120秒</em>（画面上の「残容量」で残りが分かります）',
+    '<em>Eキー</em>で戸を開ける・隠れるなどの操作。<em>1〜4キー</em>で倍率の切り替え。',
+    '電池は録画中に早く減ります。<em>玄関まで自分の足で戻り帰還</em>することもできます。',
+    'イヤホン推奨',
+  ]) : (IS_TOUCH ? [
+    'Catch all kinds of <em>paranormal phenomena on camera</em>.',
+    'Touch the <em>lower left to move</em>. Touch the <em>right side to look around</em>.',
+    'The <em>red button starts/stops recording</em>. You have <em>120 seconds in total</em> (see “Storage” at the top).',
+    'The battery drains faster while recording. You can also <em>walk back to the entrance to escape</em>.',
+    'Headphones recommended',
+  ] : [
+    'Catch all kinds of <em>paranormal phenomena on camera</em>.',
+    '<em>Move with W/A/S/D</em>. <em>Drag the mouse</em> (or use the arrow keys) to look around.',
+    '<em>R key</em> or the <em>red button starts/stops recording</em>. You have <em>120 seconds in total</em> (see “Storage” at the top).',
+    '<em>E key</em> to open doors, hide, and interact. <em>1–4 keys</em> to change zoom.',
+    'The battery drains faster while recording. You can also <em>walk back to the entrance to escape</em>.',
+    'Headphones recommended',
+  ]);
+  $('#howto').innerHTML = `<div class="hh">${head}</div>` + L.map(t => `<div>・${t}</div>`).join('');
+}
+renderHowto();
 /* ---------- 言語の切り替え：画面の文字（あとから書き換わる文字も含む）を TR() で置き換える ---------- */
-const I18N = { orig: new WeakMap(), skip: el => el && el.closest && el.closest('#credList,#dev,#devInfo,script,style,svg') };
+const I18N = { orig: new WeakMap(), skip: el => el && el.closest && el.closest('#credList,#howto,#dev,#devInfo,script,style,svg') };
 function trNode(n) {
   if (n.nodeType !== 3) return; if (I18N.skip(n.parentElement)) return;
   if (n.__tr !== undefined && n.nodeValue === n.__tr) return;   // 自分で書き換えた直後
@@ -6448,7 +6489,7 @@ function trTree(root) {
     el.setAttribute(at, LANG === 'en' ? TR(el.getAttribute(key)) : el.getAttribute(key));
   }
 }
-function setLang(l) { LANG = l === 'en' ? 'en' : 'ja'; try { localStorage.setItem('yt_lang', LANG); } catch (e) { } document.documentElement.lang = LANG; trTree(document.body); }
+function setLang(l) { LANG = l === 'en' ? 'en' : 'ja'; try { localStorage.setItem('yt_lang', LANG); } catch (e) { } document.documentElement.lang = LANG; renderHowto(); trTree(document.body); }
 new MutationObserver(ms => { if (LANG !== 'en') return; for (const m of ms) { if (m.type === 'characterData') trNode(m.target); else for (const a of m.addedNodes) { if (a.nodeType === 3) trNode(a); else if (a.nodeType === 1 && !I18N.skip(a)) trTree(a); } } })
   .observe(document.body, { childList: true, subtree: true, characterData: true });
 if (LANG === 'en') setLang('en');
