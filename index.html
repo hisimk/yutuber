@@ -1096,7 +1096,7 @@ const EN = {
   // いいねの出来事
   '10回目のノックで開いた個室': 'The stall that opened on the 10th knock', '2階の窓の外を滑っていく女子高生': 'A schoolgirl gliding past a 2F window', 'こちらを向くマイク': 'The microphone turning toward you',
   'こっちを見た？': 'Did it look at me?', 'つま先が戸の奥へ引っ込む': 'Toes pulling back behind the door', 'ひとりでにめくれる本のページ': 'Book pages turning by themselves', 'ひとりでに数センチ開く引き戸': 'A sliding door opening a few inches by itself',
-  'めくった布団の中': 'Under the covers', '逆さまに走る非常口': 'The upside-down exit sign', 'インカメラに追ってくる姿': 'A figure chasing you in the selfie cam', 'インカメラの肩越しの顔': 'A face over your shoulder in the selfie cam',
+  'めくった布団の中': 'Under the covers', '逆さまに走る非常口': 'The upside-down exit sign', 'インカメラに追ってくる姿': 'A figure chasing you in the selfie cam', 'インカメラで逃走中': 'Fleeing on the selfie cam', 'インカメラの肩越しの顔': 'A face over your shoulder in the selfie cam',
   'ガラスに残ったカメラを構えたままの自分': 'Yourself left in the glass, still holding the camera', 'シーツに残る古い血の染み': 'An old bloodstain on the sheets', 'ロッカーの前を横切る赤い布': 'A red cloth passing the locker',
   'レンズ前に割り込む顔': 'A face cutting in front of the lens', 'レンズ前のまつ毛と頬': 'Eyelashes and a cheek right at the lens', 'ズームで迫り来る女子高生の霊': 'The schoolgirl ghost closing in through the zoom',
   '一度だけ点いた赤ランプ': 'The red lamp that lit just once', 'トイレの個室の上から覗く逆さ顔': 'An upside-down face peeking over the stall', '個室のあとに振り向いた目の前の顔': 'The face right there when you turned from the stall',
@@ -7785,7 +7785,7 @@ const COL = {
     ['ceilBleed', '天井に広がる大量の血の染み', 70], ['paCall', '校内放送で呼ばれた自分の名前', 90], ['akuryo', '悪霊退散', 300], ['nurseBack', '保健室の奥に立つ背中', 30], ['nursePeek', '保健室の入口から真横に覗く顔', 80], ['pianoPlay', 'ピアノを弾く', 10], ['clairPlay', '月の光を演奏する', 50], ['requiem', '怪異に捧げるレクイエム', 200], ['nekoPiano', '猫ふんじゃったを弾く', 100], ['twinkle', 'きらきら星を弾く', 100],
     ['curtain', '閉めきった窓で揺れるカーテン', 8], ['rackFall', '突然倒れたコート掛け', 20], ['mannTurn', '首が回る人体模型', 20], ['mannRun', '逃げた人体模型を追え', 50], ['mannBurst', '致命傷で済んだ人体模型', 70], ['mannOrgan', '落ちた臓器', 10], ['mannHide1', '人体模型とかくれんぼ1', 50], ['mannHide2', '人体模型とかくれんぼ2', 50], ['mannHide3', '人体模型とかくれんぼFINAL', 300], ['clockRev', '逆回転し続ける時計の針', 25], ['ball', 'ひとりでに転がってくるボール', 20], ['shoeBlood', '血まみれの下駄箱', 30],
     ['metronome', 'ひとりでに動き出すメトロノーム', 20], ['scaleNeedle', '誰も乗っていない体重計の針', 8], ['lockerSeq', '順番に開いていくロッカーの扉', 25], ['stallFeet', '個室の扉の下に見える足の影', 20], ['wallEyes', '周りの壁に一斉に開く目', 60], ['nakayoshi', 'なかよしスリーショット', 300],
-    ['chaseRec', '追われながらカメラを回す', 4], ['chaseSelfie', 'インカメラに追ってくる姿', 8], ['close', '怪異を超接写', 10], ['fireExit', '非常口からの脱出', 50], ['chaseOut', '追われながら生還', 50], ['alive', 'いのちだいじに', 10],
+    ['chaseRec', '追われながらカメラを回す', 4], ['chaseSelfie', 'インカメラに追ってくる姿', 8], ['selfieRun', 'インカメラで逃走中', 2], ['close', '怪異を超接写', 10], ['fireExit', '非常口からの脱出', 50], ['chaseOut', '追われながら生還', 50], ['alive', 'いのちだいじに', 10],
   ],
   data: null,
   fixPts() { this.LIST = this.LIST.map(([k, n, p]) => [k, n, AW_TABLE[awBase(k)] ? AW_TABLE[awBase(k)][1] : p]); },   // 得点は AW_TABLE に合わせる
@@ -8285,7 +8285,7 @@ const MANN = {
     if (!this.ready) return;
     if (this.mixer) this.mixer.update(dt);
     this.updPieces(dt);
-    if (world.mannRun && world.state === 'play' && ['spot', 'windup', 'dash', 'skid', 'hunt', 'stun', 'turn'].includes(this.st) && rec.active) { awardCont('chaseRec', '追われながらカメラを回す', 2, dt); if (seen(this.head(), { maxD: 20 })) awardCont('mannChase', '追ってくる人体模型', 12, dt, 120); }
+    if (world.mannRun && world.state === 'play' && ['spot', 'windup', 'dash', 'skid', 'hunt', 'stun', 'turn'].includes(this.st) && rec.active) { awardCont('chaseRec', '追われながらカメラを回す', 4, dt); if (seen(this.head(), { maxD: 20 })) awardCont('mannChase', '追ってくる人体模型', 12, dt, 120); }
     if (world.mannRun && world.state === 'play' && ['windup', 'dash', 'skid', 'hunt', 'turn'].includes(this.st)) {   // 2026-11-14 追ってくる間は、首と黒目は常にカメラの方（見つけた瞬間・激突の後の首回しは別）
       const H0 = this.head(), lp = this.root.worldToLocal(camera.position.clone()), hp0 = this.root.worldToLocal(H0.clone());
       this.hy = clamp(Math.atan2(lp.x - hp0.x, lp.z - hp0.z), -1.4, 1.4); this.hp = clamp(-Math.atan2(lp.y - hp0.y, Math.hypot(lp.x - hp0.x, lp.z - hp0.z)), -0.5, 0.5);
@@ -9423,12 +9423,14 @@ function tick(now) {
   CH.update(dt); MANN.update(dt); cvoiceUpdate(dt);
   HIDE.update(dt);
   if (CH.state !== 'off' && rec.active && world.state === 'play' && !CAP.on) {
-    awardCont('chaseRec', '追われながらカメラを回す', 2, dt);   // 2026-11-14 1秒2点
+    awardCont('chaseRec', '追われながらカメラを回す', 4, dt);
     if (world.selfie && SG.root.visible) {   // インカメラで、追ってくる姿を背後に捉えている
       const h = sgHead(V()); const n = h.clone().project(selfCam);
-      if (n.z < 1 && Math.abs(n.x) < 0.95 && Math.abs(n.y) < 0.95 && h.distanceTo(camera.position) < 12) { awardCont('chaseSelfie', 'インカメラに追ってくる姿', 2, dt); if (!CBGM.selfSeen) { CBGM.selfSeen = true; jumpSting('jump_b', 0.9, 4); } }
+      if (n.z < 1 && Math.abs(n.x) < 0.95 && Math.abs(n.y) < 0.95 && h.distanceTo(camera.position) < 12) { awardCont('chaseSelfie', 'インカメラに追ってくる姿', 8, dt); if (!CBGM.selfSeen) { CBGM.selfSeen = true; jumpSting('jump_b', 0.9, 4); } }
     }
   }
+  // 2026-11-14 インカメラで逃走中：誰に追われていても、インカメラで撮りながら逃げている間は1秒2点（追ってくる姿が映っていなくてよい）
+  if (rec.active && world.selfie && world.state === 'play' && !CAP.on && ((CH.state === 'chase' || CH.state === 'hunt') || SP.st === 'chase' || (world.mannRun && ['spot', 'windup', 'dash', 'skid', 'hunt', 'stun', 'turn'].includes(MANN.st)))) awardCont('selfieRun', 'インカメラで逃走中', 2, dt);
   DIR.update(dt); AMB.update(dt); MINOR.update(dt); SELF.update(dt); MD.update(dt); MF.update(dt); POLT.update(dt); STREETFIG.update(dt); EXITF.update(dt); RED.update(dt); MG.update(dt); raspUpdate(dt); cbgmUpdate(dt); chaseHead(dt); DOORS2.update(dt); TAP.update(dt); F2.update(dt); SP.update(dt); TEN.update(dt); GG.update(dt); NEKO.update(dt); ITEM.update(dt); UWA.update(dt); MISS.update(); SPV.update(dt); OFUDA.update(dt); OFUDA.updFall(dt);
   updateDrops(dt);
   animHuman(woman, dt);
