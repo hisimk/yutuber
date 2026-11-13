@@ -2680,7 +2680,7 @@ function stepMineSfx(vol = 1) {
   const wet = ctx.createGain(); wet.gain.value = R.wet; g.connect(wet); wet.connect(A.verb);
   const dl = ctx.createDelay(0.3); dl.delayTime.value = R.d; const dg = ctx.createGain(); dg.gain.value = R.dg; const dlp = ctx.createBiquadFilter(); dlp.type = 'lowpass'; dlp.frequency.value = 3500;
   g.connect(dl); dl.connect(dlp); dlp.connect(dg); dg.connect(A.master);
-  playSfx('player_step_' + (A.stepI + 1), { dest: g, gain: 0.6 * vol * rnd(0.82, 1), rate: rnd(0.96, 1.04), lowpass: 3200 });
+  playSfx('player_step_' + (A.stepI + 1), { dest: g, gain: 0.3 * vol * rnd(0.82, 1), rate: rnd(0.96, 1.04), lowpass: 3200 });   // 2026-11-14 自分の足音は半分の大きさに
   freeLater(4, g, wet, dg);
   return true;
 }
@@ -3519,11 +3519,18 @@ const CH = {
 const HIDE = {
   lk: null, t: 0, ending: null, strongUsed: false, ph: '', outT: 0,
   canEnter() { return !this.lk && world.state === 'play' && !world.capture; },
+  open(lk) {   // 2026-11-14 まず扉を開ける（入るのはもう一度押してから）
+    if (!this.canEnter() || lk.openAt !== undefined) return;
+    lk.openAt = world.t; lk.handle.rotation.x = 0.5; setTimeout(() => { lk.handle.rotation.x = 0; }, 250);
+    if (!playSfx('locker_latch', { pos: lk.center, ref: 0.6, dur: 0.5, gain: 0.8 })) SND.latch(lk.center);
+    if (!playSfx('locker_open', { pos: lk.center, ref: 0.6, gain: 0.7, delay: 0.08 })) SND.creak(lk.center, 0.6, 0.6);
+  },
   enter(lk) {
     if (!this.canEnter()) return;
     if (DIR.active && DIR.active.lk === lk) DIR.end(DIR.active);
     if (DIR.active) DIR.end(DIR.active);
     const seenEntering = CH.state === 'chase' && (world.t - CH.seenAt < 0.4 || CH.sees());   // 入るところを見られたか
+    lk.openAt = undefined;
     this.lk = lk; this.t = 0; this.ph = 'in'; this.ending = null; player.hidden = true; player.saved = { x: player.x, z: player.z };
     lockerInside.position.copy(lkP(lk, 0, 0.9, -0.23)); lockerInside.rotation.y = lk.yaw; lockerInside.visible = true;
     lk.hinge.rotation.y = 0; look.yaw = lk.yaw; look.pitch = 0; if (gyro.got) gyro.ref = gyro.acc;
@@ -8787,10 +8794,15 @@ function updateInteractions() {
     for (const s of stalls) if (s.occupied && distTo(10.0, s.zc) < 1.5 && camFwd().x > 0.5) offerAction('ノックする', () => KN.knock(s));   // 一押しでノック一回（20回目で開く）
     for (const sk of sinks) if (distTo(3.45, sk.z) < 1.2 && camFwd().x < -0.4) offerAction(water.on ? '蛇口を閉める' : '蛇口をひねる', () => toggleWater(sk));
   }
+  for (const l of lockers) if (l.openAt !== undefined && HIDE.lk !== l) { const k = Math.min(1, (world.t - l.openAt) / 0.6); l.hinge.rotation.y = 1.3 * (1 - Math.pow(1 - k, 3)); }   // 開けた扉が開いていく
   if (HIDE.lk) { actFn = null; offerAction('扉を開ける', () => HIDE.exit()); }
   else if (!world.capture && !stairZone(player.x, player.z)) {   // どのロッカーも：扉の正面に立ち、扉の方を向いている時
     const f = camFwd(); const lk = lockers.find(l => { if (l.lv !== player.lv || l.locked || l.noHide) return false; const [a, b] = lkLocal(l, player.x, player.z); return Math.abs(a) < 0.3 && b > 0.1 && b < 1.1 && (f.x * Math.sin(l.yaw) + f.z * Math.cos(l.yaw)) > 0.55; });
-    if (lk && !(DIR.active && DIR.active.id === 'locker' && DIR.active.lk === lk && DIR.active.st !== 'rattle')) offerAction('ロッカーに隠れる', () => HIDE.enter(lk));
+    if (lk && !(DIR.active && DIR.active.id === 'locker' && DIR.active.lk === lk && DIR.active.st !== 'rattle')) {
+      // 2026-11-14 2段階：まず扉を開ける → もう一度押すと入る。開け始めて0.5秒たつまでは、連打しても入れない
+      if (lk.openAt !== undefined || lk.hinge.rotation.y > 0.9) offerAction('ロッカーに隠れる', () => { if (lk.openAt !== undefined && world.t - lk.openAt < 0.5) return; HIDE.enter(lk); });
+      else offerAction('ロッカーを開ける', () => HIDE.open(lk));
+    }
   }
   if (!HIDE.lk) ITEM.offerPick();
   const b = $('#actBtn'); b.classList.toggle('show', !!actFn && !world.dark); b.classList.toggle('key', !!actFn && actKey); if (b.textContent !== actLabel) b.textContent = actLabel;
@@ -9775,7 +9787,7 @@ if (CHK) {
     read.textContent = `速さ 自分1.00／クモ${sm.toFixed(2)}（${SP.st}・${sd}）／逆さ${wm.toFixed(2)}（${CH.state}・${wd}）`;
   }, 300);
 }
-if (TEST) window.__G = { NURSE_X, MANN, look, evidence, RACK, STAIR_LAMPS, PASUB, sgEmissive, camFwd, UISND, KB, MINOR, INV, MIDI, AUDIO_OUT, FRAME, input, STAY, occluders, ray, glassPanes, groundAt, EXITF, exitSigns, sole, runner, drainEye, prints, winFog, stainMesh, bloodDecal, fireDoor, broadcastFog, KNOB: null, render, sgHead, spFacePos, BLEED, NURSE, MICO: mic, OFUDA, SPV, speak, PACALL, award, COL, MISS, TAP, sinks, awarded, PIANO, UWA, selfCam, avatar, ITEM, escape, FL, HANDS, NEKO, stairH, SET, MIC, opt, snapEntrance, makeResultImage, shareText, CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
+if (TEST) window.__G = { lockers, HIDE, NURSE_X, MANN, look, evidence, RACK, STAIR_LAMPS, PASUB, sgEmissive, camFwd, UISND, KB, MINOR, INV, MIDI, AUDIO_OUT, FRAME, input, STAY, occluders, ray, glassPanes, groundAt, EXITF, exitSigns, sole, runner, drainEye, prints, winFog, stainMesh, bloodDecal, fireDoor, broadcastFog, KNOB: null, render, sgHead, spFacePos, BLEED, NURSE, MICO: mic, OFUDA, SPV, speak, PACALL, award, COL, MISS, TAP, sinks, awarded, PIANO, UWA, selfCam, avatar, ITEM, escape, FL, HANDS, NEKO, stairH, SET, MIC, opt, snapEntrance, makeResultImage, shareText, CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
 loadSG().then(() => Promise.all([setupGlbHuman(woman, GHOST_B64), setupGlbHuman(avatar, PROT_B64)])).then(() => loadF2()).then(() => loadSpider()).then(() => NEKO.load()).then(() => UWA.load()).then(() => loadHands()).then(() => { $('#loading').remove(); try { ensureAudio(); if (A.ctx && A.ctx.state === 'running') titleSeKick(); } catch (e) { } });
 requestAnimationFrame(tick);
 // 効果音の大きさ（端末に保存。プレイ中・録画の両方に効く）
