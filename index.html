@@ -298,6 +298,9 @@
   .rowBtns{display:flex;gap:10px;margin-top:10px;width:100%;max-width:360px}
   .rowBtns button{flex:1;font-size:14px;font-weight:700;padding:13px 6px;border-radius:12px;border:1px solid #3a3a3e;background:#18181b;color:#fff}
   .rowBtns button.pri{background:#e9e4da;color:#111;border-color:#e9e4da}
+  .rowBtns button.share{background:#e0332f;border-color:#e0332f;color:#fff;font-size:15px;padding:14px 6px}
+  .rowBtns.sub{margin-top:8px}.rowBtns.sub button{font-size:13px;padding:10px 6px;color:#cfcac0}
+  #shareHint{font-size:11px;color:#8a867f;margin-top:6px;text-align:center;max-width:360px;line-height:1.5}
   #saveMsg{font-size:12px;color:#9a958c;margin-top:8px;text-align:center;min-height:1em;max-width:360px}
   #over .title{font-size:38px}
   .logoTitle{margin:0 0 10px;line-height:0;text-shadow:none}
@@ -527,7 +530,9 @@
   <div id="likeSub">いいね</div>
   <div id="replayWrap"><video id="replay" playsinline controls preload="auto"></video><div id="noVideo">持ち帰った映像はありません</div></div>
   <div id="evWrap"><div id="missed"></div><div id="evHead"><span>いいねの内訳</span><span id="evCount"></span></div><div id="evList"></div></div>
-  <div class="rowBtns"><button id="saveBtn">動画を保存・投稿</button><button id="imgBtn">結果を画像で保存</button></div>
+  <div class="rowBtns"><button class="share" id="shareBtn">動画と結果をシェア</button></div>
+  <div class="rowBtns sub"><button id="saveBtn">動画だけ</button><button id="imgBtn">結果画像だけ</button></div>
+  <div id="shareHint">TikTok・インスタは「動画だけ」がおすすめ（動画の最後に結果が入っています）</div>
   <div class="rowBtns"><button class="pri" id="againBtn">もう一度入る</button></div>
   <div id="saveMsg"></div>
   <div id="musicCred" style="display:none;font-size:11px;color:#9a9a9a;line-height:1.6;margin:6px 4px 0;text-align:center"></div>
@@ -985,7 +990,7 @@ const EN = {
   '最後まで回っていた映像': 'Footage that kept rolling to the end', 'クモ女に捕まった': 'Caught by the Spider Woman', '（暗闇から生還）': ' (survived the dark)',
   'いいね': 'Likes', 'いいねの内訳': 'Likes breakdown', '持ち帰った映像はありません': 'No footage brought back', 'この環境では映像を書き出せませんでした（撮れ高のみ）': 'Video couldn’t be exported here (likes only)',
   '決定的瞬間は映っていなかった。空振りの廊下も記録です。': 'No decisive moment was caught. An empty hallway is a record too.',
-  '動画を保存・投稿': 'Save / post video', '結果を画像で保存': 'Save result image', 'もう一度入る': 'Go back in',
+  '動画を保存・投稿': 'Save / post video', '結果を画像で保存': 'Save result image', '動画と結果をシェア': 'Share video + result', '動画だけ': 'Video only', '結果画像だけ': 'Result image only', '結果をシェア': 'Share result', 'TikTok・インスタは「動画だけ」がおすすめ（動画の最後に結果が入っています）': 'For TikTok / Instagram, use “Video only” (the result is at the end of the video)', '動画を仕上げています…': 'Finishing the video…', '生還': 'Escaped', 'もう一度入る': 'Go back in',
   '保存しました': 'Saved', '保存をやめました': 'Canceled', 'ダウンロードを開始しました': 'Download started', 'この画面では保存できませんでした。': 'Couldn’t save on this screen.',
   'ダウンロードを開始しました。始まらない場合は、再生画面のメニューから保存してください。': 'Download started. If it doesn’t, save from the video player menu.',
   '投稿文（#幽tuber）をコピーしました。アプリで消えていたら貼り付けてください': 'Post text (#幽tuber) copied. Paste it if the app drops it', '画像を作っています…': 'Creating image…',
@@ -2939,7 +2944,68 @@ function stopRec(reason) {
   for (const f of recStopListeners) f(reason);
 }
 function toggleRec() { if (world.state !== 'play' || world.dark) return; rec.active ? stopRec('user') : startRec(); }
+/* ---------- 動画の最後に付ける結果カード（2026-11-13） ----------
+   帰還・やられた時に、録画をもう一度回して約3秒、結果（いいね数・上位の撮れ高・ゲーム名とURL）を映してから止める。
+   SNSに動画だけ投稿されても結果とURLが伝わるように。画面にもそのまま映る（結果画面へのつなぎ）。 */
+const ENDCARD = {
+  dur: 3.5,
+  run() {
+    return new Promise(done => {
+      try {
+        if (!rec.available || rec.time <= 0.3) { done(); return; }
+        let r = rec.recorder;
+        if (rec.mode === 'pause') { if (!r || r.state === 'inactive') { done(); return; } if (r.state === 'paused') r.resume(); }
+        else { if (!rec.segs.length && !r) { done(); return; } if (!r || r.state === 'inactive') { r = rec.recorder = makeRecorder(); r.start(500); } }
+        if (rec.micGain) rec.micGain.gain.setValueAtTime(0, A.ctx.currentTime);
+        const W = canvas.width, H = canvas.height, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+        const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+        const sc = new THREE.Scene(), cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        sc.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false })));
+        const lost = world.state === 'over';
+        const total = evidence.reduce((a, e) => a + e.pts, 0), top = evidence.slice().sort((a, b) => b.pts - a.pts).slice(0, 3);
+        const imgs = {}, ld = Promise.all([loadImg(TITLE_LOGO).then(i => imgs.logo = i).catch(() => { }), loadImg(LIKE_PNG).then(i => imgs.like = i).catch(() => { })]);
+        const noise = Array.from({ length: 900 }, () => [Math.random(), Math.random(), Math.random() * 0.04]);
+        let t0 = 0;
+        const step = now => {
+          if (!t0) t0 = now; const t = (now - t0) / 1000; this.draw(g, W, H, t, { lost, total, top, imgs, noise }); tex.needsUpdate = true;
+          renderer.setRenderTarget(null); renderer.render(sc, cam);
+          if (t < this.dur) { requestAnimationFrame(step); return; }
+          tex.dispose(); done();
+        };
+        Promise.race([ld, new Promise(ok => setTimeout(ok, 400))]).then(() => requestAnimationFrame(step));
+      } catch (e) { done(); }
+    });
+  },
+  draw(g, W, H, t, d) {
+    const u = Math.min(W / 900, H / 1100), cx = W / 2, sans = '-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif', serif = '"Shippori Mincho","Hiragino Mincho ProN",serif';
+    const fade = Math.min(1, t / 0.35), out = Math.min(1, Math.max(0, (this.dur - t) / 0.25));
+    g.globalAlpha = 1; g.fillStyle = '#050506'; g.fillRect(0, 0, W, H);
+    g.globalAlpha = fade * out;
+    for (const [x, y, a] of d.noise) { g.fillStyle = `rgba(255,255,255,${a})`; g.fillRect(x * W, ((y + t * 0.03) % 1) * H, 2 * u, 2 * u); }
+    let y = H * 0.5 - 430 * u;
+    if (d.imgs.logo) { const lw = 520 * u, lh = lw * d.imgs.logo.height / d.imgs.logo.width; g.drawImage(d.imgs.logo, cx - lw / 2, y, lw, lh); y += lh + 80 * u; } else y += 160 * u;
+    g.textAlign = 'center'; g.fillStyle = '#cfcac0'; g.font = `600 ${38 * u}px ${serif}`; g.fillText(TR(d.lost ? '映像はここで途切れている' : '生還'), cx, y); y += 150 * u;
+    const k = Math.min(1, Math.max(0, (t - 0.3) / 1.1)), v = Math.round(d.total * (1 - Math.pow(1 - k, 3)));
+    g.font = `800 ${130 * u}px ${sans}`; const tw = g.measureText(String(v)).width, iw = 120 * u, gap = 26 * u, x0 = cx - (iw + gap + tw) / 2;
+    if (d.imgs.like) g.drawImage(d.imgs.like, x0, y - 108 * u, iw, iw * d.imgs.like.height / d.imgs.like.width);
+    g.textAlign = 'left'; g.fillStyle = d.total >= 1000 ? '#ff9ae6' : d.total >= 500 ? '#ffd34d' : '#fff'; g.fillText(String(v), x0 + iw + gap, y);
+    g.textAlign = 'center'; g.fillStyle = '#9a958c'; g.font = `${26 * u}px ${sans}`; g.fillText(LANG === 'en' ? 'L I K E S' : 'い い ね', cx, y + 56 * u); y += 140 * u;
+    d.top.forEach((e, i) => {
+      const a = Math.min(1, Math.max(0, (t - 1.1 - i * 0.25) / 0.3)); if (!a) return; g.globalAlpha = fade * out * a;
+      const r = rankOf(e); g.fillStyle = RANK_COL[r] || '#fff'; g.font = `italic 800 ${30 * u}px ${sans}`; g.textAlign = 'left'; g.fillText(r, cx - 380 * u, y);
+      g.fillStyle = '#e9e4da'; g.font = `${32 * u}px ${sans}`; let lb = TR(e.label); while (g.measureText(lb).width > 560 * u && lb.length > 4) lb = lb.slice(0, -2) + '…'; g.fillText(lb, cx - 320 * u, y);
+      g.textAlign = 'right'; g.font = `700 ${32 * u}px ${sans}`; g.fillText(String(e.pts), cx + 380 * u, y); y += 60 * u;
+    });
+    g.globalAlpha = fade * out; y = Math.max(y + 40 * u, H * 0.5 + 330 * u);
+    g.textAlign = 'center'; g.fillStyle = '#fff'; g.font = `700 ${40 * u}px ${sans}`; g.fillText('#幽tuber', cx, y);
+    g.fillStyle = '#9a958c'; g.font = `${28 * u}px ${sans}`; g.fillText('hisimk.github.io/yutuber', cx, y + 48 * u);
+    g.globalAlpha = 1;
+  },
+};
 function finalizeRec() {
+  return ENDCARD.run().then(() => finalizeRec0());
+}
+function finalizeRec0() {
   return new Promise(res => {
     const done = () => { if (rec.mode === 'segments') { res(rec.segs.slice()); return; } res(rec.chunks.length ? [new Blob(rec.chunks, { type: rec.recorder?.mimeType || rec.mime })] : []); };
     const r = rec.recorder;
@@ -8597,6 +8663,7 @@ function showResult(blobs) {
   const v = $('#replay');
   if (resultUrls.length) { $('#noVideo').style.display = 'none'; v.style.display = ''; segIdx = 0; v.src = resultUrls[0]; v.load(); v.addEventListener('loadeddata', () => { try { if (v.paused && v.currentTime < 0.05) v.currentTime = 0.05; } catch (e) { } }, { once: true }); $('#saveBtn').disabled = false; }   // 自動では再生しない（最初のコマだけ見せる）。iPhoneでは保存した動画のURLに「#t=」を付けると再生できなくなるので付けない
   else { v.removeAttribute('src'); v.style.display = 'none'; $('#noVideo').style.display = 'flex'; $('#noVideo').textContent = rec.time > 0 && !rec.available ? 'この環境では映像を書き出せませんでした（撮れ高のみ）' : '持ち帰った映像はありません'; $('#saveBtn').disabled = true; }
+  $('#shareBtn').textContent = TR(resultUrls.length ? '動画と結果をシェア' : '結果をシェア'); $('#shareHint').style.display = resultUrls.length ? '' : 'none';
   $('#saveMsg').textContent = ''; $('#result').classList.add('show'); $('#result').scrollTop = 0;
   RBGM.start(); likeCount(total);
   resultImg = null; setTimeout(() => makeResultImage().then(b => { resultImg = b; }).catch(() => { }), 1200);   // 共有ボタンを押した瞬間に渡せるよう、先に作っておく
@@ -8657,19 +8724,36 @@ function shareText() {
   const here = /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host) ? location.origin + location.pathname : 'https://hisimk.github.io/yutuber/';
   return (LANG === 'en' ? `Footage from the old school — ${total} likes` : `旧校舎で撮れた映像　いいね${total}`) + `\n#幽tuber\n${here}` + (F2.clairHeard ? `\n\n${MUSIC_CREDIT}` : '');
 }
+// 2026-11-13 シェアは3つ：動画と結果画像をまとめて（基本）／動画だけ（TikTok・インスタ向け）／結果画像だけ
+function fileStamp() { const st = new Date(); return `${st.getMonth() + 1}${String(st.getDate()).padStart(2, '0')}_${String(st.getHours()).padStart(2, '0')}${String(st.getMinutes()).padStart(2, '0')}`; }
+function videoFiles() {
+  if (!resultBlobs.length) return [];
+  const ext = (resultBlobs[0].type || rec.mime).includes('mp4') ? 'mp4' : 'webm', st = fileStamp(), many = resultBlobs.length > 1;
+  return resultBlobs.map((b, i) => new File([b], `yutuber_${st}${many ? '_' + (i + 1) : ''}.${ext}`, { type: b.type || `video/${ext}` }));
+}
+async function imageFile() { const blob = resultImg || await makeResultImage(); resultImg = blob; return new File([blob], `yutuber_result_${fileStamp()}.png`, { type: 'image/png' }); }
+function copyPost(msg) { const post = shareText(); try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(post).then(() => { if (msg && !msg.textContent) msg.textContent = TR('投稿文（#幽tuber）をコピーしました。アプリで消えていたら貼り付けてください'); }).catch(() => { }); } catch (e) { } return post; }
+// まとめて渡せない環境では、渡せる組み合わせに順に落とす（動画と画像 → 動画だけ → ダウンロード）
+async function shareSet(sets, msg, post) {
+  try { if (window.claude && typeof window.claude.use === 'function') { const dl = await window.claude.use('downloads'); if (dl) { for (const f of sets[0]) await dl.save({ filename: f.name, data: f }); msg.textContent = TR('保存しました'); return; } } }
+  catch (e) { if (e && e.code === 'declined') { msg.textContent = TR('保存をやめました'); return; } }
+  for (const files of sets) {
+    if (!files.length) continue;
+    try { if (navigator.canShare && navigator.canShare({ files })) { await navigator.share({ files, title: '幽tuber', text: post }); return; } }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  try { for (const f of sets[0]) { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); } msg.textContent = TR('ダウンロードを開始しました'); }
+  catch (e) { msg.textContent = TR('この画面では保存できませんでした。'); }
+}
+$('#shareBtn').addEventListener('click', async () => {
+  const msg = $('#saveMsg'); msg.textContent = ''; const post = copyPost(msg);
+  const vids = videoFiles(); let img = null; try { img = await imageFile(); } catch (e) { }
+  const both = img ? [img, ...vids] : vids;   // 2026-11-13 Xでは渡した順と逆に並ぶため、画像を先に渡す（投稿画面では動画が先になる）
+  await shareSet([both, vids, img ? [img] : []].filter(f => f.length), msg, post);
+});
 $('#saveBtn').addEventListener('click', async () => {
-  if (!resultBlobs.length) return; const msg = $('#saveMsg');
-  const ext = (resultBlobs[0].type || rec.mime).includes('mp4') ? 'mp4' : 'webm';
-  const st = new Date(); const name = n => `yutuber_${st.getMonth() + 1}${String(st.getDate()).padStart(2, '0')}_${String(st.getHours()).padStart(2, '0')}${String(st.getMinutes()).padStart(2, '0')}${n ? '_' + n : ''}.${ext}`;
-  try { if (window.claude && typeof window.claude.use === 'function') { const dl = await window.claude.use('downloads'); if (dl) { for (let i = 0; i < resultBlobs.length; i++) await dl.save({ filename: name(resultBlobs.length > 1 ? i + 1 : 0), data: resultBlobs[i] }); msg.textContent = '保存しました'; return; } } }
-  catch (e) { if (e && e.code === 'declined') { msg.textContent = '保存をやめました'; return; } }
-  // SNSに投稿：共有シートからX・Instagram・TikTok・LINEなどを選べる。投稿文（#幽tuber）は自動で添え、念のためコピーもしておく
-  const post = shareText();
-  try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(post).then(() => { msg.textContent = '投稿文（#幽tuber）をコピーしました。アプリで消えていたら貼り付けてください'; }).catch(() => { }); } catch (e) { }
-  try { const files = resultBlobs.map((b, i) => new File([b], name(resultBlobs.length > 1 ? i + 1 : 0), { type: b.type || `video/${ext}` })); if (navigator.canShare && navigator.canShare({ files })) { await navigator.share({ files, title: '幽tuber', text: post }); return; } }
-  catch (e) { if (e && e.name === 'AbortError') return; }
-  try { resultBlobs.forEach((b, i) => { const a = document.createElement('a'); a.href = resultUrls[i]; a.download = name(resultBlobs.length > 1 ? i + 1 : 0); document.body.appendChild(a); a.click(); a.remove(); }); msg.textContent = 'ダウンロードを開始しました。始まらない場合は、再生画面のメニューから保存してください。'; }
-  catch (e) { msg.textContent = 'この画面では保存できませんでした。'; }
+  const vids = videoFiles(); if (!vids.length) return; const msg = $('#saveMsg'); msg.textContent = '';
+  await shareSet([vids], msg, copyPost(msg));
 });
 /* ---------- 結果を画像で保存（いいね数と内訳。SNS用の縦長 1080×1350） ---------- */
 const LIKE_PNG = 'data:image/png;base64,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';
@@ -8705,20 +8789,9 @@ async function makeResultImage() {
   g.textAlign = 'center'; g.fillStyle = '#e9e4da'; g.font = `700 36px ${sans}`; g.fillText('#幽tuber', W / 2, H - 70);
   return new Promise(ok => c.toBlob(ok, 'image/png'));
 }
-async function saveFiles(files, msg, text) {
-  try { if (window.claude && typeof window.claude.use === 'function') { const dl = await window.claude.use('downloads'); if (dl) { for (const f of files) await dl.save({ filename: f.name, data: f }); msg.textContent = '保存しました'; return; } } }
-  catch (e) { if (e && e.code === 'declined') { msg.textContent = '保存をやめました'; return; } }
-  try { if (navigator.canShare && navigator.canShare({ files })) { await navigator.share(Object.assign({ files, title: '幽tuber' }, text ? { text } : {})); return; } }
-  catch (e) { if (e && e.name === 'AbortError') return; }
-  try { for (const f of files) { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); } msg.textContent = 'ダウンロードを開始しました'; }
-  catch (e) { msg.textContent = 'この画面では保存できませんでした。'; }
-}
 $('#imgBtn').addEventListener('click', async () => {
-  const msg = $('#saveMsg'); msg.textContent = '画像を作っています…';
-  const post = shareText(); try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(post).catch(() => { }); } catch (e) { }
-  const blob = resultImg || await makeResultImage(); const st = new Date();
-  const f = new File([blob], `yutuber_result_${st.getMonth() + 1}${String(st.getDate()).padStart(2, '0')}_${String(st.getHours()).padStart(2, '0')}${String(st.getMinutes()).padStart(2, '0')}.png`, { type: 'image/png' });
-  msg.textContent = ''; await saveFiles([f], msg, post);
+  const msg = $('#saveMsg'); msg.textContent = TR('画像を作っています…'); const f = await imageFile(); msg.textContent = '';
+  await shareSet([[f]], msg, copyPost(msg));
 });
 $('#againBtn').addEventListener('click', () => location.reload());
 $('#overBtn').addEventListener('click', () => location.reload());
@@ -8749,7 +8822,8 @@ const SET = {
       this.wasRec = rec.active; if (rec.active) stopRec('pause');
       if (A.ctx) { this.masterV = A.master.gain.value || 0.9; A.master.gain.cancelScheduledValues(A.ctx.currentTime); A.master.gain.setTargetAtTime(0, A.ctx.currentTime, 0.05); }
     }
-    $('#setLang').style.display = this.paused ? 'none' : '';   // 言語はスタート画面の設定でだけ変えられる
+    $('#setLang').style.display = this.paused ? 'none' : '';
+    $('#setTut').style.display = this.paused ? 'none' : '';   // 2026-11-13 遊び方はスタート画面の設定からだけ（ゲーム中の設定には出さない）   // 言語はスタート画面の設定でだけ変えられる
     $('#setPaused').style.display = this.paused ? '' : 'none'; $('#setHome').style.display = this.paused ? '' : 'none';
     $('#setClose').textContent = TR(this.paused ? 'ゲームにもどる' : '閉じる');
     this.homeArm = 0; $('#setHome').classList.remove('warn'); $('#setHome').textContent = TR('スタート画面にもどる');
