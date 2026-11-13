@@ -123,6 +123,7 @@
   #fxPanel .fxBtns{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
   #fxPanel button{height:32px;padding:0 14px;border-radius:16px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff}
   #fxPanel button.pri{background:#ffcc00;color:#000;border:none}
+  .homeHint{display:none;margin-top:8px;font-size:11px;color:#7f7b74;text-align:center;line-height:1.5}
   .credBtn{margin-top:10px;background:none;border:none;color:#9a9a9a;font-size:12px;text-decoration:underline}
   #credits{z-index:30;justify-content:flex-start;overflow-y:auto}
   #credList{width:100%;max-width:520px;font-size:12px;line-height:1.55;color:#cfcfcf;text-align:left;margin:14px 0}
@@ -476,6 +477,7 @@
   <button class="go" id="goBtn">旧校舎に入る</button>
   <button class="colBtn" id="colBtn">撮れ高コレクション</button>
   <button class="credBtn" data-cred>使用素材・クレジット</button>
+  <div class="homeHint" id="homeHint">ホーム画面に追加して遊ぶと、記録が消えにくくなります</div>
   <div class="howto" id="howto"></div>
 </div>
 
@@ -990,7 +992,7 @@ const EN = {
   '最後まで回っていた映像': 'Footage that kept rolling to the end', 'クモ女に捕まった': 'Caught by the Spider Woman', '（暗闇から生還）': ' (survived the dark)',
   'いいね': 'Likes', 'いいねの内訳': 'Likes breakdown', '持ち帰った映像はありません': 'No footage brought back', 'この環境では映像を書き出せませんでした（撮れ高のみ）': 'Video couldn’t be exported here (likes only)',
   '決定的瞬間は映っていなかった。空振りの廊下も記録です。': 'No decisive moment was caught. An empty hallway is a record too.',
-  '動画を保存・投稿': 'Save / post video', '結果を画像で保存': 'Save result image', '動画と結果をシェア': 'Share video + result', '動画だけ': 'Video only', '結果画像だけ': 'Result image only', '結果をシェア': 'Share result', 'TikTok・インスタは「動画だけ」がおすすめ（動画の最後に結果が入っています）': 'For TikTok / Instagram, use “Video only” (the result is at the end of the video)', '動画を仕上げています…': 'Finishing the video…', '生還': 'Escaped', 'もう一度入る': 'Go back in',
+  '動画を保存・投稿': 'Save / post video', '結果を画像で保存': 'Save result image', '動画と結果をシェア': 'Share video + result', '動画だけ': 'Video only', '結果画像だけ': 'Result image only', '結果をシェア': 'Share result', 'ホーム画面に追加して遊ぶと、記録が消えにくくなります': 'Add to Home Screen to keep your records safer', 'TikTok・インスタは「動画だけ」がおすすめ（動画の最後に結果が入っています）': 'For TikTok / Instagram, use “Video only” (the result is at the end of the video)', '動画を仕上げています…': 'Finishing the video…', '生還': 'Escaped', 'もう一度入る': 'Go back in',
   '保存しました': 'Saved', '保存をやめました': 'Canceled', 'ダウンロードを開始しました': 'Download started', 'この画面では保存できませんでした。': 'Couldn’t save on this screen.',
   'ダウンロードを開始しました。始まらない場合は、再生画面のメニューから保存してください。': 'Download started. If it doesn’t, save from the video player menu.',
   '投稿文（#幽tuber）をコピーしました。アプリで消えていたら貼り付けてください': 'Post text (#幽tuber) copied. Paste it if the app drops it', '画像を作っています…': 'Creating image…',
@@ -9156,6 +9158,13 @@ function titleSeStop(fade = 0.35) {
 function titleSeKick() { if (world.state === 'title' && !TSE.src && !TSE.timer) titleSePlay(); }
 for (const ev of ['touchend', 'click']) $('#start').addEventListener(ev, e => { if (world.state !== 'title' || e.target.closest('#goBtn')) return; ensureAudio(); titleSeKick(); }, { passive: true });
 document.addEventListener('visibilitychange', () => { if (document.hidden) return; if (world.state === 'title' && A.ctx) { ensureAudio(); titleSeKick(); } });
+/* 2026-11-13 記録（撮れ高コレクションなど）が消えにくいように
+   ・ブラウザに「この端末の記録を消さないで」と頼む（聞き入れるかはブラウザしだい）
+   ・iPhone／iPadのブラウザで開いている時だけ、ホーム画面に追加すると消えにくいと案内する（7日開かないと消える仕組みの対象外になる） */
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persisted().then(p => { if (!p) navigator.storage.persist().catch(() => { }); }).catch(() => { }); } catch (e) { }
+{ const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const home = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if (ios && !home) $('#homeHint').style.display = 'block'; }
 $('#goBtn').addEventListener('click', () => {
   PACALL.unlock();   // 校内放送の読み上げを、iPhoneでも鳴らせるように
   if (opt.gyro) enableGyro();
