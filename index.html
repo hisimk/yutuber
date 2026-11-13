@@ -8729,7 +8729,7 @@ async function shareSet(sets, msg, post) {
 $('#shareBtn').addEventListener('click', async () => {
   const msg = $('#saveMsg'); msg.textContent = ''; const post = copyPost(msg);
   const vids = videoFiles(); let img = null; try { img = await imageFile(); } catch (e) { }
-  const both = img ? [...vids, img] : vids;
+  const both = img ? [img, ...vids] : vids;   // 2026-11-13 Xでは渡した順と逆に並ぶため、画像を先に渡す（投稿画面では動画が先になる）
   await shareSet([both, vids, img ? [img] : []].filter(f => f.length), msg, post);
 });
 $('#saveBtn').addEventListener('click', async () => {
