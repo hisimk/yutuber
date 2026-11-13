@@ -7769,10 +7769,13 @@ const COL = {
     this.data = d && d.items ? d : { v: 1, items: {}, runs: 0 }; return this.data;
   },
   save() { try { localStorage.setItem(this.KEY, JSON.stringify(this.data)); return true; } catch (e) { return false; } },
-  // 帰還のたびに記録。初めて撮れた名前の一覧を返す（リザルトのNEW表示用）
+  // リザルトのたびに記録。初めて撮れた名前の一覧を返す（リザルトのNEW表示用）
+  // 2026-11-14 撮影回数：帰れなくても（捕まっても）撮影していれば1回。同じ周のリザルトを開き直しても数えない
   record(evs) {
     const d = this.load(); const fresh = new Set(); const today = new Date().toISOString().slice(0, 10);
-    d.runs = (d.runs || 0) + 1;
+    if (world.runId && d.lastRun === world.runId) return this.lastFresh || fresh;
+    d.lastRun = world.runId; this.lastFresh = fresh;
+    if (rec.time > 0.3 || evs.length) d.runs = (d.runs || 0) + 1;
     for (const e of evs) {
       if (!(e.pts > 0)) continue; const name = this.base(e.label);
       if (!this.LIST.some(x => x[1] === name)) continue;
@@ -7796,7 +7799,7 @@ const COL = {
     rows.sort((a, b) => order[a.r] - order[b.r] || b.pts - a.pts);
     const got = rows.filter(x => x.it && x.it.n).length;
     $('#colCnt').innerHTML = `<b>${got}</b> / ${rows.length} 種類`; $('#colFill').style.width = (got / rows.length * 100).toFixed(1) + '%';
-    $('#colNote').textContent = `これまでの帰還 ${d.runs || 0}回`;
+    $('#colNote').textContent = `${TR('これまでの撮影回数')} ${d.runs || 0}${TR('回')}`;
     const ALL = /[?&]colall\b/.test(location.search);   // 確認用：?colall で、まだ撮れていないものも名前を全部見せる
     if (ALL) $('#colNote').textContent += '　（確認用：すべての名前を表示中）';
     const list = $('#colList'); list.innerHTML = '';
