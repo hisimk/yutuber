@@ -1084,7 +1084,7 @@ const EN = {
   '怪奇現象を': 'Capture the paranormal', 'カメラに収めろ！': 'on camera!', '心霊動画の撮れ高を': 'Capture the ghostly money shot',
   // 結果
   '決定的瞬間は映っていなかった': 'No decisive moment was caught',
-  '帰還': 'Escaped', '映像はここで途切れている': 'The footage ends here', '回収された映像': 'Recovered footage', 'カメラが壊れる直前まで': 'Until just before the camera broke',
+  '帰還': 'Escaped', 'スマホだけ回収': 'Only the phone was recovered', '回収された映像': 'Recovered footage', 'カメラが壊れる直前まで': 'Until just before the camera broke',
   '最後まで回っていた映像': 'Footage that kept rolling to the end', 'クモ女に捕まった': 'Caught by the Spider Woman', '（暗闇から生還）': ' (survived the dark)',
   'いいね': 'Likes', 'いいねの内訳': 'Likes breakdown', '持ち帰った映像はありません': 'No footage brought back', 'この環境では映像を書き出せませんでした（撮れ高のみ）': 'Video couldn’t be exported here (likes only)',
   '決定的瞬間は映っていなかった。空振りの廊下も記録です。': 'No decisive moment was caught. An empty hallway is a record too.',
@@ -1094,7 +1094,7 @@ const EN = {
   '投稿文（#幽tuber）をコピーしました。アプリで消えていたら貼り付けてください': 'Post text (#幽tuber) copied. Paste it if the app drops it', '画像を作っています…': 'Creating image…',
   '捕まった': 'Caught', '追いつかれた。カメラはそこで壊れた。': 'It caught up. The camera broke right there.', '撮った映像は持ち帰れなかった。': 'None of your footage made it back.', '残った映像を見る': 'Watch what remains',
   // いいねの出来事
-  '20回目のノックで開いた個室': 'The stall that opened on the 20th knock', '2階の窓の外を滑っていく女子高生': 'A schoolgirl gliding past a 2F window', 'こちらを向くマイク': 'The microphone turning toward you',
+  '10回目のノックで開いた個室': 'The stall that opened on the 10th knock', '2階の窓の外を滑っていく女子高生': 'A schoolgirl gliding past a 2F window', 'こちらを向くマイク': 'The microphone turning toward you',
   'こっちを見た？': 'Did it look at me?', 'つま先が戸の奥へ引っ込む': 'Toes pulling back behind the door', 'ひとりでにめくれる本のページ': 'Book pages turning by themselves', 'ひとりでに数センチ開く引き戸': 'A sliding door opening a few inches by itself',
   'めくった布団の中': 'Under the covers', '逆さまに走る非常口': 'The upside-down exit sign', 'インカメラに追ってくる姿': 'A figure chasing you in the selfie cam', 'インカメラの肩越しの顔': 'A face over your shoulder in the selfie cam',
   'ガラスに残ったカメラを構えたままの自分': 'Yourself left in the glass, still holding the camera', 'シーツに残る古い血の染み': 'An old bloodstain on the sheets', 'ロッカーの前を横切る赤い布': 'A red cloth passing the locker',
@@ -2494,6 +2494,11 @@ const SND = {
     const bp = A.ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1100; bp.Q.value = 6; const g = A.ctx.createGain(); envG(g, t, 0.08, 0.35 * vol, dur);
     const am = A.ctx.createOscillator(); am.frequency.value = 23; const amg = A.ctx.createGain(); amg.gain.value = 0.2 * vol; am.connect(amg); amg.connect(g.gain);
     o.connect(bp); bp.connect(g); g.connect(p); o.start(t); am.start(t); o.stop(t + dur + 0.1); am.stop(t + dur + 0.1); },
+  squeak(pos, vol = 1) {   // 上履きのゴム底が床で鳴る「キュッ」
+    if (!A.ctx) return; const p = panAt(pos, 1.0, 1.0), t = A.ctx.currentTime;
+    tn(p, { t, f0: 2100, f1: 3300, dur: 0.07, peak: 0.32 * vol }); tn(p, { t: t + 0.065, f0: 3300, f1: 2500, dur: 0.11, peak: 0.26 * vol });
+    nb(p, { t, f: 3000, q: 5, peak: 0.12 * vol, d: 0.16 });
+  },
   jiggle(pos, vol = 1) {   // 鍵のかかった取っ手を2回ひねる「ガチャガチャっ」
     if (!A.ctx) return; const p = panAt(pos, 0.8, 1.2), t0 = A.ctx.currentTime;
     for (const [dt, k] of [[0, 1], [0.055, 0.7], [0.13, 0.85], [0.3, 1], [0.355, 0.75], [0.44, 1.1]]) {
@@ -3193,7 +3198,7 @@ const ENDCARD = {
     for (const [x, y, a] of d.noise) { g.fillStyle = `rgba(255,255,255,${a})`; g.fillRect(x * W, ((y + t * 0.03) % 1) * H, 2 * u, 2 * u); }
     let y = H * 0.5 - 430 * u;
     if (d.imgs.logo) { const lw = 520 * u, lh = lw * d.imgs.logo.height / d.imgs.logo.width; g.drawImage(d.imgs.logo, cx - lw / 2, y, lw, lh); y += lh + 80 * u; } else y += 160 * u;
-    g.textAlign = 'center'; g.fillStyle = '#cfcac0'; g.font = `600 ${38 * u}px ${serif}`; g.fillText(TR(d.lost ? '映像はここで途切れている' : '生還'), cx, y); y += 150 * u;
+    g.textAlign = 'center'; g.fillStyle = '#cfcac0'; g.font = `600 ${38 * u}px ${serif}`; g.fillText(TR(d.lost ? 'スマホだけ回収' : '生還'), cx, y); y += 150 * u;
     const k = Math.min(1, Math.max(0, (t - 0.3) / 1.1)), v = Math.round(d.total * (1 - Math.pow(1 - k, 3)));
     g.font = `800 ${130 * u}px ${sans}`; const tw = g.measureText(String(v)).width, iw = 120 * u, gap = 26 * u, x0 = cx - (iw + gap + tw) / 2;
     if (d.imgs.like) g.drawImage(d.imgs.like, x0, y - 108 * u, iw, iw * d.imgs.like.height / d.imgs.like.width);
@@ -3214,7 +3219,7 @@ const ENDCARD = {
 function finalizeRec() {
   if (ENDCARD.will()) {   // 2026-11-14 結果画面を先に出す（結果カードは画面の裏で録画し、保存する動画にだけ入る）
     showResult(null);
-    if (world.state === 'over') { $('#resTitle').textContent = TR('映像はここで途切れている'); setResMeta('最後まで回っていた映像'); }
+    if (world.state === 'over') { $('#resTitle').textContent = TR('スマホだけ回収'); setResMeta('最後まで回っていた映像'); }
     resEarly = true;
   }
   return ENDCARD.run().then(() => finalizeRec0());
@@ -3477,6 +3482,7 @@ function doorStall(who, d) {   // who.doorT に残り秒数を入れる。0に�
   who.doorT = CONFIG.doorStall; who.door = d;
   const h = DOORS2.hole(d); SND.rattle(h.clone(), 1.1); setTimeout(() => SND.rattle && SND.rattle(h.clone(), 0.9), 520);
 }
+function doorStallBusy(who) { return who.doorT > 0; }
 function doorStallTick(who, dt) {
   if (!(who.doorT > 0)) return false;
   who.doorT -= dt; if (who.doorT <= 0 && who.door) { DOORS2.move(who.door, 1); who.door = null; }
@@ -3544,6 +3550,7 @@ const WD = {
     if (CH.state === 'off' && !this.scripted) {
       if (this.wait > 0) { this.wait -= dt; if (this.wait <= 0) this.pickDest(); }
       else if (this.stepAlong(dt, CONFIG.wanderSpeed)) this.wait = chance(0.5) ? rnd(2, 6) : 0.01;
+      stuckWatch(this, this.pos, this.wait <= 0 && !this.freeze && !doorStallBusy(this), dt, () => { const q = nodePos(nearestNode(this.pos.x, this.pos.z, undefined, this.pos.y)); this.pos.set(q.x, q.y || 0, q.z); this.path = []; this.extra = null; this.pickDest(); });
     }
     SG.root.position.set(this.pos.x, this.pos.y, this.pos.z); SG.root.rotation.set(0, this.heading, 0);
     // 見えるかどうか（女の居場所の明かりで決まる）
@@ -3635,10 +3642,12 @@ const CH = {
     const dP = distTo(WD.pos.x, WD.pos.z) + (Math.abs(WD.pos.y - player.y) > 1.0 ? 30 : 0);   /* 別の階なら届かない */
     if (this.state !== 'hunt' && distTo(WD.pos.x, WD.pos.z) > CONFIG.loseDist && Math.abs(WD.pos.y - player.y) < 1.0) { this.stop(); return; }   // 離れすぎると見失う
     this.repath -= dt;
-    if ((los && dP < 8) || (this.state === 'hunt' && dP < 6 && clearLine(V(WD.pos.x, WD.pos.y + 1.5, WD.pos.z)))) { WD.path = []; WD.extra = target.clone(); }
+    const direct = world.t > (this.noDirect || 0) && !segBlocked(WD.pos.x, WD.pos.z, target.x, target.z, WD.pos.y > 1.6 ? 1 : 0);   // 2026-11-14 壁を横切る近道はしない
+    if (direct && ((los && dP < 8) || (this.state === 'hunt' && dP < 6 && clearLine(V(WD.pos.x, WD.pos.y + 1.5, WD.pos.z))))) { WD.path = []; WD.extra = target.clone(); }
     else if (this.repath <= 0) { this.repath = 0.5; WD.goTo(target); }
     if (this.state === 'search') { this.searchT -= dt; WD.heading += dt * 1.6; if (this.searchT <= 0) { this.stop(); return; } }
     else { const arrived = WD.stepAlong(dt, speed); if (arrived && this.state === 'chase' && !los && world.t - this.seenAt > 0.5) { this.state = 'search'; this.searchT = rnd(3, 4.5); } }
+    stuckWatch(this, WD.pos, this.state !== 'search' && !WD.freeze && !doorStallBusy(WD), dt, () => { const q = nodePos(nearestNode(WD.pos.x, WD.pos.z, undefined, WD.pos.y)); WD.pos.set(q.x, q.y || 0, q.z); WD.path = []; WD.extra = null; this.noDirect = world.t + 3; this.repath = 0; });
     // 姿が見えなくても、衣擦れと息で距離がわかる
     this.sndT -= dt;
     if (this.sndT <= 0) { const p = V(WD.pos.x, WD.pos.y + 1.1, WD.pos.z); if (chance(0.65)) SND.rustle(p, 1.3); else SND.scrape(V(WD.pos.x, WD.pos.y + 0.1, WD.pos.z), 0.3, 0.35); this.sndT = clamp(dP * 0.13, 0.35, 1.5); }
@@ -3886,7 +3895,7 @@ const CAP = {
       this.done = 1; world.state = 'over';
       if (rec.active) stopRec('capture');
       $('#hud').classList.add('off');
-      finalizeRec().then(blobs => { capturedBlobs = blobs.filter(b => b && b.size > 0); showResult(capturedBlobs); $('#resTitle').textContent = '映像はここで途切れている'; setResMeta('最後まで回っていた映像'); });
+      finalizeRec().then(blobs => { capturedBlobs = blobs.filter(b => b && b.size > 0); showResult(capturedBlobs); $('#resTitle').textContent = 'スマホだけ回収'; setResMeta('最後まで回っていた映像'); });
     }
   },
 };
@@ -5681,7 +5690,7 @@ F2.reset = function () {
   const r = f2rng('plan'); const P = this.plan = {};
   P.stair = f2force('stairFaceS2') ? 'S2' : f2force('stairFaceS1') ? 'S1' : (r() < 0.5 ? 'S1' : 'S2');
   P.bedClosed = r() < 0.5 ? 0 : 1;
-  P.chair = f2force('chair') || r() < 0.8;
+  P.chair = f2force('chair') || r() < 0.4;   // 2026-11-14 回る頻度を半分に
   P.piano = !f2force('nopiano') && (f2force('piano') || r() < 0.85);
   P.float = f2force('float') || r() < 0.3;   // 2026-11-12 出現率を半分に
   P.vaseRoom = r() < 0.5 ? '2A' : '2B'; P.vaseI = (r() * 16) | 0;
@@ -6283,6 +6292,7 @@ SP.update = function (dt) {
     this.updFloor(dt, fp);
   } else if (this.st === 'chase' || this.st === 'ret') {
     this.updChase(dt, fp);
+    stuckWatch(this, this.pos, true, dt, () => { this.cpath = []; const q = nodePos(nearestNode(this.pos.x, this.pos.z, undefined, this.lv ? LH : 0)); this.pos.x = q.x; this.pos.z = q.z; });
   } else if (this.st === 'drop') {
     const k = clamp(this.t / 0.42, 0, 1), e = k * k * (3 - 2 * k);
     const [P1, Q1] = this.latchPose(); this.wrap.position.lerpVectors(this.P0, P1, e); this.wrap.quaternion.slerpQuaternions(this.Q0, Q1, e); this.wrap.updateMatrixWorld(true);
@@ -6581,7 +6591,7 @@ SP.gameOver = function () {
   world.state = 'over';
   if (rec.active) stopRec('capture');
   $('#hud').classList.add('off'); $('#actBtn').classList.remove('show');
-  finalizeRec().then(blobs => { capturedBlobs = blobs.filter(b => b && b.size > 0); showResult(capturedBlobs); $('#resTitle').textContent = '映像はここで途切れている'; setResMeta('クモ女に捕まった'); });
+  finalizeRec().then(blobs => { capturedBlobs = blobs.filter(b => b && b.size > 0); showResult(capturedBlobs); $('#resTitle').textContent = 'スマホだけ回収'; setResMeta('クモ女に捕まった'); });
 };
 
 /* =========================================================
@@ -6753,10 +6763,10 @@ KN.knock = function (st) {
   this.last = now; st.knockN = (st.knockN || 0) + 1; world.knocks = (world.knocks || 0) + 1;
   const p = V(10.5, 1.1, st.zc);
   playSfx('palm_impact', { pos: p, ref: 0.7, roll: 1.2, rate: 0.7, lowpass: 900, dur: 0.2, gain: 0.95 }) || SND.knock(p, 0.8);   // 19回までは鈍い返り音だけ
-  if (st.knockN >= 20) { this.ph = 'unlock'; this.t = 0; this.stall = st; }
+  if (st.knockN >= 10) { this.ph = 'unlock'; this.t = 0; this.stall = st; }   // 2026-11-14 閉まっている個室は、すべて10回目のノックで開く
 };
 KN.update = function (dt) {
-  if (this.ph === 'idle' || this.ph === 'open') { if (this.ph === 'open') this.keepOut(); return; }
+  if (this.ph === 'idle' || this.ph === 'open') return;   // 2026-11-14 開ききった後も押し出していたため、開いた個室に入れなかった
   const st = this.stall, lp = V(10.55, 1.05, st.zc); this.t += dt;
   if (this.ph === 'unlock' && this.t > 0.35) {   // 錠が大きくガタンと外れる
     this.ph = 'creak'; this.t = 0; playSfx('stall_unlock', { pos: lp, ref: 0.8, gain: 1.3 }) || SND.latch(lp); SND.kata && SND.kata(lp, 0.5);
@@ -6766,7 +6776,7 @@ KN.update = function (dt) {
     this.ph = 'opening'; this.t = 0; playSfx('swivel_creak', { pos: lp, ref: 0.8, gain: 1.0 }) || SND.creak(lp, 0.8, 0.45);
     st.occupied = false; st.slow = 0.9; st.target = -1.45; st.col.on = false; st.opened = true; this.openAt = world.t;
   }
-  if (this.ph === 'creak' || this.ph === 'opening') { if (rec.active && seen(V(10.5, 1.2, st.zc), { maxD: 6 })) award('stall20', '20回目のノックで開いた個室', 60); }
+  if (this.ph === 'creak' || this.ph === 'opening') { if (rec.active && seen(V(10.5, 1.2, st.zc), { maxD: 6 })) award('stall20', '10回目のノックで開いた個室', 60); }
   if (this.ph === 'opening') { this.keepOut(); if (this.t > 3.5) { this.ph = 'open'; st.slow = 0; } }
 };
 KN.keepOut = function () {   // 開いていく扉に体が挟まらないよう、扉の回る範囲から外へ
@@ -7770,7 +7780,7 @@ const COL = {
     ['f2chair', '誰もいない椅子の座面が回った', 30], ['f2fall', '窓の外から落ちる人影', 85], ['f2crows', '窓辺から一斉に飛び立つカラス', 30], ['f2books', '棚から一冊ずつ落ちる本', 35], ['f2pages', 'ひとりでにめくれる本のページ', 30],
     ['f2libChair', '通路の椅子がひとりでに動いた', 25], ['f2piano', '誰もいない部屋で鳴るピアノ', 70], ['f2blink', '肖像画のベートーベンがまばたきした', 45], ['f2float', '2階の窓の外を滑っていく女子高生', 60], ['f2vase', '机から落ちて割れた一輪挿し', 40],
     ['spWarp', '巣に触れたクモ女が別の巣へ移った瞬間', 100], ['spHead', '天井から逆さに見下ろすクモ女の顔', 60], ['spDescend', '糸で降りてくるクモ女', 80], ['spLatch', 'クモ女に襲われる', 180], ['spChase', '天井を這って追ってくるクモ女', 12],
-    ['hpFirst', '窓に増えていく赤い手形', 60], ['boardGlyph', '黒板に走る「タスケテ」', 60], ['stall20', '20回目のノックで開いた個室', 60],
+    ['hpFirst', '窓に増えていく赤い手形', 60], ['boardGlyph', '黒板に走る「タスケテ」', 60], ['stall20', '10回目のノックで開いた個室', 60],
     ['hand', '天井から垂れる灰色の手', 25], ['hand', '壁から生えた灰色の手', 25], ['nekomata', '街灯の猫又', 50], ['uwaSeen', '誰も履いていない上履き', 30], ['uwaWalk', 'インカメに映った、歩く上履き', 200],
     ['ceilBleed', '天井に広がる大量の血の染み', 70], ['paCall', '校内放送で呼ばれた自分の名前', 90], ['akuryo', '悪霊退散', 300], ['nurseBack', '保健室の奥に立つ背中', 30], ['nursePeek', '保健室の入口から真横に覗く顔', 80], ['pianoPlay', 'ピアノを弾く', 10], ['clairPlay', '月の光を演奏する', 50], ['requiem', '怪異に捧げるレクイエム', 200], ['nekoPiano', '猫ふんじゃったを弾く', 100], ['twinkle', 'きらきら星を弾く', 100],
     ['curtain', '閉めきった窓で揺れるカーテン', 8], ['rackFall', '突然倒れたコート掛け', 20], ['mannTurn', '首が回る人体模型', 20], ['mannRun', '逃げた人体模型を追え', 50], ['mannBurst', '致命傷で済んだ人体模型', 70], ['mannOrgan', '落ちた臓器', 10], ['mannHide1', '人体模型とかくれんぼ1', 50], ['mannHide2', '人体模型とかくれんぼ2', 50], ['mannHide3', '人体模型とかくれんぼFINAL', 300], ['clockRev', '逆回転し続ける時計の針', 25], ['ball', 'ひとりでに転がってくるボール', 20], ['shoeBlood', '血まみれの下駄箱', 30],
@@ -7783,7 +7793,9 @@ const COL = {
   load() {
     if (this.data) return this.data;
     let d = null; try { d = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) { }
-    this.data = d && d.items ? d : { v: 1, items: {}, runs: 0 }; return this.data;
+    this.data = d && d.items ? d : { v: 1, items: {}, runs: 0 };
+    { const it = this.data.items, o = '20回目のノックで開いた個室', n = '10回目のノックで開いた個室'; if (it[o]) { if (!it[n]) it[n] = it[o]; else it[n].n += it[o].n; delete it[o]; } }   // 2026-11-14 名前を変えたので引き継ぐ
+    return this.data;
   },
   save() { try { localStorage.setItem(this.KEY, JSON.stringify(this.data)); return true; } catch (e) { return false; } },
   // リザルトのたびに記録。初めて撮れた名前の一覧を返す（リザルトのNEW表示用）
@@ -8053,6 +8065,12 @@ defEvent('nurse', {
        捕まると、両手でスマホを押さえて顔を近づけ、カクカク動きながら叫ぶ。映像はそこで途切れる
    ========================================================= */
 // 2026-11-14 落ちる部品の当たり：壁など（ベッドの上にいる時はベッドは壁にしない）と、下にある台（ベッドの上面）
+// 2026-11-14 敵が壁につっかえて動けなくなった時の救済：動くはずなのに2.5秒ほとんど進んでいなければ、近くの通路に戻して道を選び直す
+function stuckWatch(o, pos, moving, dt, recover) {
+  const s = o._stuck || (o._stuck = { p: pos.clone(), t: 0 });
+  if (!moving || pos.distanceTo(s.p) > 0.3) { s.p.copy(pos); s.t = 0; return; }
+  s.t += dt; if (s.t > 2.5) { s.t = 0; s.p.copy(pos); if (TEST || DEV) console.log('stuck → recover'); recover(); }
+}
 function partBlocked(x0, z0, x1, z1, lv, y) {
   const off = []; for (const c of colliders) if (c.surfY !== undefined && y > c.surfY - 0.05 && c.on) { c.on = false; off.push(c); }
   const r = segBlocked(x0, z0, x1, z1, lv, 0.04); for (const c of off) c.on = true; return r;
@@ -8267,8 +8285,8 @@ const MANN = {
     if (!this.ready) return;
     if (this.mixer) this.mixer.update(dt);
     this.updPieces(dt);
-    if (world.mannRun && world.state === 'play' && ['spot', 'windup', 'dash', 'stun', 'turn'].includes(this.st) && rec.active) { awardCont('chaseRec', '追われながらカメラを回す', 4, dt); if (seen(this.head(), { maxD: 20 })) awardCont('mannChase', '追ってくる人体模型', 12, dt, 120); }
-    if (world.mannRun && world.state === 'play' && ['windup', 'dash', 'turn'].includes(this.st)) {   // 2026-11-14 追ってくる間は、首と黒目は常にカメラの方（見つけた瞬間・激突の後の首回しは別）
+    if (world.mannRun && world.state === 'play' && ['spot', 'windup', 'dash', 'skid', 'hunt', 'stun', 'turn'].includes(this.st) && rec.active) { awardCont('chaseRec', '追われながらカメラを回す', 2, dt); if (seen(this.head(), { maxD: 20 })) awardCont('mannChase', '追ってくる人体模型', 12, dt, 120); }
+    if (world.mannRun && world.state === 'play' && ['windup', 'dash', 'skid', 'hunt', 'turn'].includes(this.st)) {   // 2026-11-14 追ってくる間は、首と黒目は常にカメラの方（見つけた瞬間・激突の後の首回しは別）
       const H0 = this.head(), lp = this.root.worldToLocal(camera.position.clone()), hp0 = this.root.worldToLocal(H0.clone());
       this.hy = clamp(Math.atan2(lp.x - hp0.x, lp.z - hp0.z), -1.4, 1.4); this.hp = clamp(-Math.atan2(lp.y - hp0.y, Math.hypot(lp.x - hp0.x, lp.z - hp0.z)), -0.5, 0.5);
       this.lookHead(); this.root.updateMatrixWorld(true); this.eyesTo(camera.position, 1);
@@ -8277,7 +8295,10 @@ const MANN = {
     if (world.state !== 'play') { this.rattleStop(); return; }
     if (this.rat && A.ctx) { /* 擦れる音は体と一緒に動く：近い時は大きく */ const d = camera.position.distanceTo(this.head()); this.rat.g.gain.setTargetAtTime(clamp(1.4 / Math.max(1, d), 0.05, 0.9), A.ctx.currentTime, 0.1); }
     if (this.st === 'stand' || this.st === 'watch') { this.lookHead(); this.updStare(dt); }
-    if (world.mannRun) return this.updEnemy(dt);
+    if (world.mannRun) {
+      if (['walk', 'hunt'].includes(this.st)) stuckWatch(this, this.pos, true, dt, () => { const n = nearestNode(this.pos.x, this.pos.z, undefined, this.pos.y), q = nodePos(n); this.pos.set(q.x, q.y || 0, q.z); this.apply(); this.path = []; this.rep = 0; if (this.st === 'walk') this.walkTo(pick(WD.dests)); });
+      return this.updEnemy(dt);
+    }
     if (this.runPlan) return this.updRunEvent(dt);
   },
   // ── イベント「走り出す人体模型」
@@ -8503,7 +8524,7 @@ const MANN = {
       const vis = onScreen(H, 1) && clearLine(H), d = Math.hypot(player.x - this.pos.x, player.z - this.pos.z);
       if (vis && d < 14) this.seenOnce = true;
       const go = this.ev === 'far' ? (d > 9 && !vis) : (this.seenOnce && !vis);   // 目を一瞬離した隙に／その場を離れたら
-      if (go && world.t > 8) { this.st = 'walk'; this.col.on = false; this.play('Walk', 1); this.hy = 0; this.hp = 0; this.lookHead(); this.walkTo(pick(WD.dests)); }
+      if (go && world.t > 8) { this.bonked = false; this.st = 'walk'; this.col.on = false; this.play('Walk', 1); this.hy = 0; this.hp = 0; this.lookHead(); this.walkTo(pick(WD.dests)); }
       return;
     }
     const near = Math.hypot(player.x - this.pos.x, player.z - this.pos.z), same = Math.abs(this.pos.y - player.y) < 1.0;
@@ -8542,8 +8563,34 @@ const MANN = {
         this.t += dt; this.speed = Math.min(7.8, this.speed + dt * 12);
         if (!player.hidden) this.face(this.toPlayer(), dt, 0.45);
         const fx = Math.sin(this.heading), fz = Math.cos(this.heading), mv = this.speed * dt;
-        if (segBlocked(this.pos.x, this.pos.z, this.pos.x + fx * (mv + 0.28), this.pos.z + fz * (mv + 0.28), this.lv(), 0.1) || this.t > 8) { this.bonk(); break; }
+        // 2026-11-14 壁にぶつかるのは1回まで。2回目からは、止まれる距離に壁が来たら「キュッ」と急停止して、回り込んで追う
+        const hit = segBlocked(this.pos.x, this.pos.z, this.pos.x + fx * (mv + 0.28), this.pos.z + fz * (mv + 0.28), this.lv(), 0.1);
+        const stopD = this.speed * this.speed / (2 * 22) + 0.35, wallSoon = segBlocked(this.pos.x, this.pos.z, this.pos.x + fx * stopD, this.pos.z + fz * stopD, this.lv(), 0.1);
+        const lineOk = Math.abs(this.pos.y - player.y) < 1.0 && !segBlocked(this.pos.x, this.pos.z, player.x, player.z, this.lv(), 0.1);
+        if (hit && !this.bonked) { this.bonked = true; this.bonk(); break; }
+        if (hit || this.t > 8 || (this.bonked && wallSoon) || (wallSoon && !lineOk && this.t > 0.6)) { this.skid(hit); break; }
         this.pos.x += fx * mv; this.pos.z += fz * mv; this.apply(); this.stepTick(dt, 7.5);
+        break;
+      }
+      case 'skid': {   // 急停止：前へ滑りながら止まる
+        this.t += dt; this.speed = Math.max(0, this.speed - 22 * dt); const fx = Math.sin(this.heading), fz = Math.cos(this.heading), mv = this.speed * dt;
+        if (mv > 0 && !segBlocked(this.pos.x, this.pos.z, this.pos.x + fx * (mv + 0.3), this.pos.z + fz * (mv + 0.3), this.lv(), 0.1)) { this.pos.x += fx * mv; this.pos.z += fz * mv; } else this.speed = 0;
+        this.tilt = -0.22 * Math.min(1, this.speed / 4); this.apply();
+        if (this.speed <= 0 && this.t > 0.25) { this.tilt = 0; this.apply(); this.st = 'hunt'; this.t = 0; this.rep = 0; this.play('Run', 1.8); }
+        break;
+      }
+      case 'hunt': {   // 通路を回り込んで追う。まっすぐ狙える所に出たら、また突進
+        this.t += dt; this.rep -= dt; if (this.rep <= 0) { this.rep = 0.6; this.walkTo(V(player.x, player.y, player.z)); }
+        let move = 3.3 * dt;
+        while (move > 0 && this.path.length) {
+          const t = this.path[0], dx = t.x - this.pos.x, dz = t.z - this.pos.z, d = Math.hypot(dx, dz);
+          if (d > 0.01) this.face(Math.atan2(dx, dz), dt, 6);
+          if (d <= move) { this.pos.copy(t); move -= d; this.path.shift(); } else { const k = move / d; this.pos.x += dx * k; this.pos.z += dz * k; this.pos.y += ((t.y || 0) - this.pos.y) * k; move = 0; }
+        }
+        this.apply(); this.stepTick(dt, 5.5);
+        const lineOk = Math.abs(this.pos.y - player.y) < 1.0 && !segBlocked(this.pos.x, this.pos.z, player.x, player.z, this.lv(), 0.1) && !player.hidden;
+        if (lineOk && this.t > 0.3) { this.st = 'windup'; this.t = 0.9; this.face(this.toPlayer(), 1, 50); this.play('Run', 1.2); }
+        else if (this.t > 12 || player.hidden) { this.st = 'walk'; this.bonked = false; this.rattleStop(); this.play('Walk', 1); this.walkTo(pick(WD.dests)); }
         break;
       }
       case 'stun': {   // 2026-11-14 壁に激突：のけぞって跳ね返り、首が1回転半してから、すごい勢いで追う相手を向く
@@ -8577,7 +8624,11 @@ const MANN = {
     const dd = camera.position.distanceTo(p); if (dd < 9) { world.vhs = Math.max(world.vhs || 0, 0.75 - dd * 0.05); noiseHit(0.35); }
     this.dropOrgan(); this.st = 'stun'; this.t = 0; this.play('Walk', 0); this.speed = 0;
   },
-  spot() { this.st = 'spot'; this.t = 0; this.screamed = false; this.spT = 0; this.play(null); this.restPose(); this.rattleStart(0.7); SND.creak(this.head(), 1.6, 0.6); playSfx('swivel_creak', { pos: this.head(), ref: 0.8, gain: 0.6, rate: 1.7, dur: 1.2 }); },
+  skid(hard) {   // キュッ（上履きが床で鳴る）
+    this.st = 'skid'; this.t = 0; if (hard) this.speed = 0;
+    const p = V(this.pos.x, this.floorY() + 0.05, this.pos.z); SND.squeak(p, 1.2); setTimeout(() => SND.squeak(p, 0.7), 110);
+  },
+  spot() { this.st = 'spot'; this.bonked = false; this.t = 0; this.screamed = false; this.spT = 0; this.play(null); this.restPose(); this.rattleStart(0.7); SND.creak(this.head(), 1.6, 0.6); playSfx('swivel_creak', { pos: this.head(), ref: 0.8, gain: 0.6, rate: 1.7, dur: 1.2 }); },
   // ── 捕まった：両手でスマホを押さえ、顔を近づけてカクカク動きながら叫ぶ。映像はそこで途切れる
   capture() {
     if (this.cap || world.state !== 'play') return; scareZoom1();
@@ -8610,7 +8661,7 @@ const MANN = {
       C.done = 1; world.state = 'over';
       if (rec.active) stopRec('capture');
       $('#hud').classList.add('off');
-      finalizeRec().then(blobs => { capturedBlobs = blobs.filter(b => b && b.size > 0); showResult(capturedBlobs); $('#resTitle').textContent = TR('映像はここで途切れている'); setResMeta('最後まで回っていた映像'); });
+      finalizeRec().then(blobs => { capturedBlobs = blobs.filter(b => b && b.size > 0); showResult(capturedBlobs); $('#resTitle').textContent = TR('スマホだけ回収'); setResMeta('最後まで回っていた映像'); });
     }
   },
 };
@@ -9372,10 +9423,10 @@ function tick(now) {
   CH.update(dt); MANN.update(dt); cvoiceUpdate(dt);
   HIDE.update(dt);
   if (CH.state !== 'off' && rec.active && world.state === 'play' && !CAP.on) {
-    awardCont('chaseRec', '追われながらカメラを回す', 4, dt);
+    awardCont('chaseRec', '追われながらカメラを回す', 2, dt);   // 2026-11-14 1秒2点
     if (world.selfie && SG.root.visible) {   // インカメラで、追ってくる姿を背後に捉えている
       const h = sgHead(V()); const n = h.clone().project(selfCam);
-      if (n.z < 1 && Math.abs(n.x) < 0.95 && Math.abs(n.y) < 0.95 && h.distanceTo(camera.position) < 12) { awardCont('chaseSelfie', 'インカメラに追ってくる姿', 8, dt); if (!CBGM.selfSeen) { CBGM.selfSeen = true; jumpSting('jump_b', 0.9, 4); } }
+      if (n.z < 1 && Math.abs(n.x) < 0.95 && Math.abs(n.y) < 0.95 && h.distanceTo(camera.position) < 12) { awardCont('chaseSelfie', 'インカメラに追ってくる姿', 2, dt); if (!CBGM.selfSeen) { CBGM.selfSeen = true; jumpSting('jump_b', 0.9, 4); } }
     }
   }
   DIR.update(dt); AMB.update(dt); MINOR.update(dt); SELF.update(dt); MD.update(dt); MF.update(dt); POLT.update(dt); STREETFIG.update(dt); EXITF.update(dt); RED.update(dt); MG.update(dt); raspUpdate(dt); cbgmUpdate(dt); chaseHead(dt); DOORS2.update(dt); TAP.update(dt); F2.update(dt); SP.update(dt); TEN.update(dt); GG.update(dt); NEKO.update(dt); ITEM.update(dt); UWA.update(dt); MISS.update(); SPV.update(dt); OFUDA.update(dt); OFUDA.updFall(dt);
@@ -9488,7 +9539,7 @@ function updateDark(dt) {
 function caught() { CAP.start(); }
 function escape() {
   if (world.state !== 'play') return;
-  const chased = (CH.state === 'chase' || CH.state === 'search' || CH.state === 'hunt') || (typeof SP !== 'undefined' && SP.st === 'chase') || (world.mannRun && ['spot', 'windup', 'dash', 'stun', 'turn'].includes(MANN.st));
+  const chased = (CH.state === 'chase' || CH.state === 'search' || CH.state === 'hunt') || (typeof SP !== 'undefined' && SP.st === 'chase') || (world.mannRun && ['spot', 'windup', 'dash', 'skid', 'hunt', 'stun', 'turn'].includes(MANN.st));
   world.state = 'end'; if (DIR.active) DIR.end(DIR.active);
   if (rec.active) award('alive', 'いのちだいじに', 50);   /* 2026-11-13：脱出の瞬間を録画しているときだけ */
   if (chased && rec.active) award('chaseOut', '追われながら生還', 50);   // 追跡中に帰還   // 帰還ボーナス
