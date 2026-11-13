@@ -457,7 +457,12 @@ const CONFIG = {
   battery: { start: 100, idlePerSec: 0.20 / 1.5, recPerSec: 0.75 / 1.5 }, // 減り切るまでの時間を以前の1.5倍に（録画中は合計0.5%/秒）
   recMaxSec: 120,   // 持ち帰れる録画は通算120秒
   walkSpeed: 2.0,
-  spiderChaseMul: 1.1,   // 蜘蛛女の追跡速度（主人公の何倍か）
+  spiderChaseMul: 0.95,   // 蜘蛛女の追跡速度（主人公の何倍か）。出現から電池30%ぶんで spiderChaseMax まで上がる
+  spiderChaseMax: 1.05,
+  womanChaseMul: 0.9,     // 逆さ女の追跡速度。見えるようになってから電池30%ぶんで womanChaseMax まで
+  womanChaseMax: 1.0,
+  loseDist: 14,           // これ以上離れると、追う側は見失う
+  doorStall: 1.4,         // 閉まった引き戸で足止めされる秒数
   stepLen: 0.66,
   eyeHeight: 1.55,
   fov1x: 62,
@@ -875,12 +880,12 @@ const EN = {
   '洗面器に溜まっていく赤': 'Red filling the sink', '画面を覆う顔': 'A face covering the screen', '画面端の頬と髪': 'A cheek and hair at the edge of the frame', '目が合って飛び込む顔': 'A face lunging the moment your eyes met',
   '真っ赤に染まった蛍光灯': 'Lights turned blood red', '窓にドンと付いた赤い手形': 'A red handprint slammed on the window', '窓の外から落ちる人影': 'A figure falling past the window',
   '窓一面を埋めていく手形': 'Handprints covering the window', '窓辺から一斉に飛び立つカラス': 'Crows taking off from the windowsill', '肖像画のベートーベンがまばたきした': 'Beethoven’s portrait blinked',
-  '脚を広げて落ちてくるクモ女の全身': 'The Spider Woman dropping with legs spread', '街灯の下に立つ人影': 'A figure under the streetlight', '襲われる瞬間': 'The moment of the attack', 'いのちだいじに': 'Safety first', '追われながら生還': 'Escaped while being chased', 'レア': 'RARE', '悪霊退散': 'Evil spirit, begone!', '封印のお札を入手した': 'Got a sealing talisman', '幽霊を封印できる。': 'Seals away a ghost.', '封印のお札を拾う': 'Pick up the talisman', '保健室の奥に立つ背中': 'A back turned at the far end of the nurse\'s office', '保健室の入口から真横に覗く顔': 'A sideways face peeking in at the nurse\'s office door', 'よみがな': 'Name reading (kana)', '校内放送で呼ばれる名前': 'How the PA calls you (Japanese kana)', '校内放送で呼ばれた自分の名前': 'Your name called over the PA', 'ロッカーの中にいたもう1人': 'Someone else in the locker', '撮れ高コレクション': 'Footage Collection', '閉じる': 'Close', 'まだ撮れていない': 'Not captured yet', 'ピアノを弾く': 'Play the piano', '天井に広がる大量の血の染み': 'A huge bloodstain spreading across the ceiling', '猫ふんじゃったを弾く': 'Played "The Flea Waltz"', 'きらきら星を弾く': 'Played "Twinkle Twinkle Little Star"', 'やめる': 'Stop', '月の光を演奏する': 'Played Clair de lune', '怪異に捧げるレクイエム': 'A requiem for the haunting', '拍手が聞こえる…': 'Applause…', '月の光（冒頭）': 'Clair de lune (opening)', '誰も履いていない上履き': 'Indoor shoes with no one in them', 'インカメに映った、歩く上履き': 'Empty indoor shoes walking, caught on the selfie cam', 'リザルトの確認：3秒後に帰還します': 'Result preview: returning in 3 seconds', '鍵を入手した': 'Got the keys', '大体なんでも開けられる': 'Opens almost anything', 'おまもりを入手した': 'Got an omamori charm', '襲われても1度だけ助かる': 'Saves you once if you get caught', 'モバイルバッテリーを入手した': 'Got a power bank', 'スマホの充電を少し回復する': 'Recharges your phone a little', 'タップして進める。': 'Tap to continue.', '鍵がかかっている': "It's locked", '非常口から外に出られる': 'You can get out through the emergency exit', 'おまもりが身代わりになった': 'The omamori took the hit for you', '鍵を拾う': 'Pick up the keys', 'おまもりを拾う': 'Pick up the omamori', 'モバイルバッテリーを拾う': 'Pick up the power bank', '非常口を開ける': 'Open the emergency exit', '放送室の扉を開ける': 'Open the broadcast room door', 'ロッカーを開ける': 'Open the locker', '街灯の猫又': 'The two-tailed cat under the streetlight', '怪異を超接写ボーナス': 'Extreme close-up bonus',
+  '糸で降りてくるクモ女': 'The Spider Woman descending on a thread', '奇跡の3ショット': 'A miraculous three-shot', '街灯の下に立つ人影': 'A figure under the streetlight', '襲われる瞬間': 'The moment of the attack', 'いのちだいじに': 'Safety first', '追われながら生還': 'Escaped while being chased', 'レア': 'RARE', '悪霊退散': 'Evil spirit, begone!', '封印のお札を入手した': 'Got a sealing talisman', '幽霊を封印できる。': 'Seals away a ghost.', '封印のお札を拾う': 'Pick up the talisman', '保健室の奥に立つ背中': 'A back turned at the far end of the nurse\'s office', '保健室の入口から真横に覗く顔': 'A sideways face peeking in at the nurse\'s office door', 'よみがな': 'Name reading (kana)', '校内放送で呼ばれる名前': 'How the PA calls you (Japanese kana)', '校内放送で呼ばれた自分の名前': 'Your name called over the PA', 'ロッカーの中にいたもう1人': 'Someone else in the locker', '撮れ高コレクション': 'Footage Collection', '閉じる': 'Close', 'まだ撮れていない': 'Not captured yet', 'ピアノを弾く': 'Play the piano', '天井に広がる大量の血の染み': 'A huge bloodstain spreading across the ceiling', '猫ふんじゃったを弾く': 'Played "The Flea Waltz"', 'きらきら星を弾く': 'Played "Twinkle Twinkle Little Star"', 'やめる': 'Stop', '月の光を演奏する': 'Played Clair de lune', '怪異に捧げるレクイエム': 'A requiem for the haunting', '拍手が聞こえる…': 'Applause…', '月の光（冒頭）': 'Clair de lune (opening)', '誰も履いていない上履き': 'Indoor shoes with no one in them', 'インカメに映った、歩く上履き': 'Empty indoor shoes walking, caught on the selfie cam', 'リザルトの確認：3秒後に帰還します': 'Result preview: returning in 3 seconds', '鍵を入手した': 'Got the keys', '大体なんでも開けられる': 'Opens almost anything', 'おまもりを入手した': 'Got an omamori charm', '襲われても1度だけ助かる': 'Saves you once if you get caught', 'モバイルバッテリーを入手した': 'Got a power bank', 'スマホの充電を少し回復する': 'Recharges your phone a little', 'タップして進める。': 'Tap to continue.', '鍵がかかっている': "It's locked", '非常口から外に出られる': 'You can get out through the emergency exit', 'おまもりが身代わりになった': 'The omamori took the hit for you', '鍵を拾う': 'Pick up the keys', 'おまもりを拾う': 'Pick up the omamori', 'モバイルバッテリーを拾う': 'Pick up the power bank', '非常口を開ける': 'Open the emergency exit', '放送室の扉を開ける': 'Open the broadcast room door', 'ロッカーを開ける': 'Open the locker', '街灯の猫又': 'The two-tailed cat under the streetlight', '怪異を超接写ボーナス': 'Extreme close-up bonus',
   '角から目の前まで迫った顔': 'A face rushing at you from the corner', '角の先に立っていた顔': 'A face waiting around the corner', '誰もいないピアノの蓋が叩きつけられた': 'The empty piano’s lid slammed shut',
   '誰もいない椅子の座面が回った': 'An empty chair’s seat spun', '近づいてくる濡れた足跡': 'Wet footprints approaching', '追われながら回し続けた': 'Kept rolling while being chased',
   '通路の椅子がひとりでに動いた': 'A chair in the aisle moved by itself', '鏡の中だけに映る背後の女子高生': 'A schoolgirl behind you, only in the mirror', '鏡の中で勝手に閉まる戸': 'A door closing by itself in the mirror',
   '鏡の中の自分だけが遅れて動く': 'Your reflection moving a beat late', '開きかけの隙間に入る逆さの笑顔': 'An upside-down grin in the half-open gap', '階段の上の角から覗く顔': 'A face peeking from the top of the stairs',
-  '隣の通気孔から笑い声': 'Laughter from the next vent', '顔の前で閉じるクモ女の脚': 'The Spider Woman’s legs closing on your face', '天井を這って追ってくるクモ女（': 'The Spider Woman crawling after you (',
+  '隣の通気孔から笑い声': 'Laughter from the next vent', 'クモ女に襲われる': 'Attacked by the Spider Woman', '天井を這って追ってくるクモ女（': 'The Spider Woman crawling after you (',
 };
 function TR(s) {
   if (LANG !== 'en' || typeof s !== 'string' || !s) return s;
@@ -910,18 +915,26 @@ const glassPanes = [];
 function windowWallX(x, z0, z1, gmat = M.glass, lo = 1.0) {
   const len = Math.abs(z1 - z0), mz = (z0 + z1) / 2;
   box(T, lo, len, M.waist, x, lo / 2, mz); box(T, HT - 2.05, len, M.wall, x, 2.05 + (HT - 2.05) / 2, mz);
-  addCol(x - T / 2, x + T / 2, z0, z1);
-  const g = plane(len, 2.05 - lo, gmat, x, (lo + 2.05) / 2, mz, Math.PI / 2); g.renderOrder = 2; glassPanes.push(g);
-  const n = Math.max(1, Math.round(len / 1.8)); g.userData.win = { len, n, h: 2.05 - lo, lv: BUILD_LV };
+  const col = addCol(x - T / 2, x + T / 2, z0, z1); col.win = true;
+  const n = Math.max(1, Math.round(len / 1.8));
+  for (let i = 0; i < n; i++) {   // 2026-11-13 区画ごとのガラス（クモ女が1枚ずつ割れるように）
+    const a = z0 + (z1 - z0) * i / n, b = z0 + (z1 - z0) * (i + 1) / n, sl = Math.abs(b - a);
+    const g = plane(sl, 2.05 - lo, gmat, x, (lo + 2.05) / 2, (a + b) / 2, Math.PI / 2); g.renderOrder = 2; glassPanes.push(g);
+    g.userData.win = { len: sl, n: 1, h: 2.05 - lo, lv: BUILD_LV }; g.userData.sec = { axis: 'x', c: x, lo: Math.min(a, b), hi: Math.max(a, b), lv: BUILD_LV, y: (lo + 2.05) / 2, h: 2.05 - lo };
+  }
   for (let i = 0; i <= n; i++) box(0.08, 2.05 - lo, 0.06, M.frame, x, (lo + 2.05) / 2, z0 + (z1 - z0) * i / n);
   box(0.1, 0.05, len, M.frame, x, lo, mz, { occ: false });
 }
 function windowWallZ(z, x0, x1, gmat = M.glass, lo = 1.0) {
   const len = Math.abs(x1 - x0), mx = (x0 + x1) / 2;
   box(len, lo, T, M.waist, mx, lo / 2, z); box(len, HT - 2.05, T, M.wall, mx, 2.05 + (HT - 2.05) / 2, z);
-  addCol(x0, x1, z - T / 2, z + T / 2);
-  const g = plane(len, 2.05 - lo, gmat, mx, (lo + 2.05) / 2, z, 0); g.renderOrder = 2; glassPanes.push(g);
-  const n = Math.max(1, Math.round(len / 1.8)); g.userData.win = { len, n, h: 2.05 - lo, lv: BUILD_LV };
+  const col = addCol(x0, x1, z - T / 2, z + T / 2); col.win = true;
+  const n = Math.max(1, Math.round(len / 1.8));
+  for (let i = 0; i < n; i++) {
+    const a = x0 + (x1 - x0) * i / n, b = x0 + (x1 - x0) * (i + 1) / n, sl = Math.abs(b - a);
+    const g = plane(sl, 2.05 - lo, gmat, (a + b) / 2, (lo + 2.05) / 2, z, 0); g.renderOrder = 2; glassPanes.push(g);
+    g.userData.win = { len: sl, n: 1, h: 2.05 - lo, lv: BUILD_LV }; g.userData.sec = { axis: 'z', c: z, lo: Math.min(a, b), hi: Math.max(a, b), lv: BUILD_LV, y: (lo + 2.05) / 2, h: 2.05 - lo };
+  }
   for (let i = 0; i <= n; i++) box(0.06, 2.05 - lo, 0.08, M.frame, x0 + (x1 - x0) * i / n, (lo + 2.05) / 2, z);
   box(len, 0.05, 0.1, M.frame, mx, lo, z, { occ: false });
 }
@@ -2791,7 +2804,7 @@ const STAY = {
 };
 /* ---------- 採点 ---------- */
 /* 撮れ高のレア度と得点（2026-11-13 出やすさ・撮りやすさから見直し。ここが正。award()の第3引数より優先） */
-const AW_TABLE = { f2bed: ['B', 40], exitFlip: ['B', 45], wander: ['C', 25], glance: ['B', 45], slitCloth: ['A', 60], lockerFace: ['S', 120], lockerLong: ['S', 120], capture: ['B', 120], toes: ['B', 45], toesRetract: ['A', 70], stand: ['C', 25], nearer: ['A', 50], rush: ['A', 70], face: ['A', 50], dripRipple: ['A', 60], doorBlood: ['B', 40], stallTop: ['A', 80], basinBlood: ['A', 60], peek: ['A', 60], boardWoman: ['B', 40], boardSide: ['A', 60], boardLunge: ['A', 80], blackoutFace: ['A', 60], micLamp: ['B', 40], micTurn: ['A', 70], micFog: ['A', 50], glassSelf: ['A', 60], innerLock: ['A', 70], mirrorLag: ['S', 90], drainEye: ['S', 120], lashes: ['A', 70], sole: ['A', 60], runner: ['B', 40], fogFigure: ['A', 60], smudge: ['B', 40], fireFace: ['A', 60], prints: ['A', 50], printTurn: ['A', 60], chalk: ['C', 20], broom: ['C', 20], selfieShoulder: ['A', 70], mirrorDoor: ['B', 45], mirrorGiant: ['S', 100], slideCreep: ['C', 30], lookBack: ['A', 70], turnFace: ['S', 100], polter: ['C', 25], mirrorFlash: ['A', 60], cornerFace: ['A', 60], cornerFaceNear: ['B', 40], streetFig: ['A', 50], mirrorGirl: ['A', 60], f2blood: ['S', 100], f2stairFace: ['B', 50], f2teddy: ['A', 60], tTurnFace: ['S', 150], f2turnFace: ['S', 100], f2chair: ['B', 40], f2fall: ['A', 70], f2crows: ['A', 50], f2books: ['B', 40], f2pages: ['B', 40], f2libChair: ['B', 40], f2piano: ['B', 50], f2blink: ['A', 70], f2float: ['A', 70], f2vase: ['A', 60], spWarp: ['S', 120], spHead: ['B', 50], spDrop: ['A', 80], spLatch: ['S', 120], spChase: ['A', 12], hpFirst: ['B', 40], hpBarrage: ['A', 60], boardGlyph: ['B', 50], boardFill: ['A', 60], stall20: ['S', 100], hand: ['C', 20], nekomata: ['A', 50], uwaSeen: ['S', 90], uwaWalk: ['SS', 200], ceilBleed: ['S', 100], paCall: ['A', 80], akuryo: ['SS', 300], nurseBack: ['A', 60], nursePeek: ['S', 90], pianoPlay: ['C', 15], clairPlay: ['A', 50], requiem: ['SS', 200], nekoPiano: ['S', 100], twinkle: ['S', 100], chaseRec: ['C', 4], chaseSelfie: ['A', 8], close: ['C', 10], chaseOut: ['A', 50], alive: ['D', 50] };
+const AW_TABLE = { f2bed: ['B', 40], exitFlip: ['B', 45], wander: ['C', 25], glance: ['B', 45], slitCloth: ['A', 60], lockerFace: ['S', 120], lockerLong: ['S', 120], capture: ['B', 120], toes: ['B', 45], toesRetract: ['A', 70], stand: ['C', 25], nearer: ['A', 50], rush: ['A', 70], face: ['A', 50], dripRipple: ['A', 60], doorBlood: ['B', 40], stallTop: ['A', 80], basinBlood: ['A', 60], peek: ['A', 60], boardWoman: ['B', 40], boardSide: ['A', 60], boardLunge: ['A', 80], blackoutFace: ['A', 60], micLamp: ['B', 40], micTurn: ['A', 70], micFog: ['A', 50], glassSelf: ['A', 60], innerLock: ['A', 70], mirrorLag: ['S', 90], drainEye: ['S', 120], lashes: ['A', 70], sole: ['A', 60], runner: ['B', 40], fogFigure: ['A', 60], smudge: ['B', 40], fireFace: ['A', 60], prints: ['A', 50], printTurn: ['A', 60], chalk: ['C', 20], broom: ['C', 20], selfieShoulder: ['A', 70], mirrorDoor: ['B', 45], mirrorGiant: ['S', 100], slideCreep: ['C', 30], lookBack: ['A', 70], turnFace: ['S', 100], polter: ['C', 25], mirrorFlash: ['A', 60], cornerFace: ['A', 60], cornerFaceNear: ['B', 40], streetFig: ['A', 50], mirrorGirl: ['A', 60], f2blood: ['S', 100], f2stairFace: ['B', 50], f2teddy: ['A', 60], tTurnFace: ['S', 150], f2turnFace: ['S', 100], f2chair: ['B', 40], f2fall: ['A', 70], f2crows: ['A', 50], f2books: ['B', 40], f2pages: ['B', 40], f2libChair: ['B', 40], f2piano: ['B', 50], f2blink: ['A', 70], f2float: ['A', 70], f2vase: ['A', 60], spWarp: ['S', 120], spHead: ['B', 50], trio: ['SS', 300], spDescend: ['A', 80], spLatch: ['S', 120], spChase: ['A', 12], hpFirst: ['B', 40], hpBarrage: ['A', 60], boardGlyph: ['B', 50], boardFill: ['A', 60], stall20: ['S', 100], hand: ['C', 20], nekomata: ['A', 50], uwaSeen: ['S', 90], uwaWalk: ['SS', 200], ceilBleed: ['S', 100], paCall: ['A', 80], akuryo: ['SS', 300], nurseBack: ['A', 60], nursePeek: ['S', 90], pianoPlay: ['C', 15], clairPlay: ['A', 50], requiem: ['SS', 200], nekoPiano: ['S', 100], twinkle: ['S', 100], chaseRec: ['C', 4], chaseSelfie: ['A', 8], close: ['C', 10], chaseOut: ['A', 50], alive: ['D', 50] };
 function awBase(key) { const k = String(key || ''); return k.startsWith('broom') ? 'broom' : k.replace(/\d+$/, ''); }
 
 const awarded = new Map(); const evidence = []; const evAcc = {};
@@ -2939,7 +2952,7 @@ const DIM = {
   update(dt) {
     if (world.dark || world.state !== 'play') return;
     this.next -= dt; if (this.next > 0) return;
-    const after = world.chime30;
+    const after = womanOn();
     this.next = CH.state === 'chase' ? rnd(4.5, 7.5) : after ? rnd(14, 24) : rnd(40, 75);
     const sp = SG.root.position;
     const seenable = !WD.borrowed && camera.position.distanceTo(V(sp.x, sp.y + 1.6, sp.z)) < 22 && clearLine(V(sp.x, sp.y + 1.6, sp.z));
@@ -2960,10 +2973,11 @@ const DIM = {
    巡回する女（姿が見えない時も、位置・向き・移動は続く）
    ========================================================= */
 // 線分が、通り抜けてはいけない当たり（壁・窓・ロッカーなど）を横切るか。戸・机は除く
-function segBlocked(x0, z0, x1, z1, lv, pad = 0.12) {
+function segBlocked(x0, z0, x1, z1, lv, pad = 0.12, skipWin = false) {
   const dx = x1 - x0, dz = z1 - z0;
   for (const c of colliders) {
     if (!c.on || c.door || c.soft || (c.lv !== lv && c.lv !== -1)) continue;
+    if (skipWin && c.win) continue;   // クモ女は窓を破って通れる
     const ax0 = c.x0 - pad, ax1 = c.x1 + pad, az0 = c.z0 - pad, az1 = c.z1 + pad;
     if (x0 > ax0 && x0 < ax1 && z0 > az0 && z0 < az1) continue;   // 始点が中なら（押し出し中）見ない
     let t0 = 0, t1 = 1, ok = true;
@@ -2975,6 +2989,40 @@ function segBlocked(x0, z0, x1, z1, lv, pad = 0.12) {
   }
   return false;
 }
+// 線分が箱（当たり判定）を横切るか
+function segHitsBox(c, x0, z0, x1, z1, pad = 0.12) {
+  const dx = x1 - x0, dz = z1 - z0, ax0 = c.x0 - pad, ax1 = c.x1 + pad, az0 = c.z0 - pad, az1 = c.z1 + pad;
+  let t0 = 0, t1 = 1;
+  for (const [p, q] of [[-dx, x0 - ax0], [dx, ax1 - x0], [-dz, z0 - az0], [dz, az1 - z0]]) {
+    if (Math.abs(p) < 1e-9) { if (q < 0) return false; continue; }
+    const r = q / p; if (p < 0) { if (r > t1) return false; if (r > t0) t0 = r; } else { if (r < t0) return false; if (r < t1) t1 = r; }
+  }
+  return t1 > t0;
+}
+// 2026-11-13 閉まった引き戸に行く手をふさがれたら、少し足止め（ガタガタ鳴らしてから開ける）
+function closedDoorOn(x0, z0, x1, z1, lv) {
+  if (lv !== 0 || typeof DOORS2 === 'undefined') return null;
+  for (const d of DOORS2.list) if (d.col.on && !d.moving && segHitsBox(d.col, x0, z0, x1, z1, 0.25)) return d;
+  return null;
+}
+function doorStall(who, d) {   // who.doorT に残り秒数を入れる。0になったら戸を開ける
+  who.doorT = CONFIG.doorStall; who.door = d;
+  const h = DOORS2.hole(d); SND.rattle(h.clone(), 1.1); setTimeout(() => SND.rattle && SND.rattle(h.clone(), 0.9), 520);
+}
+function doorStallTick(who, dt) {
+  if (!(who.doorT > 0)) return false;
+  who.doorT -= dt; if (who.doorT <= 0 && who.door) { DOORS2.move(who.door, 1); who.door = null; }
+  return true;
+}
+// 逆さ女がはっきり見え、追ってくるようになったか（電池残り60%〜30%の間のどこかから）
+function womanOn() {
+  const on = world.chime30 || (world.batUsed || 0) >= (world.sgShowUsed ?? 70);
+  if (on && WD.showUsed === undefined) { WD.showUsed = world.batUsed || 0; if (TEST || DEV) console.log('WOMAN on', (world.battery || 0).toFixed(1)); }
+  return on;
+}
+// 追う側の速さの上がり具合（見えるようになってから電池を30%使うまでに 0→1）
+function rampK(fromUsed) { return fromUsed === undefined ? 0 : clamp(((world.batUsed || 0) - fromUsed) / 30, 0, 1); }
+
 const WD = {
   borrowed: false, preDur: 0.8, node: 'B3', path: [], pos: V(), heading: 0, wait: 0, speed: 1.0, sight: 0, sightCool: 0, interest: 0,
   glance: null, detect: 0, noDetectUntil: 0, wasVis: false, snapCool: 20, vis: 0,
@@ -3003,7 +3051,13 @@ const WD = {
       if ((this.repathN || 0) < 2) { this.repathN = (this.repathN || 0) + 1; this.goTo(this.extra); this.path = this.path.filter(k => true); }
       else { this.extra = null; this.repathN = 0; }
     }   // 見え方の調整中はその場に止める
+    if (doorStallTick(this, dt)) return false;   // 閉まった引き戸の前で足止め中
     let move = speed * dt;
+    if (CH.state !== 'off') {   // 追跡中は、曲がる時に減速する（角を使えば少し引き離せる）
+      const t0 = this.path.length ? nodePos(this.path[0]) : this.extra;
+      if (t0) { const h = Math.atan2(t0.x - this.pos.x, t0.z - this.pos.z), dh = Math.abs(Math.atan2(Math.sin(h - this.heading), Math.cos(h - this.heading))); move *= dh > 0.9 ? 0.45 : dh > 0.45 ? 0.75 : 1;
+        const nx = this.pos.x + Math.sin(h) * 0.6, nz = this.pos.z + Math.cos(h) * 0.6; const d = closedDoorOn(this.pos.x, this.pos.z, nx, nz, this.pos.y > 1.6 ? 1 : 0); if (d) { doorStall(this, d); return false; } }
+    }
     while (move > 0) {
       let t = null;
       if (this.path.length) t = nodePos(this.path[0]); else if (this.extra) t = this.extra; else break;
@@ -3027,7 +3081,7 @@ const WD = {
     const head = sgHead(V());
     let vis = sgVisibleByLight(this.pos);
     // 30%チャイムまでは、ときどき・うっすら・一瞬だけ
-    const pre = !world.chime30 && !world.dark;
+    const pre = !womanOn() && !world.dark;
     if (pre) {
       if (vis && this.preT === undefined && world.t >= (this.preCool || 0)) this.preT = world.t;
       if (this.preT !== undefined) { if (!vis || world.t - this.preT > this.preDur) { this.preT = undefined; this.preCool = world.t + rnd(18, 35); this.preDur = rnd(0.6, 1.1); vis = false; } }
@@ -3065,7 +3119,7 @@ const WD = {
       if (player.hidden && accum('slit', seen(V(this.pos.x, this.pos.y + 1.5, this.pos.z), { maxD: 4 }), dt, 0.15)) award('slitCloth', 'スリットを横切る赤い布', 50);
     }
     // 女がプレイヤーを見つけたか（見え方とは別に判定）
-    if (CH.state === 'off' && world.chime30 && !world.dark && !player.hidden && world.t > this.noDetectUntil) {   // 追跡は30%チャイムの後から
+    if (CH.state === 'off' && womanOn() && !world.dark && !player.hidden && world.t > this.noDetectUntil) {   // 追跡は見えるようになってから
       const dd = distTo(this.pos.x, this.pos.z) + (Math.abs(this.pos.y - player.y) > 1.0 ? 30 : 0);
       let ok = false;
       if (dd < 9.5 && clearLine(camera.position, [], head)) {
@@ -3106,9 +3160,10 @@ const CH = {
     const base = this.state === 'hunt' ? CONFIG.stalker : null;
     let speed;
     if (base) { this.speedMul = Math.min(base.maxSpeed, (this.speedMul || base.startSpeed) + base.accel * dt); speed = this.speedMul; }
-    else { this.speedMul = Math.min(1, this.speedMul + dt * 0.3); speed = CONFIG.walkSpeed * (Math.ceil(world.battery) < 10 ? CONFIG.chaseMulLow : CONFIG.chaseMul) * this.speedMul; }
+    else { this.speedMul = Math.min(1, this.speedMul + dt * 0.3); const k = rampK(WD.showUsed); speed = CONFIG.walkSpeed * lerp(CONFIG.womanChaseMul, CONFIG.womanChaseMax, k) * this.speedMul; }   // 2026-11-13 0.9 → 1.0
     const target = this.state === 'hunt' ? V(player.x, player.y, player.z) : this.lastSeen;
     const dP = distTo(WD.pos.x, WD.pos.z) + (Math.abs(WD.pos.y - player.y) > 1.0 ? 30 : 0);   /* 別の階なら届かない */
+    if (this.state !== 'hunt' && distTo(WD.pos.x, WD.pos.z) > CONFIG.loseDist && Math.abs(WD.pos.y - player.y) < 1.0) { this.stop(); return; }   // 離れすぎると見失う
     this.repath -= dt;
     if ((los && dP < 8) || (this.state === 'hunt' && dP < 6 && clearLine(V(WD.pos.x, WD.pos.y + 1.5, WD.pos.z)))) { WD.path = []; WD.extra = target.clone(); }
     else if (this.repath <= 0) { this.repath = 0.5; WD.goTo(target); }
@@ -5460,7 +5515,7 @@ F2.updVase = function (dt) {
    ・録画で得た累計得点が規定値に達した時点で電池が30％より多ければ、その周だけ出現する
    ・出現後は実体のまま描く（明滅・RECの有無・カメラの向きで消したりしない）
    ========================================================= */
-const SPIDER_SCORE = 250;   // 出現に必要な累計得点（調整用）
+const SPIDER_SCORE = 300;   // 出現に必要な累計得点（調整用）
 const SP_WEBS = [   // 角の点（天井と壁が交わる角）・回転（ローカル+X/+Zが部屋の内側）・階・這い回る天井の範囲
   { id: 'AB', p: [-1.42, -32.92], yaw: 0, lv: 0, rect: [-1.1, 1.1, -32.6, -22], front: true },
   { id: 'R2', p: [13.42, -8.08], yaw: Math.PI, lv: 0, rect: [2.2, 13.0, -17.4, -8.5], front: false },
@@ -5497,6 +5552,15 @@ async function loadSpider() {
     // 顔（笑い口のあたり）の中心を、顔の骨からの相対位置として覚えておく
     g.scene.updateMatrixWorld(true); const faceMesh = meshes.reduce((a, m) => { m.geometry.computeBoundingBox(); const b = m.geometry.boundingBox; const s = b.getSize(V()); return (s.y < 0.9 && s.x < 0.7 && (!a || b.max.z > a.b.max.z)) ? { m, b } : a; }, null) || { m: meshes[meshes.length - 1] };
     const fc = new THREE.Box3().setFromObject(faceMesh.m).getCenter(V()); fc.y -= 0.08; SP.faceOff = SP.face.worldToLocal(fc.clone());
+    // 脚（付け根の骨と先端の骨）：顔に張りつく時、8本すべてを画面の手前へ向ける
+    SP.legs = [];
+    for (const sd of ['L', 'R']) for (let i = 1; i <= 4; i++) { const f = g.scene.getObjectByName(sd + i + '_Femur'), t = g.scene.getObjectByName(sd + i + '_Tarsus'); if (f && t) SP.legs.push({ f, t, sd: sd === 'L' ? -1 : 1, i }); }
+    SP.hair = ['HairL', 'HairR'].map(n => g.scene.getObjectByName(n)).filter(Boolean).map(b => ({ b, loc: null }));
+    // 首をかしげる軸
+    SP.faceAxis = V(0, 1, 0);   // 顔の骨の原点から顔の中心へ向かう向き＝顔の正面
+    // 糸（天井から背中まで。降りてくる間だけ）
+    SP.thread = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 1, 5, 1, true), new THREE.MeshBasicMaterial({ color: 0xd8d8d0, transparent: true, opacity: 0.75, fog: true }));
+    SP.thread.visible = false; SP.thread.frustumCulled = false; scene.add(SP.thread);
     SP.ready = true;
   } catch (e) { console.warn('クモ女を読み込めませんでした', e); }
 }
@@ -5506,7 +5570,7 @@ function spFacePos(out = V()) { SP.wrap.updateMatrixWorld(true); return SP.faceO
 /* ---------- 1周ぶんの準備（巣は毎周はじめから実在） ---------- */
 SP.reset = function () {
   for (const w of this.webs) w.o.parent && w.o.parent.remove(w.o);
-  this.webs = []; this.st = 'none'; this.flag = false; this.decided = false; this.over = false; this.noChaseUntil = 0; this.lastWarp = -99; this.lastDrop = -99; this.stepStop(true);
+  this.webs = []; this.st = 'none'; this.flag = false; this.decided = false; this.over = false; this.noChaseUntil = 0; this.lastWarp = -99; this.lastDrop = -99; this.stepStop(true); this.onFloor = false; this.lastFloor = -99; if (this.thread) this.thread.visible = false; if (this.broken) { for (const g of this.broken) g.visible = true; this.broken = []; } this.tilt = null; this.winLowUntil = 0; this.doorT = 0;
   if (!this.webSrc) return;
   const r = f2rng('webs');
   const pickFrom = list => list.splice((r() * list.length) | 0, 1)[0];
@@ -5540,7 +5604,7 @@ SP.stepUpdate = function (dt, walking) {
     const ctx = A.ctx; const s = ctx.createBufferSource(); s.buffer = A.buf.spider_steps;
     const g = ctx.createGain(); g.gain.value = 0.0001; g.gain.linearRampToValueAtTime(1.0 * (SFX_GAIN.spider_steps || 1), ctx.currentTime + 0.05);
     const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 9000;
-    const p = panAt(fp, 0.9, 1.15, A.bus, 0); s.connect(g); g.connect(f); f.connect(p);
+    const p = panAt(fp, 0.8, 1.7, A.bus, 0);   // 2026-11-13 距離でよく小さくなるように s.connect(g); g.connect(f); f.connect(p);
     { const D = s.buffer.duration, len = Math.min(D, rnd(2.5, 5)); s.start(0, rnd(0, Math.max(0, D - len)), len); }   // 長い録音から毎回違う部分を数秒だけ
     const me = { s, g, f, p }; this.step = me;
     s.onended = () => { freeLater(0.1, p); if (this.step === me) { this.step = null; this.stepGap = world.t + rnd(0.25, 0.9); } };   // 3秒の実録を連打せず、間を挟む
@@ -5551,8 +5615,8 @@ SP.stepUpdate = function (dt, walking) {
   // 別の階・壁越しはこもらせて小さく
   const other = Math.abs((camera.position.y > LH ? 1 : 0) - this.lv) > 0 && !stairZone(camera.position.x, camera.position.z);
   const clear = !other && clearLine(fp, [], camera.position);
-  s.f.frequency.setTargetAtTime(other ? 650 : clear ? 9000 : 1800, A.ctx.currentTime, 0.05);
-  s.g.gain.setTargetAtTime((other ? 0.3 : clear ? 1 : 0.7) * (SFX_GAIN.spider_steps || 1), A.ctx.currentTime, 0.08);
+  s.f.frequency.setTargetAtTime(other ? 380 : clear ? 9000 : 1100, A.ctx.currentTime, 0.05);
+  s.g.gain.setTargetAtTime((other ? 0.06 : clear ? 1 : 0.38) * (SFX_GAIN.spider_steps || 1), A.ctx.currentTime, 0.08);   // 別の階はかなり小さく、壁越しはこもらせて
 };
 
 /* ---------- 出現 ---------- */
@@ -5560,11 +5624,14 @@ SP.spawn = function () {
   const mine = this.webs.filter(w => w.def.lv === player.lv); const cand = (mine.length ? mine : this.webs);
   const w = cand.find(x => !onScreen(x.touch, 1.1)) || cand[0];
   this.web = w; this.lv = w.def.lv; this.pos = w.touch.clone().addScaledVector(w.inward, 0.9); this.yaw = Math.atan2(w.inward.x, w.inward.z);
-  this.st = 'crawl'; this.tgt = null; this.t = 0; this.spawnT = world.t; this.lastWarp = world.t;
+  this.st = 'crawl'; this.tgt = null; this.t = 0; this.spawnT = world.t; this.lastWarp = world.t; this.appearUsed = world.batUsed || 0; this.tiltNext = world.t + rnd(3, 10);
   this.wrap.visible = true; spPlay('CeilingCrawl', 0); this.apply();
   if (TEST || DEV) console.log('SPIDER spawn', w.def.id);
 };
-SP.apply = function () { this.wrap.position.copy(this.pos); this.wrap.quaternion.setFromAxisAngle(V(0, 1, 0), this.yaw); this.wrap.updateMatrixWorld(true); };
+const spFloor = lv => lv ? LH : 0;
+const _qz = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI);
+function spQ(yaw, floor, out = new THREE.Quaternion()) { out.setFromAxisAngle(V(0, 1, 0), yaw); if (floor) out.multiply(_qz); return out; }   // 床では天井の姿勢を裏返す
+SP.apply = function () { this.wrap.position.copy(this.pos); spQ(this.yaw, this.onFloor, this.wrap.quaternion); this.wrap.updateMatrixWorld(true); };
 SP.newTarget = function () {
   const R = this.web.def.rect; const y = spCeil(this.lv);
   if (world.t - this.lastWarp > 12 && this.webs.length > 1 && chance(0.55)) { this.tgt = this.web.touch.clone(); this.toWeb = true; return; }
@@ -5595,6 +5662,14 @@ SP.update = function (dt) {
   if (!this.ready || world.state !== 'play') return;
   if (this.st === 'none') { if (this.flag && this.webs.length && world.t > (this.spawnAt || 0)) this.spawn(); return; }   // お札で封じた後は、しばらく出てこない
   this.mixer.update(dt); this.t += dt;
+  this.updShards(dt);
+  // 奇跡の3ショット：インカメラに、自分・クモ女・逆さ女が一緒に写る
+  if (rec.active && world.selfie && this.wrap.visible && SG.ready && SG.root.visible && (SG.opacity ?? 1) > 0.3 && !awarded.has('trio')) {
+    const inSelf = p => { const q = p.clone().project(selfCam); return q.z < 1 && q.z > -1 && Math.abs(q.x) < 0.92 && Math.abs(q.y) < 0.92 && selfCam.position.distanceTo(p) < 14 && clearLine(p, [this.wrap], selfCam.position); };
+    if (inSelf(spFacePos(V())) && inSelf(sgHead(V()))) { this.trioT = (this.trioT || 0) + dt; if (this.trioT > 0.2) award('trio', '奇跡の3ショット', 300); } else this.trioT = 0;
+  }
+  if (!['drop', 'latch', 'peel', 'sealed'].includes(this.st)) this.headTilt(dt);
+  this.hairFix(this.onFloor ? 1 : this.st === 'land' ? clamp(this.t / 0.6, 0, 1) : this.st === 'jump' ? 1 - clamp(this.t / 0.3, 0, 1) : 0);
   const cp = camera.position; const fp = spFacePos(V());
   if (this.st === 'crawl' || this.st === 'hang') {
     const dH = Math.hypot(player.x - this.pos.x, player.z - this.pos.z);
@@ -5607,6 +5682,7 @@ SP.update = function (dt) {
       const d = V(this.tgt.x - this.pos.x, 0, this.tgt.z - this.pos.z); const L = d.length();
       if (L < 0.3) {
         if (this.toWeb) { this.warp(); }
+        else if (this.canDescend() && chance(0.4)) { this.startDescend(); return; }
         else if (chance(0.35)) { this.st = 'hang'; this.t = 0; this.hangFor = rnd(2, 4); spPlay('HangListen'); }
         this.tgt = null;
       } else {
@@ -5631,15 +5707,17 @@ SP.update = function (dt) {
     this.stepUpdate(dt, this.st === 'crawl');
     // 垂れた髪の中に入り込まないよう、真下へは近づきすぎない
     if (this.lv === player.lv && !stairZone(player.x, player.z)) { const dx = player.x - this.pos.x, dz = player.z - this.pos.z, dd = Math.hypot(dx, dz); if (dd < 0.7 && dd > 1e-4) { const [nx, nz] = collide(this.pos.x + dx / dd * 0.7, this.pos.z + dz / dd * 0.7); player.x = nx; player.z = nz; } }
+  } else if (this.st === 'descend' || this.st === 'land' || this.st === 'fcrawl' || this.st === 'jump') {
+    this.updFloor(dt, fp);
   } else if (this.st === 'chase') {
     this.updChase(dt, fp);
   } else if (this.st === 'drop') {
     const k = clamp(this.t / 0.42, 0, 1), e = k * k * (3 - 2 * k);
     const [P1, Q1] = this.latchPose(); this.wrap.position.lerpVectors(this.P0, P1, e); this.wrap.quaternion.slerpQuaternions(this.Q0, Q1, e); this.wrap.updateMatrixWorld(true);
-    if (seen(this.wrap.position.clone().add(V(0, -0.3, 0)), { maxD: 6, margin: 1.2 })) award('spDrop', '脚を広げて落ちてくるクモ女の全身', 140);
     if (k >= 1) { this.st = 'latch'; this.t = 0; spPlay('FaceLatch', 0.05); }
   } else if (this.st === 'latch') {
     const [P1, Q1] = this.latchPose(); this.wrap.position.copy(P1); this.wrap.quaternion.copy(Q1); this.wrap.updateMatrixWorld(true);
+    this.legsToFace(this.t);
     if (this.t > 0.32 && !this.hit) {   // 脚が閉じて顔に触れた瞬間
       this.hit = true; this.stepStop(true);
       playSfx('latch_hit', { ear: 0, gain: 1 }) || SND.thud(cp, 0.6);
@@ -5647,7 +5725,7 @@ SP.update = function (dt) {
       if (this.strong) playSfx('capture_scream', { ear: 0, gain: 0.8, delay: 0.1, dur: 0.8 });
       world.vhs = Math.max(world.vhs, 0.6); focus.override = 0.4;
     }
-    if (this.hit && seen(fp, { maxD: 1.5, margin: 1.3 })) award('spLatch', '顔の前で閉じるクモ女の脚', 180);
+    if (this.hit && seen(fp, { maxD: 1.5, margin: 1.3 })) award('spLatch', 'クモ女に襲われる', 180);
     if (this.hit && this.t > 0.85) { const U = postMat.uniforms; U.stat.value = Math.random() < 0.6 ? 0.8 : 0.2; U.tear.value = rnd(0.2, 0.7); world.vhs = 1; }
     if (this.t > 1.2) { if (ITEM.charm('spider')) { if (OFUDA.on) return; this.t = 100; const U = postMat.uniforms; U.stat.value = 0; U.tear.value = 0; world.vhs = 0.3; this.noChaseUntil = world.t + 25; this.lastDrop = world.t + 20; } else { this.gameOver(); return; } }   // おまもりがあれば一度だけ剥がれていく   // 2026-11-12 蜘蛛女に襲われたら、そこで終わり
     if (this.t > 99) { this.st = 'peel'; this.t = 0; spPlay('PeelAway', 0.08); this.P0 = this.wrap.position.clone(); this.Q0 = this.wrap.quaternion.clone(); focus.override = null;
@@ -5672,6 +5750,163 @@ SP.latchPose = function () {
   this.wrap.updateMatrixWorld(true); const local = this.wrap.worldToLocal(spFacePos(V()));   // いまの姿勢での顔の位置（ラッパー基準）
   const off = local.applyQuaternion(Q);
   return [tgt.sub(off), Q];
+};
+
+/* ---------- 2026-11-13 床と天井の行き来 ----------
+   ・天井から床へ：その場で糸を垂らしながら、ゆっくり降りる（「糸で降りてくるクモ女」A）
+   ・床に着くと体を返して床を這う。しばらくすると跳び上がり、宙で反転して天井へ戻る
+   ・机や棚のない廊下の巣（front）の範囲だけで行う */
+SP.canDescend = function () {
+  return this.web && this.web.def.front && !this.onFloor && world.t - this.spawnT > 8 && world.t - (this.lastFloor || -99) > 20 && CH.state === 'off' && !CAP.on && !stairZone(this.pos.x, this.pos.z) && Math.hypot(player.x - this.pos.x, player.z - this.pos.z) > 1.4;
+};
+SP.startDescend = function () {
+  this.st = 'descend'; this.t = 0; this.tgt = null; this.stepStop(false);
+  this.ceilY = spCeil(this.lv); this.descTo = spFloor(this.lv) + 1.75;   // 体の下端が床すれすれになる高さまで
+  spPlay('HangListen', 0.3);
+  playSfx('drop_air', { pos: this.pos.clone(), ref: 0.6, roll: 1.2, gain: 0.35 }) || SND.rustle(this.pos.clone(), 0.4);
+  if (TEST || DEV) console.log('SPIDER descend');
+};
+SP.showThread = function (topY) {
+  const T = this.thread; if (!T) return; const top = V(this.pos.x, topY, this.pos.z); const len = Math.max(0.01, topY - this.wrap.position.y);
+  T.visible = len > 0.03; T.position.set(this.pos.x, topY - len / 2, this.pos.z); T.scale.set(1, len, 1); T.updateMatrixWorld(true);
+};
+SP.startJump = function (thenChase) {
+  this.st = 'jump'; this.t = 0; this.thenChase = !!thenChase; this.stepStop(true);
+  this.P0 = this.pos.clone(); this.P1 = this.pos.clone().add(V(Math.sin(this.yaw) * 0.6, 0, Math.cos(this.yaw) * 0.6)); this.P1.y = spCeil(this.lv);
+  const R = this.web.def.rect; this.P1.x = clamp(this.P1.x, R[0], R[1]); this.P1.z = clamp(this.P1.z, R[2], R[3]);
+  spPlay('DropSpread', 0.08);
+  playSfx('drop_air', { pos: this.pos.clone(), ref: 0.8, roll: 1.1, gain: 0.8 }) || SND.rustle(this.pos.clone(), 1);
+  if (TEST || DEV) console.log('SPIDER jump');
+};
+SP.updFloor = function (dt, fp) {
+  const cp = camera.position, dH = Math.hypot(player.x - this.pos.x, player.z - this.pos.z);
+  if (this.st === 'descend') {   // 糸を垂らしながら、ゆっくり降りる
+    this.pos.y = Math.max(this.descTo, this.pos.y - dt * 0.42);
+    this.apply(); this.showThread(this.ceilY);
+    if (rec.active && seen(fp, { maxD: 10, margin: 1.05 })) award('spDescend', '糸で降りてくるクモ女', 80);
+    if (this.pos.y <= this.descTo + 1e-3 && this.t > 1) { this.st = 'land'; this.t = 0; this.P0 = this.pos.clone(); this.Q0 = this.wrap.quaternion.clone(); spPlay('PeelAway', 0.15); }
+    return;
+  }
+  if (this.st === 'land') {   // 床の手前で体を返し、床に降り立つ
+    const k = clamp(this.t / 0.6, 0, 1), e = k * k * (3 - 2 * k);
+    const Q1 = spQ(this.yaw, true); const P1 = V(this.P0.x, spFloor(this.lv), this.P0.z);
+    this.wrap.position.lerpVectors(this.P0, P1, e); this.wrap.quaternion.slerpQuaternions(this.Q0, Q1, e); this.wrap.updateMatrixWorld(true);
+    this.showThread(this.ceilY); this.thread.material.opacity = 0.75 * (1 - k);
+    if (k >= 1) { this.thread.visible = false; this.thread.material.opacity = 0.75; this.pos.copy(P1); this.onFloor = true; this.st = 'fcrawl'; this.t = 0; this.tgt = null; this.floorFor = rnd(8, 15); this.apply(); playSfx('thud', { pos: this.pos.clone(), ref: 0.8, gain: 0.5 }); spPlay('CeilingCrawl', 0.2); }
+    return;
+  }
+  if (this.st === 'fcrawl') {   // 床を這う
+    const p = V(this.pos.x, this.pos.y + 0.4, this.pos.z);
+    const spot = this.lv === player.lv && world.t >= (this.noChaseUntil || 0) && !this.hiddenNow() && !CAP.on && world.outro <= 0 && !stairZone(player.x, player.z) && dH < 6 && clearLine(p, [this.wrap]);
+    if (spot && dH < 3.2) { this.startJump(true); return; }   // 近くで見つかると跳び上がって天井から追ってくる
+    if (this.t > this.floorFor) { this.startJump(false); return; }
+    if (!this.tgt) { const R = this.web.def.rect; this.tgt = V(rnd(R[0], R[1]), 0, rnd(R[2], R[3])); }
+    const d = V(this.tgt.x - this.pos.x, 0, this.tgt.z - this.pos.z), L = d.length();
+    if (L < 0.3) this.tgt = null;
+    else {
+      const want = Math.atan2(d.x, d.z) + Math.sin(world.t * 1.3) * 0.25 * Math.min(1, L);
+      const dh = Math.atan2(Math.sin(want - this.yaw), Math.cos(want - this.yaw)); this.yaw += clamp(dh, -2.2 * dt, 2.2 * dt);
+      const sp = 0.6 * (Math.abs(dh) > 1 ? 0.4 : 1);
+      let nx = this.pos.x + Math.sin(this.yaw) * sp * dt, nz = this.pos.z + Math.cos(this.yaw) * sp * dt;
+      if (Math.hypot(player.x - nx, player.z - nz) < 0.9) { nx = this.pos.x; nz = this.pos.z; this.tgt = null; }   // 主人公に重ならない
+      const R = this.web.def.rect; this.pos.x = clamp(nx, R[0], R[1]); this.pos.z = clamp(nz, R[2], R[3]);
+    }
+    this.pos.y = spFloor(this.lv); this.apply(); spPlay('CeilingCrawl'); this.stepUpdate(dt, true);
+    return;
+  }
+  if (this.st === 'jump') {   // 跳び上がり、宙で後ろへ反転して天井へ
+    const k = clamp(this.t / 0.6, 0, 1), e = k * k * (3 - 2 * k);
+    const pos = V().lerpVectors(this.P0, this.P1, e); pos.y += Math.sin(Math.PI * k) * 0.25;
+    const ang = Math.PI * e; const q = spQ(this.yaw, true).multiply(new THREE.Quaternion().setFromAxisAngle(V(1, 0, 0), ang));
+    this.wrap.position.copy(pos); this.wrap.quaternion.copy(q); this.wrap.updateMatrixWorld(true);
+    if (k >= 1) {
+      this.onFloor = false; this.yaw += Math.PI; this.pos.copy(this.P1); this.apply(); this.lastFloor = world.t; this.t = 0; this.tgt = null;
+      playSfx('thud', { pos: this.pos.clone(), ref: 0.8, gain: 0.4 });
+      if (this.thenChase) { this.noChaseUntil = 0; this.startChase(); } else { this.st = 'crawl'; spPlay('CeilingCrawl', 0.2); }
+    }
+  }
+};
+// 窓ガラスを割る（2026-11-13）：通り道の区画だけ。音は花瓶が割れる音
+SP.breakWindow = function (x, z) {
+  let best = null, bd = 0.6;
+  for (const g of glassPanes) {
+    const S = g.userData.sec; if (!S || !g.visible || (S.lv !== this.lv && S.lv !== -1)) continue;
+    const along = S.axis === 'x' ? z : x, across = S.axis === 'x' ? x : z;
+    if (along < S.lo - 0.1 || along > S.hi + 0.1) continue;
+    const d = Math.abs(across - S.c); if (d < bd) { bd = d; best = g; }
+  }
+  this.winLowUntil = world.t + 0.9;
+  if (!best) return;
+  best.visible = false; (this.broken || (this.broken = [])).push(best);
+  const S = best.userData.sec, p = best.getWorldPosition(V());
+  playSfx('vase_break', { pos: p.clone(), ref: 1.2, roll: 1.0, gain: 1.0 }) || (SND.glass && SND.glass(p));
+  world.vhs = Math.max(world.vhs, 0.35);
+  // 破片：小さな三角が床へ落ちる
+  const n = 26, geo = new THREE.BufferGeometry(); const pos = new Float32Array(n * 9);
+  for (let i = 0; i < n; i++) { const c = [rnd(-0.6, 0.6), rnd(-S.h / 2, S.h / 2), rnd(-0.03, 0.03)]; for (let k = 0; k < 3; k++) { pos[i * 9 + k * 3] = c[0] + rnd(-0.06, 0.06); pos[i * 9 + k * 3 + 1] = c[1] + rnd(-0.06, 0.06); pos[i * 9 + k * 3 + 2] = c[2]; } }
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xc8d2d8, transparent: true, opacity: 0.7, side: THREE.DoubleSide, depthWrite: false }));
+  m.position.copy(p); m.quaternion.copy(best.getWorldQuaternion(new THREE.Quaternion())); scene.add(m);
+  const v = []; for (let i = 0; i < n; i++) v.push([rnd(-0.8, 0.8), rnd(-0.5, 0.6), rnd(-1.2, 1.2)]);
+  this.shards = (this.shards || []).concat([{ m, v, t: 0, n }]);
+};
+SP.updShards = function (dt) {
+  if (!this.shards || !this.shards.length) return;
+  for (const s of this.shards) {
+    s.t += dt; const a = s.m.geometry.attributes.position;
+    for (let i = 0; i < s.n; i++) { const vv = s.v[i]; vv[1] -= 9.8 * dt; const floorLocal = (this.lv ? LH : 0) + 0.02 - s.m.position.y; for (let k = 0; k < 3; k++) { const j = (i * 3 + k) * 3; if (a.array[j + 1] <= floorLocal) { vv[0] *= 0.8; vv[2] *= 0.8; } a.array[j] += vv[0] * dt; a.array[j + 1] = Math.max(floorLocal, a.array[j + 1] + vv[1] * dt); a.array[j + 2] += vv[2] * dt; } }
+    a.needsUpdate = true; if (s.t > 2.5) s.m.material.opacity = Math.max(0, 0.7 - (s.t - 2.5) * 0.3);
+  }
+  this.shards = this.shards.filter(s => { if (s.t > 5) { scene.remove(s.m); s.m.geometry.dispose(); return false; } return true; });
+};
+// 3〜10秒に1回、顔は正面を向いたまま、左右どちらかへ90度か45度かしげて戻す
+SP.headTilt = function (dt) {
+  if (!this.face || !this.faceAxis) return;
+  if (!this.tilt && world.t > (this.tiltNext || 0)) this.tilt = { t: 0, side: chance(0.5) ? 1 : -1, hold: rnd(0.5, 1.1), ang: chance(0.5) ? Math.PI / 2 : Math.PI / 4 };   // 90度か45度
+  if (!this.tilt) return;
+  const T = this.tilt; T.t += dt;
+  const k = T.t < 0.22 ? smooth(0, 0.22, T.t) : T.t < 0.22 + T.hold ? 1 : 1 - smooth(0.22 + T.hold, 0.6 + T.hold, T.t);
+  this.face.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(this.faceAxis, T.side * (T.ang || Math.PI / 2) * k));
+  if (T.t > 0.6 + T.hold) { this.tilt = null; this.tiltNext = world.t + rnd(3, 10); }
+};
+// 床にいる間は、髪を地面のほうへ垂らす（天井で垂れている向きを覚えておき、それを真下へ向け直す）
+SP.hairFix = function (amt) {
+  if (!this.hair) return;
+  const down = V(0, -1, 0), q = new THREE.Quaternion(), wq = new THREE.Quaternion(), pq = new THREE.Quaternion();
+  for (const H of this.hair) {
+    H.b.updateWorldMatrix(true, false); H.b.getWorldQuaternion(wq);
+    if (!this.onFloor && this.st === 'crawl') { H.loc = down.clone().applyQuaternion(wq.clone().invert()); continue; }   // 天井では向きを覚えるだけ
+    if (!H.loc || amt <= 0) continue;
+    const cur = H.loc.clone().applyQuaternion(wq);
+    q.setFromUnitVectors(cur, down); q.slerp(new THREE.Quaternion(), 1 - amt);
+    H.b.parent.getWorldQuaternion(pq); H.b.quaternion.copy(pq.invert().multiply(q.multiply(wq))); H.b.updateMatrixWorld(true);
+  }
+};
+
+// 顔に張りつく時：8本の脚の先を、画面の縁から顔の前へ寄せる（開いた状態 → 閉じる）
+SP.legsToFace = function (t) {
+  if (!this.legs || !this.legs.length) return;
+  const w = clamp(t / 0.12, 0, 1);   // 最初の一瞬で脚を手前へ
+  const close = smooth(0.12, 0.34, t);   // 脚が閉じる
+  const cq = camera.quaternion, cp = camera.position;
+  const R = V(1, 0, 0).applyQuaternion(cq), U = V(0, 1, 0).applyQuaternion(cq), Fw = camFwd();
+  const th = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), asp = camera.aspect;
+  const tmp = V(), fP = V(), tP = V(), want = V(), q = new THREE.Quaternion(), pq = new THREE.Quaternion(), fq = new THREE.Quaternion();
+  for (const L of this.legs) {
+    // 脚先を置きたい画面の位置（開いた状態は画面の縁、閉じると顔の前の中心寄り）
+    const nx = L.sd * (1.12 - 0.72 * close), ny = [0.5, 0.18, -0.16, -0.48][L.i - 1] * (1 - 0.25 * close);
+    const dir = V(nx * th * asp, ny * th, -1).applyQuaternion(cq).normalize();
+    L.f.updateWorldMatrix(true, true);
+    L.f.getWorldPosition(fP); L.t.getWorldPosition(tP);
+    // 画面のその位置を通る線の上で、付け根から脚の長さちょうどの点（顔より手前）を狙う
+    const len = tP.distanceTo(fP); tmp.copy(cp).sub(fP); const bb = tmp.dot(dir), cc = tmp.lengthSq() - len * len, disc = bb * bb - cc;
+    const sq = Math.sqrt(Math.max(0, disc)), sAlong = -bb - sq > 0.3 ? -bb - sq : -bb + sq;   /* 手前側（顔より前）の点 */ want.copy(cp).addScaledVector(dir, Math.max(0.3, sAlong));
+    const a = tP.sub(fP).normalize(), b = want.sub(fP).normalize();
+    q.setFromUnitVectors(a, b); q.slerp(new THREE.Quaternion(), 1 - w);
+    L.f.getWorldQuaternion(fq); L.f.parent.getWorldQuaternion(pq);
+    L.f.quaternion.copy(pq.invert().multiply(q.multiply(fq)));
+    L.f.updateMatrixWorld(true);
+  }
 };
 
 /* ---------- 追跡：見つけると天井を這って追ってくる（主人公の1.1倍の速さ。曲がり角では減速するので、角を使えば振り切れる） ---------- */
@@ -5708,10 +5943,13 @@ SP.updChase = function (dt, fp) {
   this.lostT = see ? 0 : this.lostT + dt;
   if (hid ? this.lostT > 2.5 : this.lostT > 6) { this.lv = this.gy > 1.6 ? 1 : 0; this.endChase(); return; }
   const dH = Math.hypot(player.x - this.pos.x, player.z - this.pos.z);
+  if (CAP.on) { this.apply(); return; }   // 逆さ女に捕まっている間は待つ
+  if (dH > CONFIG.loseDist && !stairZone(player.x, player.z) && !inStair) { this.lv = this.gy > 1.6 ? 1 : 0; this.endChase(); return; }   // 離れすぎると見失う
+  if (doorStallTick(this, dt)) { this.apply(); this.stepUpdate(dt, false); return; }   // 閉まった引き戸で足止め
   if (!hid && dH < 0.85 && Math.abs((this.pos.y - 0.9) - camera.position.y) < 1.3) { this.lv = this.gy > 1.6 ? 1 : 0; this.startDrop(); return; }   // 追いつかれた（階段の上でも）
   // 行き先：同じ階でまっすぐ行けるなら主人公へ。壁・別の階・階段をはさむなら通路づたい（階段の道も含む）
   const pStair = !!stairZone(player.x, player.z), pLv = player.y > 1.6 ? 1 : 0;
-  const direct = !inStair && !pStair && pLv === this.lv && !segBlocked(this.pos.x, this.pos.z, player.x, player.z, this.lv);
+  const direct = !inStair && !pStair && pLv === this.lv && !segBlocked(this.pos.x, this.pos.z, player.x, player.z, this.lv, 0.12, true);   // 窓ガラスは破ってまっすぐ来る
   let tx = player.x, tz = player.z;
   if (!direct) {
     this.repath -= dt;
@@ -5729,14 +5967,19 @@ SP.updChase = function (dt, fp) {
   const dh = Math.atan2(Math.sin(want - this.yaw), Math.cos(want - this.yaw));
   this.yaw += clamp(dh, -3.2 * dt, 3.2 * dt);
   const turnSlow = Math.abs(dh) > 0.9 ? 0.4 : Math.abs(dh) > 0.45 ? 0.75 : 1;   // 曲がる時は大きく減速
-  const sp = CONFIG.walkSpeed * CONFIG.spiderChaseMul * turnSlow * (inStair ? 0.85 : 1);
+  const sp = CONFIG.walkSpeed * lerp(CONFIG.spiderChaseMul, CONFIG.spiderChaseMax, rampK(this.appearUsed)) * turnSlow * (inStair ? 0.85 : 1);   // 2026-11-13 0.95 → 1.05
   const nx = this.pos.x + Math.sin(this.yaw) * sp * dt, nz = this.pos.z + Math.cos(this.yaw) * sp * dt;
   const toStair = !!stairZone(nx, nz);
-  if (inStair || toStair || !segBlocked(this.pos.x, this.pos.z, nx, nz, this.lv, 0.05)) { this.pos.x = nx; this.pos.z = nz; }
+  { const d = !inStair && !toStair && closedDoorOn(this.pos.x, this.pos.z, this.pos.x + Math.sin(this.yaw) * 0.6, this.pos.z + Math.cos(this.yaw) * 0.6, this.lv); if (d) { doorStall(this, d); this.apply(); return; } }
+  if (inStair || toStair || !segBlocked(this.pos.x, this.pos.z, nx, nz, this.lv, 0.05, direct)) {
+    if (direct && segBlocked(this.pos.x, this.pos.z, nx, nz, this.lv, 0.05)) this.breakWindow(nx, nz);   // 窓を横切る：ガラスを割って通る
+    this.pos.x = nx; this.pos.z = nz;
+  }
   // 高さ：階段では段の高さに合わせ、階に出たらその階の天井へ
   this.gy = groundAt(this.pos.x, this.pos.z, this.gy + 0.3);
   if (!stairZone(this.pos.x, this.pos.z)) { this.lv = this.gy > 1.6 ? 1 : 0; this.gy = this.lv ? LH : 0; }
-  const ty = stairZone(this.pos.x, this.pos.z) ? Math.min(this.gy + 2.45, LH + HT - 0.05) : spCeil(this.lv);
+  let ty = stairZone(this.pos.x, this.pos.z) ? Math.min(this.gy + 2.45, LH + HT - 0.05) : spCeil(this.lv);
+  if (world.t < (this.winLowUntil || 0)) ty = spFloor(this.lv) + 2.15;   // 窓枠をくぐる間は体を下げる
   this.pos.y += (ty - this.pos.y) * Math.min(1, dt * 6);
   spPlay('CeilingCrawl'); this.apply(); this.stepUpdate(dt, true);
   if (rec.active && seen(fp, { maxD: 9 })) awardCont('spChase', '天井を這って追ってくるクモ女', 12, dt, 120);
@@ -6809,7 +7052,7 @@ const COL = {
     ['f2blood', 'シーツに残る古い血の染み', 35], ['f2stairFace', '階段の上の角から覗く顔', 90], ['f2teddy', '布団の中のクマ', 20], ['tTurnFace', '個室のあとに振り向いた目の前の顔', 95], ['f2turnFace', '振り向いた目の前の顔', 95],
     ['f2chair', '誰もいない椅子の座面が回った', 30], ['f2fall', '窓の外から落ちる人影', 85], ['f2crows', '窓辺から一斉に飛び立つカラス', 30], ['f2books', '棚から一冊ずつ落ちる本', 35], ['f2pages', 'ひとりでにめくれるページ', 30],
     ['f2libChair', '通路の椅子がひとりでに動いた', 25], ['f2piano', '誰もいないピアノの蓋が叩きつけられた', 70], ['f2blink', '肖像画のベートーベンがまばたきした', 45], ['f2float', '2階の窓の外を滑っていく女子高生', 60], ['f2vase', '机から落ちて割れた一輪挿し', 40],
-    ['spWarp', '巣に触れたクモ女が別の巣へ移った瞬間', 100], ['spHead', '天井から逆さに見下ろすクモ女の顔', 60], ['spDrop', '脚を広げて落ちてくるクモ女の全身', 140], ['spLatch', '顔の前で閉じるクモ女の脚', 180], ['spChase', '天井を這って追ってくるクモ女', 12],
+    ['spWarp', '巣に触れたクモ女が別の巣へ移った瞬間', 100], ['spHead', '天井から逆さに見下ろすクモ女の顔', 60], ['spDescend', '糸で降りてくるクモ女', 80], ['trio', '奇跡の3ショット', 300], ['spLatch', 'クモ女に襲われる', 180], ['spChase', '天井を這って追ってくるクモ女', 12],
     ['hpFirst', '窓にドンと付いた赤い手形', 40], ['hpBarrage', '窓一面を埋めていく手形', 60], ['boardGlyph', '黒板に走る「タスケテ」の殴り書き', 50], ['boardFill', '板を埋めていく「タスケテ」', 60], ['stall20', '20回目のノックで開いた個室', 60],
     ['hand', '天井から垂れる灰色の手', 25], ['hand', '壁から生えた灰色の手', 25], ['nekomata', '街灯の猫又', 50], ['uwaSeen', '誰も履いていない上履き', 30], ['uwaWalk', 'インカメに映った、歩く上履き', 200],
     ['ceilBleed', '天井に広がる大量の血の染み', 70], ['paCall', '校内放送で呼ばれた自分の名前', 90], ['akuryo', '悪霊退散', 300], ['nurseBack', '保健室の奥に立つ背中', 30], ['nursePeek', '保健室の入口から真横に覗く顔', 80], ['pianoPlay', 'ピアノを弾く', 10], ['clairPlay', '月の光を演奏する', 50], ['requiem', '怪異に捧げるレクイエム', 200], ['nekoPiano', '猫ふんじゃったを弾く', 100], ['twinkle', 'きらきら星を弾く', 100],
@@ -7074,12 +7317,15 @@ const SPV = {
   utter(dest, t0) { const x = Math.random(); const frags = x < 0.18 ? this.taberu() : x < 0.4 ? this.plan(this.name()) : this.plan(pick(this.WORDS)); return this.speakFrags(dest, frags, t0); },
   update(dt) {
     if (!A.ctx || world.state !== 'play' || !SP.ready || !SP.pos) return;
-    if (!['crawl', 'chase', 'hang'].includes(SP.st) || SP.lv !== player.lv) return;
+    if (!['crawl', 'chase', 'hang', 'fcrawl', 'descend'].includes(SP.st) || SP.lv !== player.lv) return;
     const d = camera.position.distanceTo(SP.pos); if (d > 16) return;
     this.next -= dt; if (this.next > 0) return;
     const chase = SP.st === 'chase'; this.next = chase ? rnd(3.5, 6.5) : rnd(8, 15);
-    const pn = panAt(SP.pos.clone(), 1.0, 1.1, undefined, 0);   // クモ女の位置から（その時の位置に固定）
-    const len = this.utter(pn, A.ctx.currentTime + 0.05); freeLater(len + 2, pn);
+    const pn = panAt(SP.pos.clone(), 0.9, 1.6, undefined, 0);   // クモ女の位置から（その時の位置に固定）。2026-11-13 距離でよく小さく
+    // 壁越し（見通せない）なら、こもらせて小さく
+    const fp = spFacePos(V()), clear = clearLine(fp, [SP.wrap]);
+    const lp = A.ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = clear ? 9000 : 1100; const g = A.ctx.createGain(); g.gain.value = clear ? 1 : 0.4; lp.connect(g); g.connect(pn);
+    const len = this.utter(lp, A.ctx.currentTime + 0.05); freeLater(len + 2, pn, lp, g);
   },
 };
 
@@ -7762,7 +8008,7 @@ $('#goBtn').addEventListener('click', () => {
   world.chRaw = ($('#chName').value || '').trim(); world.yomi = world.chRaw ? ($('#chYomi').value || '').trim() : '';
   WD.init(); DIR.planRun(); SELF.reset(); MD.reset(); DOORS2.reset(); TAP.reset(); F2.reset(); SP.reset(); NEKO.reset(); OFUDA.reset(); ITEM.reset(); UWA.reset(); TEN.reset(); GG.reset(); POLT.reset(); MF.reset(); STREETFIG.reset(); EXITF.reset(); STAY.reset(); RED.reset(); MG.reset();
   $('#start').classList.remove('show');
-  world.state = 'intro'; world.battery = CONFIG.battery.start; world.batUsed = Math.max(0, 100 - CONFIG.battery.start);
+  world.state = 'intro'; world.battery = CONFIG.battery.start; world.batUsed = Math.max(0, 100 - CONFIG.battery.start); world.sgShowUsed = rnd(40, 70);   /* 逆さ女がはっきり見えるようになる時（電池残り60%〜30%のどこか） */
   player.yaw = look.yaw = 0; player.pitch = look.pitch = 0;
   INTRO.run(beginPlay);
 });
@@ -7778,7 +8024,7 @@ const DEMO = (location.search.match(/[?&]demo=(\w+)/) || [])[1] || '';
 function demoResult() {   // リザルト画面の確認用：3秒だけ録画して、各レア度の見本を並べて帰還する
   startRec(); toast('リザルトの確認：3秒後に帰還します', 2600);
   setTimeout(() => {
-    const S = [['stand', '教室に立つ制服姿', 15], ['f2libChair', '通路の椅子がひとりでに動いた', 25], ['nekomata', '街灯の猫又', 50], ['prints', '近づいてくる濡れた足跡', 40], ['uwaSeen', '誰も履いていない上履き', 30], ['lookBack', '振り返った女子生徒の黒い目', 70], ['uwaWalk', 'インカメに映った、歩く上履き', 200], ['mirrorGiant', '振り返った目の前の巨大な顔', 90], ['spLatch', '顔の前で閉じるクモ女の脚', 180]];
+    const S = [['stand', '教室に立つ制服姿', 15], ['f2libChair', '通路の椅子がひとりでに動いた', 25], ['nekomata', '街灯の猫又', 50], ['prints', '近づいてくる濡れた足跡', 40], ['uwaSeen', '誰も履いていない上履き', 30], ['lookBack', '振り返った女子生徒の黒い目', 70], ['uwaWalk', 'インカメに映った、歩く上履き', 200], ['mirrorGiant', '振り返った目の前の巨大な顔', 90], ['spLatch', 'クモ女に襲われる', 180]];
     S.forEach(([k, l, p], i) => { award(k, l, p); evidence[evidence.length - 1].t = Math.min(rec.time, 0.3 * (i + 1)); });
     escape();
   }, 3000);
