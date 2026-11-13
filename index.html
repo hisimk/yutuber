@@ -148,7 +148,8 @@
   .gearBtn{display:flex;align-items:center;gap:6px;height:38px;min-width:38px;justify-content:center;padding:0 8px;border-radius:19px;background:rgba(0,0,0,.45);border:1.5px solid rgba(255,255,255,.55);color:#fff;font-size:13px}
   #gearBtn{width:38px;padding:0}
   #startGear{position:absolute;left:14px;top:calc(var(--sat) + 14px);padding:0 12px 0 9px;z-index:2}
-  #start{padding-top:calc(var(--sat) + 66px)}   /* 設定ボタンとタイトルロゴが重ならないように */
+  #start{padding-top:calc(var(--sat) + 66px);justify-content:flex-start}   /* 設定ボタンとタイトルロゴが重ならないように */
+  #start .logoTitle{margin-top:auto!important}#start .howto{margin-bottom:auto}   /* 2026-11-14 画面に収まる時は上下中央、収まらない時は上から並べる（中央寄せで上にはみ出して設定ボタンと重なっていた） */
   #yomiRow{display:none}
   #yomiRow.show{display:flex}
   #fxBtn,#wvBtn,#ltBtn{display:none}
@@ -291,6 +292,22 @@
   .achList .al .like{font-size:14px}
   .achList .ad{font-size:11.5px;color:#8d8a84;font-variant-numeric:tabular-nums}
   .achNone{font-size:12.5px;color:#8d8a84;padding:6px 2px 4px}
+  .achList li{cursor:pointer}.achList li:active{background:rgba(255,255,255,.1)}
+  .achCam{font-style:normal;font-size:9px;color:#ffd34d;margin-left:6px;border:1px solid rgba(255,211,77,.6);border-radius:4px;padding:0 3px;vertical-align:1px}
+  .achHint{font-size:10.5px;color:#77746e;margin:6px 2px 0}
+  #godView{position:fixed;inset:0;z-index:48;display:none;background:rgba(6,6,8,.98);padding:calc(var(--sat) + 12px) 14px calc(var(--sab) + 12px)}
+  #godView.show{display:block}
+  #godView .gvBox{height:100%;display:flex;flex-direction:column;max-width:520px;margin:0 auto;gap:10px}
+  #godView .gvHead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  #godView .gvT{font-size:17px;font-weight:800;color:#fff}#godView .gvT b{color:#ffd34d;margin-right:6px}
+  #godView .gvSub{font-size:12px;color:#9a958c;margin-top:3px;display:flex;align-items:center;gap:6px}#godView .gvSub .like{font-size:13px}
+  #gvClose{height:36px;padding:0 18px;border-radius:18px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.5);color:#fff;font-size:13px;font-weight:700;flex:0 0 auto}
+  #gvVid{width:100%;height:min(52vh,560px);background:#000;border-radius:10px;object-fit:contain;flex:none}
+  #gvNoVid{font-size:12px;color:#8d8a84;text-align:center;padding:14px 8px;border:1px dashed #333;border-radius:10px;flex:none}
+  #gvList{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-bottom:8px}
+  #gvList .gvRow{display:grid;grid-template-columns:46px 1fr auto 34px;align-items:center;gap:8px;padding:9px 10px;border-radius:10px;background:#121214;border:1px solid #232327;font-size:13px;color:#eee}
+  #gvList .gvRow .gt{color:#ffd34d;font-variant-numeric:tabular-nums;font-size:12px}#gvList .gvRow .gp{display:flex;align-items:center;gap:4px;font-weight:800}#gvList .gvRow .gp .like{font-size:13px}
+  #gvList .gvRow .gr{font-weight:800;text-align:center;font-style:italic}
   .colSec{grid-column:1/-1;font-size:12px;font-weight:700;color:#cfcac0;letter-spacing:.1em;margin:8px 2px 0}
   #retakeBtn{flex:none;background:#fff;color:#111;border:none;border-radius:999px;padding:9px 18px;font:700 14px system-ui,-apple-system,"Hiragino Sans",sans-serif;letter-spacing:.06em}
   #resSum{width:100%;max-width:360px;margin:2px 0 6px;text-align:center}
@@ -527,7 +544,6 @@
   </div>
   <button class="go" id="goBtn">旧校舎に入る</button>
   <button class="colBtn" id="colBtn">撮れ高コレクション</button>
-  <button class="resetBtn" id="resetBtn">データをリセット</button>
   <button class="credBtn" data-cred>使用素材・クレジット</button>
   <div class="homeHint" id="homeHint">ホーム画面に追加して遊ぶと、記録が消えにくくなります</div>
   <div class="howto" id="howto"></div>
@@ -7784,7 +7800,7 @@ const COL = {
     const ALL = /[?&]colall\b/.test(location.search);   // 確認用：?colall で、まだ撮れていないものも名前を全部見せる
     if (ALL) $('#colNote').textContent += '　（確認用：すべての名前を表示中）';
     const list = $('#colList'); list.innerHTML = '';
-    list.appendChild(ACH.box()); const sec = document.createElement('div'); sec.className = 'colSec'; sec.textContent = TR('撮れ高'); list.appendChild(sec);
+    list.appendChild(ACH.box()); const sec = document.createElement('div'); sec.className = 'colSec'; sec.textContent = TR('撮れ高リスト'); list.appendChild(sec);
     for (const x of rows) {
       const c = document.createElement('div'); const has = x.it && x.it.n, show = has || ALL;
       c.className = 'colItem r-' + x.r.toLowerCase() + (show ? '' : ' unk'); c.style.setProperty('--rc', RANK_COL[x.r]);
@@ -9483,7 +9499,7 @@ function showResult(blobs) {
   $('#evScore').textContent = '0'; $('#evCount').textContent = evidence.length ? `${evidence.length}件　← スライド →` : '';
   const list = $('#evList'); list.innerHTML = '';
   const fresh = DEMO ? new Set() : COL.record(evidence);
-  if (!DEMO) ACH.record(total, world.runId);   // 2026-11-14 累計いいね・歴代の神回（同じ周は二度足さない）
+  if (!DEMO) ACH.pendVid = ACH.record(total, world.runId, evidence);   // 2026-11-14 累計いいね・歴代の神回ランキング（同じ周は二度足さない。上位3位なら動画も残す）
   { const pi = $('#permIcons'); pi.innerHTML = ''; for (const id of PERM.owned()) if (PERM.active(id)) { const im = document.createElement('img'); im.src = PERM_IMG[id]; im.alt = im.title = TR(PERM.DEFS[id].name); pi.appendChild(im); } }   // 撮れ高コレクションに記録（初めて撮れたものにNEW）。リザルト確認用のデモでは記録しない
   const evs = evidence.slice().sort((a, b) => a.t - b.t);
   if (!evs.length) list.innerHTML = '<div class="ev none">決定的瞬間は映っていなかった。空振りの廊下も記録です。</div>';
@@ -9497,6 +9513,7 @@ function showResult(blobs) {
 }
 function attachVideo(blobs, pending) {
   resultBlobs = blobs.filter(b => b && b.size > 0);
+  if (resultBlobs.length) ACH.saveVid(resultBlobs);
   resultUrls.forEach(u => URL.revokeObjectURL(u)); resultUrls = resultBlobs.map(b => URL.createObjectURL(b));
   const v = $('#replay');
   if (resultUrls.length) { $('#noVideo').style.display = 'none'; v.style.display = ''; segIdx = 0; v.src = resultUrls[0]; v.load(); v.addEventListener('loadeddata', () => { try { if (v.paused && v.currentTime < 0.05) v.currentTime = 0.05; } catch (e) { } }, { once: true }); $('#saveBtn').disabled = false; }   // 自動では再生しない（最初のコマだけ見せる）。iPhoneでは保存した動画のURLに「#t=」を付けると再生できなくなるので付けない
@@ -10291,6 +10308,57 @@ const PERM = {
   },
 };
 
+/* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
+const VDB = {
+  NAME: 'yutuber_db', db: null,
+  open() {
+    if (this.db) return Promise.resolve(this.db);
+    return new Promise((ok, ng) => { try { const r = indexedDB.open(this.NAME, 1); r.onupgradeneeded = () => r.result.createObjectStore('vids'); r.onsuccess = () => { this.db = r.result; ok(this.db); }; r.onerror = () => ng(r.error); } catch (e) { ng(e); } });
+  },
+  tx(mode, fn) { return this.open().then(db => new Promise((ok, ng) => { const t = db.transaction('vids', mode); const st = t.objectStore('vids'); const r = fn(st); t.oncomplete = () => ok(r && r.result); t.onerror = () => ng(t.error); })); },
+  put(id, blobs) { return this.tx('readwrite', st => st.put(blobs, id)); },
+  get(id) { return this.tx('readonly', st => st.get(id)); },
+  del(id) { return this.tx('readwrite', st => st.delete(id)).catch(() => { }); },
+  keys() { return this.tx('readonly', st => st.getAllKeys()).then(k => k || []); },
+  wipe() { try { if (this.db) { this.db.close(); this.db = null; } } catch (e) { } return new Promise(ok => { try { const r = indexedDB.deleteDatabase(this.NAME); r.onsuccess = r.onerror = r.onblocked = () => ok(); } catch (e) { ok(); } }); },
+};
+/* 2026-11-14 神回ランキングの1件を開く：その回の内訳（タップでその場面へ）と、上位3位は収録動画 */
+const GOD = {
+  urls: [], seg: 0,
+  build() {
+    if (this.el) return; const el = document.createElement('div'); el.id = 'godView';
+    el.innerHTML = `<div class="gvBox"><div class="gvHead"><div><div class="gvT" id="gvT"></div><div class="gvSub" id="gvSub"></div></div><button id="gvClose">閉じる</button></div><video id="gvVid" playsinline controls preload="auto"></video><div id="gvNoVid"></div><div id="gvList"></div></div>`;
+    document.body.appendChild(el); this.el = el;
+    for (const t of ['pointerdown', 'touchstart', 'click']) el.addEventListener(t, e => e.stopPropagation());
+    el.querySelector('#gvClose').addEventListener('click', () => this.close());
+    el.querySelector('#gvVid').addEventListener('ended', () => { if (this.seg < this.urls.length - 1) { const v = $('#gvVid'); v.src = this.urls[++this.seg]; v.play().catch(() => { }); } });
+  },
+  async open(i) {
+    this.build(); const b = ACH.load().best[i]; if (!b) return; const L = n => Number(n).toLocaleString('ja-JP');
+    $('#gvT').innerHTML = `<b>${i + 1}${TR('位')}</b>${TR('歴代の神回')}`; $('#gvSub').innerHTML = `<i class="like"></i>${L(b.n)}　${b.d}`;
+    const v = $('#gvVid'), nv = $('#gvNoVid'); this.clear(); v.style.display = 'none'; nv.style.display = 'block';
+    nv.textContent = i < 3 ? TR(b.v ? '動画を読み込んでいます…' : 'この回の動画は残っていません') : TR('収録動画は上位3位までです');
+    const list = $('#gvList'); list.innerHTML = '';
+    if (!b.ev || !b.ev.length) list.innerHTML = `<div class="achNone">${TR(b.ev ? '決定的瞬間は映っていなかった' : 'この回の内訳は記録されていません')}</div>`;
+    for (const [label, pts, r, t] of (b.ev || [])) {
+      const row = document.createElement('div'); row.className = 'gvRow';
+      row.innerHTML = `<span class="gt">${fmt(t || 0)}</span><span class="gn"></span><span class="gp"><i class="like"></i>${pts}</span><span class="gr" style="color:${RANK_COL[r] || '#ccc'}">${r || ''}</span>`;
+      row.querySelector('.gn').textContent = TR(label); row.addEventListener('click', () => this.seek(t || 0)); list.appendChild(row);
+    }
+    this.el.classList.add('show');
+    if (i < 3 && b.v) {
+      try { const blobs = await VDB.get(b.id); if (blobs && blobs.length) { this.urls = blobs.map(x => URL.createObjectURL(x)); this.seg = 0; v.src = this.urls[0]; v.style.display = ''; nv.style.display = 'none'; } else nv.textContent = TR('この回の動画は残っていません'); }
+      catch (e) { nv.textContent = TR('この回の動画は残っていません'); }
+    }
+  },
+  async seek(t) {
+    const v = $('#gvVid'); if (!this.urls.length) return; const target = Math.max(0, t - 1);
+    let acc = 0; for (let i = 0; i < this.urls.length; i++) { const d = await durOf(this.urls[i]); if (target < acc + d || i === this.urls.length - 1) { if (this.seg !== i) { this.seg = i; v.src = this.urls[i]; } v.currentTime = Math.max(0, target - acc); v.play().catch(() => { }); return; } acc += d; }
+  },
+  clear() { const v = $('#gvVid'); if (v) { v.pause(); v.removeAttribute('src'); v.load(); } this.urls.forEach(u => URL.revokeObjectURL(u)); this.urls = []; },
+  close() { this.clear(); if (this.el) this.el.classList.remove('show'); },
+};
+
 /* =========================================================
    2026-11-14 撮れ高実績（撮れ高コレクションの中に表示）
    ・累計いいね数：リザルトでいいねが確定した全プレイの合計（ベスト10圏外も含む）
@@ -10311,17 +10379,30 @@ const ACH = {
   },
   save() { try { localStorage.setItem(this.KEY, JSON.stringify(this.d)); } catch (e) { } },
   today() { const t = new Date(); return `${t.getFullYear()}/${String(t.getMonth() + 1).padStart(2, '0')}/${String(t.getDate()).padStart(2, '0')}`; },
-  record(likes, id) {
-    const d = this.load(); id = id || 'x' + Date.now(); if (d.ids.includes(id)) return false;
+  record(likes, id, evs) {
+    const d = this.load(); id = id || 'x' + Date.now(); if (d.ids.includes(id)) return null;
     d.ids.push(id); if (d.ids.length > 60) d.ids = d.ids.slice(-60);
     const n = Math.max(0, Math.round(likes) || 0); d.total += n;
-    d.best.push({ n, d: this.today() }); d.best.sort((a, b) => b.n - a.n); d.best = d.best.slice(0, 10);
-    this.save(); return true;
+    const ev = (evs || []).slice().sort((a, b) => a.t - b.t).map(e => [String(e.label), e.pts, rankOf(e), Math.round((e.t || 0) * 10) / 10]);
+    const ent = { n, d: this.today(), id, ev, v: 0 };
+    d.best.push(ent); d.best.sort((a, b) => b.n - a.n); d.best = d.best.slice(0, 10);
+    // 動画は上位3位まで：圏外になった回の動画は消す
+    const keep = new Set(d.best.slice(0, 3).map(b => b.id)); this.vids = this.vids || [];
+    for (const b of d.best) if (b.v && !keep.has(b.id)) { b.v = 0; VDB.del(b.id); }
+    VDB.keys().then(ks => { for (const k of ks) if (!keep.has(k)) VDB.del(k); }).catch(() => { });
+    this.save(); return keep.has(id) ? ent : null;
+  },
+  // 上位3位に入った回の動画を、仕上がった時に保存する
+  pendVid: null,
+  saveVid(blobs) {
+    const ent = this.pendVid; if (!ent || !blobs || !blobs.length) return; this.pendVid = null;
+    VDB.put(ent.id, blobs).then(() => { const b = this.load().best.find(x => x.id === ent.id); if (b) { b.v = 1; this.save(); } }).catch(e => console.warn('動画を保存できませんでした', e));
   },
   box() {
     const d = this.load(), el = document.createElement('div'); el.className = 'achBox'; const L = n => Number(n).toLocaleString('ja-JP');
-    el.innerHTML = `<div class="achH">${TR('撮れ高実績')}</div><div class="achTot"><span>${TR('累計いいね数')}</span><b><i class="like"></i>${L(d.total)}</b></div><div class="achSub">${TR('歴代の神回')}</div>`
-      + (d.best.length ? `<ol class="achList">${d.best.map((b, i) => `<li><span class="ar">${i + 1}</span><span class="al"><i class="like"></i>${L(b.n)}</span><span class="ad">${b.d}</span></li>`).join('')}</ol>` : `<div class="achNone">${TR('まだ記録がありません')}</div>`);
+    el.innerHTML = `<div class="achH">${TR('撮れ高実績')}</div><div class="achTot"><span>${TR('累計いいね数')}</span><b><i class="like"></i>${L(d.total)}</b></div><div class="achSub">${TR('歴代の神回ランキング')}</div>`
+      + (d.best.length ? `<ol class="achList">${d.best.map((b, i) => `<li data-i="${i}"><span class="ar">${i + 1}</span><span class="al"><i class="like"></i>${L(b.n)}</span><span class="ad">${b.d}${b.v ? '<i class="achCam">▶</i>' : ''}</span></li>`).join('')}</ol><div class="achHint">${TR('タップで、その回の内訳（上位3位は動画も）を見られます')}</div>` : `<div class="achNone">${TR('まだ記録がありません')}</div>`);
+    for (const li of el.querySelectorAll('.achList li')) li.addEventListener('click', e => { e.stopPropagation(); GOD.open(+li.dataset.i); });
     return el;
   },
 };
@@ -10378,12 +10459,12 @@ const RESET = {
     try { for (const k of this.keys()) localStorage.removeItem(k); for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && /^yutuber_/.test(k)) localStorage.removeItem(k); } } catch (e) { }
     try { resultUrls.forEach(u => URL.revokeObjectURL(u)); } catch (e) { }
     COL.data = null; ACH.d = null; PERM.d = null;
-    const u = new URL(location.href); u.searchParams.delete('perm'); location.replace(u.toString());   // スタート画面から（初めて遊ぶ時と同じ状態）
+    const go = () => { const u = new URL(location.href); u.searchParams.delete('perm'); location.replace(u.toString()); };   // スタート画面から（初めて遊ぶ時と同じ状態）
+    VDB.wipe().then(go, go); setTimeout(go, 1500);   // 神回ランキングの保存映像も消す
   },
 };
 for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'touchmove']) $('#resetAsk').addEventListener(ev, e => e.stopPropagation(), { passive: true });
 $('#resetAsk').addEventListener('click', e => e.stopPropagation());
-$('#resetBtn').addEventListener('click', e => { e.stopPropagation(); RESET.ask(); });
 $('#setReset').addEventListener('click', e => { e.stopPropagation(); RESET.ask(); });
 $('#resetNo').addEventListener('click', e => { e.stopPropagation(); RESET.no(); });
 $('#resetYes').addEventListener('click', e => { e.stopPropagation(); RESET.yes(); });
