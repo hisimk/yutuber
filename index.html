@@ -988,7 +988,7 @@ const EN = {
   'カーテンを開ける': 'Open curtain', 'ノックする': 'Knock', 'ロッカーに隠れる': 'Hide in locker', '布団をめくる': 'Pull back the covers', '戸を開ける': 'Open door', '扉を開ける': 'Open door',
   '引き戸を開ける': 'Open sliding door', '引き戸を閉める': 'Close sliding door', '鍵を開ける': 'Unlock', '鍵をかける': 'Lock', '蛇口を閉める': 'Turn off tap', '蛇口をひねる': 'Turn on tap',
   'ロッカーから出る': 'Leave locker',
-  '怪奇現象を': 'Capture the paranormal', 'カメラに収めろ！': 'on camera!',
+  '怪奇現象を': 'Capture the paranormal', 'カメラに収めろ！': 'on camera!', '心霊動画の撮れ高を': 'Capture the ghostly money shot',
   // 結果
   '決定的瞬間は映っていなかった': 'No decisive moment was caught',
   '帰還': 'Escaped', '映像はここで途切れている': 'The footage ends here', '回収された映像': 'Recovered footage', 'カメラが壊れる直前まで': 'Until just before the camera broke',
@@ -1990,7 +1990,9 @@ function makeGlbHuman(kind) {
   H.root = new THREE.Group(); H.tilt = new THREE.Group(); H.tilt.position.y = 0.86; H.root.add(H.tilt);
   H.body = new THREE.Group(); H.body.position.y = -0.86; H.tilt.add(H.body);
   H.skull = new THREE.Object3D(); H.skull.position.set(0, 1.55, 0.07); H.body.add(H.skull);
-  H.setHollow = on => { H.hollowOn = !!on; for (const f of H.faces) f.mesh.material = on ? f.hollow : f.normal; };
+  // 2026-11-13 怖い顔は上下が逆さまの顔に（kind：'inv'＝逆さ／'blood'＝逆さで血を流す。作れなかった時はもとの黒い目の顔）
+  H.hollowKind = 'inv';
+  H.setHollow = (on, kind) => { H.hollowOn = !!on; for (const f of H.faces) f.mesh.material = on ? (f[kind || H.hollowKind] || f.hollow) : f.normal; };
   // 旧コードの「顔テクスチャを差し替える」を、黒い目の顔への切り替えに読み替える
   H.faceMat = { set map(v) { H.setHollow(v && v !== TX.face); }, get map() { return H.hollowOn ? TX.faceGhost : TX.face; }, set needsUpdate(v) { } };
   return H;
@@ -2017,6 +2019,35 @@ async function glbFixTextures(g, meshes, faces = []) {
     for (const f of faces) { f.normal.map = f.mesh.userData.normalMap || f.normal.map; if (hsi !== null) { f.hollow.map = await loadImg(hsi); f.hollow.needsUpdate = true; } }
   } catch (e) { console.warn('テクスチャの読み直しに失敗', e); }
 }
+/* 2026-11-13 黒い目の顔の画像から、顔の部分だけを上下逆さにした画像（と、血を流す版）を作る */
+function makeInvFaces(H) {
+  for (const f of H.faces) {
+    const src = f.hollow.map, img = src && src.image; if (!img || !img.width) continue;
+    const uv = f.mesh.geometry.attributes.uv; if (!uv) continue;
+    let u0 = 1, u1 = 0, v0 = 1, v1 = 0;
+    for (let i = 0; i < uv.count; i++) { const u = uv.getX(i) - Math.floor(uv.getX(i)), v = uv.getY(i) - Math.floor(uv.getY(i)); u0 = Math.min(u0, u); u1 = Math.max(u1, u); v0 = Math.min(v0, v); v1 = Math.max(v1, v); }
+    const W = img.width, Hh = img.height, x0 = Math.floor(u0 * W), y0 = Math.floor(v0 * Hh), w = Math.ceil((u1 - u0) * W), h = Math.ceil((v1 - v0) * Hh);
+    const mk = blood => {
+      const c = document.createElement('canvas'); c.width = W; c.height = Hh; const g = c.getContext('2d');
+      g.drawImage(img, 0, 0);
+      g.save(); g.translate(x0 + w / 2, y0 + h / 2); g.rotate(Math.PI); g.drawImage(img, x0, y0, w, h, -w / 2, -h / 2, w, h); g.restore();
+      if (blood) {   // 血の筋。この画像は顔に貼ると上下が入れ替わるので、顔の上で「下へ流れる」＝画像の上へ向かって描く
+        g.save(); g.beginPath(); g.rect(x0, y0, w, h); g.clip();
+        const streak = (x, y, len, wd) => {   // (x,y) から画像の上へ len
+          const gr = g.createLinearGradient(0, y, 0, y - len); gr.addColorStop(0, 'rgba(110,0,0,.95)'); gr.addColorStop(0.75, 'rgba(85,0,0,.85)'); gr.addColorStop(1, 'rgba(60,0,0,0)');
+          g.fillStyle = gr; g.beginPath(); g.moveTo(x - wd / 2, y); g.quadraticCurveTo(x - wd * 0.2 + (Math.random() - 0.5) * wd * 1.5, y - len * 0.55, x - wd * 0.12, y - len); g.lineTo(x + wd * 0.12, y - len); g.quadraticCurveTo(x + wd * 0.25, y - len * 0.45, x + wd / 2, y); g.fill();
+          g.fillStyle = 'rgba(95,0,0,.9)'; g.beginPath(); g.arc(x, y - len * 0.93, wd * 0.36, 0, Math.PI * 2); g.fill();
+        };
+        // 逆さの目（画像の上寄り）と口（画像の中ほど）から
+        for (const [fx, fy, fl, fw] of [[0.29, 0.25, 0.2, 0.03], [0.33, 0.26, 0.16, 0.022], [0.67, 0.25, 0.21, 0.03], [0.71, 0.26, 0.13, 0.02], [0.4, 0.49, 0.42, 0.026], [0.47, 0.5, 0.3, 0.02], [0.58, 0.49, 0.4, 0.026], [0.63, 0.48, 0.24, 0.018]]) streak(x0 + w * fx, y0 + h * fy, h * fl, w * fw);
+        g.restore();
+      }
+      const t = new THREE.CanvasTexture(c); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; t.wrapS = src.wrapS; t.wrapT = src.wrapT; t.anisotropy = 4;
+      const m = f.hollow.clone(); m.map = t; H.mats.push(m); return m;
+    };
+    f.inv = mk(false); f.blood = mk(true);
+  }
+}
 function setupGlbHuman(H, b64) {
   return new Promise(res => {
     try {
@@ -2038,6 +2069,7 @@ function setupGlbHuman(H, b64) {
           }
         });
         await glbFixTextures(g, H.meshes, H.faces);
+        if (ghost) try { makeInvFaces(H); } catch (e) { console.warn('逆さの顔を作れませんでした', e); }
         H.root.updateMatrixWorld(true);
         const hb = H.bones.Head;
         if (hb) { const wp = H.skull.getWorldPosition(V()); hb.worldToLocal(wp); hb.add(H.skull); H.skull.position.copy(wp); H.headRest = hb.quaternion.clone(); }
@@ -7752,7 +7784,7 @@ defEvent('nurse', {
   },
   placePeek() {   // 入口の枠（廊下側）から、高い位置に真横の顔
     borrowWoman(); const c = woman.c; c.pose = 'peek'; c.poseT = 3; c.snap = true; c.peekRoll = 0.75; c.headRoll = 1.45; c.headYaw = -0.2;   // 体は入口の北側の壁の陰、頭だけ真横に倒して入口へ
-    woman.faceMat.map = TX.faceGhost; woman.faceMat.needsUpdate = true;
+    woman.setHollow(true, 'blood');   // 2026-11-13 逆さで血を流す顔
     const hp = V(-1.6, 1.86, -12.95);
     woman.root.position.set(-1.1, 0, -12.4); woman.root.rotation.y = -Math.PI / 2; animHuman(woman, 0.016); woman.root.updateMatrixWorld(true);
     const h = headWorld(woman, V()); woman.root.position.x += hp.x - h.x; woman.root.position.z += hp.z - h.z; woman.root.position.y += hp.y - h.y; setOpacity(woman, 1);
@@ -7775,9 +7807,12 @@ defEvent('nurse', {
       if (n.z < 1 && Math.abs(n.x) < 0.75 && Math.abs(n.y) < 0.75 && clearLine(hp)) {   // カメラに入った瞬間
         jumpSting('jump_a', 0.9, 2.6) || SND.hit(); world.vhs = Math.max(world.vhs, 0.5);
         if (rec.active) award('nursePeek', '保健室の入口から真横に覗く顔', 80);
-        this.st = 'hit'; this.t = 0; noiseHit(0.9);
+        this.st = 'stare'; this.t = 0;   // 2026-11-13 すぐ消さずに、しばらく覗いたまま
       }
       if (this.t > 30) return true;
+    } else if (this.st === 'stare') {   // 約2.5秒、じっとこちらを覗く。首がじわじわ傾く
+      woman.c.headRoll = 1.45 + Math.min(0.25, this.t * 0.1); woman.c.snap = true; world.vhs = Math.max(world.vhs, 0.25);
+      if (this.t > 2.5) { this.st = 'hit'; this.t = 0; noiseHit(0.9); }
     } else if (this.st === 'hit') {
       const U = postMat.uniforms; U.tear.value = rnd(0.35, 0.7); U.stat.value = Math.random() < 0.6 ? 0.7 : 0.2; world.vhs = 0.9;
       setOpacity(woman, Math.random() < 0.35 && this.t < 0.18 ? 1 : 0);
@@ -9260,14 +9295,22 @@ const INTRO = {
     const el = $('#intro'), cv = $('#introCv'), cx = cv.getContext('2d');
     const dpr = Math.min(2, devicePixelRatio || 1) * (FRAME.on ? Math.max(1, FRAME.k) : 1), W = vpW(), H = vpH();
     cv.width = W * dpr; cv.height = H * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const lines = ['怪奇現象を', 'カメラに収めろ！'].map(TR);
+    const lines = ['心霊動画の撮れ高を', 'カメラに収めろ！'].map(TR);   // 2026-11-13 文言変更。「心霊」「撮れ高」「カメラ」は赤
     let fs = Math.min(44, W * 0.8 / 8.4); { const g0 = document.createElement('canvas').getContext('2d'); g0.font = `800 ${fs}px "Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif`; const mw = Math.max(...lines.map(l => g0.measureText(l).width)); if (mw > W * 0.86) fs *= W * 0.86 / mw; }
     const lh = fs * 1.55;
     // 文字だけを別の紙に描いておき、ずらしたり色を分けたりして貼る
     const tx = document.createElement('canvas'); tx.width = W * dpr; tx.height = H * dpr; const t = tx.getContext('2d'); t.setTransform(dpr, 0, 0, dpr, 0, 0);
     t.font = `800 ${fs}px "Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif`; t.textAlign = 'center'; t.textBaseline = 'middle'; t.fillStyle = '#e9e4da';
     t.shadowColor = 'rgba(255,240,220,.25)'; t.shadowBlur = 14;
-    lines.forEach((ln, i) => t.fillText(ln, W / 2, H / 2 + (i - (lines.length - 1) / 2) * lh));
+    { const RED = LANG === 'ja' ? ['心霊', '撮れ高', 'カメラ'] : ['ghostly', 'camera'];
+      lines.forEach((ln, i) => {   // 赤くする言葉で区切って、左から順に描く
+        const y = H / 2 + (i - (lines.length - 1) / 2) * lh, segs = []; let rest = ln;
+        while (rest) { let hit = null; for (const r of RED) { const k = rest.indexOf(r); if (k >= 0 && (!hit || k < hit[0])) hit = [k, r]; }
+          if (!hit) { segs.push([rest, false]); break; } if (hit[0]) segs.push([rest.slice(0, hit[0]), false]); segs.push([hit[1], true]); rest = rest.slice(hit[0] + hit[1].length); }
+        const tw = segs.reduce((a, [x]) => a + t.measureText(x).width, 0); let x = W / 2 - tw / 2; t.textAlign = 'left';
+        for (const [txt, red] of segs) { t.fillStyle = red ? '#e3201b' : '#e9e4da'; t.shadowColor = red ? 'rgba(255,40,30,.35)' : 'rgba(255,240,220,.25)'; t.fillText(txt, x, y); x += t.measureText(txt).width; }
+        t.textAlign = 'center'; t.fillStyle = '#e9e4da'; t.shadowColor = 'rgba(255,240,220,.25)';
+      }); }
     if (LANG === 'ja' && lines[0].startsWith('怪奇現象')) {   // 2026-11-13 「怪奇現象」に「とれだか」のルビ（漢字1字にかな1字）
       const lw = t.measureText(lines[0]).width, y0 = H / 2 - (lines.length - 1) / 2 * lh; let x = W / 2 - lw / 2;
       const cw = [...'怪奇現象'].map(c => t.measureText(c).width), rs = fs * 0.36;
