@@ -8285,7 +8285,7 @@ const MANN = {
     if (!this.ready) return;
     if (this.mixer) this.mixer.update(dt);
     this.updPieces(dt);
-    if (world.mannRun && world.state === 'play' && ['spot', 'windup', 'dash', 'skid', 'hunt', 'stun', 'turn'].includes(this.st) && rec.active) { awardCont('chaseRec', '追われながらカメラを回す', 4, dt); if (seen(this.head(), { maxD: 20 })) awardCont('mannChase', '追ってくる人体模型', 12, dt, 120); }
+    if (world.mannRun && world.state === 'play' && ['spot', 'windup', 'dash', 'skid', 'hunt', 'stun', 'turn'].includes(this.st) && rec.active) { if (seen(this.head(), { maxD: 20 })) awardCont('mannChase', '追ってくる人体模型', 12, dt, 120); }
     if (world.mannRun && world.state === 'play' && ['windup', 'dash', 'skid', 'hunt', 'turn'].includes(this.st)) {   // 2026-11-14 追ってくる間は、首と黒目は常にカメラの方（見つけた瞬間・激突の後の首回しは別）
       const H0 = this.head(), lp = this.root.worldToLocal(camera.position.clone()), hp0 = this.root.worldToLocal(H0.clone());
       this.hy = clamp(Math.atan2(lp.x - hp0.x, lp.z - hp0.z), -1.4, 1.4); this.hp = clamp(-Math.atan2(lp.y - hp0.y, Math.hypot(lp.x - hp0.x, lp.z - hp0.z)), -0.5, 0.5);
@@ -9422,14 +9422,21 @@ function tick(now) {
   WD.update(dt);
   CH.update(dt); MANN.update(dt); cvoiceUpdate(dt);
   HIDE.update(dt);
-  if (CH.state !== 'off' && rec.active && world.state === 'play' && !CAP.on) {
-    awardCont('chaseRec', '追われながらカメラを回す', 4, dt);
-    if (world.selfie && SG.root.visible) {   // インカメラで、追ってくる姿を背後に捉えている
-      const h = sgHead(V()); const n = h.clone().project(selfCam);
-      if (n.z < 1 && Math.abs(n.x) < 0.95 && Math.abs(n.y) < 0.95 && h.distanceTo(camera.position) < 12) { awardCont('chaseSelfie', 'インカメラに追ってくる姿', 8, dt); if (!CBGM.selfSeen) { CBGM.selfSeen = true; jumpSting('jump_b', 0.9, 4); } }
+  // 2026-11-14 追われている間の継続点（1秒あたり）：撮りながら逃げる＝逆さ女4・クモ女5・人体模型6／インカメラに追ってくる姿が映る＝逆さ女8・クモ女10・人体模型12
+  if (rec.active && world.state === 'play' && !CAP.on) {
+    const byW = CH.state !== 'off', byS = SP.st === 'chase', byM = world.mannRun && ['spot', 'windup', 'dash', 'skid', 'hunt', 'stun', 'turn'].includes(MANN.st);
+    const rate = Math.max(byW ? 4 : 0, byS ? 5 : 0, byM ? 6 : 0);
+    if (rate) awardCont('chaseRec', '追われながらカメラを回す', rate, dt);
+    if (world.selfie) {
+      const inSelf = h => { const n = h.clone().project(selfCam); return n.z < 1 && Math.abs(n.x) < 0.95 && Math.abs(n.y) < 0.95 && h.distanceTo(camera.position) < 12; };
+      let sr = 0;
+      if (byW && SG.root.visible && inSelf(sgHead(V()))) sr = Math.max(sr, 8);
+      if (byS && SP.wrap.visible && inSelf(spFacePos(V()))) sr = Math.max(sr, 10);
+      if (byM && MANN.root.visible && inSelf(MANN.head())) sr = Math.max(sr, 12);
+      if (sr) { awardCont('chaseSelfie', 'インカメラに追ってくる姿', sr, dt); if (!CBGM.selfSeen) { CBGM.selfSeen = true; jumpSting('jump_b', 0.9, 4); } }
     }
   }
-  // 2026-11-14 インカメラで逃走中：誰に追われていても、インカメラで撮りながら逃げている間は1秒2点（追ってくる姿が映っていなくてよい）
+  // インカメラで逃走中：誰に追われていても、インカメラで撮りながら逃げている間は1秒2点（追ってくる姿が映っていなくてよい）
   if (rec.active && world.selfie && world.state === 'play' && !CAP.on && ((CH.state === 'chase' || CH.state === 'hunt') || SP.st === 'chase' || (world.mannRun && ['spot', 'windup', 'dash', 'skid', 'hunt', 'stun', 'turn'].includes(MANN.st)))) awardCont('selfieRun', 'インカメラで逃走中', 2, dt);
   DIR.update(dt); AMB.update(dt); MINOR.update(dt); SELF.update(dt); MD.update(dt); MF.update(dt); POLT.update(dt); STREETFIG.update(dt); EXITF.update(dt); RED.update(dt); MG.update(dt); raspUpdate(dt); cbgmUpdate(dt); chaseHead(dt); DOORS2.update(dt); TAP.update(dt); F2.update(dt); SP.update(dt); TEN.update(dt); GG.update(dt); NEKO.update(dt); ITEM.update(dt); UWA.update(dt); MISS.update(); SPV.update(dt); OFUDA.update(dt); OFUDA.updFall(dt);
   updateDrops(dt);
