@@ -199,6 +199,25 @@
   #invScore.show{display:flex}
   #invScore img{width:min(calc(92 * var(--vw)),520px);height:auto;transform:rotate(-1.5deg);filter:drop-shadow(0 4px 14px rgba(0,0,0,.6))}
   #invScoreTap{margin-top:18px;font-size:13px;color:#cfcac0}
+  #setKeys{display:none;flex-direction:column;gap:6px}html.pcFrame #setKeys{display:flex}
+  #setKeys .setSub small{display:block;font-size:11px;color:#6f6b64;margin-top:2px}
+  #keyList{display:grid;grid-template-columns:1fr auto;gap:5px 10px;align-items:center;font-size:13px;padding:4px}
+  #keyList button{min-width:74px;padding:6px 8px;border-radius:7px;border:1px solid #444;background:#151517;color:#fff;font:600 13px system-ui}
+  #keyList button.wait{border-color:#ffd60a;color:#ffd60a}
+  #tut{position:fixed;inset:0;z-index:45;display:none;touch-action:none}
+  #tut.show{display:block}
+  #tut.dim{background:rgba(0,0,0,.78)}
+  #tSkipTop{position:absolute;right:12px;top:calc(var(--sat) + 96px);z-index:2;padding:8px 12px;border-radius:999px;border:1px solid #6a665f;background:rgba(20,20,22,.9);color:#e9e4da;font:600 13px system-ui}
+  #tHole{position:absolute;display:none;border:2px dashed #ffd60a;border-radius:14px;box-shadow:0 0 0 2000px rgba(0,0,0,.74);transition:all .25s;pointer-events:none}
+  #tHole.on{display:block}
+  #tTag{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:800 15px system-ui;color:#ffd60a;text-shadow:0 1px 4px #000;white-space:nowrap;letter-spacing:.06em}
+  .tBox{position:absolute;left:16px;right:16px;padding:16px 16px 14px;border-radius:16px;background:#141416;border:1px solid #3a3834;color:#e9e4da;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.6)}
+  .tStep{font-size:11px;letter-spacing:.2em;color:#8a867f}
+  .tIco{margin:8px 0 2px;font-size:30px;line-height:1.25}.tIco:empty{display:none}
+  .tIco kbd{display:inline-block;min-width:28px;padding:3px 7px;margin:2px;border:1px solid #6a665f;border-bottom-width:3px;border-radius:7px;font:700 15px system-ui;color:#fff}
+  #tTitle{font-family:"Shippori Mincho",serif;font-size:20px;letter-spacing:.1em;margin:6px 0 6px;color:#ffd60a}
+  #tText{font-size:14px;line-height:1.7;color:#e1dcd2;margin:0 0 12px}
+  .tBtns{display:flex;gap:10px}.tBtns .go{flex:1;margin:0}.tSkip{padding:0 14px;border-radius:12px;border:1px solid #3a3834;background:none;color:#8a867f;font-size:13px}
   .setLink{margin-top:6px;background:none;border:1px solid #3a3a3e;border-radius:12px;color:#e9e4da;font-size:14px;padding:12px}
   .setLink.warn{border-color:#ff453a;color:#ff453a}
   #setClose{margin-top:8px;align-self:center}
@@ -465,6 +484,8 @@
         <div class="opt col" id="setOutRow"><div class="optTop"><div>音の出力先<small id="outNote">ヘッドホンやスピーカーを選べます</small></div></div><select class="sel" id="outSel"><option value="">いつもの出力（パソコンの設定）</option></select></div>
         <div class="opt col" id="setMidiRow"><div class="optTop" id="setMidi"><div>電子ピアノ（MIDI）<small>USBでつないだ電子ピアノで音楽室のピアノを弾けます</small></div><div class="sw"></div></div><select class="sel" id="midiSel"><option value="">つないだ機器すべて</option></select><div id="midiNote"></div></div>
       </div>
+      <div id="setKeys"><div class="setSub">キー操作（PC）<small>ボタンを押してから、割り当てたいキーを押す</small></div><div id="keyList"></div><button class="setLink" id="keyReset">キー操作を初期設定にもどす</button></div>
+      <button class="setLink" id="setTut">遊び方を見る</button>
       <div class="opt" id="setLang"><div>言語 / Language</div><div class="seg" id="langSeg"><button data-lang="ja">日本語</button><button data-lang="en">English</button></div></div>
       <button class="setLink" id="setCol">撮れ高コレクション</button>
       <button class="setLink" id="setHome">スタート画面にもどる</button>
@@ -487,6 +508,7 @@
   </div>
   <div id="invScore"><img id="invScoreImg" alt=""><div id="invScoreTap">タップで閉じる</div></div>
 </div>
+<div id="tut"><button id="tSkipTop">遊び方をとばす ✕</button><div id="tHole"><b id="tTag"></b></div><div class="tBox" id="tBox"><div class="tStep" id="tStep"></div><div class="tIco" id="tIco"></div><h3 id="tTitle"></h3><p id="tText"></p><div class="tBtns"><button class="tSkip" id="tSkip">とばす</button><button class="go" id="tNext">次へ</button></div></div></div>
 <div id="intro"><canvas id="introCv"></canvas><div class="skip">タップでスキップ</div></div>
 <div class="screen" id="result">
   <h2 id="resTitle">帰還</h2>
@@ -2788,7 +2810,26 @@ touchEl.addEventListener('pointermove', e => { if (e.pointerId === stickId) stic
 addEventListener('blur', () => resetPtrs()); document.addEventListener('visibilitychange', () => { if (document.hidden) resetPtrs(); });
 setInterval(() => { if (stickId !== null && performance.now() - stickEvT > 5000 && touchN < ptrs.size) resetPtrs(); }, 500);
 const keys = {};
-addEventListener('keydown', e => { keys[e.code] = true; if (e.code === 'KeyR') toggleRec(); if (e.code === 'KeyE') $('#actBtn').click(); if (e.code.startsWith('Digit')) { const z = CONFIG.zoomStops[+e.code.slice(5) - 1]; if (z) setZoom(z); } });
+/* 2026-11-13 PCのキー操作（設定で組み換えられる。この端末に保存） */
+const KB = {
+  DEF: { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD', lookL: 'ArrowLeft', lookR: 'ArrowRight', lookU: 'ArrowUp', lookD: 'ArrowDown', rec: 'KeyR', act: 'KeyE', selfie: 'KeyF', inv: 'KeyI', z1: 'Digit1', z2: 'Digit2', z3: 'Digit3' },
+  NAME: { up: '前へ歩く', down: '後ろへ歩く', left: '左へ歩く', right: '右へ歩く', lookL: '左を向く', lookR: '右を向く', lookU: '上を向く', lookD: '下を向く', rec: '録画の開始・停止', act: '調べる・開ける', selfie: 'インカメラの切り替え', inv: '持ち物', z1: 'ズーム 1倍', z2: 'ズーム 2倍', z3: 'ズーム 3倍' },
+  map: {},
+  load() { let s = {}; try { s = JSON.parse(localStorage.getItem('yt_keys') || '{}'); } catch (e) { } this.map = Object.assign({}, this.DEF, s); },
+  save() { try { localStorage.setItem('yt_keys', JSON.stringify(this.map)); } catch (e) { } },
+  label(c) { if (!c) return '—'; const A = { ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓', Space: 'Space', Enter: 'Enter', Tab: 'Tab', Backspace: 'BS', ShiftLeft: 'Shift', ShiftRight: '右Shift', ControlLeft: 'Ctrl', ControlRight: '右Ctrl', AltLeft: 'Alt', AltRight: '右Alt', CapsLock: 'Caps' }; return A[c] || c.replace(/^Key|^Digit|^Numpad/, (m) => m === 'Numpad' ? 'テンキー' : ''); },
+  of(a) { return this.label(this.map[a]); },
+  down(a) { return !!keys[this.map[a]]; },
+};
+KB.load();
+addEventListener('keydown', e => {
+  if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;   // 名前の入力中は反応しない
+  keys[e.code] = true; if (KB.wait) return; const M = KB.map;
+  if (e.code === M.rec) toggleRec(); if (e.code === M.act) $('#actBtn').click();
+  if (e.code === M.selfie && typeof SELF !== 'undefined' && world.state === 'play') SELF.set(!world.selfie);
+  if (e.code === M.inv && typeof INV !== 'undefined') INV.open ? INV.hide() : INV.show();
+  for (const [i, k] of [[0, 'z1'], [1, 'z2'], [2, 'z3']]) if (e.code === M[k]) { const z = CONFIG.zoomStops[i]; if (z) setZoom(z); }
+});
 addEventListener('keyup', e => { keys[e.code] = false; });
 // HUDのボタンを押しても移動は止まらない（別の指として扱う）
 for (const b of document.querySelectorAll('#hud .btn')) b.addEventListener('pointerdown', e => e.stopPropagation());
@@ -4602,7 +4643,7 @@ const SELF = {
   },
 };
 hudTap($('#camBtn'), () => SELF.set(!world.selfie));
-addEventListener('keydown', e => { if (e.code === 'KeyF') SELF.set(!world.selfie); });
+/* インカメラのキーは KB（p6_state）で扱う */
 
 /* =========================================================
    トイレの鏡：見ていると、後ろの個室の戸がひとつ勝手に閉まる
@@ -8277,8 +8318,8 @@ function tick(now) {
   if (Math.abs(zoom - prevZoom) > 0.0015) focus.lastZoomMove = world.t; prevZoom = zoom;
   camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(CONFIG.fov1x / 2)) / zoom)); camera.updateProjectionMatrix();
   // 視点
-  if (keys.ArrowLeft) look.yaw += 1.8 * dt; if (keys.ArrowRight) look.yaw -= 1.8 * dt;
-  if (keys.ArrowUp) look.pitch = clamp(look.pitch + 1.2 * dt, -1.54, 1.54); if (keys.ArrowDown) look.pitch = clamp(look.pitch - 1.2 * dt, -1.54, 1.54);
+  if (KB.down('lookL')) look.yaw += 1.8 * dt; if (KB.down('lookR')) look.yaw -= 1.8 * dt;
+  if (KB.down('lookU')) look.pitch = clamp(look.pitch + 1.2 * dt, -1.54, 1.54); if (KB.down('lookD')) look.pitch = clamp(look.pitch - 1.2 * dt, -1.54, 1.54);
   if (gyro.on && gyro.got) { player.yaw = look.yaw + (gyro.acc - gyro.ref); player.pitch = clamp(gyro.pitch + look.pitch, -1.55, 1.55); }
   else { player.yaw = look.yaw; player.pitch = look.pitch; }
   if (CAP.on) { player.yaw = CAP.camYaw; player.pitch = CAP.camPitch; }   // 捕まったら強制的に振り向かされる
@@ -8288,7 +8329,7 @@ function tick(now) {
   }
   // 移動
   let mx = input.sx, my = input.sy;
-  if (keys.KeyW) my = -1; if (keys.KeyS) my = 1; if (keys.KeyA) mx = -1; if (keys.KeyD) mx = 1;
+  if (KB.down('up')) my = -1; if (KB.down('down')) my = 1; if (KB.down('left')) mx = -1; if (KB.down('right')) mx = 1;
   if (world.outro > 0 || world.capture || player.hidden) { mx = 0; my = 0; }
   const fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw), rx = Math.cos(player.yaw), rz = -Math.sin(player.yaw);
   const vx = (fx * -my + rx * mx) * CONFIG.walkSpeed, vz = (fz * -my + rz * mx) * CONFIG.walkSpeed;
@@ -8695,7 +8736,7 @@ const SET = {
     $('#setClose').textContent = TR(this.paused ? 'ゲームにもどる' : '閉じる');
     this.homeArm = 0; $('#setHome').classList.remove('warn'); $('#setHome').textContent = TR('スタート画面にもどる');
     this.sync(); $('#settings').classList.remove('bright'); $('#settings').classList.add('show'); this.meter();
-    if (FRAME.on) { AUDIO_OUT.list(); MIDI.list(); }
+    if (FRAME.on) { AUDIO_OUT.list(); MIDI.list(); KEYUI.draw(); }
   },
   hide() {
     if (!this.open) return; this.open = false; cancelAnimationFrame(this.raf);
@@ -8815,6 +8856,75 @@ const MIDI = {
 $('#setMidi').addEventListener('click', () => { opt.midi = !opt.midi; saveOpts(); SET.sync(); if (opt.midi) MIDI.start(); else MIDI.stop(); });
 $('#midiSel').addEventListener('change', e => { opt.midiIn = e.target.value; saveOpts(); MIDI.bind(); });
 if (FRAME.on && opt.midi && navigator.requestMIDIAccess) MIDI.start();
+/* 2026-11-13 はじめての人向けの遊び方（スマホ版・PC版で中身を変える）。設定の「遊び方を見る」からも開ける */
+const TUT = {
+  // [目印（要素のid・範囲・なし）, 目印の文字, 見出し, 説明, アイコン]
+  steps() {
+    const pc = FRAME.on, W = vpW(), H = vpH(), k = (...a) => a.map(x => `<kbd>${KB.of(x)}</kbd>`).join(''), Z = CONFIG.stickZone;
+    return [
+      [null, '', 'ようこそ、幽tuberへ', '夜の旧校舎で心霊現象を撮影して、無事に帰ってくるゲームです。画面の見方を説明します。', '📷'],
+      pc ? [null, '', '歩く', `${KB.of('up')}${KB.of('left')}${KB.of('down')}${KB.of('right')} キーで前後左右に歩きます。`, k('up') + '<br>' + k('left', 'down', 'right')]
+         : [{ x: 0, y: H * Z.minY, w: W * Z.maxX, h: H * (1 - Z.minY) }, '移動スティック', '歩く', 'この範囲を押したまま、行きたい方へ指をずらすと歩けます。'],
+      pc ? [{ x: 8, y: 90, w: W - 16, h: H * 0.56 - 90 }, 'ドラッグで見回す', '見回す', 'マウスで画面をドラッグすると向きが変わります。矢印キーでも見回せます。']
+         : [{ x: W * Z.maxX, y: 90, w: W * (1 - Z.maxX) - 6, h: H * 0.56 - 90 }, '視点の操作', '見回す', 'この範囲をなぞると向きが変わります（左下以外ならどこでも）。スマホを傾けても見回せます。'],
+      ['recBtn', '', '録画はここ！', (pc ? `${KB.of('rec')} キーでも録画できます。` : '') + 'ここを押すと録画が始まり、もう一度押すと止まります。撮れ高は録画中にしか入りません。'],
+      ['cap', '', '録画の残容量', '録画できるのは全部で2分。録画中に減っていき、0になるともう撮れません。ここぞという時に回そう！'],
+      ['battery', '', 'スマホの電池', '時間とともに減り、録画中は早く減ります。電池が切れると明かりも消えて、真っ暗な中で怪異が近づいてきます。'],
+      ['zoomRow', '', 'ズーム', (pc ? `${KB.of('z1')}〜${KB.of('z3')} キーでも切り替えられます。` : '') + '遠くの怪異は2倍・3倍で大きく撮ろう。'],
+      ['camBtn', '', 'インカメラ', (pc ? `${KB.of('selfie')} キーでも切り替えられます。` : '') + '自分を映すカメラに切り替えます。背後に何かが映ることも……。'],
+      ['topL', '', '設定と持ち物', '上の歯車が設定、その下のカバンが持ち物です。開いている間はゲームが止まります。' + (pc ? `持ち物は ${KB.of('inv')} キー、調べる・開けるは ${KB.of('act')} キー。キーは設定で組み換えられます。` : '')],
+      [null, '', '逃げて、帰る', '怪異に追われたらロッカーなどに隠れよう。捕まるとゲームオーバー。撮り終えたら、玄関から外へ出れば帰還です。', '🏃'],
+    ];
+  },
+  show(done) {
+    const S = this.steps(); let i = 0; const el = $('#tut'), hole = $('#tHole'), box = $('#tBox');
+    const prev = world.state; if (prev === 'play') world.state = 'paused';
+    const draw = () => {
+      const [tg, tag, ti, tx, ico] = S[i];
+      let r = null;
+      if (typeof tg === 'string') { const e = $('#' + tg); if (e && e.getBoundingClientRect().width) { const q = frameRect(e); r = { x: q.left - 8, y: q.top - 8, w: q.width + 16, h: q.height + 16 }; if (tg === 'topL') { const v = frameRect($('#invBtn')); r.h = v.bottom - q.top + 16; r.w = Math.max(r.w, v.width + 16); } } }
+      else if (tg) r = tg;
+      hole.classList.toggle('on', !!r); el.classList.toggle('dim', !r);
+      if (r) Object.assign(hole.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' });
+      $('#tTag').textContent = tag ? TR(tag) : '';
+      $('#tStep').textContent = `${TR('遊び方')}  ${i + 1} / ${S.length}`; $('#tIco').innerHTML = ico || ''; $('#tTitle').textContent = TR(ti); $('#tText').textContent = TR(tx);
+      $('#tNext').textContent = TR(i === S.length - 1 ? 'はじめる' : '次へ'); $('#tSkip').style.visibility = i === S.length - 1 ? 'hidden' : 'visible';
+      // 説明の箱は、目印と重ならない側（上か下）へ
+      const H = vpH(), lo = !r || r.y + r.h / 2 < H * 0.5;
+      box.style.top = lo ? (r ? Math.min(H - 250, r.y + r.h + 14) : H * 0.32) + 'px' : 'auto';
+      box.style.bottom = lo ? 'auto' : (H - r.y + 14) + 'px';
+      if (r && !lo && H - r.y + 14 > H - 260) { box.style.bottom = 'auto'; box.style.top = '70px'; }
+    };
+    const end = () => { el.classList.remove('show'); $('#tNext').onclick = $('#tSkip').onclick = $('#tSkipTop').onclick = null; removeEventListener('keydown', kd, true); try { localStorage.setItem('yt_tut', '1'); } catch (e) { } if (prev === 'play' && world.state === 'paused' && !SET.open) { world.state = 'play'; lastT = performance.now(); } done && done(); };
+    const kd = e => { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); e.stopImmediatePropagation(); i < S.length - 1 ? (i++, draw()) : end(); } else if (e.code === 'Escape') { e.stopImmediatePropagation(); end(); } };
+    $('#tNext').onclick = e => { e && e.stopPropagation(); if (i < S.length - 1) { i++; draw(); } else end(); };
+    $('#tSkip').onclick = $('#tSkipTop').onclick = e => { e && e.stopPropagation(); end(); }; addEventListener('keydown', kd, true);
+    if (!el._stop) { el._stop = 1; for (const ev of ['pointerdown', 'pointermove', 'pointerup', 'touchstart', 'touchmove']) el.addEventListener(ev, e => e.stopPropagation(), { passive: true }); }
+    el.classList.add('show'); draw();
+  },
+  need() { if (TEST && !/[#&?]tut/.test(location.href)) return false; try { return !localStorage.getItem('yt_tut'); } catch (e) { return false; } },
+};
+$('#setTut').addEventListener('click', e => { e.stopPropagation(); const st = $('#settings'); st.style.visibility = 'hidden'; TUT.show(() => { st.style.visibility = ''; }); });   // 説明の間は設定画面を隠して、ボタンの場所を見せる
+/* PC：キー操作の一覧と組み換え */
+const KEYUI = {
+  draw() {
+    const L = $('#keyList'); L.innerHTML = '';
+    for (const a of Object.keys(KB.DEF)) {
+      const n = document.createElement('div'); n.textContent = TR(KB.NAME[a]); const b = document.createElement('button'); b.textContent = KB.of(a); b.dataset.a = a;
+      b.addEventListener('click', ev => { ev.stopPropagation(); this.wait(b, a); }); L.append(n, b);
+    }
+  },
+  wait(b, a) {
+    if (KB.wait) return; KB.wait = a; b.classList.add('wait'); b.textContent = TR('キーを押す…');
+    const kd = e => {
+      e.preventDefault(); e.stopImmediatePropagation(); removeEventListener("keydown", kd, true); KB.wait = null; keys[e.code] = false;
+      if (e.code !== 'Escape') { const other = Object.keys(KB.map).find(x => x !== a && KB.map[x] === e.code); if (other) KB.map[other] = KB.map[a]; KB.map[a] = e.code; KB.save(); }   // ほかの操作と重なったら入れ替える
+      this.draw();
+    };
+    addEventListener('keydown', kd, true);
+  },
+};
+$('#keyReset').addEventListener('click', e => { e.stopPropagation(); KB.map = Object.assign({}, KB.DEF); KB.save(); KEYUI.draw(); });
 /* 2026-11-13 持ち物（設定の下のボタン）。開いている間は一時停止 */
 const INV = {
   open: false, wasRec: false, masterV: 0.9,
@@ -8928,7 +9038,8 @@ function beginPlay() {
   world.state = 'play';
   postMat.uniforms.black.value = 1; postMat.uniforms.grain.value = 1;
   if (DEV) $('#dev').classList.add('show'), $('#devInfo').style.display = 'block';
-  setTimeout(() => toast('左下を押して歩く／右側をなぞって見回す', 3200), 600);
+  if (TUT.need()) setTimeout(() => { if (world.state === 'play') TUT.show(); }, 400);   // 2026-11-13 はじめての人には、画面を指しながら遊び方を説明（その間は止める）
+  else setTimeout(() => toast(FRAME.on ? `${KB.of('up')}${KB.of('left')}${KB.of('down')}${KB.of('right')}で歩く／ドラッグで見回す` : '左下を押して歩く／右側をなぞって見回す', 3200), 600);
   if (DEMO === 'result') demoResult();
 }
 const DEMO = (location.search.match(/[?&]demo=(\w+)/) || [])[1] || '';
@@ -9093,7 +9204,7 @@ if (CHK) {
     read.textContent = `速さ 自分1.00／クモ${sm.toFixed(2)}（${SP.st}・${sd}）／逆さ${wm.toFixed(2)}（${CH.state}・${wd}）`;
   }, 300);
 }
-if (TEST) window.__G = { MINOR, INV, MIDI, AUDIO_OUT, FRAME, input, STAY, occluders, ray, glassPanes, groundAt, EXITF, exitSigns, sole, runner, drainEye, prints, winFog, stainMesh, bloodDecal, fireDoor, broadcastFog, KNOB: null, render, sgHead, spFacePos, BLEED, NURSE, MICO: mic, OFUDA, SPV, speak, PACALL, award, COL, MISS, TAP, sinks, awarded, PIANO, UWA, selfCam, avatar, ITEM, escape, FL, HANDS, NEKO, stairH, SET, MIC, opt, snapEntrance, makeResultImage, shareText, CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
+if (TEST) window.__G = { KB, MINOR, INV, MIDI, AUDIO_OUT, FRAME, input, STAY, occluders, ray, glassPanes, groundAt, EXITF, exitSigns, sole, runner, drainEye, prints, winFog, stainMesh, bloodDecal, fireDoor, broadcastFog, KNOB: null, render, sgHead, spFacePos, BLEED, NURSE, MICO: mic, OFUDA, SPV, speak, PACALL, award, COL, MISS, TAP, sinks, awarded, PIANO, UWA, selfCam, avatar, ITEM, escape, FL, HANDS, NEKO, stairH, SET, MIC, opt, snapEntrance, makeResultImage, shareText, CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
 loadSG().then(() => Promise.all([setupGlbHuman(woman, GHOST_B64), setupGlbHuman(avatar, PROT_B64)])).then(() => loadF2()).then(() => loadSpider()).then(() => NEKO.load()).then(() => UWA.load()).then(() => loadHands()).then(() => { $('#loading').remove(); try { ensureAudio(); if (A.ctx && A.ctx.state === 'running') titleSeKick(); } catch (e) { } });
 requestAnimationFrame(tick);
 // 効果音の大きさ（端末に保存。プレイ中・録画の両方に効く）
@@ -9246,7 +9357,7 @@ function renderHowto() {
     'さまざまな<em>心霊現象をカメラに収めて</em>ください。',
     '<em>W・A・S・Dキーで移動</em>。<em>マウスでドラッグ</em>（または矢印キー）で視点操作。',
     '<em>Rキー</em>または<em>赤いボタンで録画開始／停止</em>。録画時間は<em>通算120秒</em>（画面上の「残容量」で残りが分かります）',
-    '<em>Eキー</em>で戸を開ける・隠れるなどの操作。<em>1〜4キー</em>で倍率の切り替え。',
+    '<em>Eキー</em>で戸を開ける・隠れる、<em>1〜3キー</em>でズーム、<em>Fキー</em>でインカメラ、<em>Iキー</em>で持ち物（キーは設定で組み換えられます）。',
     '電池は録画中に早く減ります。<em>玄関まで自分の足で戻り帰還</em>することもできます。',
     'イヤホン推奨',
   ]) : (IS_TOUCH ? [
