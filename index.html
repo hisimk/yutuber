@@ -488,7 +488,6 @@
         <div class="opt col" id="setMidiRow"><div class="optTop" id="setMidi"><div>電子ピアノ（MIDI）<small>USBでつないだ電子ピアノで音楽室のピアノを弾けます</small></div><div class="sw"></div></div><select class="sel" id="midiSel"><option value="">つないだ機器すべて</option></select><div id="midiNote"></div></div>
       </div>
       <div id="setKeys"><div class="setSub">キー操作（PC）<small>ボタンを押してから、割り当てたいキーを押す</small></div><div id="keyList"></div><button class="setLink" id="keyReset">キー操作を初期設定にもどす</button></div>
-      <button class="setLink" id="setTut">遊び方を見る</button>
       <div class="opt" id="setLang"><div>言語 / Language</div><div class="seg" id="langSeg"><button data-lang="ja">日本語</button><button data-lang="en">English</button></div></div>
       <button class="setLink" id="setCol">撮れ高コレクション</button>
       <button class="setLink" id="setHome">スタート画面にもどる</button>
@@ -8977,7 +8976,6 @@ const TUT = {
   },
   need() { if (TEST && !/[#&?]tut/.test(location.href)) return false; try { return !localStorage.getItem('yt_tut'); } catch (e) { return false; } },
 };
-$('#setTut').addEventListener('click', e => { e.stopPropagation(); const st = $('#settings'); st.style.visibility = 'hidden'; TUT.show(() => { st.style.visibility = ''; }); });   // 説明の間は設定画面を隠して、ボタンの場所を見せる
 /* PC：キー操作の一覧と組み換え */
 const KEYUI = {
   draw() {
