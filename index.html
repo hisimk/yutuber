@@ -155,7 +155,7 @@
   #settings{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:rgba(4,4,6,.86);padding:calc(var(--sat) + 16px) 16px calc(var(--sab) + 16px);overflow-y:auto}
   #settings.show{display:flex}
   .setBox{width:100%;max-width:380px;display:flex;flex-direction:column;gap:8px}
-  .setHead{display:flex;align-items:baseline;justify-content:space-between;margin:0 4px 6px}
+  .setHead{display:flex;align-items:baseline;justify-content:flex-start;gap:14px;margin:0 4px 6px}   /* 2026-11-14 一時停止中は左へ（右上の×と重ならないように） */
   #setTitle{font-family:"Shippori Mincho",serif;font-size:22px;letter-spacing:.2em}
   #setPaused{font-size:12px;color:#ffd60a;letter-spacing:.1em}
   #setMain{display:flex;flex-direction:column;gap:8px}
@@ -249,7 +249,17 @@
   #credList .need{font-size:11px;color:#9a958c;margin-top:14px;line-height:1.7}
   #result{justify-content:flex-start}
   #result h2{font-family:"Shippori Mincho",serif;font-size:15px;font-weight:600;letter-spacing:.2em;margin:2px 0 2px;color:#cfcac0}
-  #result .meta{font-size:11px;color:#8a867f;margin-bottom:6px;text-align:center}
+  #result .meta{font-size:11px;color:#8a867f;margin:2px 0 0;text-align:left;line-height:1.55}
+  /* 2026-11-14 結果画面：帰還は左、右に再撮影。今回の撮れ高といいねは左揃えで上へ詰め、シェアボタンが最初から見えるように */
+  #resTop{width:100%;max-width:360px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  #resTop h2{text-align:left;margin:0}
+  #retakeBtn{flex:none;background:#fff;color:#111;border:none;border-radius:999px;padding:9px 18px;font:700 14px system-ui,-apple-system,"Hiragino Sans",sans-serif;letter-spacing:.06em}
+  #resSum{width:100%;max-width:360px;margin:10px 0 8px}
+  #likeRow{display:flex;align-items:baseline;gap:10px;margin-top:2px}
+  #resSum #likeHero{justify-content:flex-start;margin:0;gap:10px}
+  #resSum #likeHero .like{font-size:38px}
+  #resSum #likeHero b{font-size:50px}
+  #resSum #likeSub{margin:0;letter-spacing:.2em}
   #missed{font-size:14px;font-weight:700;color:#fff;margin:0 2px 8px;letter-spacing:.04em}
   #missed b{color:#ffd34d;font-size:16px;margin:0 1px}
   #likeHero{display:flex;align-items:center;justify-content:center;gap:14px;color:#fff;margin:6px 0 0}
@@ -276,13 +286,13 @@
   @keyframes heroSp{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}20%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1) rotate(90deg)}}
   @keyframes likePulse{from{transform:scale(.9)}to{transform:scale(1.14)}}
   @keyframes likePop{0%{transform:scale(1)}35%{transform:scale(1.28)}100%{transform:scale(1)}}
-  #resCount{text-align:center;font-size:13px;letter-spacing:.12em;color:#c9c4ba;margin:14px 0 0}
+  #resCount{text-align:left;font-size:13px;letter-spacing:.12em;color:#c9c4ba;margin:0}
   #resCount b{font-size:18px;font-weight:800;color:#fff;margin:0 2px;font-variant-numeric:tabular-nums}
   #likeSub{font-size:12px;letter-spacing:.3em;color:#9a958c;margin:2px 0 12px}
-  #replayWrap{width:100%;max-width:360px;aspect-ratio:9/19;max-height:calc(52 * var(--vh));background:#000;border-radius:10px;overflow:hidden;position:relative;flex:none}
+  #replayWrap{width:100%;max-width:360px;aspect-ratio:9/19;max-height:calc(34 * var(--vh));background:#000;border-radius:10px;overflow:hidden;position:relative;flex:none}
   #replay{width:100%;height:100%;object-fit:contain;background:#000}
   #noVideo{position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:#777;font-size:13px;text-align:center;padding:20px}
-  #evWrap{width:100%;max-width:360px;margin-top:14px}
+  #evWrap{width:100%;max-width:360px;margin-top:10px}
   #evHead{display:flex;justify-content:space-between;font-size:12px;color:#9a958c;margin:0 2px 6px;letter-spacing:.08em}
   #evList{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:6px;touch-action:pan-x;scrollbar-width:none}
   #evList::-webkit-scrollbar{display:none}
@@ -494,8 +504,8 @@
       <div class="opt" id="setGyro"><div>ジャイロで見回す<small>スマホの向きで視点が動きます</small></div><div class="sw"></div></div>
       <div class="opt col" id="setMicRow"><div class="optTop" id="setMic"><div>実況マイク<small>録画中の自分の声も動画に入ります</small></div><div class="sw"></div></div><div id="micMeter"><div id="micMeterFill"></div></div><div id="micNote"></div></div>
       <div class="opt col" id="setVolRow"><div class="optTop"><div>音量<small>スピーカーから出る大きさ（録画の音は変わりません）</small></div><div class="val" id="volVal">100%</div></div><input class="rng" id="volRange" type="range" min="0" max="100" step="5" value="100"></div>
-      <div class="opt" id="setBright"><div>明るさ<small>入口の景色を見ながら合わせます</small></div><div class="val"><span id="brightVal">0</span> ›</div></div>
       <div class="opt col" id="setSensRow"><div class="optTop"><div>視点を動かす速さ<small>なぞった時・ドラッグした時の回りやすさ</small></div><div class="val" id="sensVal">×1.0</div></div><input class="rng" id="sensRange" type="range" min="0.4" max="2" step="0.1" value="1"></div>
+      <div class="opt" id="setBright"><div>明るさ<small>入口の景色を見ながら合わせます</small></div><div class="val"><span id="brightVal">0</span> ›</div></div>
       <div id="setPC">
         <div class="setSub" id="setAudioHead">オーディオ（PC）</div>
         <div class="opt col" id="setOutRow"><div class="optTop"><div>音の出力先<small id="outNote">ヘッドホンやスピーカーを選べます</small></div></div><select class="sel" id="outSel"><option value="">いつもの出力（パソコンの設定）</option></select></div>
@@ -528,11 +538,8 @@
 <div id="tut"><button id="tSkipTop">遊び方をとばす ✕</button><div id="tHole"><b id="tTag"></b></div><div id="tStick"><b></b><i></i></div><div id="tSwipe"><i></i></div><div class="tBox" id="tBox"><div class="tStep" id="tStep"></div><div class="tIco" id="tIco"></div><h3 id="tTitle"></h3><p id="tText"></p><div class="tBtns"><button class="tSkip" id="tBack">もどる</button><button class="go" id="tNext">次へ</button></div></div></div>
 <div id="intro"><canvas id="introCv"></canvas><div class="skip">タップでスキップ</div></div>
 <div class="screen" id="result">
-  <h2 id="resTitle">帰還</h2>
-  <div class="meta" id="resMeta"></div>
-  <div id="resCount">今回の撮れ高 <b id="resCountN">0</b>回</div>
-  <div id="likeHero"><i class="like" id="likeIcon"></i><b id="evScore">0</b></div>
-  <div id="likeSub">いいね</div>
+  <div id="resTop"><div id="resHeadL"><h2 id="resTitle">帰還</h2><div class="meta" id="resMeta"></div></div><button id="retakeBtn">再撮影</button></div>
+  <div id="resSum"><div id="resCount">今回の撮れ高 <b id="resCountN">0</b>回</div><div id="likeRow"><div id="likeHero"><i class="like" id="likeIcon"></i><b id="evScore">0</b></div><div id="likeSub">いいね</div></div></div>
   <div id="replayWrap"><video id="replay" playsinline controls preload="auto"></video><div id="noVideo">持ち帰った映像はありません</div></div>
   <div id="evWrap"><div id="missed"></div><div id="evHead"><span>いいねの内訳</span><span id="evCount"></span></div><div id="evList"></div></div>
   <div class="rowBtns"><button class="share" id="shareBtn">動画と結果をシェア</button></div>
@@ -995,7 +1002,7 @@ const EN = {
   '最後まで回っていた映像': 'Footage that kept rolling to the end', 'クモ女に捕まった': 'Caught by the Spider Woman', '（暗闇から生還）': ' (survived the dark)',
   'いいね': 'Likes', 'いいねの内訳': 'Likes breakdown', '持ち帰った映像はありません': 'No footage brought back', 'この環境では映像を書き出せませんでした（撮れ高のみ）': 'Video couldn’t be exported here (likes only)',
   '決定的瞬間は映っていなかった。空振りの廊下も記録です。': 'No decisive moment was caught. An empty hallway is a record too.',
-  '動画を保存・投稿': 'Save / post video', '結果を画像で保存': 'Save result image', '動画と結果をシェア': 'Share video + result', '動画だけ': 'Video only', '結果画像だけ': 'Result image only', '結果をシェア': 'Share result', 'ホーム画面に追加して遊ぶと、記録が消えにくくなります': 'Add to Home Screen to keep your records safer', 'TikTok・インスタは「動画だけ」がおすすめ（動画の最後に結果が入っています）': 'For TikTok / Instagram, use “Video only” (the result is at the end of the video)', '動画を仕上げています…': 'Finishing the video…', '生還': 'Escaped', 'もう一度入る': 'Go back in',
+  '動画を保存・投稿': 'Save / post video', '結果を画像で保存': 'Save result image', '動画と結果をシェア': 'Share video + result', '動画だけ': 'Video only', '結果画像だけ': 'Result image only', '結果をシェア': 'Share result', '撮影': 'Recorded', '再撮影': 'Shoot again', '動画を仕上げています…': 'Finishing the video…', 'ホーム画面に追加して遊ぶと、記録が消えにくくなります': 'Add to Home Screen to keep your records safer', 'TikTok・インスタは「動画だけ」がおすすめ（動画の最後に結果が入っています）': 'For TikTok / Instagram, use “Video only” (the result is at the end of the video)', '生還': 'Escaped', 'もう一度入る': 'Go back in',
   '保存しました': 'Saved', '保存をやめました': 'Canceled', 'ダウンロードを開始しました': 'Download started', 'この画面では保存できませんでした。': 'Couldn’t save on this screen.',
   'ダウンロードを開始しました。始まらない場合は、再生画面のメニューから保存してください。': 'Download started. If it doesn’t, save from the video player menu.',
   '投稿文（#幽tuber）をコピーしました。アプリで消えていたら貼り付けてください': 'Post text (#幽tuber) copied. Paste it if the app drops it', '画像を作っています…': 'Creating image…',
@@ -3026,6 +3033,7 @@ function toggleRec() { if (world.state !== 'play' || world.dark) return; rec.act
    SNSに動画だけ投稿されても結果とURLが伝わるように。画面にもそのまま映る（結果画面へのつなぎ）。 */
 const ENDCARD = {
   dur: 3.5,
+  will() { if (!rec.available || rec.time <= 0.3) return false; const r = rec.recorder; return rec.mode === 'pause' ? !!(r && r.state !== 'inactive') : !!(rec.segs.length || r); },
   run() {
     return new Promise(done => {
       try {
@@ -3080,6 +3088,11 @@ const ENDCARD = {
   },
 };
 function finalizeRec() {
+  if (ENDCARD.will()) {   // 2026-11-14 結果画面を先に出す（結果カードは画面の裏で録画し、保存する動画にだけ入る）
+    showResult(null);
+    if (world.state === 'over') { $('#resTitle').textContent = TR('映像はここで途切れている'); setResMeta('最後まで回っていた映像'); }
+    resEarly = true;
+  }
   return ENDCARD.run().then(() => finalizeRec0());
 }
 function finalizeRec0() {
@@ -3108,7 +3121,7 @@ const STAY = {
 };
 /* ---------- 採点 ---------- */
 /* 撮れ高のレア度と得点（2026-11-13 出やすさ・撮りやすさから見直し。ここが正。award()の第3引数より優先） */
-const AW_TABLE = { mannRun: ['S', 100], mannOrgan: ['D', 10], nakayoshi: ['SS', 300], wallEyes: ['A', 60], metronome: ['C', 20], scaleNeedle: ['D', 8], bcStatic: ['D', 8], lockerSeq: ['C', 25], stallFeet: ['C', 20], curtain: ['D', 8], rackFall: ['C', 20], clockRev: ['C', 25], ball: ['C', 20], shoeBlood: ['C', 30], fireExit: ['B', 50], f2bed: ['B', 40], exitFlip: ['B', 45], wander: ['C', 25], glance: ['B', 45], slitCloth: ['A', 60], lockerFace: ['S', 120], capture: ['B', 120], toes: ['A', 70], stand: ['C', 25], semari: ['S', 100], dripRipple: ['A', 60], doorBlood: ['B', 40], stallTop: ['A', 80], basinBlood: ['A', 60], peek: ['A', 60], boardWoman: ['B', 40], boardLunge: ['A', 80], blackoutFace: ['A', 60], micLamp: ['B', 40], micTurn: ['A', 70], glassSelf: ['A', 60], innerLock: ['A', 70], mirrorLag: ['S', 90], drainEye: ['S', 120], runner: ['A', 60], smudge: ['B', 40], fireFace: ['A', 60], prints: ['A', 60], chalk: ['C', 20], broom: ['C', 20], selfieShoulder: ['A', 70], mirrorDoor: ['B', 45], mirrorGiant: ['S', 100], slideCreep: ['C', 30], lookBack: ['A', 70], turnFace: ['S', 100], polter: ['C', 25], mirrorFlash: ['A', 60], cornerFace: ['A', 60], streetFig: ['A', 50], mirrorGirl: ['A', 60], f2blood: ['S', 100], f2stairFace: ['B', 50], f2teddy: ['A', 60], tTurnFace: ['S', 150], f2turnFace: ['S', 100], f2chair: ['B', 40], f2fall: ['A', 70], f2crows: ['A', 50], f2books: ['B', 40], f2pages: ['B', 40], f2libChair: ['B', 40], f2piano: ['B', 50], f2blink: ['A', 70], f2float: ['A', 70], f2vase: ['A', 60], spWarp: ['S', 120], spHead: ['B', 50], spDescend: ['A', 80], spLatch: ['S', 120], spChase: ['A', 12], hpFirst: ['A', 60], boardGlyph: ['A', 60], stall20: ['S', 100], hand: ['C', 20], nekomata: ['A', 50], uwaSeen: ['S', 90], uwaWalk: ['SS', 300], ceilBleed: ['S', 100], paCall: ['A', 80], akuryo: ['SS', 550], nurseBack: ['A', 60], nursePeek: ['S', 90], pianoPlay: ['C', 15], clairPlay: ['A', 50], requiem: ['SS', 300], nekoPiano: ['S', 100], twinkle: ['S', 100], chaseRec: ['C', 4], chaseSelfie: ['A', 8], close: ['C', 10], chaseOut: ['A', 50], alive: ['D', 50] };
+const AW_TABLE = { mannRun: ['S', 100], mannOrgan: ['D', 10], nakayoshi: ['SS', 300], wallEyes: ['A', 60], metronome: ['C', 20], scaleNeedle: ['D', 8], lockerSeq: ['C', 25], stallFeet: ['C', 20], curtain: ['D', 8], rackFall: ['C', 20], clockRev: ['C', 25], ball: ['C', 20], shoeBlood: ['C', 30], fireExit: ['B', 50], f2bed: ['B', 40], exitFlip: ['B', 45], wander: ['C', 25], glance: ['B', 45], slitCloth: ['A', 60], lockerFace: ['S', 120], capture: ['B', 120], toes: ['A', 70], stand: ['C', 25], semari: ['S', 100], dripRipple: ['A', 60], doorBlood: ['B', 40], stallTop: ['A', 80], basinBlood: ['A', 60], peek: ['A', 60], boardWoman: ['B', 40], boardLunge: ['A', 80], blackoutFace: ['A', 60], micLamp: ['B', 40], micTurn: ['A', 70], glassSelf: ['A', 60], innerLock: ['A', 70], mirrorLag: ['S', 90], drainEye: ['S', 120], runner: ['A', 60], smudge: ['B', 40], fireFace: ['A', 60], prints: ['A', 60], chalk: ['C', 20], broom: ['C', 20], selfieShoulder: ['A', 70], mirrorDoor: ['B', 45], mirrorGiant: ['S', 100], slideCreep: ['C', 30], lookBack: ['A', 70], turnFace: ['S', 100], polter: ['C', 25], mirrorFlash: ['A', 60], cornerFace: ['A', 60], streetFig: ['A', 50], mirrorGirl: ['A', 60], f2blood: ['S', 100], f2stairFace: ['B', 50], f2teddy: ['A', 60], tTurnFace: ['S', 150], f2turnFace: ['S', 100], f2chair: ['B', 40], f2fall: ['A', 70], f2crows: ['A', 50], f2books: ['B', 40], f2pages: ['B', 40], f2libChair: ['B', 40], f2piano: ['B', 50], f2blink: ['A', 70], f2float: ['A', 70], f2vase: ['A', 60], spWarp: ['S', 120], spHead: ['B', 50], spDescend: ['A', 80], spLatch: ['S', 120], spChase: ['A', 12], hpFirst: ['A', 60], boardGlyph: ['A', 60], stall20: ['S', 100], hand: ['C', 20], nekomata: ['A', 50], uwaSeen: ['S', 90], uwaWalk: ['SS', 300], ceilBleed: ['S', 100], paCall: ['A', 80], akuryo: ['SS', 550], nurseBack: ['A', 60], nursePeek: ['S', 90], pianoPlay: ['C', 15], clairPlay: ['A', 50], requiem: ['SS', 300], nekoPiano: ['S', 100], twinkle: ['S', 100], chaseRec: ['C', 4], chaseSelfie: ['A', 8], close: ['C', 10], chaseOut: ['A', 50], alive: ['D', 50] };
 function awBase(key) { const k = String(key || ''); if (typeof AW_TABLE !== 'undefined' && AW_TABLE[k]) return k;   /* 2026-11-13 stall20 のように数字で終わる名前そのものが表にある時はそのまま */ return k.startsWith('broom') ? 'broom' : k.replace(/\d+$/, ''); }
 
 const awarded = new Map(); const evidence = []; const evAcc = {};
@@ -3730,7 +3743,7 @@ const CAP = {
       this.done = 1; world.state = 'over';
       if (rec.active) stopRec('capture');
       $('#hud').classList.add('off');
-      finalizeRec().then(blobs => { capturedBlobs = blobs.filter(b => b && b.size > 0); showResult(capturedBlobs); $('#resTitle').textContent = '映像はここで途切れている'; $('#resMeta').textContent = `撮影 ${fmt(rec.time)}　最後まで回っていた映像`; });
+      finalizeRec().then(blobs => { capturedBlobs = blobs.filter(b => b && b.size > 0); showResult(capturedBlobs); $('#resTitle').textContent = '映像はここで途切れている'; setResMeta('最後まで回っていた映像'); });
     }
   },
 };
@@ -6420,7 +6433,7 @@ SP.gameOver = function () {
   world.state = 'over';
   if (rec.active) stopRec('capture');
   $('#hud').classList.add('off'); $('#actBtn').classList.remove('show');
-  finalizeRec().then(blobs => { capturedBlobs = blobs.filter(b => b && b.size > 0); showResult(capturedBlobs); $('#resTitle').textContent = '映像はここで途切れている'; $('#resMeta').textContent = `撮影 ${fmt(rec.time)}　クモ女に捕まった`; });
+  finalizeRec().then(blobs => { capturedBlobs = blobs.filter(b => b && b.size > 0); showResult(capturedBlobs); $('#resTitle').textContent = '映像はここで途切れている'; setResMeta('クモ女に捕まった'); });
 };
 
 /* =========================================================
@@ -7600,7 +7613,7 @@ const COL = {
     ['hand', '天井から垂れる灰色の手', 25], ['hand', '壁から生えた灰色の手', 25], ['nekomata', '街灯の猫又', 50], ['uwaSeen', '誰も履いていない上履き', 30], ['uwaWalk', 'インカメに映った、歩く上履き', 200],
     ['ceilBleed', '天井に広がる大量の血の染み', 70], ['paCall', '校内放送で呼ばれた自分の名前', 90], ['akuryo', '悪霊退散', 300], ['nurseBack', '保健室の奥に立つ背中', 30], ['nursePeek', '保健室の入口から真横に覗く顔', 80], ['pianoPlay', 'ピアノを弾く', 10], ['clairPlay', '月の光を演奏する', 50], ['requiem', '怪異に捧げるレクイエム', 200], ['nekoPiano', '猫ふんじゃったを弾く', 100], ['twinkle', 'きらきら星を弾く', 100],
     ['curtain', '閉めきった窓で揺れるカーテン', 8], ['rackFall', '突然倒れたコート掛け', 20], ['mannRun', '走り出す人体模型', 100], ['mannOrgan', '落ちた臓器', 10], ['clockRev', '逆回転し続ける時計の針', 25], ['ball', 'ひとりでに転がってくるボール', 20], ['shoeBlood', '血まみれの下駄箱', 30],
-    ['metronome', 'ひとりでに動き出すメトロノーム', 20], ['scaleNeedle', '誰も乗っていない体重計の針', 8], ['bcStatic', '放送室のスピーカーから流れる砂嵐', 8], ['lockerSeq', '順番に開いていくロッカーの扉', 25], ['stallFeet', '個室の扉の下に見える足の影', 20], ['wallEyes', '周りの壁に一斉に開く目', 60], ['nakayoshi', 'なかよしスリーショット', 300],
+    ['metronome', 'ひとりでに動き出すメトロノーム', 20], ['scaleNeedle', '誰も乗っていない体重計の針', 8], ['lockerSeq', '順番に開いていくロッカーの扉', 25], ['stallFeet', '個室の扉の下に見える足の影', 20], ['wallEyes', '周りの壁に一斉に開く目', 60], ['nakayoshi', 'なかよしスリーショット', 300],
     ['chaseRec', '追われながらカメラを回す', 4], ['chaseSelfie', 'インカメラに追ってくる姿', 8], ['close', '怪異を超接写', 10], ['fireExit', '非常口からの脱出', 50], ['chaseOut', '追われながら生還', 50], ['alive', 'いのちだいじに', 10],
   ],
   data: null,
@@ -7780,7 +7793,35 @@ PACALL.plan = function () {   // 1周に1回：25%の確率で、この周回の
    ・カメラに入れると衝撃音とノイズとともに消える
    ・背中を一度もカメラに入れずに近づいた時は、何も起きない
    ========================================================= */
-const NURSE = { arm() { const e = EV.nurse; if (!e || DIR.plan.includes('nurse')) { if (e) { e.done = false; e.notBefore = 0; } return; } e.planned = true; e.done = false; e.omened = true; e.notBefore = 0; DIR.plan.push('nurse'); } };
+/* 2026-11-14 保健室の入口から覗く顔：上側（逆さまにぶら下がる3人）と左側（2人）にも。体は壁の外側に置き、部屋の側へはみ出す部分は切り落とす */
+const NURSE_X = {
+  list: [], loading: false,
+  SPOTS: [ // [頭の位置, 上からか]
+    [V(-1.52, 1.86, -13.28), 'top'], [V(-1.52, 1.84, -13.58), 'top'], [V(-1.52, 1.87, -13.88), 'top'],
+    [V(-1.52, 1.6, -14.06), 'left'], [V(-1.52, 1.22, -14.06), 'left'],
+  ],
+  clip: [new THREE.Plane(V(1, 0, 0), 1.62), new THREE.Plane(V(0, -1, 0), 2.68)],   // x ≥ -1.62（部屋の側へはみ出さない）、y ≤ 2.68（天井より上は描かない）
+  load() {   // 呼ばれた後に、裏で5人ぶん読み込んでおく
+    if (this.loading) return; this.loading = true; renderer.localClippingEnabled = true;
+    for (let i = 0; i < this.SPOTS.length; i++) { const H = makeGlbHuman('ghost'); scene.add(H.root); setOpacity(H, 0); this.list.push(H); setupGlbHuman(H, GHOST_B64).then(() => { setOpacity(H, 0); }); }
+  },
+  setClip(H, on) { for (const m of H.mats) { m.clippingPlanes = on ? this.clip : null; m.needsUpdate = true; } },
+  place() {
+    this.list.forEach((H, i) => {
+      if (!H.ready) return; const [hp, kind] = this.SPOTS[i]; const c = H.c;
+      Object.assign(c, { speed: 0, snap: true, headYaw: 0, headPitch: 0, headRoll: 0, lean: 0 });
+      if (kind === 'top') { c.pose = 'stand'; H.root.position.set(-1.0, 2.2, hp.z); H.root.rotation.set(0, -Math.PI / 2, Math.PI); c.headRoll = rnd(-0.25, 0.25); }   // 逆さまにぶら下がる
+      else { c.pose = 'peek'; c.poseT = 3; c.peekRoll = -0.75; c.headRoll = -1.45 + rnd(-0.15, 0.15); c.headYaw = 0.2; H.root.position.set(-1.0, 0, -14.9); H.root.rotation.set(0, -Math.PI / 2, 0); }   // 左の柱の陰から真横に
+      H.setHollow(true, 'blood'); this.setClip(H, true);
+      animHuman(H, 0.016); H.root.updateMatrixWorld(true);
+      const h = headWorld(H, V()); H.root.position.add(hp.clone().sub(h)); setOpacity(H, 1);
+    });
+  },
+  update(dt) { for (const H of this.list) if (H.ready && H.root.visible) animHuman(H, dt); },
+  flick(on) { for (const H of this.list) if (H.ready) setOpacity(H, on ? 1 : 0); },
+  hide() { for (const H of this.list) if (H.ready) { setOpacity(H, 0); this.setClip(H, false); H.setHollow(false); } },
+};
+const NURSE = { arm() { NURSE_X.load(); const e = EV.nurse; if (!e || DIR.plan.includes('nurse')) { if (e) { e.done = false; e.notBefore = 0; } return; } e.planned = true; e.done = false; e.omened = true; e.notBefore = 0; DIR.plan.push('nurse'); } };
 defEvent('nurse', {
   tier: 'mid', weight: 0, woman: true, minT: 0, maxT: 0, zones: ['A', 'C'],
   spot: { p: V(-7.1, 0, -13.5) },
@@ -7793,9 +7834,10 @@ defEvent('nurse', {
   placePeek() {   // 入口の枠（廊下側）から、高い位置に真横の顔
     borrowWoman(); const c = woman.c; c.pose = 'peek'; c.poseT = 3; c.snap = true; c.peekRoll = 0.75; c.headRoll = 1.45; c.headYaw = -0.2;   // 体は入口の北側の壁の陰、頭だけ真横に倒して入口へ
     woman.setHollow(true, 'blood');   // 2026-11-13 逆さで血を流す顔
-    const hp = V(-1.6, 1.86, -12.95);
-    woman.root.position.set(-1.1, 0, -12.4); woman.root.rotation.y = -Math.PI / 2; animHuman(woman, 0.016); woman.root.updateMatrixWorld(true);
+    const hp = V(-1.52, 1.86, -12.95);   // 2026-11-14 頭は壁の厚みの中ほど。体はもっと廊下側（後ろ）へ置き、部屋の側へはみ出す部分は切り落とす
+    woman.root.position.set(-0.8, 0, -12.2); woman.root.rotation.y = -Math.PI / 2; animHuman(woman, 0.016); woman.root.updateMatrixWorld(true);
     const h = headWorld(woman, V()); woman.root.position.x += hp.x - h.x; woman.root.position.z += hp.z - h.z; woman.root.position.y += hp.y - h.y; setOpacity(woman, 1);
+    NURSE_X.setClip(woman, true); NURSE_X.place();   // 上と左からも5人
   },
   update(dt) {
     this.t += dt;
@@ -7818,17 +7860,18 @@ defEvent('nurse', {
         this.st = 'stare'; this.t = 0;   // 2026-11-13 すぐ消さずに、しばらく覗いたまま
       }
       if (this.t > 30) return true;
-    } else if (this.st === 'stare') {   // 約2.5秒、じっとこちらを覗く。首がじわじわ傾く
-      woman.c.headRoll = 1.45 + Math.min(0.25, this.t * 0.1); woman.c.snap = true; world.vhs = Math.max(world.vhs, 0.25);
-      if (this.t > 2.5) { this.st = 'hit'; this.t = 0; noiseHit(0.9); }
+    } else if (this.st === 'stare') {   // 2026-11-14 映ってから0.8秒で、ノイズと共に消える
+      woman.c.headRoll = 1.45 + Math.min(0.25, this.t * 0.3); woman.c.snap = true; world.vhs = Math.max(world.vhs, 0.25);
+      if (this.t > 0.8) { this.st = 'hit'; this.t = 0; noiseHit(0.9); }
     } else if (this.st === 'hit') {
       const U = postMat.uniforms; U.tear.value = rnd(0.35, 0.7); U.stat.value = Math.random() < 0.6 ? 0.7 : 0.2; world.vhs = 0.9;
-      setOpacity(woman, Math.random() < 0.35 && this.t < 0.18 ? 1 : 0);
+      const on = Math.random() < 0.35 && this.t < 0.18; setOpacity(woman, on ? 1 : 0); NURSE_X.flick(on);
       if (this.t > 0.3) { U.tear.value = 0; U.stat.value = 0; return true; }
     }
+    if (this.st === 'door' || this.st === 'stare' || this.st === 'hit') NURSE_X.update(dt);
     return false;
   },
-  cleanup() { const U = postMat.uniforms; U.tear.value = 0; U.stat.value = 0; world.nurseCall = false; woman.c.peekRoll = undefined; releaseWoman(); },
+  cleanup() { const U = postMat.uniforms; U.tear.value = 0; U.stat.value = 0; world.nurseCall = false; woman.c.peekRoll = undefined; NURSE_X.setClip(woman, false); NURSE_X.hide(); releaseWoman(); },
 });
 
 /* =========================================================
@@ -8089,7 +8132,7 @@ const MANN = {
       C.done = 1; world.state = 'over';
       if (rec.active) stopRec('capture');
       $('#hud').classList.add('off');
-      finalizeRec().then(blobs => { capturedBlobs = blobs.filter(b => b && b.size > 0); showResult(capturedBlobs); $('#resTitle').textContent = TR('映像はここで途切れている'); $('#resMeta').textContent = `撮影 ${fmt(rec.time)}　最後まで回っていた映像`; });
+      finalizeRec().then(blobs => { capturedBlobs = blobs.filter(b => b && b.size > 0); showResult(capturedBlobs); $('#resTitle').textContent = TR('映像はここで途切れている'); setResMeta('最後まで回っていた映像'); });
     }
   },
 };
@@ -8376,7 +8419,7 @@ Object.assign(MINOR, {
     // 体重計
     this.scPlan = chance(0.6); this.scOn = 0; this.scDone = false; this.scSeen = false; this.scT = 0; scaleKg(0);
     // 放送室の砂嵐
-    this.bcPlan = chance(0.55); this.bcStop(); this.bcDone = false; this.bcSeen = 0;
+    this.bcPlan = false;   /* 2026-11-14 放送室のスピーカーの砂嵐はなくした */ this.bcStop(); this.bcDone = false; this.bcSeen = 0;
     // ロッカーが順番に開く
     this.lkPlan = chance(0.5); this.lkOn = 0; this.lkDone = false; this.lkSeen = false; this.lkList = null;
     for (let i = 0; i < 10; i++) if (lockers[i] && HIDE.lk !== lockers[i]) lockers[i].hinge.rotation.y = 0;
@@ -9009,12 +9052,14 @@ const RANK_IO = 'IntersectionObserver' in window ? new IntersectionObserver(es =
   if (en.isIntersecting && !d.dataset.seen) { d.dataset.seen = '1'; d.classList.remove('kira'); void d.offsetWidth; d.classList.add('kira'); clearTimeout(d._kt); d._kt = setTimeout(() => d.classList.remove('kira'), 1300); }
   else if (!en.isIntersecting) delete d.dataset.seen; } }, { root: document.getElementById('evList'), threshold: 0.6 }) : null;
 let resultBlobs = [], resultUrls = [], segIdx = 0, evShown = false;
+/* 2026-11-14 結果カードは保存する動画にだけ入れる：画面ではすぐ結果を出し、その裏で結果カードを録画してから動画を差し込む */
+let resEarly = false;
+function setResMeta(line2) { $('#resMeta').innerHTML = `${TR('撮影')} ${fmt(rec.time)}<br>${TR(line2)}`; }
 function showResult(blobs) {
+  if (resEarly) { resEarly = false; attachVideo(blobs || []); return; }
   { const mc = $('#musicCred'); if (mc) { mc.style.display = 'block'; mc.textContent = 'BGM' + (F2.clairHeard ? '・' : '：') + MUSIC_CREDIT.replace(/^音楽室のピアノ：/, F2.clairHeard ? '音楽室のピアノ：' : ''); } }
-  resultBlobs = blobs.filter(b => b && b.size > 0);
-  resultUrls.forEach(u => URL.revokeObjectURL(u)); resultUrls = resultBlobs.map(b => URL.createObjectURL(b));
   const total = evidence.reduce((a, e) => a + e.pts, 0);
-  $('#resMeta').textContent = `撮影 ${fmt(rec.time)}　電池残り ${Math.max(0, Math.round(world.battery))}%` + (world.dark ? '（暗闇から生還）' : '');
+  if (!resEarly) setResMeta(`電池残り ${Math.max(0, Math.round(world.battery))}%` + (world.dark ? '（暗闇から生還）' : ''));
   { const m = MISS.total(), u = MISS.notYet(), y = n => `<b>${n}</b>`; $('#missed').innerHTML = LANG === 'en' ? `Missed shots ${y(m)}　Not yet happened ${y(u)}` : `のがした撮れ高 ${y(m)}回　未発生の撮れ高 ${y(u)}種`; }
   $('#resCount').innerHTML = LANG === 'en' ? `Captures this run <b>${evidence.length}</b>` : `今回の撮れ高 <b>${evidence.length}</b>回`;   // 2026-11-13 今回の撮れ高の数
   $('#evScore').textContent = '0'; $('#evCount').textContent = evidence.length ? `${evidence.length}件　← スライド →` : '';
@@ -9025,13 +9070,19 @@ function showResult(blobs) {
   for (const e of evs) { const r = rankOf(e), d = document.createElement('div'); d.className = 'ev r-' + r.toLowerCase(); d.style.setProperty('--rc', RANK_COL[r]);
     d.innerHTML = `<span class="t">${fmt(e.t)}</span><span class="n">${e.label}</span><span class="p"><i class="like"></i>${e.pts}</span><span class="rk${r === 'SS' ? ' ss' : r === 'S' ? ' s' : ''}"><small>レア</small><b>${r}</b>${r === 'SS' ? '<i class="spk s1"></i><i class="spk s2"></i><i class="spk s3"></i>' : r === 'S' ? '<i class="spk s1"></i><i class="spk s2"></i>' : ''}</span>${fresh.has(COL.base(e.label)) ? '<span class="newTag">NEW</span>' : ''}`;
     d.addEventListener('click', () => seekTo(e.t)); list.appendChild(d); RANK_IO && RANK_IO.observe(d); }
-  const v = $('#replay');
-  if (resultUrls.length) { $('#noVideo').style.display = 'none'; v.style.display = ''; segIdx = 0; v.src = resultUrls[0]; v.load(); v.addEventListener('loadeddata', () => { try { if (v.paused && v.currentTime < 0.05) v.currentTime = 0.05; } catch (e) { } }, { once: true }); $('#saveBtn').disabled = false; }   // 自動では再生しない（最初のコマだけ見せる）。iPhoneでは保存した動画のURLに「#t=」を付けると再生できなくなるので付けない
-  else { v.removeAttribute('src'); v.style.display = 'none'; $('#noVideo').style.display = 'flex'; $('#noVideo').textContent = rec.time > 0 && !rec.available ? 'この環境では映像を書き出せませんでした（撮れ高のみ）' : '持ち帰った映像はありません'; $('#saveBtn').disabled = true; }
-  $('#shareBtn').textContent = TR(resultUrls.length ? '動画と結果をシェア' : '結果をシェア'); $('#shareHint').style.display = resultUrls.length ? '' : 'none';
+  attachVideo(blobs || [], !blobs);
   $('#saveMsg').textContent = ''; $('#result').classList.add('show'); $('#result').scrollTop = 0;
   RBGM.start(); likeCount(total);
   resultImg = null; setTimeout(() => makeResultImage().then(b => { resultImg = b; }).catch(() => { }), 1200);   // 共有ボタンを押した瞬間に渡せるよう、先に作っておく
+}
+function attachVideo(blobs, pending) {
+  resultBlobs = blobs.filter(b => b && b.size > 0);
+  resultUrls.forEach(u => URL.revokeObjectURL(u)); resultUrls = resultBlobs.map(b => URL.createObjectURL(b));
+  const v = $('#replay');
+  if (resultUrls.length) { $('#noVideo').style.display = 'none'; v.style.display = ''; segIdx = 0; v.src = resultUrls[0]; v.load(); v.addEventListener('loadeddata', () => { try { if (v.paused && v.currentTime < 0.05) v.currentTime = 0.05; } catch (e) { } }, { once: true }); $('#saveBtn').disabled = false; }   // 自動では再生しない（最初のコマだけ見せる）。iPhoneでは保存した動画のURLに「#t=」を付けると再生できなくなるので付けない
+  else { v.removeAttribute('src'); v.style.display = 'none'; $('#noVideo').style.display = 'flex'; $('#noVideo').textContent = pending ? TR('動画を仕上げています…') : rec.time > 0 && !rec.available ? 'この環境では映像を書き出せませんでした（撮れ高のみ）' : '持ち帰った映像はありません'; $('#saveBtn').disabled = true; }
+  $('#shareBtn').textContent = TR(resultUrls.length || pending ? '動画と結果をシェア' : '結果をシェア'); $('#shareHint').style.display = resultUrls.length || pending ? '' : 'none';
+  if (pending) { $('#shareBtn').disabled = true; $('#saveBtn').disabled = true; } else $('#shareBtn').disabled = false;
 }
 let resultImg = null;
 // いいね数のカウントアップ（数えている間はアイコンが小さく脈打ち、止まった瞬間にポンと弾む）
@@ -9132,7 +9183,7 @@ async function makeResultImage() {
   const [logo, like] = await Promise.all([loadImg(TITLE_LOGO).catch(() => null), loadImg(LIKE_PNG).catch(() => null)]);
   if (logo) { const lw = 520, lh = lw * logo.height / logo.width; g.drawImage(logo, (W - lw) / 2, 60, lw, lh); }
   g.textAlign = 'center'; g.fillStyle = '#cfcac0'; g.font = `600 34px ${serif}`; g.fillText($('#resTitle').textContent, W / 2, 330);
-  g.fillStyle = '#8a867f'; g.font = `28px ${sans}`; g.fillText($('#resMeta').textContent, W / 2, 378);
+  g.fillStyle = '#8a867f'; g.font = `28px ${sans}`; g.fillText($('#resMeta').innerText.replace(/\s*\n\s*/g, '　'), W / 2, 378);
   const total = evidence.reduce((a, e) => a + e.pts, 0);
   g.font = `800 150px ${sans}`; const tw = g.measureText(String(total)).width, iw = 150, gap = 34, x0 = (W - (iw + gap + tw)) / 2;
   if (like) g.drawImage(like, x0, 440, iw, iw * like.height / like.width);
@@ -9159,6 +9210,7 @@ $('#imgBtn').addEventListener('click', async () => {
   await shareSet([[f]], msg, copyPost(msg));
 });
 $('#againBtn').addEventListener('click', () => location.reload());
+$('#retakeBtn').addEventListener('click', () => location.reload());   // 2026-11-14 結果画面の右上の再撮影
 $('#overBtn').addEventListener('click', () => location.reload());
 $('#overVideo').addEventListener('click', () => { $('#over').classList.remove('show'); showResult(capturedBlobs); $('#resTitle').textContent = '回収された映像'; $('#resMeta').textContent = 'カメラが壊れる直前まで'; });
 
@@ -9723,7 +9775,7 @@ if (CHK) {
     read.textContent = `速さ 自分1.00／クモ${sm.toFixed(2)}（${SP.st}・${sd}）／逆さ${wm.toFixed(2)}（${CH.state}・${wd}）`;
   }, 300);
 }
-if (TEST) window.__G = { MANN, look, evidence, RACK, STAIR_LAMPS, PASUB, sgEmissive, camFwd, UISND, KB, MINOR, INV, MIDI, AUDIO_OUT, FRAME, input, STAY, occluders, ray, glassPanes, groundAt, EXITF, exitSigns, sole, runner, drainEye, prints, winFog, stainMesh, bloodDecal, fireDoor, broadcastFog, KNOB: null, render, sgHead, spFacePos, BLEED, NURSE, MICO: mic, OFUDA, SPV, speak, PACALL, award, COL, MISS, TAP, sinks, awarded, PIANO, UWA, selfCam, avatar, ITEM, escape, FL, HANDS, NEKO, stairH, SET, MIC, opt, snapEntrance, makeResultImage, shareText, CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
+if (TEST) window.__G = { NURSE_X, MANN, look, evidence, RACK, STAIR_LAMPS, PASUB, sgEmissive, camFwd, UISND, KB, MINOR, INV, MIDI, AUDIO_OUT, FRAME, input, STAY, occluders, ray, glassPanes, groundAt, EXITF, exitSigns, sole, runner, drainEye, prints, winFog, stainMesh, bloodDecal, fireDoor, broadcastFog, KNOB: null, render, sgHead, spFacePos, BLEED, NURSE, MICO: mic, OFUDA, SPV, speak, PACALL, award, COL, MISS, TAP, sinks, awarded, PIANO, UWA, selfCam, avatar, ITEM, escape, FL, HANDS, NEKO, stairH, SET, MIC, opt, snapEntrance, makeResultImage, shareText, CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
 loadSG().then(() => Promise.all([setupGlbHuman(woman, GHOST_B64), setupGlbHuman(avatar, PROT_B64)])).then(() => loadF2()).then(() => loadSpider()).then(() => NEKO.load()).then(() => UWA.load()).then(() => loadHands()).then(() => { $('#loading').remove(); try { ensureAudio(); if (A.ctx && A.ctx.state === 'running') titleSeKick(); } catch (e) { } });
 requestAnimationFrame(tick);
 // 効果音の大きさ（端末に保存。プレイ中・録画の両方に効く）
