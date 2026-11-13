@@ -2287,6 +2287,25 @@ function setP(p, v) { if (p.positionX) { p.positionX.value = v.x; p.positionY.va
 // 距離による減衰はゆるめ（スマホのスピーカーでも遠くの音が届くように）。方向と壁越しのこもりで距離感を出す
 // 使い終わった音の配線を外す（外さないと、iPhoneでは鳴り終わった音も処理され続け、長く遊ぶと音が割れて止まる）
 function freeLater(sec, ...nodes) { setTimeout(() => { for (const n of nodes) { if (n && n !== A.bus && n !== A.master && n !== A.verb && n !== A.muffle) try { n.disconnect(); } catch (e) { } } }, Math.max(0, sec) * 1000); }
+/* 2026-11-14 先生の椅子の座面が回る音：高い「きぃーー」と伸びて、最後に小さく「、、、」と途切れる（合成） */
+function chairSqueak(pos, vol = 0.5) {
+  if (!A.ctx) return; const ctx = A.ctx, t = ctx.currentTime, p = panAt(pos, 0.8, 1.1);
+  const out = ctx.createGain(); out.gain.value = 0; out.connect(p);
+  const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1900; bp.Q.value = 3.5; bp.connect(out);
+  const am = ctx.createGain(); am.gain.value = 0.75; am.connect(bp);
+  const o = ctx.createOscillator(); o.type = 'sawtooth'; o.connect(am);
+  o.frequency.setValueAtTime(1480, t); o.frequency.linearRampToValueAtTime(1760, t + 0.22); o.frequency.linearRampToValueAtTime(1600, t + 0.8); o.frequency.linearRampToValueAtTime(1320, t + 1.35);
+  const lfo = ctx.createOscillator(); lfo.frequency.value = 29; const lg = ctx.createGain(); lg.gain.value = 38; lfo.connect(lg); lg.connect(o.frequency);   // 擦れのザラつき
+  const lfo2 = ctx.createOscillator(); lfo2.frequency.value = 17; const lg2 = ctx.createGain(); lg2.gain.value = 0.25; lfo2.connect(lg2); lg2.connect(am.gain);   // 引っ掛かりの揺れ
+  const pk = 0.11 * vol, G = out.gain;
+  G.setValueAtTime(0, t); G.linearRampToValueAtTime(pk, t + 0.06); G.setValueAtTime(pk, t + 0.5); G.linearRampToValueAtTime(pk * 0.75, t + 1.05); G.linearRampToValueAtTime(0, t + 1.38);
+  for (const [dt0, f, k] of [[1.55, 1260, 0.5], [1.78, 1180, 0.38], [1.98, 1100, 0.26]]) {   // 「、、、」
+    G.setValueAtTime(0, t + dt0); G.linearRampToValueAtTime(pk * k, t + dt0 + 0.015); G.linearRampToValueAtTime(0, t + dt0 + 0.08);
+    o.frequency.setValueAtTime(f, t + dt0);
+  }
+  for (const n of [o, lfo, lfo2]) { n.start(t); n.stop(t + 2.2); }
+  freeLater(3, out, bp, am, lg, lg2);
+}
 function panAt(pos, ref = 1.2, roll = 1.3, dest, life = 12) { const p = A.ctx.createPanner(); if (life > 0) freeLater(life, p); p.panningModel = 'HRTF'; p.distanceModel = 'inverse'; p.refDistance = Math.max(ref, 1) * A.distRef; p.rolloffFactor = roll * A.distRoll; p.maxDistance = 80; setP(p, pos); p.connect(dest || A.ambDest || A.bus); return p; }
 function envG(g, t, a, peak, d) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); }
 function nb(dest, { t, f = 1000, q = 1, type = 'bandpass', a = 0.002, peak = 0.5, d = 0.08, rate = 1, f1 }) {
@@ -5707,7 +5726,7 @@ F2.updChair = function (dt) {
     if (this.cT < S.chairAt || S.scare === 'face' || S.scare === 'noise' || F2.busy) return;
     const p = V(-3.0, 0.55, -15.6); if (camera.position.distanceTo(p) > 6.5) return;
     const r = f2rng('chair2'); S.cA = (r() < 0.5 ? 1 : -1) * (20 + r() * 35) * Math.PI / 180; S.chair = 'run'; S.ct = 0;
-    playSfx('swivel_creak', { pos: p, ref: 0.8, roll: 1.1, dur: 1.6 }) || SND.squeak(p, 0.4);
+    chairSqueak(p, 0.5);   // 2026-11-14 「きぃーー、、、」という軋み（音量は前の半分ほど）
   } else if (S.chair === 'run') {
     S.ct += dt; const t = S.ct;
     // 6割まで回り、0.18秒引っ掛かって、残りを少しだけ進んで止まる
@@ -6095,10 +6114,10 @@ SP.update = function (dt) {
   else if (!this.flag && f2force('spider')) this.flag = true;
   if (!this.decided && f2force('spider')) { this.decided = true; this.flag = true; }
   for (const w of this.webs) if (w.jig > 0) { w.jig -= dt; const k = Math.max(0, w.jig) / 0.6; w.o.rotation.x = Math.sin(world.t * 38) * 0.05 * k; w.o.rotation.z = Math.cos(world.t * 31) * 0.04 * k; }
-  if (!this.ready || world.state !== 'play') return;
+  if (!this.ready || world.state !== 'play') { if (this.updShards) this.updShards(dt); return; }
+  this.updShards(dt);   // 2026-11-14 割れたガラスは、クモ女がいない時も落ちて散らばる
   if (this.st === 'none') { if (this.flag && this.webs.length && world.t > (this.spawnAt || 0)) this.spawn(); return; }   // お札で封じた後は、しばらく出てこない
   this.mixer.update(dt); this.t += dt;
-  this.updShards(dt);
   if (!['drop', 'latch', 'peel', 'sealed'].includes(this.st)) this.headTilt(dt);
   this.hairFix(this.onFloor ? 1 : this.st === 'land' ? clamp(this.t / 0.6, 0, 1) : this.st === 'jump' ? 1 - clamp(this.t / 0.3, 0, 1) : 0);
   const cp = camera.position; const fp = spFacePos(V());
@@ -6279,13 +6298,13 @@ SP.breakWindow = function (x, z) {
   const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xc8d2d8, transparent: true, opacity: 0.7, side: THREE.DoubleSide, depthWrite: false }));
   m.position.copy(p); m.quaternion.copy(best.getWorldQuaternion(new THREE.Quaternion())); scene.add(m);
   const v = []; for (let i = 0; i < n; i++) v.push([rnd(-0.8, 0.8), rnd(-0.5, 0.6), rnd(-1.2, 1.2)]);
-  this.shards = (this.shards || []).concat([{ m, v, t: 0, n }]);
+  this.shards = (this.shards || []).concat([{ m, v, t: 0, n, lv: S.lv === 1 ? 1 : 0 }]);
 };
 SP.updShards = function (dt) {
   if (!this.shards || !this.shards.length) return;
   for (const s of this.shards) {
     s.t += dt; const a = s.m.geometry.attributes.position;
-    for (let i = 0; i < s.n; i++) { const vv = s.v[i]; vv[1] -= 9.8 * dt; const floorLocal = (this.lv ? LH : 0) + 0.02 - s.m.position.y; for (let k = 0; k < 3; k++) { const j = (i * 3 + k) * 3; if (a.array[j + 1] <= floorLocal) { vv[0] *= 0.8; vv[2] *= 0.8; } a.array[j] += vv[0] * dt; a.array[j + 1] = Math.max(floorLocal, a.array[j + 1] + vv[1] * dt); a.array[j + 2] += vv[2] * dt; } }
+    for (let i = 0; i < s.n; i++) { const vv = s.v[i]; vv[1] -= 9.8 * dt; const floorLocal = ((s.lv ?? this.lv) ? LH : 0) + 0.02 - s.m.position.y; for (let k = 0; k < 3; k++) { const j = (i * 3 + k) * 3; if (a.array[j + 1] <= floorLocal) { vv[0] *= 0.8; vv[2] *= 0.8; } a.array[j] += vv[0] * dt; a.array[j + 1] = Math.max(floorLocal, a.array[j + 1] + vv[1] * dt); a.array[j + 2] += vv[2] * dt; } }
     a.needsUpdate = true; if (s.t > 2.5) s.m.material.opacity = Math.max(0, 0.7 - (s.t - 2.5) * 0.3);
   }
   this.shards = this.shards.filter(s => { if (s.t > 5) { scene.remove(s.m); s.m.geometry.dispose(); return false; } return true; });
@@ -7910,6 +7929,19 @@ const MANN = {
       this.mixer = new THREE.AnimationMixer(g.scene);
       for (const n of ['Walk', 'Run']) { const c = THREE.AnimationClip.findByName(g.animations, n); if (c) this.act[n] = this.mixer.clipAction(c); }
       this.rest = {}; for (const k of ['UpperL', 'UpperR', 'ForeL', 'ForeR', 'Head', 'Body']) if (this.bones[k]) this.rest[k] = this.bones[k].quaternion.clone();
+      this.root.rotation.order = 'YXZ';
+      // 2026-11-14 黒目を動かせるように：描かれた黒目を白目の色で塗り、頭の骨に動く黒目を付ける
+      try {
+        g.scene.updateMatrixWorld(true); const mesh = this.mesh = g.scene.getObjectByProperty('isSkinnedMesh', true) || g.scene.getObjectByProperty('isMesh', true);
+        const P = mesh.geometry.attributes.position, C = mesh.geometry.attributes.color;
+        if (C) { for (let i = 0; i < P.count; i++) { const x = P.getX(i), y = P.getY(i), z = P.getZ(i); if (y > 1.37 && y < 1.41 && Math.abs(x) < 0.035 && z > 0.05 && (C.getX(i) + C.getY(i) + C.getZ(i)) / 3 < 0.15) C.setXYZ(i, 0.8, 0.8, 0.8); } C.needsUpdate = true; }
+        const hb = this.bones.Head; this.pupils = [];
+        if (hb) for (const sx of [-1, 1]) {
+          const w = V(sx * 0.0245, 1.392, 0.0602).applyMatrix4(g.scene.matrixWorld); const base = hb.worldToLocal(w.clone());
+          const pm = new THREE.MeshBasicMaterial({ color: 0x050505 }); this.mats.push(pm);
+          const m = new THREE.Mesh(new THREE.CircleGeometry(0.0046, 14), pm); m.position.copy(base); hb.add(m); this.pupils.push({ m, base });
+        }
+      } catch (e) { console.warn('人体模型の黒目', e); }
       this.col = { x0: this.SPOT.x - 0.22, x1: this.SPOT.x + 0.22, z0: this.SPOT.z - 0.2, z1: this.SPOT.z + 0.2, on: true, lv: 0 }; colliders.push(this.col);
       this.ready = true; this.reset();
     } catch (e) { console.warn('人体模型を読み込めませんでした', e); }
@@ -7922,6 +7954,40 @@ const MANN = {
     const old = this.cur && this.act[this.cur]; a.reset().play(); if (old) old.crossFadeTo(a, 0.15, false); this.cur = name;
   },
   restPose() { for (const k in this.rest) this.bones[k].quaternion.copy(this.rest[k]); },
+  lookHead() {   // 首の向き（hy＝左右、hp＝上下）を頭の骨に
+    const b = this.bones.Head; if (!b || !this.rest.Head) return;
+    b.quaternion.copy(this.rest.Head).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(this.hp, this.hy, 0, 'YXZ')));
+  },
+  eyesTo(target, k) {   // 黒目を target の方へ（k＝0〜1）
+    if (!this.pupils || !this.pupils.length) return; const hb = this.bones.Head;
+    for (const P of this.pupils) {
+      const lp = hb.worldToLocal(target.clone()).sub(P.base); const l = Math.hypot(lp.x, lp.y, lp.z) || 1;
+      const ox = clamp(lp.x / l * 0.009, -0.0042, 0.0042), oy = clamp(lp.y / l * 0.009, -0.003, 0.003);
+      P.m.position.set(P.base.x + ox * k, P.base.y + oy * k, P.base.z);
+    }
+  },
+  // 2026-11-14 接写（近く）か2倍以上のズームで、大きめに5秒見続けると、首がギギギとこちらへ回り、黒目もこちらを見る
+  updStare(dt) {
+    if (!this.root.visible || this.cur) return;
+    const H = this.head(), d = camera.position.distanceTo(H), n = ndc(H);
+    if (!this.stare) {
+      const big = n.z < 1 && Math.abs(n.x) < 0.55 && Math.abs(n.y) < 0.6 && clearLine(H) && (d < 1.6 || (zoom >= 1.9 && d < 7));
+      this.stareT = big ? this.stareT + dt : Math.max(0, this.stareT - dt * 2);
+      if (this.stareT >= 5) {
+        this.stare = { t: 0, tick: 0 }; SND.creak(H, 1.6, 0.7); SND.knock(H, 0.5);
+        playSfx('swivel_creak', { pos: H.clone(), ref: 0.7, gain: 0.45, rate: 0.8, dur: 1.6 });
+      }
+      return;
+    }
+    const S = this.stare; S.t += dt;
+    const lp = this.root.worldToLocal(camera.position.clone()); const hp0 = this.root.worldToLocal(H.clone());
+    const ty = clamp(Math.atan2(lp.x - hp0.x, lp.z - hp0.z), -1.4, 1.4), tp = clamp(-Math.atan2(lp.y - hp0.y, Math.hypot(lp.x - hp0.x, lp.z - hp0.z)), -0.5, 0.5);
+    const stut = S.t < 1.6 ? (Math.sin(S.t * 22) > -0.2 ? 1 : 0.1) : 1;   // ギギギと引っ掛かりながら回る
+    this.hy += clamp(ty - this.hy, -1.0 * dt * stut, 1.0 * dt * stut); this.hp += clamp(tp - this.hp, -0.6 * dt, 0.6 * dt);
+    S.tick -= dt; if (S.t < 1.6 && S.tick <= 0) { S.tick = 0.14; SND.knock(H, 0.18); }
+    this.lookHead(); this.root.updateMatrixWorld(true);
+    this.eyesTo(camera.position, clamp((S.t - 0.4) / 0.8, 0, 1));
+  },
   setOp(a) { this.root.visible = a > 0.01; for (const m of this.mats) { const tr = a < 0.995; if (m.transparent !== tr) { m.transparent = tr; m.needsUpdate = true; } m.opacity = a; } },
   head(out = V()) { const h = this.bones.Head; if (h) return h.getWorldPosition(out).add(V(0, 0.08, 0)); return out.copy(this.root.position).add(V(0, 1.55, 0)); },
   lv() { return this.pos.y > 1.6 ? 1 : 0; },
@@ -7936,7 +8002,7 @@ const MANN = {
     if (this.parts) for (const p of this.parts) scene.remove(p.m); this.parts = [];
     if (this.broken) for (const g of this.broken) g.visible = true; this.broken = [];
     this.cap = null; this.rattleStop(); this.col.on = true; this.root.rotation.set(0, this.heading, 0); this.root.position.copy(this.pos);
-    this.setOp(1); this.play(null); this.tilt = 0;
+    this.setOp(1); this.play(null); this.tilt = 0; this.hy = -0.9; this.hp = 0.05; this.stare = null; this.stareT = 0; this.eye = V(0, 0, 0); this.lookHead();   // 2026-11-14 首は正面から見て左へ回したまま
     if (TEST || DEV) console.log('MANN', world.mannRun ? 'enemy' : this.runPlan ? 'run' : 'stand');
   },
   // ── 音
@@ -7982,7 +8048,7 @@ const MANN = {
   },
   face(h, dt, rate) { const d = Math.atan2(Math.sin(h - this.heading), Math.cos(h - this.heading)); this.heading += clamp(d, -rate * dt, rate * dt); },
   toPlayer() { return Math.atan2(player.x - this.pos.x, player.z - this.pos.z); },
-  apply() { this.root.position.copy(this.pos); this.root.rotation.set(this.tilt || 0, this.heading, 0); },
+  apply() { this.root.position.copy(this.pos); this.root.rotation.set(this.tilt || 0, this.heading, 0, 'YXZ'); },
   seesPlayer(range = 14, cone = 1.0) {
     if (player.hidden || world.state !== 'play') return false;
     if (Math.abs(this.pos.y - player.y) > 1.0) return false;
@@ -7999,6 +8065,7 @@ const MANN = {
     if (this.cap) { this.updCap(dt); return; }
     if (world.state !== 'play') { this.rattleStop(); return; }
     if (this.rat && A.ctx) { /* 擦れる音は体と一緒に動く：近い時は大きく */ const d = camera.position.distanceTo(this.head()); this.rat.g.gain.setTargetAtTime(clamp(1.4 / Math.max(1, d), 0.05, 0.9), A.ctx.currentTime, 0.1); }
+    if (this.st === 'stand' || this.st === 'watch') { this.lookHead(); this.updStare(dt); }
     if (world.mannRun) return this.updEnemy(dt);
     if (this.runPlan) return this.updRunEvent(dt);
   },
@@ -8016,7 +8083,7 @@ const MANN = {
     if (this.st === 'watch') {   // 5秒間、目を離さなければ
       const on = onScreen(H, 1.0) && clearLine(H) && player.lv === 0;
       this.look = on ? this.look + dt : 0;
-      if (this.look >= 5) {
+      if (this.look >= 5 && !(this.stare && this.stare.t < 2.2)) {
         this.st = 'run'; this.t = 0; this.speed = 0; this.col.on = false; this.tilt = 0;
         this.path = [V(-1.55, 0, -13.5), V(1.45, 0, -13.5), V(13.45, 0, -13.5), V(17.5, 0, -13.5)]; this.breakAt = [2, 3];   // 2つ目（廊下側の窓）と3つ目（外の窓）に着いた時に割る
         this.play('Run', 2.2); this.rattleStart(0.8);
@@ -8034,7 +8101,14 @@ const MANN = {
           if (this.breakAt[0] === 0) { this.breakAt.shift(); this.smash(this.pos.x, this.pos.z); } }
         else { this.pos.x += dx / d * move; this.pos.z += dz / d * move; move = 0; }
       }
-      this.apply(); this.stepTick(dt, 6.5);
+      { // 2026-11-14 窓枠を通る時は飛び込む（腰より下は割れない）：窓の手前1.4mで踏み切り、体を前へ倒して窓の高さを抜ける
+        let u = 9; for (const wx of [1.5, 13.5]) if (Math.abs(this.pos.x - wx) < Math.abs(u)) u = this.pos.x - wx;
+        const k = Math.abs(u) < 1.4 ? 1 - (u / 1.4) * (u / 1.4) : 0;
+        this.tilt = 1.25 * k; this.pos.y = 1.25 * k;
+        if (k > 0 && !this.inAir) { this.inAir = true; SND.knock(V(this.pos.x, 0.05, this.pos.z), 0.9); }
+        if (k === 0 && this.inAir) { this.inAir = false; this.step(1.0); SND.thud(V(this.pos.x, 0.1, this.pos.z), 0.7); }
+      }
+      this.apply(); if (!this.inAir) this.stepTick(dt, 6.5);
       if (rec.active && accum('mannRun', seen(this.head(), { maxD: 18, ignore: glassPanes }), dt, 0.25)) award('mannRun', '走り出す人体模型', 100);
       if (Math.hypot(player.x - this.pos.x, player.z - this.pos.z) < 0.65 && player.lv === 0) { this.burst(); return; }
       if (!this.path.length) { this.st = 'fade'; this.t = 0; }
