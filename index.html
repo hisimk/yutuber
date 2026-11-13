@@ -270,6 +270,7 @@
   .invIt .pSw::after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .2s}
   .invIt.on .pSw{background:#34c759}.invIt.on .pSw::after{left:23px}
   .invIt.perm:not(.on) img{opacity:.45;filter:grayscale(.6)}
+  .verTag{font-size:10.5px;color:#6f6b64;letter-spacing:.08em;text-align:center;margin-top:6px;font-variant-numeric:tabular-nums}
   .resetBtn{margin-top:10px;background:none;border:1px solid rgba(255,255,255,.22);border-radius:22px;color:#a9a49b;font-size:12.5px;padding:8px 20px;letter-spacing:.06em}
   #resetAsk{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:24px}
   #resetAsk.show{display:flex}
@@ -546,6 +547,7 @@
   <button class="go" id="goBtn">旧校舎に入る</button>
   <button class="colBtn" id="colBtn">撮れ高コレクション</button>
   <button class="credBtn" data-cred>使用素材・クレジット</button>
+  <div class="verTag"></div>
   <div class="homeHint" id="homeHint">ホーム画面に追加して遊ぶと、記録が消えにくくなります</div>
   <div class="howto" id="howto"></div>
 </div>
@@ -574,6 +576,7 @@
       <button class="setLink" id="setTut">遊び方を見る</button>
       <button class="setLink" id="setCol">撮れ高コレクション</button>
       <button class="setLink" id="setReset">データをリセット</button>
+      <div class="verTag" id="verSet"></div>
       <button class="setLink" id="setHome">スタート画面にもどる</button>
       <button class="go" id="setClose">ゲームにもどる</button>
     </div>
@@ -608,6 +611,7 @@
   <div id="saveMsg"></div>
   <div id="musicCred" style="display:none;font-size:11px;color:#9a9a9a;line-height:1.6;margin:6px 4px 0;text-align:center"></div>
   <button class="credBtn" data-cred>使用素材・クレジット</button>
+  <div class="verTag"></div>
 </div>
 
 <div class="screen" id="credits">
@@ -10418,6 +10422,10 @@ const PERM = {
   },
 };
 
+/* 2026-11-14 バージョン番号（スタート画面・設定の下に表示）
+   決まり：1.0.0 を正式公開とし、それまでは 0.x。新しい怪異・機能 → 2つ目の数字を上げる（0.9 → 0.10）／調整・不具合直し → 3つ目を上げる（0.9.0 → 0.9.1） */
+const VERSION = '0.9.0';
+for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION;
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
 const VDB = {
   NAME: 'yutuber_db', db: null,
