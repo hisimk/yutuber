@@ -231,6 +231,7 @@
   .setLink{margin-top:6px;background:none;border:1px solid #3a3a3e;border-radius:12px;color:#e9e4da;font-size:14px;padding:12px}
   .setLink.warn{border-color:#ff453a;color:#ff453a}
   #setClose{margin-top:8px;align-self:center}
+  #setX{position:fixed;top:calc(var(--sat) + 12px);right:14px;z-index:41;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(20,20,22,.7);color:#fff;font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
   #setBrightPane{display:none;flex-direction:column;gap:10px;align-items:center}
   #settings.bright #setMain{display:none}#settings.bright #setBrightPane{display:flex}
   #brightCv{width:100%;max-width:300px;aspect-ratio:9/16;border-radius:10px;background:#000}
@@ -407,6 +408,7 @@
   .colItem.r-s:not(.unk){background:linear-gradient(160deg,#1b1810,#121214 55%)}
   .ev .newTag{position:absolute;right:11px;bottom:11px;font-size:9px;font-weight:800;color:#111;background:#ffd34d;border-radius:4px;padding:1px 5px;letter-spacing:.08em}
   #paSub{position:fixed;left:8%;right:8%;top:46%;z-index:25;text-align:center;font-size:19px;font-weight:700;color:#f2eee6;letter-spacing:.06em;line-height:1.5;text-shadow:0 0 6px #000,0 0 14px #000,0 2px 2px #000;pointer-events:none;opacity:0;transition:opacity .25s}
+  #paSub{word-break:keep-all}
   #paSub.show{opacity:1}
   #paSub.low{color:#c9c2b8;transform:translateY(2px) scaleY(.96)}
   #paSub.glitch{animation:paGl .5s steps(6) forwards}
@@ -487,11 +489,12 @@
 <div id="settings">
   <div class="setBox">
     <div class="setHead"><span id="setTitle">設定</span><span id="setPaused">一時停止中</span></div>
+    <button id="setX" aria-label="閉じる">×</button>
     <div id="setMain">
       <div class="opt" id="setGyro"><div>ジャイロで見回す<small>スマホの向きで視点が動きます</small></div><div class="sw"></div></div>
-      <div class="opt" id="setBright"><div>明るさ<small>入口の景色を見ながら合わせます</small></div><div class="val"><span id="brightVal">0</span> ›</div></div>
       <div class="opt col" id="setMicRow"><div class="optTop" id="setMic"><div>実況マイク<small>録画中の自分の声も動画に入ります</small></div><div class="sw"></div></div><div id="micMeter"><div id="micMeterFill"></div></div><div id="micNote"></div></div>
       <div class="opt col" id="setVolRow"><div class="optTop"><div>音量<small>スピーカーから出る大きさ（録画の音は変わりません）</small></div><div class="val" id="volVal">100%</div></div><input class="rng" id="volRange" type="range" min="0" max="100" step="5" value="100"></div>
+      <div class="opt" id="setBright"><div>明るさ<small>入口の景色を見ながら合わせます</small></div><div class="val"><span id="brightVal">0</span> ›</div></div>
       <div class="opt col" id="setSensRow"><div class="optTop"><div>視点を動かす速さ<small>なぞった時・ドラッグした時の回りやすさ</small></div><div class="val" id="sensVal">×1.0</div></div><input class="rng" id="sensRange" type="range" min="0.4" max="2" step="0.1" value="1"></div>
       <div id="setPC">
         <div class="setSub" id="setAudioHead">オーディオ（PC）</div>
@@ -499,8 +502,8 @@
         <div class="opt col" id="setMidiRow"><div class="optTop" id="setMidi"><div>電子ピアノ（MIDI）<small>USBでつないだ電子ピアノで音楽室のピアノを弾けます</small></div><div class="sw"></div></div><select class="sel" id="midiSel"><option value="">つないだ機器すべて</option></select><div id="midiNote"></div></div>
       </div>
       <div id="setKeys"><div class="setSub">キー操作（PC）<small>ボタンを押してから、割り当てたいキーを押す</small></div><div id="keyList"></div><button class="setLink" id="keyReset">キー操作を初期設定にもどす</button></div>
-      <button class="setLink" id="setTut">遊び方を見る</button>
       <div class="opt" id="setLang"><div>言語 / Language</div><div class="seg" id="langSeg"><button data-lang="ja">日本語</button><button data-lang="en">English</button></div></div>
+      <button class="setLink" id="setTut">遊び方を見る</button>
       <button class="setLink" id="setCol">撮れ高コレクション</button>
       <button class="setLink" id="setHome">スタート画面にもどる</button>
       <button class="go" id="setClose">ゲームにもどる</button>
@@ -1008,7 +1011,7 @@ const EN = {
   '外から開いた扉の前に立つ女': 'A woman at the door opened from outside', '外灯の下を横切る影': 'A shadow crossing under the outside light', '天井から垂れる灰色の手': 'Gray hands hanging from the ceiling',
   '壁から生えた灰色の手': 'Gray hands growing from the wall', '天井から逆さに見下ろすクモ女の顔': 'The Spider Woman looking down from the ceiling', '天井の角を曲がる上履きの裏': 'Shoe soles turning the ceiling corner',
   '天井を這って追ってくるクモ女': 'The Spider Woman crawling after you', '小窓に残る五本の指跡': 'Five finger marks on the small window', '巣に触れたクモ女が別の巣へ移った瞬間': 'The Spider Woman jumping to another web',
-  '布団の中のクマ': 'A teddy bear under the covers', '床に落ちていたチョーク': 'Chalk on the floor', '閉めきった窓で揺れるカーテン': 'A curtain swaying by a closed window', '4時44分で止まった時計': 'A clock stopped at 4:44', '逆回転し続ける時計の針': 'Clock hands spinning backwards', 'ひとりでに転がってくるボール': 'A ball rolling toward you by itself', '血まみれの下駄箱': 'Shoe lockers covered in blood', 'ひとりでに動き出すメトロノーム': 'A metronome starting by itself', '誰も乗っていない体重計の針': 'A scale needle moving with no one on it', '放送室のスピーカーから流れる砂嵐': 'Static from the broadcast room speaker', '順番に開いていくロッカーの扉': 'Locker doors opening one by one', '個室の扉の下に見える足の影': 'Feet under the stall door', '周りの壁に一斉に開く目': 'Eyes opening on every wall around you', 'なかよしスリーショット': 'Best-friends three-shot', '床に落ちる血の滴と広がる波紋': 'Blood dripping and rippling on the floor',
+  '布団の中のクマ': 'A teddy bear under the covers', '床に落ちていたチョーク': 'Chalk on the floor', '閉めきった窓で揺れるカーテン': 'A curtain swaying by a closed window', '突然倒れたコート掛け': 'The coat rack that suddenly fell', '逆回転し続ける時計の針': 'Clock hands spinning backwards', 'ひとりでに転がってくるボール': 'A ball rolling toward you by itself', '血まみれの下駄箱': 'Shoe lockers covered in blood', 'ひとりでに動き出すメトロノーム': 'A metronome starting by itself', '誰も乗っていない体重計の針': 'A scale needle moving with no one on it', '放送室のスピーカーから流れる砂嵐': 'Static from the broadcast room speaker', '順番に開いていくロッカーの扉': 'Locker doors opening one by one', '個室の扉の下に見える足の影': 'Feet under the stall door', '周りの壁に一斉に開く目': 'Eyes opening on every wall around you', 'なかよしスリーショット': 'Best-friends three-shot', '床に落ちる血の滴と広がる波紋': 'Blood dripping and rippling on the floor',
   '復電の一瞬に立つ女': 'A woman standing as the power returns', '戸口から真横に覗く顔': 'A face peeking sideways from the doorway', '戸口に揃った上履き': 'Indoor shoes lined up at the doorway',
   'トイレの扉の内側に垂れる血の筋': 'Blood running down the inside of the toilet door', '振り返ったレンズの前の顔': 'A face in the lens when you turned', '振り返った女子生徒の黒い目': 'The black eyes of a girl who turned around',
   '振り返った目の前の巨大な顔': 'A giant face right behind you', '振り向いた目の前の顔': 'The face right there when you turned', '排水口の暗がりの片目': 'An eye in the dark of the drain',
@@ -1181,6 +1184,41 @@ const coatRack = new THREE.Group(); coatRack.position.set(-0.95, 0, -32.55); sce
   const hood = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), L({ color: 0x15161a })); hood.position.y = 1.72; hood.scale.set(1, 1.2, 0.9); coatRack.add(hood);
   /* 2026-11-13 掛けていた雑巾（白いズボンのように見えた）は撤去 */
   for (const m of [pole, coat, hood]) { occluders.push(m); focusables.push(m); } }
+/* 2026-11-13 「4時44分で止まった時計」と差し替え：廊下Aの突き当たりのコート掛けが、近づいた瞬間に倒れて大きな音を立てる（1周に75%）
+   ・倒れるのはこちらに向かって。カメラに入っていれば撮れ高「突然倒れたコート掛け」20 */
+const RACK = {
+  base: coatRack.position.clone(),
+  reset() { this.plan = chance(0.75); this.st = 'stand'; this.a = 0; this.v = 0; this.hits = 0; coatRack.quaternion.identity(); },
+  update(dt) {
+    if (!this.plan || this.st === 'down') return;
+    if (this.st === 'stand') {
+      if (player.lv !== 0 || world.state !== 'play') return;
+      const top = V(this.base.x, 1.5, this.base.z);
+      if (Math.hypot(player.x - this.base.x, player.z - this.base.z) < 2.7 && onScreen(top, 1.0) && clearLine(top, coatRack.children)) {
+        const d = V(player.x - this.base.x, 0, player.z - this.base.z).normalize();
+        this.axis = V(0, 1, 0).cross(d).normalize(); this.st = 'fall'; this.a = 0.04; this.v = 0.6;
+        SND.creak && SND.creak(top, 0.9, 0.25);
+      }
+      return;
+    }
+    // 倒れる：根元を支点に、だんだん速く
+    this.v += 7.5 * dt * Math.cos(this.a) + 0.5 * dt; this.a += this.v * dt;
+    if (this.a >= 1.42) {
+      this.a = 1.42;
+      if (this.hits === 0) {   // 床に叩きつけられる大きな音
+        const p = coatRack.localToWorld(V(0, 1.2, 0));
+        SND.thud(p, 1.6); SND.clatter(p); SND.knock && SND.knock(p, 1.4);
+        playSfx('locker_close', { pos: p, ref: 1.2, gain: 1.1 }) || playSfx('metal_rattle', { pos: p, ref: 1.2, gain: 1, dur: 0.8 });
+        world.vhs = Math.max(world.vhs || 0, 0.45);
+        if (rec.active && seen(p, { maxD: 6 })) award('rackFall', '突然倒れたコート掛け', 20);
+      }
+      this.hits++;
+      if (this.hits < 3 && this.v > 1.2) { this.v = -this.v * 0.22; if (this.hits === 2) { const p = coatRack.localToWorld(V(0, 1.2, 0)); SND.knock && SND.knock(p, 0.4); } }
+      else { this.st = 'down'; }
+    }
+    coatRack.quaternion.setFromAxisAngle(this.axis, this.a);
+  },
+};
 // 角：廊下Bの北壁
 wallZ(-33, -1.5, 29.6);
 exitSigns.push(plane(0.5, 0.25, M.exit.clone(), 0, 2.35, -32.88, 0));
@@ -1641,6 +1679,7 @@ plane(0.5, 0.16, L({ map: plateTex('保健室', '#e8e4da', '#111', 96, 32, 18) }
 const clinic = { bedZ: [-11.4, -15.4] };
 
 // 階段室（両方の階にまたがる縦長の部屋）
+const STAIR_LAMPS = [];
 for (const s of STAIRS) {
   const [x0, x1, z0, z1] = s.room; const H2 = LH + HT;
   BUILD_LV = -1;
@@ -1656,7 +1695,8 @@ for (const s of STAIRS) {
   box(-1.5 - (s.ox + 0.1), 0.47, 1.62, M.wall, (s.ox + 0.1 - 1.5) / 2, -0.25, s.oz - 0.81);
   BUILD_Y = 0; BUILD_LV = 0;
   box(0.35, 0.02, 1.4, M.frame, -1.68, 0.01, s.oz + 0.8);   // 1階の敷居
-  fixture((x0 + x1) / 2, (z0 + z1) / 2, false, 'off');
+  // 2026-11-13 蛍光灯は階段室の天井（2階ぶんの高さ）へ。1階の天井の高さに吊っていて、踊り場の手すりの所に浮いて見えていた
+  { BUILD_Y = LH; BUILD_LV = -1; const f = fixture((x0 + x1) / 2, (z0 + z1) / 2, false, 'on'); BUILD_Y = 0; BUILD_LV = 0; f.manual = true; STAIR_LAMPS.push(f); }
   plane(0.6, 0.16, L({ map: plateTex(s.name, '#e8e4da', '#111', 110, 32, 18) }), -1.38, 2.3, s.oz + (s.id === 'S1' ? 1.75 : 1.75), Math.PI / 2);
   s.mesh = null;   // GLBは読み込み後に配置
 }
@@ -3033,7 +3073,7 @@ const STAY = {
 };
 /* ---------- 採点 ---------- */
 /* 撮れ高のレア度と得点（2026-11-13 出やすさ・撮りやすさから見直し。ここが正。award()の第3引数より優先） */
-const AW_TABLE = { nakayoshi: ['SS', 300], wallEyes: ['A', 60], metronome: ['C', 20], scaleNeedle: ['D', 8], bcStatic: ['D', 8], lockerSeq: ['C', 25], stallFeet: ['C', 20], curtain: ['D', 8], clockStop: ['D', 8], clockRev: ['C', 25], ball: ['C', 20], shoeBlood: ['C', 30], fireExit: ['B', 50], f2bed: ['B', 40], exitFlip: ['B', 45], wander: ['C', 25], glance: ['B', 45], slitCloth: ['A', 60], lockerFace: ['S', 120], capture: ['B', 120], toes: ['A', 70], stand: ['C', 25], semari: ['S', 100], dripRipple: ['A', 60], doorBlood: ['B', 40], stallTop: ['A', 80], basinBlood: ['A', 60], peek: ['A', 60], boardWoman: ['B', 40], boardLunge: ['A', 80], blackoutFace: ['A', 60], micLamp: ['B', 40], micTurn: ['A', 70], glassSelf: ['A', 60], innerLock: ['A', 70], mirrorLag: ['S', 90], drainEye: ['S', 120], runner: ['A', 60], smudge: ['B', 40], fireFace: ['A', 60], prints: ['A', 60], chalk: ['C', 20], broom: ['C', 20], selfieShoulder: ['A', 70], mirrorDoor: ['B', 45], mirrorGiant: ['S', 100], slideCreep: ['C', 30], lookBack: ['A', 70], turnFace: ['S', 100], polter: ['C', 25], mirrorFlash: ['A', 60], cornerFace: ['A', 60], streetFig: ['A', 50], mirrorGirl: ['A', 60], f2blood: ['S', 100], f2stairFace: ['B', 50], f2teddy: ['A', 60], tTurnFace: ['S', 150], f2turnFace: ['S', 100], f2chair: ['B', 40], f2fall: ['A', 70], f2crows: ['A', 50], f2books: ['B', 40], f2pages: ['B', 40], f2libChair: ['B', 40], f2piano: ['B', 50], f2blink: ['A', 70], f2float: ['A', 70], f2vase: ['A', 60], spWarp: ['S', 120], spHead: ['B', 50], spDescend: ['A', 80], spLatch: ['S', 120], spChase: ['A', 12], hpFirst: ['A', 60], boardGlyph: ['A', 60], stall20: ['S', 100], hand: ['C', 20], nekomata: ['A', 50], uwaSeen: ['S', 90], uwaWalk: ['SS', 300], ceilBleed: ['S', 100], paCall: ['A', 80], akuryo: ['SS', 550], nurseBack: ['A', 60], nursePeek: ['S', 90], pianoPlay: ['C', 15], clairPlay: ['A', 50], requiem: ['SS', 300], nekoPiano: ['S', 100], twinkle: ['S', 100], chaseRec: ['C', 4], chaseSelfie: ['A', 8], close: ['C', 10], chaseOut: ['A', 50], alive: ['D', 50] };
+const AW_TABLE = { nakayoshi: ['SS', 300], wallEyes: ['A', 60], metronome: ['C', 20], scaleNeedle: ['D', 8], bcStatic: ['D', 8], lockerSeq: ['C', 25], stallFeet: ['C', 20], curtain: ['D', 8], rackFall: ['C', 20], clockRev: ['C', 25], ball: ['C', 20], shoeBlood: ['C', 30], fireExit: ['B', 50], f2bed: ['B', 40], exitFlip: ['B', 45], wander: ['C', 25], glance: ['B', 45], slitCloth: ['A', 60], lockerFace: ['S', 120], capture: ['B', 120], toes: ['A', 70], stand: ['C', 25], semari: ['S', 100], dripRipple: ['A', 60], doorBlood: ['B', 40], stallTop: ['A', 80], basinBlood: ['A', 60], peek: ['A', 60], boardWoman: ['B', 40], boardLunge: ['A', 80], blackoutFace: ['A', 60], micLamp: ['B', 40], micTurn: ['A', 70], glassSelf: ['A', 60], innerLock: ['A', 70], mirrorLag: ['S', 90], drainEye: ['S', 120], runner: ['A', 60], smudge: ['B', 40], fireFace: ['A', 60], prints: ['A', 60], chalk: ['C', 20], broom: ['C', 20], selfieShoulder: ['A', 70], mirrorDoor: ['B', 45], mirrorGiant: ['S', 100], slideCreep: ['C', 30], lookBack: ['A', 70], turnFace: ['S', 100], polter: ['C', 25], mirrorFlash: ['A', 60], cornerFace: ['A', 60], streetFig: ['A', 50], mirrorGirl: ['A', 60], f2blood: ['S', 100], f2stairFace: ['B', 50], f2teddy: ['A', 60], tTurnFace: ['S', 150], f2turnFace: ['S', 100], f2chair: ['B', 40], f2fall: ['A', 70], f2crows: ['A', 50], f2books: ['B', 40], f2pages: ['B', 40], f2libChair: ['B', 40], f2piano: ['B', 50], f2blink: ['A', 70], f2float: ['A', 70], f2vase: ['A', 60], spWarp: ['S', 120], spHead: ['B', 50], spDescend: ['A', 80], spLatch: ['S', 120], spChase: ['A', 12], hpFirst: ['A', 60], boardGlyph: ['A', 60], stall20: ['S', 100], hand: ['C', 20], nekomata: ['A', 50], uwaSeen: ['S', 90], uwaWalk: ['SS', 300], ceilBleed: ['S', 100], paCall: ['A', 80], akuryo: ['SS', 550], nurseBack: ['A', 60], nursePeek: ['S', 90], pianoPlay: ['C', 15], clairPlay: ['A', 50], requiem: ['SS', 300], nekoPiano: ['S', 100], twinkle: ['S', 100], chaseRec: ['C', 4], chaseSelfie: ['A', 8], close: ['C', 10], chaseOut: ['A', 50], alive: ['D', 50] };
 function awBase(key) { const k = String(key || ''); if (typeof AW_TABLE !== 'undefined' && AW_TABLE[k]) return k;   /* 2026-11-13 stall20 のように数字で終わる名前そのものが表にある時はそのまま */ return k.startsWith('broom') ? 'broom' : k.replace(/\d+$/, ''); }
 
 const awarded = new Map(); const evidence = []; const evAcc = {};
@@ -3108,6 +3148,23 @@ function releaseWoman() {
 /* =========================================================
    照明：女は「自分のいる区画の明かりが弱まっている間」だけ見える
    ========================================================= */
+/* 2026-11-13 階段の蛍光灯：ほとんど消えていて、たまに一瞬だけ「チカッ、チカッ」と点く */
+const STAIRBLINK = {
+  PAT: [[[0.05, 1], [0.08, 0], [0.04, 1]], [[0.06, 1]], [[0.04, 1], [0.1, 0], [0.05, 1], [0.06, 0], [0.03, 1]]],
+  set(f, on) { if (f.lit === on) return; f.lit = on; f.light.intensity = on ? f.base : 0; for (const m of f.meshes) m.material.color.setScalar(on ? 1 : 0.1); },
+  update(dt) {
+    for (const f of STAIR_LAMPS) {
+      if (world.dark || world.blackout) { this.set(f, false); f.seq = null; continue; }
+      if (!f.seq) {
+        f.wait = (f.wait ?? rnd(1, 4)) - dt; this.set(f, false);
+        if (f.wait <= 0) { f.seq = pick(this.PAT).slice(); f.st = 0; f.wait = rnd(2.5, 7); if (camera.position.distanceTo(f.pos) < 9) playSfx('fl_chin', { pos: f.pos.clone(), ref: 1.0, roll: 3.0, gain: 0.5 }); }
+        continue;
+      }
+      const [d, on] = f.seq[0]; this.set(f, !!on); f.st += dt;
+      if (f.st >= d) { f.seq.shift(); f.st = 0; if (!f.seq.length) f.seq = null; }
+    }
+  },
+};
 const LIGHTS = [];
 for (const t of tubes) LIGHTS.push({ kind: 'tube', t, pos: t.pos, r: 6.5, dim: 0, dimUntil: 0, late: 0 });
 LIGHTS.push({ kind: 'street', pos: V(9.5, HT, -19), r: 7.5, dim: 0, dimUntil: 0, base: streetSpot.intensity });
@@ -7502,7 +7559,7 @@ const COL = {
     ['hpFirst', '窓に増えていく赤い手形', 60], ['boardGlyph', '黒板に走る「タスケテ」', 60], ['stall20', '20回目のノックで開いた個室', 60],
     ['hand', '天井から垂れる灰色の手', 25], ['hand', '壁から生えた灰色の手', 25], ['nekomata', '街灯の猫又', 50], ['uwaSeen', '誰も履いていない上履き', 30], ['uwaWalk', 'インカメに映った、歩く上履き', 200],
     ['ceilBleed', '天井に広がる大量の血の染み', 70], ['paCall', '校内放送で呼ばれた自分の名前', 90], ['akuryo', '悪霊退散', 300], ['nurseBack', '保健室の奥に立つ背中', 30], ['nursePeek', '保健室の入口から真横に覗く顔', 80], ['pianoPlay', 'ピアノを弾く', 10], ['clairPlay', '月の光を演奏する', 50], ['requiem', '怪異に捧げるレクイエム', 200], ['nekoPiano', '猫ふんじゃったを弾く', 100], ['twinkle', 'きらきら星を弾く', 100],
-    ['curtain', '閉めきった窓で揺れるカーテン', 8], ['clockStop', '4時44分で止まった時計', 8], ['clockRev', '逆回転し続ける時計の針', 25], ['ball', 'ひとりでに転がってくるボール', 20], ['shoeBlood', '血まみれの下駄箱', 30],
+    ['curtain', '閉めきった窓で揺れるカーテン', 8], ['rackFall', '突然倒れたコート掛け', 20], ['clockRev', '逆回転し続ける時計の針', 25], ['ball', 'ひとりでに転がってくるボール', 20], ['shoeBlood', '血まみれの下駄箱', 30],
     ['metronome', 'ひとりでに動き出すメトロノーム', 20], ['scaleNeedle', '誰も乗っていない体重計の針', 8], ['bcStatic', '放送室のスピーカーから流れる砂嵐', 8], ['lockerSeq', '順番に開いていくロッカーの扉', 25], ['stallFeet', '個室の扉の下に見える足の影', 20], ['wallEyes', '周りの壁に一斉に開く目', 60], ['nakayoshi', 'なかよしスリーショット', 300],
     ['chaseRec', '追われながらカメラを回す', 4], ['chaseSelfie', 'インカメラに追ってくる姿', 8], ['close', '怪異を超接写', 10], ['fireExit', '非常口からの脱出', 50], ['chaseOut', '追われながら生還', 50], ['alive', 'いのちだいじに', 10],
   ],
@@ -7651,15 +7708,15 @@ defEvent('paCall', {
     this.t += dt; const en = LANG === 'en', K = 1 / 1.2;   // 読む速さ：1.2倍
     if (this.ph === 'chime' && this.t > 4.1) {   // 「◯◯さん。◯◯さん。」
       this.ph = 'name'; this.t = 0; this.d = PACALL.say(`${this.say}さん。${this.say}さん。`, { f0: 235, fall: 0.94, k: K });
-      PASUB.show(en ? `${this.disp}... ${this.disp}...` : `${this.disp}さん、${this.disp}さん、`);
+      PASUB.show(en ? `${this.disp}...` : `${this.disp}さん`);   // 2026-11-13 声は2回呼ぶが、字幕の名前は1回だけ
     }
     if (this.ph === 'name' && this.t > this.d + 0.03) {   // 「いますぐ、」
       this.ph = 'now'; this.t = 0; this.d = PACALL.say('いますぐ、', { f0: 228, fall: 0.9, k: K });
-      PASUB.show(en ? 'Come right now...' : '今すぐ、');
+      PASUB.show(en ? `${this.disp}... come right now` : `${this.disp}さん 今すぐ`);
     }
     if (this.ph === 'now' && this.t > this.d + 0.03) {   // 「ほけんしつまで」：声が低く沈み、ゆっくりに
       this.ph = 'down'; this.t = 0; this.d = PACALL.say('ほけんしつまで', { f0: 190, fall: 0.45, k: 1.6 * K, gain: 0.95 });
-      PASUB.show(en ? "to the nurse's off—" : '保健室まで……', true);
+      PASUB.show(en ? `${this.disp}... come right now to the nurse's off—` : `${this.disp}さん 今すぐ保健室まで…`, true);
     }
     if (this.ph === 'down' && this.t > this.d * 0.72) {   // 「〜室まで」あたりでノイズが走って途切れる
       PACALL.noise(1.0); PACALL.cutVoice(); PASUB.glitch(); this.ph = 'after'; this.t = 0;
@@ -8203,7 +8260,6 @@ Object.assign(MINOR, {
   reset() {
     for (const c of clocks) { c.mode = 'run'; c.seenStop = c.seenRev = false; c.rev = 0; }
     const order = shuffle([...clocks]);
-    if (chance(0.75)) order.pop().mode = 'stop';   // 4時44分で止まっている
     if (chance(0.45)) order.pop().mode = 'rev';    // 針が逆に回り続ける
     for (const c of curtains) { c.sway = 0; if (c.drawn) curtainShape(c, 0, 0); }
     this.curtRoom = chance(0.6) ? pick(['2A', '2B']) : null; this.curtT = 0; this.curtDone = false; this.curtOn = 0; this.curtSeen = false;
@@ -8211,6 +8267,7 @@ Object.assign(MINOR, {
     for (const p of shoeBlood) p.visible = false;
     this.bloodPlan = chance(0.2); this.bloodOn = false; this.bloodSeen = false; this.bloodDrip = false; this.leftE = null;
     this.reset2();
+    RACK.reset();
     this.eyPlan = chance(0.35); this.eyOn = 0; this.eyDone = false; this.eyAfter = rnd(60, 150); this.eyT = 0; for (const e of WEYE.list) e.m.visible = false; this.trT = 0;
   },
   quiet() { return typeof AMB !== 'undefined' ? AMB.quiet() : world.state === 'play'; },
@@ -8219,15 +8276,13 @@ Object.assign(MINOR, {
     const t0 = 19 * 3600 + 20 * 60 + Math.floor(world.t || 0);   // ふだんは 19:20 から実時間で進む（秒針は1秒ごとに動く）
     const z = playerZone();
     for (const c of clocks) {
-      if (c.mode === 'stop') setHands(c, 4, 44, 44);
-      else if (c.mode === 'rev') {
+      if (c.mode === 'rev') {
         c.rev -= dt * 900;   // 1秒で15分ぶん、逆に回る
         const T = ((t0 + c.rev) % 43200 + 43200) % 43200; setHands(c, T / 3600, (T % 3600) / 60, (T % 60));
         if (z === c.room && A.ctx) { c.tick -= dt; if (c.tick <= 0) { c.tick = 0.085; tn(panAt(c.pos, 0.5, 1.6, undefined, 1), { f0: 3400, f1: 2700, dur: 0.012, peak: 0.07 }); } }
       } else setHands(c, t0 / 3600, (t0 % 3600) / 60, t0 % 60);
       if (z !== c.room) continue;
       const fp = c.g.localToWorld(V(0, 0, 0.05));
-      if (c.mode === 'stop' && !c.seenStop && seen(fp, { maxD: 7, margin: 0.9 })) { c.seenStop = true; award('clockStop', '4時44分で止まった時計', 8); }
       if (c.mode === 'rev' && !c.seenRev && seen(fp, { maxD: 8, margin: 0.9 })) { c.seenRev = true; award('clockRev', '逆回転し続ける時計の針', 25); }
     }
   },
@@ -8303,7 +8358,7 @@ Object.assign(MINOR, {
   },
 
   update(dt) {
-    this.updClocks(dt);
+    this.updClocks(dt); RACK.update(dt);
     if (world.state !== 'play') return;
     this.updCurtain(dt); this.updBall(dt); this.updBlood(dt);
     this.updMetro(dt); this.updScale(dt); this.updBc(dt); this.updLockers(dt); this.updFeet(dt); this.updEyes(dt); this.updTrio(dt);
@@ -8476,7 +8531,7 @@ function tick(now) {
   if (!world.dark) { flashDip = Math.max(0, flashDip - dt); flash.intensity = (RED.on ? 0.75 : 1) * (SP.wrap && SP.wrap.visible && (SP.st === 'drop' || SP.st === 'latch' || SP.st === 'peel') ? clamp(camera.position.distanceTo(SP.wrap.position) / 2.4, 0.12, 1) : 1) * (woman.root.visible && woman.opacity > 0.5 ? clamp(camera.position.distanceTo(headWorld(woman, V())) / 2.2, 0.2, 1) : 1) * (MD.ph === 'face' ? 9 : CAP.on ? LIT.int * clamp(CAP.dist / 1.6, 0.1, 1) : flashDip > 0 ? 3 : player.hidden ? 1.2 : LIT.int); /* 顔が白飛びしないように */ }
   updateStalls(dt);
   updateInteractions();
-  DIM.update(dt); applyLights(dt); FL.update(dt);
+  DIM.update(dt); applyLights(dt); FL.update(dt); STAIRBLINK.update(dt);
   WD.update(dt);
   CH.update(dt); cvoiceUpdate(dt);
   HIDE.update(dt);
@@ -8886,6 +8941,7 @@ function micOff() {
 for (const id of ['#gearBtn', '#startGear']) { const el = $(id); for (const ev of ['pointerdown', 'touchstart']) el.addEventListener(ev, e => e.stopPropagation(), { passive: true }); el.addEventListener('click', e => { e.stopPropagation(); ensureAudio(); SET.show(); }); }
 for (const ev of ['pointerdown', 'pointermove', 'pointerup', 'touchstart', 'touchmove']) $('#settings').addEventListener(ev, e => e.stopPropagation(), { passive: true });
 $('#setClose').addEventListener('click', () => SET.hide());
+$('#setX').addEventListener('click', e => { e.stopPropagation(); if ($('#setBrightPane').classList.contains('show') || getComputedStyle($('#setBrightPane')).display !== 'none') { const d = $('#brightDone'); if (d) d.click(); } SET.hide(); });   // 2026-11-13 右上の×でも閉じる
 $('#setGyro').addEventListener('click', () => {
   opt.gyro = !opt.gyro; saveOpts(); SET.sync();
   if (SET.paused) { if (opt.gyro) enableGyro(); else disableGyro(); }
@@ -9125,7 +9181,7 @@ const UISND = {
     const id = el.id || '';
     if (id === 'goBtn') return 'start';
     if (/^(tNext|setTut|setCol)$/.test(id) || el.classList.contains('setLink')) return id === 'tNext' && el.textContent.includes('はじめる') ? 'start' : 'next';
-    if (/^(setClose|invClose|tBack|tSkipTop|fxClose)$/.test(id) || /閉じる|もどる/.test(el.textContent || '')) return 'back';
+    if (/^(setClose|setX|invClose|tBack|tSkipTop|fxClose)$/.test(id) || /閉じる|もどる/.test(el.textContent || '')) return 'back';
     const row = el.closest('.opt'); if (row && row.querySelector('.sw')) return row.classList.contains('on') ? 'off' : 'on';
     return 'tap';
   },
@@ -9351,7 +9407,7 @@ if (CHK) {
     read.textContent = `速さ 自分1.00／クモ${sm.toFixed(2)}（${SP.st}・${sd}）／逆さ${wm.toFixed(2)}（${CH.state}・${wd}）`;
   }, 300);
 }
-if (TEST) window.__G = { look, evidence, sgEmissive, camFwd, UISND, KB, MINOR, INV, MIDI, AUDIO_OUT, FRAME, input, STAY, occluders, ray, glassPanes, groundAt, EXITF, exitSigns, sole, runner, drainEye, prints, winFog, stainMesh, bloodDecal, fireDoor, broadcastFog, KNOB: null, render, sgHead, spFacePos, BLEED, NURSE, MICO: mic, OFUDA, SPV, speak, PACALL, award, COL, MISS, TAP, sinks, awarded, PIANO, UWA, selfCam, avatar, ITEM, escape, FL, HANDS, NEKO, stairH, SET, MIC, opt, snapEntrance, makeResultImage, shareText, CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
+if (TEST) window.__G = { look, evidence, RACK, STAIR_LAMPS, PASUB, sgEmissive, camFwd, UISND, KB, MINOR, INV, MIDI, AUDIO_OUT, FRAME, input, STAY, occluders, ray, glassPanes, groundAt, EXITF, exitSigns, sole, runner, drainEye, prints, winFog, stainMesh, bloodDecal, fireDoor, broadcastFog, KNOB: null, render, sgHead, spFacePos, BLEED, NURSE, MICO: mic, OFUDA, SPV, speak, PACALL, award, COL, MISS, TAP, sinks, awarded, PIANO, UWA, selfCam, avatar, ITEM, escape, FL, HANDS, NEKO, stairH, SET, MIC, opt, snapEntrance, makeResultImage, shareText, CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
 loadSG().then(() => Promise.all([setupGlbHuman(woman, GHOST_B64), setupGlbHuman(avatar, PROT_B64)])).then(() => loadF2()).then(() => loadSpider()).then(() => NEKO.load()).then(() => UWA.load()).then(() => loadHands()).then(() => { $('#loading').remove(); try { ensureAudio(); if (A.ctx && A.ctx.state === 'running') titleSeKick(); } catch (e) { } });
 requestAnimationFrame(tick);
 // 効果音の大きさ（端末に保存。プレイ中・録画の両方に効く）
