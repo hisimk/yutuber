@@ -208,6 +208,15 @@
   #tut.show{display:block}
   #tut.dim{background:rgba(0,0,0,.78)}
   #tSkipTop{position:absolute;right:12px;top:calc(var(--sat) + 96px);z-index:2;padding:8px 12px;border-radius:999px;border:1px solid #6a665f;background:rgba(20,20,22,.9);color:#e9e4da;font:600 13px system-ui}
+  #tStick{position:absolute;width:116px;height:116px;margin:-58px 0 0 -58px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:rgba(255,255,255,.08);display:none;pointer-events:none}
+  #tStick.on{display:block}
+  #tStick b{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(255,255,255,.55);animation:tStk 2.4s ease-in-out infinite}
+  #tStick i{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-6px 0 0 -4px;border-radius:50% 50% 50% 8px;background:rgba(255,214,10,.85);transform:rotate(-45deg);animation:tStk 2.4s ease-in-out infinite;opacity:.9}
+  @keyframes tStk{0%,100%{translate:0 0}12%{translate:0 -32px}30%{translate:32px 0}48%{translate:0 32px}66%{translate:-32px 0}84%{translate:0 -32px}}
+  #tSwipe{position:absolute;width:0;height:0;display:none;pointer-events:none}#tSwipe.on{display:block}
+  #tSwipe i{position:absolute;width:38px;height:38px;margin:-19px 0 0 -19px;border-radius:50% 50% 50% 8px;background:rgba(255,214,10,.85);transform:rotate(-45deg);box-shadow:0 0 0 8px rgba(255,214,10,.18);animation:tSwp 2.6s ease-in-out infinite}
+  @keyframes tSwp{0%,100%{translate:0 -60px}25%{translate:60px 0}50%{translate:0 60px}75%{translate:-60px 0}}
+  #tut.pass{pointer-events:none}#tut.pass .tBox,#tut.pass #tSkipTop{pointer-events:auto}
   #tHole{position:absolute;display:none;border:2px dashed #ffd60a;border-radius:14px;box-shadow:0 0 0 2000px rgba(0,0,0,.74);transition:all .25s;pointer-events:none}
   #tHole.on{display:block}
   #tTag{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:800 15px system-ui;color:#ffd60a;text-shadow:0 1px 4px #000;white-space:nowrap;letter-spacing:.06em}
@@ -289,9 +298,6 @@
   .rowBtns{display:flex;gap:10px;margin-top:10px;width:100%;max-width:360px}
   .rowBtns button{flex:1;font-size:14px;font-weight:700;padding:13px 6px;border-radius:12px;border:1px solid #3a3a3e;background:#18181b;color:#fff}
   .rowBtns button.pri{background:#e9e4da;color:#111;border-color:#e9e4da}
-  .rowBtns button.share{background:#e0332f;border-color:#e0332f;color:#fff;font-size:15px;padding:14px 6px}
-  .rowBtns.sub{margin-top:8px}.rowBtns.sub button{font-size:13px;padding:10px 6px;color:#cfcac0}
-  #shareHint{font-size:11px;color:#8a867f;margin-top:6px;text-align:center;max-width:360px;line-height:1.5}
   #saveMsg{font-size:12px;color:#9a958c;margin-top:8px;text-align:center;min-height:1em;max-width:360px}
   #over .title{font-size:38px}
   .logoTitle{margin:0 0 10px;line-height:0;text-shadow:none}
@@ -461,7 +467,7 @@
   <h1 class="title logoTitle"><img id="titleLogo" alt="幽tuber 撮レ高狙エ"></h1>
   <div class="sub">夜の旧校舎で、決定的瞬間を撮って帰る</div>
   <div class="opts">
-    <div class="opt"><div>チャンネル名</div><input id="chName" maxlength="20" placeholder="心霊チャンネル"></div>
+    <div class="opt"><div>なまえ</div><input id="chName" maxlength="20" placeholder="心霊チャンネル"></div>
     <div class="opt" id="yomiRow"><div>よみがな</div><input id="chYomi" maxlength="20" placeholder="ひらがなで入力"></div>
   </div>
   <button class="go" id="goBtn">旧校舎に入る</button>
@@ -488,6 +494,7 @@
         <div class="opt col" id="setMidiRow"><div class="optTop" id="setMidi"><div>電子ピアノ（MIDI）<small>USBでつないだ電子ピアノで音楽室のピアノを弾けます</small></div><div class="sw"></div></div><select class="sel" id="midiSel"><option value="">つないだ機器すべて</option></select><div id="midiNote"></div></div>
       </div>
       <div id="setKeys"><div class="setSub">キー操作（PC）<small>ボタンを押してから、割り当てたいキーを押す</small></div><div id="keyList"></div><button class="setLink" id="keyReset">キー操作を初期設定にもどす</button></div>
+      <button class="setLink" id="setTut">遊び方を見る</button>
       <div class="opt" id="setLang"><div>言語 / Language</div><div class="seg" id="langSeg"><button data-lang="ja">日本語</button><button data-lang="en">English</button></div></div>
       <button class="setLink" id="setCol">撮れ高コレクション</button>
       <button class="setLink" id="setHome">スタート画面にもどる</button>
@@ -510,7 +517,7 @@
   </div>
   <div id="invScore"><img id="invScoreImg" alt=""><div id="invScoreTap">タップで閉じる</div></div>
 </div>
-<div id="tut"><button id="tSkipTop">遊び方をとばす ✕</button><div id="tHole"><b id="tTag"></b></div><div class="tBox" id="tBox"><div class="tStep" id="tStep"></div><div class="tIco" id="tIco"></div><h3 id="tTitle"></h3><p id="tText"></p><div class="tBtns"><button class="tSkip" id="tSkip">とばす</button><button class="go" id="tNext">次へ</button></div></div></div>
+<div id="tut"><button id="tSkipTop">遊び方をとばす ✕</button><div id="tHole"><b id="tTag"></b></div><div id="tStick"><b></b><i></i></div><div id="tSwipe"><i></i></div><div class="tBox" id="tBox"><div class="tStep" id="tStep"></div><div class="tIco" id="tIco"></div><h3 id="tTitle"></h3><p id="tText"></p><div class="tBtns"><button class="tSkip" id="tBack">もどる</button><button class="go" id="tNext">次へ</button></div></div></div>
 <div id="intro"><canvas id="introCv"></canvas><div class="skip">タップでスキップ</div></div>
 <div class="screen" id="result">
   <h2 id="resTitle">帰還</h2>
@@ -520,9 +527,7 @@
   <div id="likeSub">いいね</div>
   <div id="replayWrap"><video id="replay" playsinline controls preload="auto"></video><div id="noVideo">持ち帰った映像はありません</div></div>
   <div id="evWrap"><div id="missed"></div><div id="evHead"><span>いいねの内訳</span><span id="evCount"></span></div><div id="evList"></div></div>
-  <div class="rowBtns"><button class="share" id="shareBtn">動画と結果をシェア</button></div>
-  <div class="rowBtns sub"><button id="saveBtn">動画だけ</button><button id="imgBtn">結果画像だけ</button></div>
-  <div id="shareHint">TikTok・インスタは「動画だけ」がおすすめ（動画の最後に結果が入っています）</div>
+  <div class="rowBtns"><button id="saveBtn">動画を保存・投稿</button><button id="imgBtn">結果を画像で保存</button></div>
   <div class="rowBtns"><button class="pri" id="againBtn">もう一度入る</button></div>
   <div id="saveMsg"></div>
   <div id="musicCred" style="display:none;font-size:11px;color:#9a9a9a;line-height:1.6;margin:6px 4px 0;text-align:center"></div>
@@ -940,7 +945,7 @@ let LANG = 'ja'; try { const l = localStorage.getItem('yt_lang'); if (l === 'en'
 const EN = {
   // スタート・設定
   '夜の旧校舎で、決定的瞬間を撮って帰る': 'Film the decisive moment in the old school at night — and make it out',
-  'チャンネル名': 'Channel name', '心霊チャンネル': 'Ghost Channel', '旧校舎に入る': 'Enter the old school', '使用素材・クレジット': 'Assets & credits',
+  'チャンネル名': 'Channel name', 'なまえ': 'Name', '心霊チャンネル': 'Ghost Channel', '旧校舎に入る': 'Enter the old school', '使用素材・クレジット': 'Assets & credits',
   '・画面の左下を押すと移動スティック。右側をなぞると見回す': '• Press the lower left to move. Swipe the right side to look around',
   '・倍率ボタン（.5／1／2／3）で画角を切り替え': '• Use the zoom buttons (.5 / 1 / 2 / 3) to change the view',
   '・赤いボタンで録画開始／停止。持ち帰れるのは通算120秒（画面上の「残容量」で残りが分かります）': '• The red button starts/stops recording. You can bring back 120 seconds in total (see “Storage” at the top)',
@@ -980,7 +985,7 @@ const EN = {
   '最後まで回っていた映像': 'Footage that kept rolling to the end', 'クモ女に捕まった': 'Caught by the Spider Woman', '（暗闇から生還）': ' (survived the dark)',
   'いいね': 'Likes', 'いいねの内訳': 'Likes breakdown', '持ち帰った映像はありません': 'No footage brought back', 'この環境では映像を書き出せませんでした（撮れ高のみ）': 'Video couldn’t be exported here (likes only)',
   '決定的瞬間は映っていなかった。空振りの廊下も記録です。': 'No decisive moment was caught. An empty hallway is a record too.',
-  '動画を保存・投稿': 'Save / post video', '結果を画像で保存': 'Save result image', '動画と結果をシェア': 'Share video + result', '動画だけ': 'Video only', '結果画像だけ': 'Result image only', '結果をシェア': 'Share result', 'TikTok・インスタは「動画だけ」がおすすめ（動画の最後に結果が入っています）': 'For TikTok / Instagram, use “Video only” (the result is at the end of the video)', '動画を仕上げています…': 'Finishing the video…', '生還': 'Escaped', 'もう一度入る': 'Go back in',
+  '動画を保存・投稿': 'Save / post video', '結果を画像で保存': 'Save result image', 'もう一度入る': 'Go back in',
   '保存しました': 'Saved', '保存をやめました': 'Canceled', 'ダウンロードを開始しました': 'Download started', 'この画面では保存できませんでした。': 'Couldn’t save on this screen.',
   'ダウンロードを開始しました。始まらない場合は、再生画面のメニューから保存してください。': 'Download started. If it doesn’t, save from the video player menu.',
   '投稿文（#幽tuber）をコピーしました。アプリで消えていたら貼り付けてください': 'Post text (#幽tuber) copied. Paste it if the app drops it', '画像を作っています…': 'Creating image…',
@@ -2646,6 +2651,7 @@ function raspPos(out = V()) { return WD.borrowed && SG.root.visible ? sgHead(out
 function raspUpdate(dt) {
   if (!A.ctx) return;
   if (world.state !== 'play' || CAP.on) { raspStop(); return; }
+  if (CH.state === 'off' && !womanOn()) { raspStop(); return; }   // 2026-11-13 逆さ女の息は、姿がはっきり見えるようになってから（または追われている時）だけ
   if (!RASP.on) raspStart(); if (!RASP.on) return;
   const t = A.ctx.currentTime, p = raspPos(V());
   setP(RASP.p, p);
@@ -2845,6 +2851,7 @@ function hudTap(el, fn) {
 }
 
 function setZoom(z) { zoomTarget = clamp(z, 1, 3); updateZoomUI(); }
+function scareZoom1() { if (zoomTarget !== 1 || zoom !== 1) { zoomTarget = 1; zoom = 1; updateZoomUI(); } }   // 2026-11-13 怪異が目の前に出る場面は強制的に1倍（顔が画面からはみ出さないように）
 const zbs = [...document.querySelectorAll('.zb')];
 zbs.forEach(b => hudTap(b, () => setZoom(parseFloat(b.dataset.z))));
 function updateZoomUI() {
@@ -2932,68 +2939,7 @@ function stopRec(reason) {
   for (const f of recStopListeners) f(reason);
 }
 function toggleRec() { if (world.state !== 'play' || world.dark) return; rec.active ? stopRec('user') : startRec(); }
-/* ---------- 動画の最後に付ける結果カード（2026-11-13） ----------
-   帰還・やられた時に、録画をもう一度回して約3秒、結果（いいね数・上位の撮れ高・ゲーム名とURL）を映してから止める。
-   SNSに動画だけ投稿されても結果とURLが伝わるように。画面にもそのまま映る（結果画面へのつなぎ）。 */
-const ENDCARD = {
-  dur: 3.5,
-  run() {
-    return new Promise(done => {
-      try {
-        if (!rec.available || rec.time <= 0.3) { done(); return; }
-        let r = rec.recorder;
-        if (rec.mode === 'pause') { if (!r || r.state === 'inactive') { done(); return; } if (r.state === 'paused') r.resume(); }
-        else { if (!rec.segs.length && !r) { done(); return; } if (!r || r.state === 'inactive') { r = rec.recorder = makeRecorder(); r.start(500); } }
-        if (rec.micGain) rec.micGain.gain.setValueAtTime(0, A.ctx.currentTime);
-        const W = canvas.width, H = canvas.height, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
-        const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
-        const sc = new THREE.Scene(), cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-        sc.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false })));
-        const lost = world.state === 'over';
-        const total = evidence.reduce((a, e) => a + e.pts, 0), top = evidence.slice().sort((a, b) => b.pts - a.pts).slice(0, 3);
-        const imgs = {}, ld = Promise.all([loadImg(TITLE_LOGO).then(i => imgs.logo = i).catch(() => { }), loadImg(LIKE_PNG).then(i => imgs.like = i).catch(() => { })]);
-        const noise = Array.from({ length: 900 }, () => [Math.random(), Math.random(), Math.random() * 0.04]);
-        let t0 = 0;
-        const step = now => {
-          if (!t0) t0 = now; const t = (now - t0) / 1000; this.draw(g, W, H, t, { lost, total, top, imgs, noise }); tex.needsUpdate = true;
-          renderer.setRenderTarget(null); renderer.render(sc, cam);
-          if (t < this.dur) { requestAnimationFrame(step); return; }
-          tex.dispose(); done();
-        };
-        Promise.race([ld, new Promise(ok => setTimeout(ok, 400))]).then(() => requestAnimationFrame(step));
-      } catch (e) { done(); }
-    });
-  },
-  draw(g, W, H, t, d) {
-    const u = Math.min(W / 900, H / 1100), cx = W / 2, sans = '-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif', serif = '"Shippori Mincho","Hiragino Mincho ProN",serif';
-    const fade = Math.min(1, t / 0.35), out = Math.min(1, Math.max(0, (this.dur - t) / 0.25));
-    g.globalAlpha = 1; g.fillStyle = '#050506'; g.fillRect(0, 0, W, H);
-    g.globalAlpha = fade * out;
-    for (const [x, y, a] of d.noise) { g.fillStyle = `rgba(255,255,255,${a})`; g.fillRect(x * W, ((y + t * 0.03) % 1) * H, 2 * u, 2 * u); }
-    let y = H * 0.5 - 430 * u;
-    if (d.imgs.logo) { const lw = 520 * u, lh = lw * d.imgs.logo.height / d.imgs.logo.width; g.drawImage(d.imgs.logo, cx - lw / 2, y, lw, lh); y += lh + 80 * u; } else y += 160 * u;
-    g.textAlign = 'center'; g.fillStyle = '#cfcac0'; g.font = `600 ${38 * u}px ${serif}`; g.fillText(TR(d.lost ? '映像はここで途切れている' : '生還'), cx, y); y += 150 * u;
-    const k = Math.min(1, Math.max(0, (t - 0.3) / 1.1)), v = Math.round(d.total * (1 - Math.pow(1 - k, 3)));
-    g.font = `800 ${130 * u}px ${sans}`; const tw = g.measureText(String(v)).width, iw = 120 * u, gap = 26 * u, x0 = cx - (iw + gap + tw) / 2;
-    if (d.imgs.like) g.drawImage(d.imgs.like, x0, y - 108 * u, iw, iw * d.imgs.like.height / d.imgs.like.width);
-    g.textAlign = 'left'; g.fillStyle = d.total >= 1000 ? '#ff9ae6' : d.total >= 500 ? '#ffd34d' : '#fff'; g.fillText(String(v), x0 + iw + gap, y);
-    g.textAlign = 'center'; g.fillStyle = '#9a958c'; g.font = `${26 * u}px ${sans}`; g.fillText(LANG === 'en' ? 'L I K E S' : 'い い ね', cx, y + 56 * u); y += 140 * u;
-    d.top.forEach((e, i) => {
-      const a = Math.min(1, Math.max(0, (t - 1.1 - i * 0.25) / 0.3)); if (!a) return; g.globalAlpha = fade * out * a;
-      const r = rankOf(e); g.fillStyle = RANK_COL[r] || '#fff'; g.font = `italic 800 ${30 * u}px ${sans}`; g.textAlign = 'left'; g.fillText(r, cx - 380 * u, y);
-      g.fillStyle = '#e9e4da'; g.font = `${32 * u}px ${sans}`; let lb = TR(e.label); while (g.measureText(lb).width > 560 * u && lb.length > 4) lb = lb.slice(0, -2) + '…'; g.fillText(lb, cx - 320 * u, y);
-      g.textAlign = 'right'; g.font = `700 ${32 * u}px ${sans}`; g.fillText(String(e.pts), cx + 380 * u, y); y += 60 * u;
-    });
-    g.globalAlpha = fade * out; y = Math.max(y + 40 * u, H * 0.5 + 330 * u);
-    g.textAlign = 'center'; g.fillStyle = '#fff'; g.font = `700 ${40 * u}px ${sans}`; g.fillText('#幽tuber', cx, y);
-    g.fillStyle = '#9a958c'; g.font = `${28 * u}px ${sans}`; g.fillText('hisimk.github.io/yutuber', cx, y + 48 * u);
-    g.globalAlpha = 1;
-  },
-};
 function finalizeRec() {
-  return ENDCARD.run().then(() => finalizeRec0());
-}
-function finalizeRec0() {
   return new Promise(res => {
     const done = () => { if (rec.mode === 'segments') { res(rec.segs.slice()); return; } res(rec.chunks.length ? [new Blob(rec.chunks, { type: rec.recorder?.mimeType || rec.mime })] : []); };
     const r = rec.recorder;
@@ -3078,7 +3024,7 @@ function distTo(x, z) { return Math.hypot(player.x - x, player.z - z); }
    制服の子（個別の怪異用）を出し入れする
    ========================================================= */
 function setGlow(H, v) { for (const m of H.mats) if (m !== H.faceMat) m.emissive.setScalar(v); }
-function borrowWoman() {
+function borrowWoman() { scareZoom1();
   setGlow(woman, 0);
   const c = woman.c; Object.assign(c, { speed: 0, pose: 'stand', poseT: 0, snap: false, headYaw: 0, headPitch: 0, headRoll: 0, lean: 0, fingerCurl: undefined });
   woman.hy = woman.hp = woman.hr = 0; woman.root.position.set(0, 0, 0); woman.root.rotation.set(0, 0, 0);
@@ -3253,7 +3199,7 @@ const WD = {
     this.path = navPath(this.node, d).slice(1);
   },
   goTo(p) { const n = nearestNode(p.x, p.z, undefined, p.y || 0); this.path = navPath(nearestNode(this.pos.x, this.pos.z, undefined, this.pos.y), n).slice(1).map(k => k); this.extra = p.clone(); },
-  borrow() { this.borrowed = true; this.glance = null; SG.ovYaw = SG.ovPitch = 0; SG.ovStretch = 0; return SG; },
+  borrow() { scareZoom1(); this.borrowed = true; this.glance = null; SG.ovYaw = SG.ovPitch = 0; SG.ovStretch = 0; return SG; },
   release(far = true) {
     this.borrowed = false; sgSetOpacity(0); SG.root.rotation.x = 0; SG.root.rotation.z = 0; SG.ovRoll = 0; SG.root.position.y = 0; SG.ovYaw = SG.ovPitch = 0; sgPlay('Walk');
     if (far) { const cands = Object.keys(NAV).filter(k => !['E1', 'E0', 'Aa'].includes(k) && distTo(NAV[k][0], NAV[k][1]) > 12 && !clearLine(V(NAV[k][0], (NAV[k][3] || 0) + 1.5, NAV[k][1]))); this.node = cands.length ? pick(cands) : 'B4'; this.pos.copy(nodePos(this.node)); }
@@ -3432,7 +3378,7 @@ const HIDE = {
     if (this.ending !== 'normal') this.strongUsed = true;
   },
   // バレた：怪異がロッカーの前まで来て、外から扉を開ける。そのまま襲われて終わる
-  beginFound() {
+  beginFound() { scareZoom1();
     const lk = this.lk; this.ph = 'fGo'; this.t = 0; this.fT = 0;
     if (this.foundBy === 'woman') { CH.state = 'off'; tensionCut(true); WD.path = []; WD.scripted = true; WD.noDetectUntil = world.t + 60; WD.goTo(lkP(lk, 0, 0, 0.95)); }
     else { SP.st = 'lockerGo'; SP.stepStop && SP.stepStop(true); }
@@ -3564,7 +3510,7 @@ const HIDE = {
 const CAP = {
   on: false, t: 0, camYaw: 0, camPitch: 0,
   start() {
-    if (this.on || world.state !== 'play') return;
+    if (this.on || world.state !== 'play') return; scareZoom1();
     if (ITEM.charm('woman')) { if (!OFUDA.on) ITEM.banishWoman(); return; }   // おまもり／封印のお札が一度だけ身代わりに
     if (world.selfie) SELF.set(false);
     this.on = true; this.t = 0; this.seenS = 0; world.capture = 0.0001; CH.state = 'off'; $('#hud').classList.add('off'); $('#actBtn').classList.remove('show');
@@ -3578,7 +3524,7 @@ const CAP = {
     let ty = Math.atan2(-this.dir.x, -this.dir.z); let d = Math.atan2(Math.sin(ty - this.yaw0), Math.cos(ty - this.yaw0)); if (Math.abs(d) < 0.6) { this.yaw0 -= Math.sign(d || 1) * 0.6; d += Math.sign(d || 1) * 0.6; } this.yaw1 = this.yaw0 + d;   /* 正面にいる時も、最後は必ず女の方を向く（以前は0.6だけ行き過ぎて顔が画面外になっていた） */
     WD.borrow(); sgSetOpacity(1); sgPlay('Walk', 0); sgEmissive(0x3a2424);
     this.dist = 1.35; this.place(this.dist, 0, 0);
-    this.steps = [1.05, 0.82, 0.64, 0.5, 0.4, 0.32, 0.27]; this.nextStep = 0.62; this.si = 0;
+    this.steps = [1.05, 0.86, 0.72, 0.62, 0.55, 0.5, 0.47]; this.nextStep = 0.62; this.si = 0;   /* 2026-11-13 近づきすぎると顔の中に入って何か分からなくなるので、0.47で止める */
     SND.hit(); playSfx('capture_dropout', { gain: 0.35 }); world.vhs = 0.6;
   },
   place(d, side, up) {
@@ -3600,15 +3546,15 @@ const CAP = {
       if (t >= this.nextStep && this.si < this.steps.length) {
         this.dist = this.steps[this.si++]; this.nextStep = t + rnd(0.12, 0.24);
         const amp = clamp(this.dist / 1.1, 0.25, 1);   // 近いほど顔はこちらを向いたまま、首と傾きだけが狂う
-        SG.ovYaw = rnd(-0.45, 0.45) * amp; SG.ovPitch = rnd(-0.3, 0.3) * amp;
+        SG.ovYaw = rnd(-0.22, 0.22) * amp; SG.ovPitch = rnd(-0.15, 0.15) * amp;
         this.place(this.dist, rnd(-0.06, 0.06) * amp, rnd(-0.04, 0.03) * amp - (this.dist < 0.55 ? 0.08 : 0));   // 近づくほど真っ黒な目が画面の中心に来るように
-        SG.ovRoll = rnd(-0.6, 0.6);   // 首だけが不自然に傾く
-        if (chance(0.45)) { this.flash = 0.07; }   // 一瞬だけ画面が砂嵐に
-        U.tear.value = rnd(0.05, 0.3); world.vhs = Math.max(world.vhs, rnd(0.3, 0.8)); SND.glitch(0.08);
+        SG.ovRoll = rnd(-0.32, 0.32);   // 首だけが不自然に傾く（傾けすぎると顔が画面の外へ逃げるので控えめに）
+        if (chance(0.22)) { this.flash = 0.05; }   // 一瞬だけ画面が砂嵐に（顔が見えるよう少なめ）
+        U.tear.value = rnd(0.02, 0.14); world.vhs = Math.max(world.vhs, rnd(0.25, 0.55)); SND.glitch(0.08);
       }
       // ステップの合間も小刻みに震える
-      if (chance(0.5)) { SG.ovYaw = clamp(SG.ovYaw + rnd(-0.06, 0.06), -0.5, 0.5); SG.ovPitch = clamp(SG.ovPitch + rnd(-0.04, 0.04), -0.35, 0.35); SG.ovRoll += rnd(-0.08, 0.08); }
-      this.flash = Math.max(0, (this.flash || 0) - dt); U.stat.value = this.flash > 0 || screamGap() ? 0.65 : 0.0;   // 叫びが途切れる瞬間に映像も飛ぶ
+      if (chance(0.5)) { SG.ovYaw = clamp(SG.ovYaw + rnd(-0.06, 0.06), -0.5, 0.5); SG.ovPitch = clamp(SG.ovPitch + rnd(-0.04, 0.04), -0.35, 0.35); SG.ovRoll = clamp(SG.ovRoll + rnd(-0.08, 0.08), -0.38, 0.38); }
+      this.flash = Math.max(0, (this.flash || 0) - dt); U.stat.value = this.flash > 0 || screamGap() ? 0.4 : 0.0;   // 叫びが途切れる瞬間に映像も飛ぶ
       if (t > 1.55 && !this.mo) { this.mo = 1; SG.ovYaw *= 0.3; SG.ovPitch *= 0.3; sgPlay('Scare_MouthOpen', 0); if (!this.seenS) wdScream(SCREAM_JAW); }   // 顎が開き始める瞬間に叫びが立ち上がる
       if (seen(sgHead(V()), { maxD: 1.5 })) award('capture', '逆さ女に襲われた瞬間', 120);
     }
@@ -4753,8 +4699,8 @@ const MD = {
     } else if (this.ph === 'face') {
       this.t += dt; const d = Math.max(0.72, 0.95 - this.t * 0.35);
       SG.ovRoll = rnd(-0.12, 0.12); SG.ovYaw = rnd(-0.08, 0.08); this.placeFace(d); focus.override = d * NEAR_K;
-      U.stat.value = screamGap() ? 0.7 : 0; sgSetOpacity(screamGap() && chance(0.5) ? 0 : 1);   // 叫びの欠けと同時に映像も欠ける
-      U.tear.value = rnd(0.05, 0.35); world.vhs = Math.max(world.vhs, 0.7);
+      U.stat.value = screamGap() ? 0.4 : 0; sgSetOpacity(screamGap() && chance(0.5) ? 0 : 1);   // 叫びの欠けと同時に映像も欠ける
+      U.tear.value = rnd(0.02, 0.15); world.vhs = Math.max(world.vhs, 0.5);
       if (seen(sgHead(V()), { maxD: 3, margin: 1.2 })) award('mirrorGiant', '振り返った目の前の巨大な顔', 90);
       if (this.t > 1.1) { this.ph = 'noise'; this.t = 0; SND.glitch(0.35); }
     } else if (this.ph === 'noise') {
@@ -5095,8 +5041,8 @@ defEvent('cornerFace', {
         if (!this.near) { this.near = 1; SG.root.scale.setScalar(1.15); SND.hit(); world.vhs = 1; U.tear.value = 0.5; this.pt = 0; this.pi = 0; }
         F2.placeSG(Math.max(0.55, 0.7 - this.t * 0.12)); focus.override = 0.6 * NEAR_K;
         this.pt -= dt; if (this.pt <= 0) { this.pi = (this.pi + 1 + ((Math.random() * 2) | 0)) % 3; this.pt = rnd(0.07, 0.16); }
-        const P = [[0.5, -0.3, 0.35], [-0.6, 0.25, -0.5], [0.1, 0.5, 0.9]][this.pi]; SG.ovYaw = P[0]; SG.ovPitch = P[1]; SG.ovRoll = P[2];
-        U.stat.value = screamGap() ? 0.7 : 0; U.tear.value = rnd(0.05, 0.3); world.vhs = Math.max(world.vhs, 0.7);
+        const P = [[0.2, -0.12, 0.35], [-0.22, 0.1, -0.5], [0.05, 0.18, 0.8]][this.pi]; SG.ovYaw = P[0]; SG.ovPitch = P[1]; SG.ovRoll = P[2];
+        U.stat.value = screamGap() ? 0.4 : 0; U.tear.value = rnd(0.02, 0.14); world.vhs = Math.max(world.vhs, 0.5);
         if (rec.active && seen(sgHead(V()), { maxD: 2.5, margin: 1.2 })) award('cornerFace', '角の先に立つ顔', 60);
       }
       if (this.t > 0.95 && !this.gone) { this.gone = 1; noiseHit(1); U.stat.value = 0.8; U.tear.value = 0.6; world.vhs = 0.8; }
@@ -5541,7 +5487,7 @@ F2.updTeddyScare = function (dt) {
     if (playerZone() !== (S.zone || 'C')) { S.scare = S.after || 'done'; S.zone = null; S.after = null; return; }
     if (f.dot(to) < -0.35 && turn > 0.6 && SG.ready && !WD.borrowed && CH.state === 'off' && !CAP.on && !world.selfie && S.chair !== 'run') {
       S.scare = 'face'; S.st = 0; F2.busy = true; WD.borrow(); sgPlay('Scare_MouthOpen', 0); sgSetOpacity(1); SG.root.scale.setScalar(1.15); sgEmissive(0x3a2424);
-      S.poses = [[0.5, -0.3, 0.35], [-0.6, 0.25, -0.5], [0.1, 0.5, 0.9]]; S.pi = 0; S.pt = 0;
+      S.poses = [[0.2, -0.12, 0.35], [-0.22, 0.1, -0.5], [0.05, 0.18, 0.8]];   /* 2026-11-13 顔がこちらを向いたまま（首の傾きだけ大きく）。顔として分かるように */ S.pi = 0; S.pt = 0;
       this.placeSG(0.62); world.maxUsed = true; SND.hit(); wdScream(SCREAM_JAW * 0.5, 1.0, 1.0); world.vhs = 1; U.tear.value = 0.5;
       S.yaw0 = player.yaw; S.tdir = Math.sign(Math.atan2(Math.sin(player.yaw - (S.prevYaw ?? player.yaw)), Math.cos(player.yaw - (S.prevYaw ?? player.yaw)))) || 1;
     }
@@ -5551,7 +5497,7 @@ F2.updTeddyScare = function (dt) {
     const [y, p, r] = S.poses[S.pi]; SG.ovYaw = y; SG.ovPitch = p; SG.ovRoll = r;
     F2.yawOff = S.tdir * 0.22 * smooth(0, 0.12, S.st);   // 振り向きの終わり10〜15°だけ、表示用のカメラで補助（ジャイロの基準は触らない）
     this.placeSG(Math.max(0.5, 0.62 - S.st * 0.1)); focus.override = 0.6 * NEAR_K;
-    U.stat.value = screamGap() ? 0.7 : 0; U.tear.value = rnd(0.05, 0.3); world.vhs = Math.max(world.vhs, 0.7);
+    U.stat.value = screamGap() ? 0.4 : 0; U.tear.value = rnd(0.02, 0.14); world.vhs = Math.max(world.vhs, 0.5);
     if (seen(sgHead(V()), { maxD: 2.5, margin: 1.2 })) award(S.zone === 'T' ? 'tTurnFace' : 'f2turnFace', S.zone === 'T' ? '個室のあとに振り向いた目の前の顔' : '振り向いた目の前の顔', 95);
     if (S.st > 1.0) { S.scare = 'noise'; S.st = 0; noiseHit(1); }
   } else if (S.scare === 'noise') {
@@ -6031,7 +5977,7 @@ SP.update = function (dt) {
     if (k >= 1) { this.pos.copy(this.backTo); const R = this.web.def.rect; this.pos.x = clamp(this.pos.x, R[0], R[1]); this.pos.z = clamp(this.pos.z, R[2], R[3]); this.apply(); this.st = 'crawl'; this.t = 0; this.tgt = null; spPlay('CeilingCrawl', 0.2); world.quietUntil = Math.max(world.quietUntil, world.t + 15); }
   }
 };
-SP.startDrop = function () {
+SP.startDrop = function () { scareZoom1();
   this.st = 'drop'; this.t = 0; this.hit = false; this.strong = chance(0.3); this.lastDrop = world.t; this.armDrop = false;
   this.P0 = this.wrap.position.clone(); this.Q0 = this.wrap.quaternion.clone();
   spPlay('DropSpread', 0.05); playSfx('drop_air', { pos: this.P0.clone(), ref: 0.8, roll: 1.1 }) || SND.rustle(this.P0, 1);
@@ -8377,7 +8323,7 @@ function tick(now) {
   const rawDt = Math.min(0.5, Math.max(0, (now - lastT) / 1000)); let dt = Math.min(TEST && window.__dtMax || 0.05, rawDt); lastT = now;
   if (world.state === 'piano') { PIANO.tick(rawDt); return; }   // ピアノを弾いている間は時間が止まる
   if (world.state !== 'play') { if (world.state === 'title') { idleCam(now); render(); } return; }
-  world.t += dt;
+  world.t += dt; if (world.tutLive) world.t -= dt;   // 遊び方の説明で動かしている間は、時間を進めない
   // ズーム（倍率ボタンのみ）
   zoom = lerp(zoom, zoomTarget, 1 - Math.exp(-14 * dt)); if (Math.abs(zoom - zoomTarget) < 0.003) zoom = zoomTarget;
   if (Math.abs(zoom - prevZoom) > 0.0015) focus.lastZoomMove = world.t; prevZoom = zoom;
@@ -8536,6 +8482,7 @@ function render() {
   renderer.setRenderTarget(null); renderer.render(postScene, postCam);
 }
 function idleCam(now) {
+  if (world.tutPreview) { camera.position.set(0, CONFIG.eyeHeight, 3.4); camera.rotation.set(0, 0, 0); camera.fov = CONFIG.fov1x; camera.updateProjectionMatrix(); postMat.uniforms.black.value = 0.3; postMat.uniforms.exposure.value = 1.2; postMat.uniforms.focus.value = 8; updateGlints(); return; }   // 遊び方の説明の背景（ゲーム開始の位置から見た廊下）
   const t = now / 1000; camera.position.set(0, 1.5, 3.2); camera.rotation.set(-0.02 + Math.sin(t * 0.3) * 0.02, Math.sin(t * 0.13) * 0.08, 0); camera.fov = CONFIG.fovScene; camera.updateProjectionMatrix(); camera.updateMatrixWorld();
   postMat.uniforms.black.value = 0.55; postMat.uniforms.exposure.value = 1.2; postMat.uniforms.focus.value = 8; updateGlints();
 }
@@ -8644,7 +8591,6 @@ function showResult(blobs) {
   const v = $('#replay');
   if (resultUrls.length) { $('#noVideo').style.display = 'none'; v.style.display = ''; segIdx = 0; v.src = resultUrls[0]; v.load(); v.addEventListener('loadeddata', () => { try { if (v.paused && v.currentTime < 0.05) v.currentTime = 0.05; } catch (e) { } }, { once: true }); $('#saveBtn').disabled = false; }   // 自動では再生しない（最初のコマだけ見せる）。iPhoneでは保存した動画のURLに「#t=」を付けると再生できなくなるので付けない
   else { v.removeAttribute('src'); v.style.display = 'none'; $('#noVideo').style.display = 'flex'; $('#noVideo').textContent = rec.time > 0 && !rec.available ? 'この環境では映像を書き出せませんでした（撮れ高のみ）' : '持ち帰った映像はありません'; $('#saveBtn').disabled = true; }
-  $('#shareBtn').textContent = TR(resultUrls.length ? '動画と結果をシェア' : '結果をシェア'); $('#shareHint').style.display = resultUrls.length ? '' : 'none';
   $('#saveMsg').textContent = ''; $('#result').classList.add('show'); $('#result').scrollTop = 0;
   RBGM.start(); likeCount(total);
   resultImg = null; setTimeout(() => makeResultImage().then(b => { resultImg = b; }).catch(() => { }), 1200);   // 共有ボタンを押した瞬間に渡せるよう、先に作っておく
@@ -8705,36 +8651,19 @@ function shareText() {
   const here = /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host) ? location.origin + location.pathname : 'https://hisimk.github.io/yutuber/';
   return (LANG === 'en' ? `Footage from the old school — ${total} likes` : `旧校舎で撮れた映像　いいね${total}`) + `\n#幽tuber\n${here}` + (F2.clairHeard ? `\n\n${MUSIC_CREDIT}` : '');
 }
-// 2026-11-13 シェアは3つ：動画と結果画像をまとめて（基本）／動画だけ（TikTok・インスタ向け）／結果画像だけ
-function fileStamp() { const st = new Date(); return `${st.getMonth() + 1}${String(st.getDate()).padStart(2, '0')}_${String(st.getHours()).padStart(2, '0')}${String(st.getMinutes()).padStart(2, '0')}`; }
-function videoFiles() {
-  if (!resultBlobs.length) return [];
-  const ext = (resultBlobs[0].type || rec.mime).includes('mp4') ? 'mp4' : 'webm', st = fileStamp(), many = resultBlobs.length > 1;
-  return resultBlobs.map((b, i) => new File([b], `yutuber_${st}${many ? '_' + (i + 1) : ''}.${ext}`, { type: b.type || `video/${ext}` }));
-}
-async function imageFile() { const blob = resultImg || await makeResultImage(); resultImg = blob; return new File([blob], `yutuber_result_${fileStamp()}.png`, { type: 'image/png' }); }
-function copyPost(msg) { const post = shareText(); try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(post).then(() => { if (msg && !msg.textContent) msg.textContent = TR('投稿文（#幽tuber）をコピーしました。アプリで消えていたら貼り付けてください'); }).catch(() => { }); } catch (e) { } return post; }
-// まとめて渡せない環境では、渡せる組み合わせに順に落とす（動画と画像 → 動画だけ → ダウンロード）
-async function shareSet(sets, msg, post) {
-  try { if (window.claude && typeof window.claude.use === 'function') { const dl = await window.claude.use('downloads'); if (dl) { for (const f of sets[0]) await dl.save({ filename: f.name, data: f }); msg.textContent = TR('保存しました'); return; } } }
-  catch (e) { if (e && e.code === 'declined') { msg.textContent = TR('保存をやめました'); return; } }
-  for (const files of sets) {
-    if (!files.length) continue;
-    try { if (navigator.canShare && navigator.canShare({ files })) { await navigator.share({ files, title: '幽tuber', text: post }); return; } }
-    catch (e) { if (e && e.name === 'AbortError') return; }
-  }
-  try { for (const f of sets[0]) { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); } msg.textContent = TR('ダウンロードを開始しました'); }
-  catch (e) { msg.textContent = TR('この画面では保存できませんでした。'); }
-}
-$('#shareBtn').addEventListener('click', async () => {
-  const msg = $('#saveMsg'); msg.textContent = ''; const post = copyPost(msg);
-  const vids = videoFiles(); let img = null; try { img = await imageFile(); } catch (e) { }
-  const both = img ? [img, ...vids] : vids;   // 2026-11-13 Xでは渡した順と逆に並ぶため、画像を先に渡す（投稿画面では動画が先になる）
-  await shareSet([both, vids, img ? [img] : []].filter(f => f.length), msg, post);
-});
 $('#saveBtn').addEventListener('click', async () => {
-  const vids = videoFiles(); if (!vids.length) return; const msg = $('#saveMsg'); msg.textContent = '';
-  await shareSet([vids], msg, copyPost(msg));
+  if (!resultBlobs.length) return; const msg = $('#saveMsg');
+  const ext = (resultBlobs[0].type || rec.mime).includes('mp4') ? 'mp4' : 'webm';
+  const st = new Date(); const name = n => `yutuber_${st.getMonth() + 1}${String(st.getDate()).padStart(2, '0')}_${String(st.getHours()).padStart(2, '0')}${String(st.getMinutes()).padStart(2, '0')}${n ? '_' + n : ''}.${ext}`;
+  try { if (window.claude && typeof window.claude.use === 'function') { const dl = await window.claude.use('downloads'); if (dl) { for (let i = 0; i < resultBlobs.length; i++) await dl.save({ filename: name(resultBlobs.length > 1 ? i + 1 : 0), data: resultBlobs[i] }); msg.textContent = '保存しました'; return; } } }
+  catch (e) { if (e && e.code === 'declined') { msg.textContent = '保存をやめました'; return; } }
+  // SNSに投稿：共有シートからX・Instagram・TikTok・LINEなどを選べる。投稿文（#幽tuber）は自動で添え、念のためコピーもしておく
+  const post = shareText();
+  try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(post).then(() => { msg.textContent = '投稿文（#幽tuber）をコピーしました。アプリで消えていたら貼り付けてください'; }).catch(() => { }); } catch (e) { }
+  try { const files = resultBlobs.map((b, i) => new File([b], name(resultBlobs.length > 1 ? i + 1 : 0), { type: b.type || `video/${ext}` })); if (navigator.canShare && navigator.canShare({ files })) { await navigator.share({ files, title: '幽tuber', text: post }); return; } }
+  catch (e) { if (e && e.name === 'AbortError') return; }
+  try { resultBlobs.forEach((b, i) => { const a = document.createElement('a'); a.href = resultUrls[i]; a.download = name(resultBlobs.length > 1 ? i + 1 : 0); document.body.appendChild(a); a.click(); a.remove(); }); msg.textContent = 'ダウンロードを開始しました。始まらない場合は、再生画面のメニューから保存してください。'; }
+  catch (e) { msg.textContent = 'この画面では保存できませんでした。'; }
 });
 /* ---------- 結果を画像で保存（いいね数と内訳。SNS用の縦長 1080×1350） ---------- */
 const LIKE_PNG = 'data:image/png;base64,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';
@@ -8770,9 +8699,20 @@ async function makeResultImage() {
   g.textAlign = 'center'; g.fillStyle = '#e9e4da'; g.font = `700 36px ${sans}`; g.fillText('#幽tuber', W / 2, H - 70);
   return new Promise(ok => c.toBlob(ok, 'image/png'));
 }
+async function saveFiles(files, msg, text) {
+  try { if (window.claude && typeof window.claude.use === 'function') { const dl = await window.claude.use('downloads'); if (dl) { for (const f of files) await dl.save({ filename: f.name, data: f }); msg.textContent = '保存しました'; return; } } }
+  catch (e) { if (e && e.code === 'declined') { msg.textContent = '保存をやめました'; return; } }
+  try { if (navigator.canShare && navigator.canShare({ files })) { await navigator.share(Object.assign({ files, title: '幽tuber' }, text ? { text } : {})); return; } }
+  catch (e) { if (e && e.name === 'AbortError') return; }
+  try { for (const f of files) { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); } msg.textContent = 'ダウンロードを開始しました'; }
+  catch (e) { msg.textContent = 'この画面では保存できませんでした。'; }
+}
 $('#imgBtn').addEventListener('click', async () => {
-  const msg = $('#saveMsg'); msg.textContent = TR('画像を作っています…'); const f = await imageFile(); msg.textContent = '';
-  await shareSet([[f]], msg, copyPost(msg));
+  const msg = $('#saveMsg'); msg.textContent = '画像を作っています…';
+  const post = shareText(); try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(post).catch(() => { }); } catch (e) { }
+  const blob = resultImg || await makeResultImage(); const st = new Date();
+  const f = new File([blob], `yutuber_result_${st.getMonth() + 1}${String(st.getDate()).padStart(2, '0')}_${String(st.getHours()).padStart(2, '0')}${String(st.getMinutes()).padStart(2, '0')}.png`, { type: 'image/png' });
+  msg.textContent = ''; await saveFiles([f], msg, post);
 });
 $('#againBtn').addEventListener('click', () => location.reload());
 $('#overBtn').addEventListener('click', () => location.reload());
@@ -8949,7 +8889,9 @@ const TUT = {
     ];
   },
   show(done) {
-    const S = this.steps(); let i = 0; const el = $('#tut'), hole = $('#tHole'), box = $('#tBox');
+    const S = this.steps(); let i = 0, live = false; const el = $('#tut'), hole = $('#tHole'), box = $('#tBox');
+    const touch = e => { if (!live || e.target.closest && e.target.closest('.tBox, #tSkipTop')) return; $('#tStick').classList.remove('on'); $('#tSwipe').classList.remove('on'); };   // 触ったらお手本を消す
+    addEventListener('pointerdown', touch, true); addEventListener('keydown', touch, true);
     const prev = world.state; if (prev === 'play') world.state = 'paused';
     const draw = () => {
       const [tg, tag, ti, tx, ico] = S[i];
@@ -8960,22 +8902,38 @@ const TUT = {
       if (r) Object.assign(hole.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' });
       $('#tTag').textContent = tag ? TR(tag) : '';
       $('#tStep').textContent = `${TR('遊び方')}  ${i + 1} / ${S.length}`; $('#tIco').innerHTML = ico || ''; $('#tTitle').textContent = TR(ti); $('#tText').textContent = TR(tx);
-      $('#tNext').textContent = TR(i === S.length - 1 ? 'はじめる' : '次へ'); $('#tSkip').style.visibility = i === S.length - 1 ? 'hidden' : 'visible';
+      $('#tNext').textContent = TR(i === S.length - 1 ? 'はじめる' : '次へ'); $('#tBack').style.visibility = i === 0 ? 'hidden' : 'visible';
+      const stk = $('#tStick'), swp = $('#tSwipe'), isStick = !FRAME.on && tag === '移動スティック', isLook = /視点の操作|ドラッグで見回す/.test(tag);
+      stk.classList.toggle('on', isStick); swp.classList.toggle('on', isLook); $('#tTag').style.top = isStick || isLook ? '14%' : '';   // 歩く・見回す：指のお手本をぐるぐる動かして見せる
+      if (isStick) { stk.style.left = (r.x + r.w / 2) + 'px'; stk.style.top = (r.y + r.h * 0.42) + 'px'; }
+      if (isLook) { swp.style.left = (r.x + r.w / 2) + 'px'; swp.style.top = (r.y + r.h * 0.55) + 'px'; }
+      // 歩く・見回すの説明の間は、実際に触って（キーを押して）動かせる。時間は進めない（怪異は動き出さない）
+      live = prev === 'play' && (isStick || isLook || (FRAME.on && i === 1));
+      el.classList.toggle('pass', live); world.tutLive = live; if (prev === 'play') { world.state = live ? 'play' : 'paused'; lastT = performance.now(); }
+      if (!live) { input.sx = input.sy = 0; }
       // 説明の箱は、目印と重ならない側（上か下）へ
       const H = vpH(), lo = !r || r.y + r.h / 2 < H * 0.5;
       box.style.top = lo ? (r ? Math.min(H - 250, r.y + r.h + 14) : H * 0.32) + 'px' : 'auto';
       box.style.bottom = lo ? 'auto' : (H - r.y + 14) + 'px';
       if (r && !lo && H - r.y + 14 > H - 260) { box.style.bottom = 'auto'; box.style.top = '70px'; }
+      { const k = $('#tSkipTop'), bt = parseFloat(box.style.top); const up = box.style.top !== 'auto' && bt < 170; k.style.top = up ? 'auto' : ''; k.style.bottom = up ? 'calc(var(--sab) + 150px)' : ''; }   // 説明の箱が上に来た時は、とばすボタンを下へ
     };
-    const end = () => { el.classList.remove('show'); $('#tNext').onclick = $('#tSkip').onclick = $('#tSkipTop').onclick = null; removeEventListener('keydown', kd, true); try { localStorage.setItem('yt_tut', '1'); } catch (e) { } if (prev === 'play' && world.state === 'paused' && !SET.open) { world.state = 'play'; lastT = performance.now(); } done && done(); };
-    const kd = e => { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); e.stopImmediatePropagation(); i < S.length - 1 ? (i++, draw()) : end(); } else if (e.code === 'Escape') { e.stopImmediatePropagation(); end(); } };
+    const end = () => { el.classList.remove('show', 'pass'); world.tutLive = false; removeEventListener('pointerdown', touch, true); removeEventListener('keydown', touch, true); $('#tStick').classList.remove('on'); $('#tSwipe').classList.remove('on'); $('#tNext').onclick = $('#tBack').onclick = $('#tSkipTop').onclick = null; removeEventListener('keydown', kd, true); try { localStorage.setItem('yt_tut', '1'); } catch (e) { } if (prev === 'play' && world.state === 'paused' && !SET.open) { world.state = 'play'; lastT = performance.now(); } done && done(); };
+    const kd = e => { if (e.code === 'Backspace') { e.preventDefault(); e.stopImmediatePropagation(); if (i > 0) { i--; draw(); } } else if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); e.stopImmediatePropagation(); i < S.length - 1 ? (i++, draw()) : end(); } else if (e.code === 'Escape') { e.stopImmediatePropagation(); end(); } };
     $('#tNext').onclick = e => { e && e.stopPropagation(); if (i < S.length - 1) { i++; draw(); } else end(); };
-    $('#tSkip').onclick = $('#tSkipTop').onclick = e => { e && e.stopPropagation(); end(); }; addEventListener('keydown', kd, true);
+    $('#tSkipTop').onclick = e => { e && e.stopPropagation(); end(); };
+    $('#tBack').onclick = e => { e && e.stopPropagation(); if (i > 0) { i--; draw(); } }; addEventListener('keydown', kd, true);
     if (!el._stop) { el._stop = 1; for (const ev of ['pointerdown', 'pointermove', 'pointerup', 'touchstart', 'touchmove']) el.addEventListener(ev, e => e.stopPropagation(), { passive: true }); }
     el.classList.add('show'); draw();
   },
   need() { if (TEST && !/[#&?]tut/.test(location.href)) return false; try { return !localStorage.getItem('yt_tut'); } catch (e) { return false; } },
 };
+$('#setTut').addEventListener('click', e => {
+  e.stopPropagation(); const st = $('#settings'); st.style.visibility = 'hidden';
+  // スタート画面から開いた時は、タイトルを隠してゲーム中と同じ画面（ボタンの並び）を後ろに出す
+  const title = world.state === 'title'; if (title) { $('#start').classList.remove('show'); $('#hud').classList.remove('off'); world.tutPreview = true; }
+  TUT.show(() => { st.style.visibility = ''; if (title) { world.tutPreview = false; $('#hud').classList.add('off'); $('#start').classList.add('show'); } });
+});   // 説明の間は設定画面を隠して、ボタンの場所を見せる
 /* PC：キー操作の一覧と組み換え */
 const KEYUI = {
   draw() {
@@ -9085,7 +9043,7 @@ const UISND = {
     const id = el.id || '';
     if (id === 'goBtn') return 'start';
     if (/^(tNext|setTut|setCol)$/.test(id) || el.classList.contains('setLink')) return id === 'tNext' && el.textContent.includes('はじめる') ? 'start' : 'next';
-    if (/^(setClose|invClose|tSkip|tSkipTop|fxClose)$/.test(id) || /閉じる|もどる/.test(el.textContent || '')) return 'back';
+    if (/^(setClose|invClose|tBack|tSkipTop|fxClose)$/.test(id) || /閉じる|もどる/.test(el.textContent || '')) return 'back';
     const row = el.closest('.opt'); if (row && row.querySelector('.sw')) return row.classList.contains('on') ? 'off' : 'on';
     return 'tap';
   },
@@ -9304,7 +9262,7 @@ if (CHK) {
     read.textContent = `速さ 自分1.00／クモ${sm.toFixed(2)}（${SP.st}・${sd}）／逆さ${wm.toFixed(2)}（${CH.state}・${wd}）`;
   }, 300);
 }
-if (TEST) window.__G = { UISND, KB, MINOR, INV, MIDI, AUDIO_OUT, FRAME, input, STAY, occluders, ray, glassPanes, groundAt, EXITF, exitSigns, sole, runner, drainEye, prints, winFog, stainMesh, bloodDecal, fireDoor, broadcastFog, KNOB: null, render, sgHead, spFacePos, BLEED, NURSE, MICO: mic, OFUDA, SPV, speak, PACALL, award, COL, MISS, TAP, sinks, awarded, PIANO, UWA, selfCam, avatar, ITEM, escape, FL, HANDS, NEKO, stairH, SET, MIC, opt, snapEntrance, makeResultImage, shareText, CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
+if (TEST) window.__G = { sgEmissive, camFwd, UISND, KB, MINOR, INV, MIDI, AUDIO_OUT, FRAME, input, STAY, occluders, ray, glassPanes, groundAt, EXITF, exitSigns, sole, runner, drainEye, prints, winFog, stainMesh, bloodDecal, fireDoor, broadcastFog, KNOB: null, render, sgHead, spFacePos, BLEED, NURSE, MICO: mic, OFUDA, SPV, speak, PACALL, award, COL, MISS, TAP, sinks, awarded, PIANO, UWA, selfCam, avatar, ITEM, escape, FL, HANDS, NEKO, stairH, SET, MIC, opt, snapEntrance, makeResultImage, shareText, CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
 loadSG().then(() => Promise.all([setupGlbHuman(woman, GHOST_B64), setupGlbHuman(avatar, PROT_B64)])).then(() => loadF2()).then(() => loadSpider()).then(() => NEKO.load()).then(() => UWA.load()).then(() => loadHands()).then(() => { $('#loading').remove(); try { ensureAudio(); if (A.ctx && A.ctx.state === 'running') titleSeKick(); } catch (e) { } });
 requestAnimationFrame(tick);
 // 効果音の大きさ（端末に保存。プレイ中・録画の両方に効く）
