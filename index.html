@@ -8666,14 +8666,16 @@ $('#overBtn').addEventListener('click', () => location.reload());
 $('#overVideo').addEventListener('click', () => { $('#over').classList.remove('show'); showResult(capturedBlobs); $('#resTitle').textContent = '回収された映像'; $('#resMeta').textContent = 'カメラが壊れる直前まで'; });
 
 /* ---------- 開始 ---------- */
-const opt = { gyro: false, mic: false };
+const opt = { gyro: !FRAME.on, mic: true };
 opt.bright = 0; opt.vol = 1; opt.sens = 1; opt.sink = ''; opt.midi = false; opt.midiIn = '';
 try {
-  const sv = JSON.parse(localStorage.getItem('yt_settings') || '{}'); if (sv.gyro) opt.gyro = true; if (sv.mic) opt.mic = true; if (typeof sv.bright === 'number') opt.bright = sv.bright;
+  const sv = JSON.parse(localStorage.getItem('yt_settings') || '{}');
+  // 2026-11-13 ジャイロと実況マイクは最初からオン（PCにジャイロはないのでオフ）。この版より前に保存した設定も一度だけ新しい初期値にそろえる
+  if (sv.v === 2) { opt.gyro = !!sv.gyro; opt.mic = !!sv.mic; } else { opt.gyro = !FRAME.on; opt.mic = true; } if (typeof sv.bright === 'number') opt.bright = sv.bright;
   if (typeof sv.vol === 'number') opt.vol = clamp(sv.vol, 0, 1); if (typeof sv.sens === 'number') opt.sens = clamp(sv.sens, 0.4, 2);
   if (typeof sv.sink === 'string') opt.sink = sv.sink; if (sv.midi) opt.midi = true; if (typeof sv.midiIn === 'string') opt.midiIn = sv.midiIn;
 } catch (e) { }
-function saveOpts() { try { localStorage.setItem('yt_settings', JSON.stringify({ gyro: opt.gyro, mic: opt.mic, bright: opt.bright, vol: opt.vol, sens: opt.sens, sink: opt.sink, midi: opt.midi, midiIn: opt.midiIn })); } catch (e) { } }
+function saveOpts() { try { localStorage.setItem('yt_settings', JSON.stringify({ v: 2, gyro: opt.gyro, mic: opt.mic, bright: opt.bright, vol: opt.vol, sens: opt.sens, sink: opt.sink, midi: opt.midi, midiIn: opt.midiIn })); } catch (e) { } }
 const brightK = v => Math.pow(1.09, v);   // 明るさ：-5〜+5 の段階 → 画面の中間の明るさの持ち上げ量
 postMat.uniforms.bright.value = brightK(opt.bright);
 
