@@ -4431,6 +4431,12 @@ const DIR = {
     if (CH.state !== 'off' || player.hidden || HIDE.lk) return;   // 追跡中・隠れている間は他の怪異を重ねない
     if (this.active) { let r = false; try { r = this.active.update(dt); } catch (err) { console.warn(err); r = true; } if (r) this.end(this.active); return; }
     if (this.omen) { if (world.t < this.omen.until) return; const e = this.omen.e; this.omen = null; if (!e.done && e.ready()) { this.start(e); return; } }
+    // 2026-11-13 校内放送で呼ばれたあとは、保健室のイベントを最優先にする（ほかの怪異の静かな時間を待たない／保健室のまわりでは、ほかの怪異に横取りさせない）
+    { const nu = EV.nurse;
+      if (world.nurseCall && nu && !nu.done && this.plan.includes('nurse') && player.lv === 0 && !world.selfie && (MD.ph === 'idle' || MD.ph === 'done')) {
+        if (nu.ready() && this.start(nu)) return;
+        if (Math.hypot(player.x + 1.5, player.z + 13.5) < 11) return;
+      } }
     if (world.t < world.quietUntil) return;
     if (world.selfie || MD.ph !== 'idle' && MD.ph !== 'done') return;   // インカメラ中・鏡の怪異中は新しい怪異を始めない
     const z = playerZone();
@@ -7613,7 +7619,7 @@ const NURSE = { arm() { const e = EV.nurse; if (!e || DIR.plan.includes('nurse')
 defEvent('nurse', {
   tier: 'mid', weight: 0, woman: true, minT: 0, maxT: 0, zones: ['A', 'C'],
   spot: { p: V(-7.1, 0, -13.5) },
-  ready() { if (!world.nurseCall || player.lv !== 0) return false; const sp = V(-7.1, 1.4, -13.5); return Math.hypot(player.x + 1.5, player.z + 13.5) < 7 && camera.position.distanceTo(sp) > 4 && !onScreen(sp, 1.15); },
+  ready() { if (!world.nurseCall || player.lv !== 0) return false; const sp = V(-7.1, 1.4, -13.5); return Math.hypot(player.x + 1.5, player.z + 13.5) < 8 && camera.position.distanceTo(sp) > 3.2 && !(onScreen(sp, 1.15) && clearLine(sp)); },   // 2026-11-13 壁ごしで見えていない時も出せるように
   start() {
     this.st = 'back'; this.t = 0; this.seenBack = false;
     borrowWoman(); const c = woman.c; c.pose = 'stand'; c.headPitch = 0.08;
@@ -9262,7 +9268,7 @@ if (CHK) {
     read.textContent = `速さ 自分1.00／クモ${sm.toFixed(2)}（${SP.st}・${sd}）／逆さ${wm.toFixed(2)}（${CH.state}・${wd}）`;
   }, 300);
 }
-if (TEST) window.__G = { sgEmissive, camFwd, UISND, KB, MINOR, INV, MIDI, AUDIO_OUT, FRAME, input, STAY, occluders, ray, glassPanes, groundAt, EXITF, exitSigns, sole, runner, drainEye, prints, winFog, stainMesh, bloodDecal, fireDoor, broadcastFog, KNOB: null, render, sgHead, spFacePos, BLEED, NURSE, MICO: mic, OFUDA, SPV, speak, PACALL, award, COL, MISS, TAP, sinks, awarded, PIANO, UWA, selfCam, avatar, ITEM, escape, FL, HANDS, NEKO, stairH, SET, MIC, opt, snapEntrance, makeResultImage, shareText, CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
+if (TEST) window.__G = { look, evidence, sgEmissive, camFwd, UISND, KB, MINOR, INV, MIDI, AUDIO_OUT, FRAME, input, STAY, occluders, ray, glassPanes, groundAt, EXITF, exitSigns, sole, runner, drainEye, prints, winFog, stainMesh, bloodDecal, fireDoor, broadcastFog, KNOB: null, render, sgHead, spFacePos, BLEED, NURSE, MICO: mic, OFUDA, SPV, speak, PACALL, award, COL, MISS, TAP, sinks, awarded, PIANO, UWA, selfCam, avatar, ITEM, escape, FL, HANDS, NEKO, stairH, SET, MIC, opt, snapEntrance, makeResultImage, shareText, CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
 loadSG().then(() => Promise.all([setupGlbHuman(woman, GHOST_B64), setupGlbHuman(avatar, PROT_B64)])).then(() => loadF2()).then(() => loadSpider()).then(() => NEKO.load()).then(() => UWA.load()).then(() => loadHands()).then(() => { $('#loading').remove(); try { ensureAudio(); if (A.ctx && A.ctx.state === 'running') titleSeKick(); } catch (e) { } });
 requestAnimationFrame(tick);
 // 効果音の大きさ（端末に保存。プレイ中・録画の両方に効く）
