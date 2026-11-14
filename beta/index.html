@@ -908,13 +908,13 @@ const LUM = {
     this.sc = new THREE.Scene(); this.sc.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.mat)); this.cam = new THREE.Camera();
   },
   grab() {   // 描いた直後に呼ぶ
-    if (!rec.active || world.selfie || world.state !== 'play') { this.ready = false; return; }
+    if (!rec.active || world.state !== 'play') { this.ready = false; return; }   // 2026-11-14 インカメラの画面も測る
     const now = performance.now(); if (now - this.last < 150) return; this.last = now;
-    try { this.init(); renderer.setRenderTarget(this.rt); renderer.render(this.sc, this.cam); renderer.readRenderTargetPixels(this.rt, 0, 0, this.W, this.H, this.buf); this.ready = true; } catch (e) { this.ready = false; }
+    try { this.init(); this.cam0 = world.selfie ? 'self' : 'main'; renderer.setRenderTarget(this.rt); renderer.render(this.sc, this.cam); renderer.readRenderTargetPixels(this.rt, 0, 0, this.W, this.H, this.buf); this.ready = true; } catch (e) { this.ready = false; }
   },
   dark(pos) {
-    if (!this.ready) return false;
-    const n = _v.copy(pos).project(camera); if (n.z > 1 || n.z < -1) return false;
+    if (!this.ready || this.cam0 !== (world.selfie ? 'self' : 'main')) return false;
+    const n = _v.copy(pos).project(world.selfie ? selfCam : camera); if (n.z > 1 || n.z < -1) return false;
     const cx = Math.floor((n.x * 0.5 + 0.5) * this.W), cy = Math.floor((n.y * 0.5 + 0.5) * this.H); let m = 0;
     for (let y = cy - 1; y <= cy + 1; y++) for (let x = cx - 1; x <= cx + 1; x++) { if (x < 0 || y < 0 || x >= this.W || y >= this.H) continue; m = Math.max(m, this.buf[(y * this.W + x) * 4]); }
     return m / 255 < this.TH;
@@ -3840,14 +3840,18 @@ function clearLine(pos, ignore = [], from = camera.position) {
 }
 function camFwd() { return V(0, 0, -1).applyQuaternion(camera.quaternion); }
 function inFlash(pos, maxD = 14) { if (world.dark) return false; const d = camera.position.distanceTo(pos); if (d > maxD) return false; const f = V(0, -0.02, -1).normalize().applyQuaternion(camera.quaternion); return f.angleTo(_dir.copy(pos).sub(camera.position).normalize()) < flash.angle * 1.05; }
+/* 2026-11-14 インカメラでも、画面にちゃんと映れば撮れ高にする（インカメラの画角・位置で判定。暗くて映っていなければ入らない）。
+   前を向いていないと起きない怪異は、そもそもインカメラには映らない */
+function viewCam() { return world.selfie ? selfCam : camera; }
 function seen(pos, { margin = 1, light = false, maxD = 30, ignore = [] } = {}) {
   if (!rec.active) return false;
-  if (world.selfie) return false;   // インカメラ中は前方の映像ではない
-  if (camera.position.distanceTo(pos) > maxD) return false;
-  if (!onScreen(pos, margin)) return false;
-  if (light && !inFlash(pos)) return false;
+  const C = viewCam();
+  if (C.position.distanceTo(pos) > maxD) return false;
+  _v.copy(pos).project(C); if (!(_v.z < 1 && _v.z > -1 && Math.abs(_v.x) <= margin && Math.abs(_v.y) <= margin)) return false;
+  if (light && !world.selfie && !inFlash(pos)) return false;   // インカメラは画面の明かりで照らす（暗さは下の判定で見る）
   if (LUM.dark(pos)) return false;   // 2026-11-14 真っ暗で映っていない（明るさを上げても見えない）なら撮れ高にしない
-  return clearLine(pos, ignore);
+  if (world.selfie && pos.distanceTo(camera.position) < 0.35) return false;   // 自分の頭の位置そのもの（顔に隠れる）
+  return clearLine(pos, ignore, C.position);
 }
 function playerZone() { return zoneOf(player.x, player.z, player.y + 1); }
 function distTo(x, z) { return Math.hypot(player.x - x, player.z - z); }
@@ -13847,7 +13851,7 @@ $('#resetAsk').addEventListener('click', e => e.stopPropagation());
 $('#setReset').addEventListener('click', e => { e.stopPropagation(); RESET.ask(); });
 $('#resetNo').addEventListener('click', e => { e.stopPropagation(); RESET.no(); });
 $('#resetYes').addEventListener('click', e => { e.stopPropagation(); RESET.yes(); });
-if (TEST && window.__G) Object.assign(window.__G, { A, CH, HEART, CVOICE, wdScream, WARP, WD, ITEM, F2, PAD, QUALITY, opt, MP4FIX, rec, resultBlobs: () => resultBlobs, LOGOANIM, CHIP, VTITLE, NOISE, SNAKE, ACC, ACC_ICON, ACC_VIEW, award, CHATLOG, CHAT, CHATGEN, RES_CHAT, RANKPOP, yrankIdx, GOD, VDB, ACH, PERM, REVIVE, RESET, COL, escape, caught, DIR, SP, OFUDA, LUM, TRACE, HAZURE, seen, SFX_CREDITS, AW_TABLE, RANK_FIX, rankOf, MICLV, MIC, rec, opt, VED, RES_CHAT_: () => RES_CHAT, _attach: b => attachVideo(b), GODV: GOD, _blobs: () => resultBlobs, EVENTS: () => EV });
+if (TEST && window.__G) Object.assign(window.__G, { seen, A, CH, HEART, CVOICE, wdScream, WARP, WD, ITEM, F2, PAD, QUALITY, opt, MP4FIX, rec, resultBlobs: () => resultBlobs, LOGOANIM, CHIP, VTITLE, NOISE, SNAKE, ACC, ACC_ICON, ACC_VIEW, award, CHATLOG, CHAT, CHATGEN, RES_CHAT, RANKPOP, yrankIdx, GOD, VDB, ACH, PERM, REVIVE, RESET, COL, escape, caught, DIR, SP, OFUDA, LUM, TRACE, HAZURE, seen, SFX_CREDITS, AW_TABLE, RANK_FIX, rankOf, MICLV, MIC, rec, opt, VED, RES_CHAT_: () => RES_CHAT, _attach: b => attachVideo(b), GODV: GOD, _blobs: () => resultBlobs, EVENTS: () => EV });
 /* 2026-11-14 PC：ウィンドウ／全画面（全画面はボタンを押した時と、旧校舎に入る時に切り替える。Escで戻したらウィンドウに） */
 const SCREEN = {
   isFull() { return !!(document.fullscreenElement || document.webkitFullscreenElement); },
