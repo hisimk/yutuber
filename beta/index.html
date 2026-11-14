@@ -10911,7 +10911,7 @@ const CHAT_CFG = {
   tiers: [[1500, 12, 34, 15], [1000, 10, 26, 12], [800, 6, 18, 9], [600, 3, 12, 7], [0, 1, 6, 5]],   // [P以上, SSの基準件数B, 120秒あたりの背景コメント, 話者数]
   coef: { SS: 1, S: 0.7, A: 0.45, B: 0.3, C: 0.2, D: 0.15 },
   cap120: 300, win10: 30, minGap: 0.25, maxCrit: 2,
-  ambient: [4, 12, 24, 38, 52, 66],   // 2026-11-14 何も起きていない時も流れる雑談（120秒あたり。ランクの順）。ランクが上がるほど常に賑やかに
+  ambient: [4, 14, 30, 50, 75, 100], rkBonus: [0, 0, 1, 2, 3, 5],   // 2026-11-14 何も起きていない時も流れる雑談（120秒あたり。ランクの順）。ランクが上がるほど常に賑やかに
   namesEn: ['nightowl', 'mochi', 'sleepybean', 'teabreak', 'windowseat', 'lowbattery', 'lurker', 'toast', 'moonlit', 'justwatching', 'lateagain', 'nopeclub', 'paperclip', 'blanketfort', 'midnightsnack', 'oneearbud', 'quietcorner', 'coldtea', 'raincheck', 'softstatic', 'nightshift', 'sparekey', 'hallpass', 'cozyghost'],
   names: ['夜ふかし', 'もち', 'ねぎ', '帰宅部', 'しろ', '麦茶', 'ねむい人', 'こたつ', 'まめ', 'ROMから来た', 'ぽん', '夜食', 'すみっこ', 'うどん', 'ふせん', 'あめ', '寝落ち寸前', '明日一限', '充電3％', '窓際', '体育館裏', 'きなこ', 'ざらめ', 'ねこ舌', '無糖', 'やきそば', '湯のみ', 'ながぐつ', '通りすがり', '深夜組', '布団の中', 'みかん', '寝不足', '冷めたお茶', '塩むすび', 'イヤホン片耳', '夜の散歩'],
   colors: ['#ff8a80', '#ffb74d', '#ffd54f', '#aed581', '#4dd0e1', '#64b5f6', '#9575cd', '#f06292', '#a1887f', '#90a4ae', '#81c784', '#ce93d8', '#ffab91', '#80cbc4', '#e6ee9c'],
@@ -10988,7 +10988,7 @@ const CHATGEN = {
     const R = chatRng(o.seed), rnd2 = (a, b) => a + (b - a) * R(), pickR = a => a[Math.floor(R() * a.length)];
     const ev = o.log || [], end = o.end || { R: 0, ec: false, lost: false }, len = Math.max(1, end.R), M = o.M || 1, nJa = o.name || '主', nEn = o.name || 'streamer', T = CHAT_DICT.t;
     const rk = o.rk ?? 0, ti = CHAT_CFG.tiers.findIndex(t => o.P >= t[0]), tier = CHAT_CFG.tiers[ti < 0 ? 4 : ti], cls = 4 - (ti < 0 ? 4 : ti);
-    const B = tier[1], N = Math.min(18, Math.round(1 + (B - 1) * M));
+    const B = tier[1], N = Math.min(18, Math.round(1 + (B - 1) * M) + CHAT_CFG.rkBonus[rk]);   // ランクが高いと、いいねが少ない回でも反応が多い
     const out = [];   // [t, kind('g'=見せ場, 'b'=背景), text, prio, group]
     const used = new Set(), recent = [];
     const isShort = s => Array.from(s).length <= 6;
@@ -11070,10 +11070,10 @@ const CHATGEN = {
       for (let t = a + 26; t < a + gap - 2; t += rnd2(9, 14)) bg.push([t, pickR(['quiet_chat', 'quiet_short', 'bored_slang', 'quiet_unease']), 1]);
     }
     // 何も起きていない時の雑談：ランクが高いほど多い（候補を細かく置き、予算の分だけ選ぶ）
-    for (let t = 3 + R() * 2; t < end.R - 0.5; t += rnd2(1.2, 2.6)) { const r = R(); bg.push([t, r < 0.42 ? 'idle_chat' : r < 0.62 ? 'idle_watch' : r < 0.74 ? 'quiet_short' : r < 0.84 ? 'name_idle' : r < 0.92 ? 'quiet_chat' : 'quiet_unease', 0.5 + R() * 0.4]); }
+    for (let t = 3 + R() * 2; t < end.R - 0.5; t += rnd2(1.2, 2.6) * [1, 1, 0.9, 0.75, 0.6, 0.42][rk]) { const r = R(); bg.push([t, r < 0.42 ? 'idle_chat' : r < 0.62 ? 'idle_watch' : r < 0.76 ? 'quiet_short' : r < 0.81 ? 'name_idle' : r < 0.91 ? 'quiet_chat' : 'quiet_unease', 0.5 + R() * 0.4]); }
     // 背景の数＝（区分の基準×ランク倍率＋ランクの雑談）×録画の長さ。見せ場の直前直後には入れない
     const budget = Math.max(1, Math.round((tier[2] * M + CHAT_CFG.ambient[rk]) * len / 120));
-    const gapB = Math.max(0.7, Math.min(2.2, 100 / Math.max(1, budget)));
+    const gapB = Math.max(0.55, Math.min(2.2, 90 / Math.max(1, budget)));
     const busy = out.map(x => x[4]).filter(x => x !== undefined);
     const free = (t, lo) => !busy.some(g => lo ? t > g - 0.5 && t < g + 3 : t > g - 2 && t < g + 5);
     bg.sort((x, y) => y[2] - x[2] || x[0] - y[0]);
