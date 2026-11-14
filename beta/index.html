@@ -498,7 +498,7 @@
   .logoTitle{margin:0 0 10px;line-height:0;text-shadow:none}
   #titleLogo{display:none;width:min(calc(86 * var(--vw)),420px);height:auto;margin:0 auto}
   /* 2026-11-14 タイトルロゴ（パーツを重ねて動かす） */
-  #logoAnim{position:relative;width:min(calc(86 * var(--vw)),420px);aspect-ratio:2.4312;margin:0 auto}#logoAnim img,#logoAnim .lgGrp{position:absolute;display:block}#logoAnim .lgGrp{inset:0}#logoAnim .lgGrp img:first-child{transform-origin:50% 60%}#logoAnim img{opacity:0;will-change:transform,opacity,filter}#logoAnim.done img{opacity:1}#logoAnim.done .lgGrp{transform:none}
+  #logoAnim{position:relative;width:min(calc(86 * var(--vw)),420px);aspect-ratio:2.4312;margin:0 auto}#logoAnim img,#logoAnim .lgGrp{position:absolute;display:block}#logoAnim .lgGrp,#logoAnim .lgMask{inset:0}#logoAnim .lgGrp{z-index:2}#logoAnim .lgMask{position:absolute;-webkit-mask-image:linear-gradient(to right,transparent 24%,#000 29.9%);mask-image:linear-gradient(to right,transparent 24%,#000 29.9%)}#logoAnim.done .lgMask{-webkit-mask-image:none;mask-image:none}#logoAnim .lgGrp img:first-child{transform-origin:50% 60%}#logoAnim img{opacity:0;will-change:transform,opacity,filter}#logoAnim.done img{opacity:1}#logoAnim.done .lgGrp{transform:none}
   #over p{color:#9a958c;font-size:14px;margin:6px 0 26px;text-align:center;line-height:1.8}
   #loading{position:fixed;inset:0;z-index:20;background:#000;display:flex;align-items:center;justify-content:center;color:#666;font-size:12px;letter-spacing:.2em}
   #dev{position:fixed;left:6px;top:calc(var(--sat) + 52px);z-index:30;display:none;flex-wrap:wrap;gap:4px;max-width:calc(70 * var(--vw));pointer-events:auto}
@@ -11821,7 +11821,7 @@ const LOGOANIM = {   // 2026-11-14 タイトルロゴの登場（AEの参考動�
   build() {
     const box = $('#logoAnim'); if (!box || this.built) return; this.built = true; const grp = box.querySelector('.lgGrp');
     for (const k of ['sub', 'tuber', 'tri', 'yu', 'bar', 'yuh', 'ghost']) { const [x, y, w, h, src] = LOGO_PARTS[k], im = new Image(); im.src = src; im.alt = ''; im.draggable = false;
-      Object.assign(im.style, { left: x * 100 + '%', top: y * 100 + '%', width: w * 100 + '%', height: h * 100 + '%' }); (['yu', 'bar', 'yuh', 'ghost'].includes(k) ? grp : box).appendChild(im); this.el[k] = im; }
+      Object.assign(im.style, { left: x * 100 + '%', top: y * 100 + '%', width: w * 100 + '%', height: h * 100 + '%' }); if (k === 'tuber') { const w = document.createElement('div'); w.className = 'lgMask'; w.appendChild(im); box.appendChild(w); } else (['yu', 'bar', 'yuh', 'ghost'].includes(k) ? grp : box).appendChild(im); this.el[k] = im; }
     this.grp = grp;
   },
   play() {
@@ -11841,9 +11841,9 @@ const LOGOANIM = {   // 2026-11-14 タイトルロゴの登場（AEの参考動�
     // 「幽」のまとまりが、まん中から左へ寄る
     an(this.grp, [{ offset: 0, transform: 'translateX(33.3%)' }, { offset: at(0.78), transform: 'translateX(33.3%)', easing: 'cubic-bezier(.6,0,.25,1)' }, { offset: at(1.2), transform: 'translateX(0)' }, { offset: 1, transform: 'translateX(0)' }]);
     // 「tuber」とサブタイトル：灰色から白へ
-    an(E.tuber, [{ offset: 0, opacity: 0, filter: 'brightness(.35)', transform: 'translateX(-42%)', clipPath: 'inset(0 0 0 42%)' }, { offset: at(1.16), opacity: 0, filter: 'brightness(.35)', transform: 'translateX(-42%)', clipPath: 'inset(0 0 0 42%)' },
-      { offset: at(1.2), opacity: 1, filter: 'brightness(.45)', transform: 'translateX(-38%)', clipPath: 'inset(0 0 0 38%)', easing: 'cubic-bezier(.15,.75,.35,1)' }, { offset: at(1.46), opacity: 1, filter: 'brightness(.85)', transform: 'translateX(5%)', clipPath: 'inset(0 0 0 0%)', easing: 'ease-in-out' },
-      { offset: at(1.6), opacity: 1, filter: 'brightness(1)', transform: 'translateX(0)', clipPath: 'inset(0 0 0 0%)' }, { offset: 1, opacity: 1, filter: 'brightness(1)', transform: 'none', clipPath: 'inset(0 0 0 0%)' }]);   // 2026-11-14 「幽」の後ろから右へ飛び出し、少し行き過ぎて戻る
+    an(E.tuber, [{ offset: 0, opacity: 0, filter: 'brightness(.35)', transform: 'translateX(-42%)' }, { offset: at(1.16), opacity: 0, filter: 'brightness(.35)', transform: 'translateX(-42%)' },
+      { offset: at(1.2), opacity: 1, filter: 'brightness(.45)', transform: 'translateX(-38%)', easing: 'cubic-bezier(.15,.75,.35,1)' }, { offset: at(1.46), opacity: 1, filter: 'brightness(.85)', transform: 'translateX(5%)', easing: 'ease-in-out' },
+      { offset: at(1.6), opacity: 1, filter: 'brightness(1)', transform: 'translateX(0)' }, { offset: 1, opacity: 1, filter: 'brightness(1)', transform: 'none' }]);   // 2026-11-14 「幽」の後ろから右へ飛び出し、少し行き過ぎて戻る
     an(E.sub, [{ offset: 0, opacity: 0, filter: 'brightness(.3)' }, { offset: at(1.15), opacity: 0, filter: 'brightness(.3)', easing: eo }, { offset: at(1.45), opacity: 1, filter: 'brightness(.8)' }, { offset: at(1.6), opacity: 1, filter: 'brightness(1)' }, { offset: 1, opacity: 1, filter: 'brightness(1)' }]);
     an(E.tri, [{ offset: 0, opacity: 0, transform: 'scale(.4)' }, { offset: at(1.6), opacity: 0, transform: 'scale(.4)', easing: bk }, { offset: at(1.74), opacity: 1, transform: 'scale(1)' }, { offset: 1, opacity: 1, transform: 'scale(1)' }]);
   },
