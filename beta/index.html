@@ -498,7 +498,7 @@
   .logoTitle{margin:0 0 10px;line-height:0;text-shadow:none}
   #titleLogo{display:none;width:min(calc(86 * var(--vw)),420px);height:auto;margin:0 auto}
   /* 2026-11-14 タイトルロゴ（パーツを重ねて動かす） */
-  #logoAnim{position:relative;width:min(calc(86 * var(--vw)),420px);aspect-ratio:2.4312;margin:0 auto}#logoAnim img,#logoAnim .lgGrp{position:absolute;display:block}#logoAnim .lgGrp{inset:0}#logoAnim img{opacity:0;will-change:transform,opacity,filter}#logoAnim.done img{opacity:1}#logoAnim.done .lgGrp{transform:none}
+  #logoAnim{position:relative;width:min(calc(86 * var(--vw)),420px);aspect-ratio:2.4312;margin:0 auto}#logoAnim img,#logoAnim .lgGrp{position:absolute;display:block}#logoAnim .lgGrp{inset:0}#logoAnim .lgGrp img:first-child{transform-origin:50% 60%}#logoAnim img{opacity:0;will-change:transform,opacity,filter}#logoAnim.done img{opacity:1}#logoAnim.done .lgGrp{transform:none}
   #over p{color:#9a958c;font-size:14px;margin:6px 0 26px;text-align:center;line-height:1.8}
   #loading{position:fixed;inset:0;z-index:20;background:#000;display:flex;align-items:center;justify-content:center;color:#666;font-size:12px;letter-spacing:.2em}
   #dev{position:fixed;left:6px;top:calc(var(--sat) + 52px);z-index:30;display:none;flex-wrap:wrap;gap:4px;max-width:calc(70 * var(--vw));pointer-events:auto}
@@ -11828,12 +11828,12 @@ const LOGOANIM = {   // 2026-11-14 タイトルロゴの登場（AEの参考動�
     if (this.played) return; this.played = true;   // 一度だけ
     this.build(); const box = $('#logoAnim'); if (!box) return; const E = this.el;
     if (matchMedia('(prefers-reduced-motion: reduce)').matches || !box.animate) { box.classList.add('done'); return; }
-    const T = 1650, at = s => s * 1000 / T, an = (el, kf, o = {}) => el.animate(kf, Object.assign({ duration: T, fill: 'both', easing: 'linear' }, o));
+    const T = 1760, at = s => s * 1000 / T, an = (el, kf, o = {}) => el.animate(kf, Object.assign({ duration: T, fill: 'both', easing: 'linear' }, o));
     const eo = 'cubic-bezier(.2,.8,.3,1)', bk = 'cubic-bezier(.3,1.6,.5,1)';
     // 「幽」：暗い色から赤へ浮かび上がる
-    an(E.yu, [{ offset: 0, opacity: 0, filter: 'brightness(.15)', transform: 'translateY(4%) scale(.96)' }, { offset: at(0.3), opacity: 1, filter: 'brightness(.45)', easing: eo }, { offset: at(0.6), opacity: 1, filter: 'brightness(1)', transform: 'translateY(0) scale(1)' }, { offset: 1, opacity: 1, filter: 'brightness(1)', transform: 'none' }]);
+    an(E.yu, [{ offset: 0, opacity: 0, filter: 'brightness(.15)', transform: 'translateY(14%) rotate(0deg)' }, { offset: at(0.15), opacity: .7, filter: 'brightness(.3)', transform: 'translateY(9%) rotate(10deg)', easing: 'ease-in-out' }, { offset: at(0.33), opacity: 1, filter: 'brightness(.55)', transform: 'translateY(4%) rotate(-10deg)', easing: 'ease-in-out' }, { offset: at(0.6), opacity: 1, filter: 'brightness(1)', transform: 'translateY(0) rotate(0deg)', easing: eo }, { offset: 1, opacity: 1, filter: 'brightness(1)', transform: 'none' }]);   // 2026-11-14 左右に揺れながら上がってくる（10度→-10度→0度）
     // おばけ・「ゆ」：ぽんと出る
-    an(E.ghost, [{ offset: 0, opacity: 0, transform: 'scale(0)' }, { offset: at(0.47), opacity: 0, transform: 'scale(0)', easing: bk }, { offset: at(0.62), opacity: 1, transform: 'scale(1)' }, { offset: 1, opacity: 1, transform: 'scale(1)' }]);
+    { const kf = [{ offset: 0, opacity: 0 }]; for (let k = 0; k < 7; k++) kf.push({ offset: at(0.47 + k / 30), opacity: k % 2 ? 0 : 1, easing: 'steps(1, end)' }); kf.push({ offset: at(0.47 + 7 / 30), opacity: 1 }, { offset: 1, opacity: 1 }); kf[0].easing = 'steps(1, end)'; an(E.ghost, kf); }   // 2026-11-14 1コマごとに点いたり消えたりして現れる
     an(E.yuh, [{ offset: 0, opacity: 0, transform: 'scale(0)' }, { offset: at(0.53), opacity: 0, transform: 'scale(0)', easing: bk }, { offset: at(0.68), opacity: 1, transform: 'scale(1)' }, { offset: 1, opacity: 1, transform: 'scale(1)' }]);
     // 「ー」：長く伸びてから縮んで収まる
     E.bar.style.transformOrigin = '0 50%';
@@ -11841,9 +11841,11 @@ const LOGOANIM = {   // 2026-11-14 タイトルロゴの登場（AEの参考動�
     // 「幽」のまとまりが、まん中から左へ寄る
     an(this.grp, [{ offset: 0, transform: 'translateX(33.3%)' }, { offset: at(0.78), transform: 'translateX(33.3%)', easing: 'cubic-bezier(.6,0,.25,1)' }, { offset: at(1.2), transform: 'translateX(0)' }, { offset: 1, transform: 'translateX(0)' }]);
     // 「tuber」とサブタイトル：灰色から白へ
-    an(E.tuber, [{ offset: 0, opacity: 0, filter: 'brightness(.35)' }, { offset: at(1.18), opacity: 0, filter: 'brightness(.35)', easing: eo }, { offset: at(1.4), opacity: 1, filter: 'brightness(.75)' }, { offset: at(1.6), opacity: 1, filter: 'brightness(1)' }, { offset: 1, opacity: 1, filter: 'brightness(1)' }]);
+    an(E.tuber, [{ offset: 0, opacity: 0, filter: 'brightness(.35)', transform: 'translateX(-42%)', clipPath: 'inset(0 0 0 42%)' }, { offset: at(1.16), opacity: 0, filter: 'brightness(.35)', transform: 'translateX(-42%)', clipPath: 'inset(0 0 0 42%)' },
+      { offset: at(1.2), opacity: 1, filter: 'brightness(.45)', transform: 'translateX(-38%)', clipPath: 'inset(0 0 0 38%)', easing: 'cubic-bezier(.15,.75,.35,1)' }, { offset: at(1.46), opacity: 1, filter: 'brightness(.85)', transform: 'translateX(5%)', clipPath: 'inset(0 0 0 0%)', easing: 'ease-in-out' },
+      { offset: at(1.6), opacity: 1, filter: 'brightness(1)', transform: 'translateX(0)', clipPath: 'inset(0 0 0 0%)' }, { offset: 1, opacity: 1, filter: 'brightness(1)', transform: 'none', clipPath: 'inset(0 0 0 0%)' }]);   // 2026-11-14 「幽」の後ろから右へ飛び出し、少し行き過ぎて戻る
     an(E.sub, [{ offset: 0, opacity: 0, filter: 'brightness(.3)' }, { offset: at(1.15), opacity: 0, filter: 'brightness(.3)', easing: eo }, { offset: at(1.45), opacity: 1, filter: 'brightness(.8)' }, { offset: at(1.6), opacity: 1, filter: 'brightness(1)' }, { offset: 1, opacity: 1, filter: 'brightness(1)' }]);
-    an(E.tri, [{ offset: 0, opacity: 0, transform: 'scale(.4)' }, { offset: at(1.42), opacity: 0, transform: 'scale(.4)', easing: bk }, { offset: at(1.58), opacity: 1, transform: 'scale(1)' }, { offset: 1, opacity: 1, transform: 'scale(1)' }]);
+    an(E.tri, [{ offset: 0, opacity: 0, transform: 'scale(.4)' }, { offset: at(1.6), opacity: 0, transform: 'scale(.4)', easing: bk }, { offset: at(1.74), opacity: 1, transform: 'scale(1)' }, { offset: 1, opacity: 1, transform: 'scale(1)' }]);
   },
 };
 LOGOANIM.build();
