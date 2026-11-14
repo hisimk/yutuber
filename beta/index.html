@@ -3938,7 +3938,7 @@ const ENDCARD = {
         const sc = new THREE.Scene(), cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
         sc.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false })));
         const lost = world.state === 'over';
-        const total = evidence.reduce((a, e) => a + e.pts, 0), top = evidence.slice().sort((a, b) => b.pts - a.pts).slice(0, 3);
+        const total = evidence.reduce((a, e) => a + e.pts, 0), top = evidence.slice();   // 2026-11-15 全部渡して、入りきらない分は draw でまとめる
         const imgs = {}, ld = Promise.all([loadImg(TITLE_LOGO).then(i => imgs.logo = i).catch(() => { }), loadImg(LIKE_PNG).then(i => imgs.like = i).catch(() => { })]);
         const noise = Array.from({ length: 900 }, () => [Math.random(), Math.random(), Math.random() * 0.04]);
         let t0 = 0;
@@ -3952,9 +3952,21 @@ const ENDCARD = {
       } catch (e) { done(); }
     });
   },
+  ORD: { SS: 0, S: 1, A: 2, B: 3, C: 4, D: 5 },
+  // 並べる行：ランク順（同じランクはいいねの多い順）。max 行に入らない時は、下のランクから「×件数・合計」の1行にまとめる
+  rows(list, max) {
+    const L = list.map(e => ({ r: e._r || rankOf(e), label: e.label, pts: e.pts || 0 })).sort((a, b) => (this.ORD[a.r] ?? 9) - (this.ORD[b.r] ?? 9) || b.pts - a.pts);
+    if (L.length <= max) return L;
+    for (const edge of [true, false]) for (let k = Math.min(L.length, max); k >= 0; k--) {   // まずはランクの切れ目で分ける（同じランクを1件ずつとまとめに分けない）
+      if (edge && k > 0 && k < L.length && L[k - 1].r === L[k].r) continue;
+      const g = []; for (const e of L.slice(k)) { const x = g.find(q => q.r === e.r); if (x) { x.n++; x.pts += e.pts; } else g.push({ r: e.r, n: 1, pts: e.pts }); }
+      if (k + g.length <= max) return L.slice(0, k).concat(g.map(q => q.n === 1 ? Object.assign(L.find(e => e.r === q.r && !L.slice(0, k).includes(e)), {}) : q));
+    }
+    const rest = L.slice(max - 1); return L.slice(0, max - 1).concat([{ r: '', n: rest.length, pts: rest.reduce((a, e) => a + e.pts, 0), other: true }]);   // それでも入らない時は「ほか ×件数」
+  },
   draw(g, W, H, t, d) {
     const u = Math.min(W / 900, H / 1100), cx = W / 2, sans = '-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif', serif = '"Shippori Mincho","Hiragino Mincho ProN",serif';
-    const fade = Math.min(1, t / 0.35), out = Math.min(1, Math.max(0, (this.dur - t) / 0.25));
+    const fade = Math.min(1, t / 0.35), out = 1;   // 2026-11-15 最後はフェードさせない
     g.globalAlpha = 1; g.fillStyle = '#050506'; g.fillRect(0, 0, W, H);
     g.globalAlpha = fade * out;
     for (const [x, y, a] of d.noise) { g.fillStyle = `rgba(255,255,255,${a})`; g.fillRect(x * W, ((y + t * 0.03) % 1) * H, 2 * u, 2 * u); }
@@ -3966,11 +3978,13 @@ const ENDCARD = {
     if (d.imgs.like) g.drawImage(d.imgs.like, x0, y - 108 * u, iw, iw * d.imgs.like.height / d.imgs.like.width);
     g.textAlign = 'left'; g.fillStyle = d.total >= 2000 ? '#ff9ae6' : d.total >= 1000 ? '#ffd34d' : '#fff'; if (d.total >= 500) { g.shadowColor = d.total >= 2000 ? 'rgba(255,154,230,.9)' : d.total >= 1000 ? 'rgba(255,200,60,.9)' : 'rgba(255,255,255,.9)'; g.shadowBlur = 18; } g.fillText(String(v), x0 + iw + gap, y); g.shadowBlur = 0;
     g.textAlign = 'center'; g.fillStyle = '#9a958c'; g.font = `${26 * u}px ${sans}`; g.fillText(LANG === 'en' ? 'L I K E S' : 'い い ね', cx, y + 56 * u); y += 140 * u;
-    d.top.forEach((e, i) => {
-      const a = Math.min(1, Math.max(0, (t - 1.1 - i * 0.25) / 0.3)); if (!a) return; g.globalAlpha = fade * out * a;
-      const r = e._r || rankOf(e); g.fillStyle = RANK_COL[r] || '#fff'; g.font = `italic 800 ${30 * u}px ${sans}`; g.textAlign = 'left'; g.fillText(r, cx - 380 * u, y);
-      g.fillStyle = '#e9e4da'; g.font = `${32 * u}px ${sans}`; let lb = TR(e.label); while (g.measureText(lb).width > 560 * u && lb.length > 4) lb = lb.slice(0, -2) + '…'; g.fillText(lb, cx - 320 * u, y);
-      g.textAlign = 'right'; g.font = `700 ${32 * u}px ${sans}`; g.fillText(String(e.pts), cx + 380 * u, y); y += 60 * u;
+    /* 2026-11-15 撮れ高はランクの高い順に。入りきらない分は、ランクごとに「D ×4　100」のようにまとめる */
+    const rows = this.rows(d.top || [], Math.max(2, Math.floor((Math.max(H * 0.5 + 430 * u, H - 150 * u) - y) / (56 * u))));
+    rows.forEach((e, i) => {
+      const a = Math.min(1, Math.max(0, (t - 1.1 - i * 0.18) / 0.3)); if (!a) return; g.globalAlpha = fade * out * a;
+      const r = e.r; g.fillStyle = RANK_COL[r] || '#fff'; g.font = `italic 800 ${30 * u}px ${sans}`; g.textAlign = 'left'; g.fillText(r, cx - 380 * u, y);
+      g.fillStyle = e.n ? '#b4afa6' : '#e9e4da'; g.font = `${e.n ? 700 : 400} ${32 * u}px ${sans}`; let lb = e.other ? (LANG === 'en' ? `others ×${e.n}` : `ほか ×${e.n}`) : e.n ? `×${e.n}` : TR(e.label); while (g.measureText(lb).width > 560 * u && lb.length > 4) lb = lb.slice(0, -2) + '…'; g.fillText(lb, cx - 320 * u, y);
+      g.fillStyle = '#e9e4da'; g.textAlign = 'right'; g.font = `700 ${32 * u}px ${sans}`; g.fillText(String(e.pts), cx + 380 * u, y); y += 56 * u;
     });
     g.globalAlpha = fade * out; y = Math.max(y + 40 * u, H * 0.5 + 330 * u);
     g.textAlign = 'center'; g.fillStyle = '#fff'; g.font = `700 ${40 * u}px ${sans}`; g.fillText('#幽tuber', cx, y);
@@ -13630,7 +13644,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.14.25';
+const VERSION = '0.14.26';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -13689,7 +13703,7 @@ const GOD = {
   shareSrc() {
     const b = ACH.load().best[this.i], cd = this.cd, ev = (b && b.ev) || [];
     return { urls: this.urls, side: this.side || null, player: $('#gvVid'), view: this.chat, cd, ec: false, marks: ev.map(([label, pts, r, t]) => ({ t: t || 0, label })), total: b ? b.n : 0,
-      card: { lost: !!(cd && cd.end && cd.end.lost), total: b ? b.n : 0, top: ev.slice().sort((p, q) => q[1] - p[1]).slice(0, 3).map(([label, pts, r]) => ({ label, pts, _r: r || 'D' })) }, orig: () => this.shareOrig() };
+      card: { lost: !!(cd && cd.end && cd.end.lost), total: b ? b.n : 0, top: ev.slice().map(([label, pts, r]) => ({ label, pts, _r: r || 'D' })) }, orig: () => this.shareOrig() };
   },
   async shareOrig() {
     const b = ACH.load().best[this.i], msg = $('#gvMsg'); msg.textContent = ''; if (!this.blobs || !this.blobs.length) return; const post = copyPost(msg, b ? b.n : 0);
@@ -14476,7 +14490,7 @@ const VED = {
     const tot = evidence.reduce((p, e) => p + e.pts, 0);
     return { urls: resultUrls, side: SIDE.of(resultBlobs), player: $('#replay'), view: RES_CHAT, cd: CHAT.cur, ec: !!(CHATLOG.end && CHATLOG.end.ec), total: tot, orig: () => shareOriginal(),
       marks: CHATLOG.ev.filter(e => (e.k === 'aw' || e.k === 'awc') && !CHATGEN.END.has(e.key)).map(e => ({ t: e.t, label: e.label })),
-      card: { lost: world.state === 'over', total: tot, top: evidence.slice().sort((p, q) => q.pts - p.pts).slice(0, 3) } };
+      card: { lost: world.state === 'over', total: tot, top: evidence.slice() } };
   },
   async open(src) {
     src = src || this.resSrc(); if (!src.urls.length) return; this.src = src; const VW = src.view, U = src.urls.slice();
@@ -14648,7 +14662,7 @@ const VED = {
   drawFrame(g, W, H, G, cardT, S, lay) {
     if (G === null) {   // 結果カード（コメントは重ねない）
       ENDCARD.draw(g, W, H, cardT, this.cardD);
-      const a = Math.min(1, cardT / 0.35) * Math.min(1, Math.max(0, (ENDCARD.dur - cardT) / 0.25)), u = Math.min(W / 900, H / 1100);
+      const a = Math.min(1, cardT / 0.35), u = Math.min(W / 900, H / 1100);   // 2026-11-15 最後はフェードさせない
       g.globalAlpha = a; g.textAlign = 'center'; g.fillStyle = '#e9e4da'; g.font = `700 ${Math.round(30 * u)}px ${VE_FONT}`; g.fillText(vt('cardH'), W / 2, Math.max(H * 0.06, H * 0.5 - 470 * u)); g.globalAlpha = 1;
       return;
     }
@@ -14823,7 +14837,7 @@ addEventListener('keydown', e => {
   else if ($('#saveNote').classList.contains('show')) { $('#saveNote').classList.remove('show'); e.stopPropagation(); }
 }, true);
 addEventListener('resize', () => { if (VED.on) VED.uiMarks(); });
-if (TEST && window.__G) Object.assign(window.__G, { SIDE, RKLIST, RING, AFIX, SET, A, LID, stalls, CHATGEN, PADNAV, INV, RES_CHAT, SHX, CROUCH, COVER, enemySees, F2, startRec, SFXLAZY, NICK });   // 2026-11-14 確認用
+if (TEST && window.__G) Object.assign(window.__G, { SIDE, RKLIST, RING, AFIX, SET, A, LID, stalls, CHATGEN, PADNAV, INV, RES_CHAT, SHX, CROUCH, COVER, enemySees, F2, startRec, SFXLAZY, NICK, ENDCARD });   // 2026-11-14 確認用
 
 setInterval(() => CHATLOG.tick(), 400);
 setInterval(() => { try { VOICE.tick(); } catch (e) { if (TEST || DEV) console.warn('VOICE', e); } }, 33);   // 2026-11-14 声の判定（約30回/秒）
