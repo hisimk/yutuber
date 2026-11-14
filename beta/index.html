@@ -158,6 +158,7 @@
   #notice .nTg .sw{flex:none}#notice .nTg.on .sw{background:#34c759}#notice .nTg.on .sw::after{left:23px}
   #notice .nPriv{font-size:13px;line-height:1.7;color:#cfcac0;background:#111113;border:1px solid #2c2b29;border-radius:12px;padding:10px 12px}#notice .nPriv b{color:#fff;display:block;margin-bottom:4px}
   :root{color-scheme:dark}
+  .opt:has(> .sw),.optTop:has(> .sw),#setBright{cursor:pointer}.padFocus{outline:3px solid #ffd60a!important;outline-offset:2px!important;box-shadow:0 0 0 6px rgba(255,214,10,.25)!important}   /* 2026-11-15 コントローラーで選んでいる物 */
   html.curHide,html.curHide *{cursor:none!important}   /* 2026-11-14 元から暗い画面だとブラウザに伝え、ナイトモードなどで色を塗り替えられにくくする */
   .browserHint{display:none;margin:10px auto 0;max-width:340px;padding:8px 12px;border-radius:10px;border:1px solid rgba(255,214,10,.45);background:rgba(255,214,10,.07);font-size:12px;color:#ffd60a;text-align:center;line-height:1.6}
   .homeHint{display:none;margin-top:8px;font-size:11px;color:#7f7b74;text-align:center;line-height:1.5}
@@ -535,6 +536,7 @@
   #noVideo{position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:#777;font-size:13px;text-align:center;padding:20px}
   #evWrap{width:100%;max-width:360px;margin-top:10px}
   #evHead{display:flex;justify-content:space-between;font-size:12px;color:#9a958c;margin:0 2px 6px;letter-spacing:.08em}
+  html.pcFrame #evList{scrollbar-width:thin;scrollbar-color:#6a655c transparent;cursor:grab}
   #evList{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:6px;touch-action:pan-x;scrollbar-width:none}
   #evList::-webkit-scrollbar{display:none}
   #evTotal{font-size:14px;margin-bottom:8px;display:flex;justify-content:space-between;color:#cfcac0}
@@ -1295,6 +1297,7 @@ function plane(w, h, mat, x, y, z, ry = 0, rx = 0, o = {}) {
 /* ---------- 言語（日本語／English）：画面の文言は T() で英語に置き換える。英語の表が無い文言は日本語のまま ---------- */
 let LANG = 'ja'; try { const l = localStorage.getItem('yt_lang'); if (l === 'en' || l === 'ja') LANG = l; } catch (e) { }
 const EN = {
+  '保存しました。投稿文もコピーしたので、LINEやXに動画を添付して、文を貼り付けて投稿してください': 'Saved. The post text is copied too — attach the video in LINE or X and paste the text.', '投稿文をコピー': 'copy post text',
   '画面をクリックで視点操作（Escでカーソルを出す）': 'Click the screen to look around (Esc shows the cursor)',
   'どういうお笑い？': 'What kind of comedy is this?',
   '便器の中の血溜まり': 'A pool of blood in the toilet bowl', '便器の中からのぞく目': 'An eye peering up from the toilet', 'フタを開けたら閉じ込められた': 'Locked in after opening the lid', 'フタを開ける': 'Open the lid', 'フタを閉める': 'Close the lid', '開かない…': 'It won’t open…',
@@ -3647,7 +3650,8 @@ const PAD = {
   load() { try { const v = JSON.parse(localStorage.getItem('yt_pad') || '{}'); if (typeof v.sens === 'number') this.cfg.sens = clamp(v.sens, 0.4, 2); this.cfg.inv = !!v.inv; if (v.vib === false) this.cfg.vib = false; if (v.map && typeof v.map === 'object') this.cfg.map = v.map; } catch (e) { } },
   save() { try { localStorage.setItem('yt_pad', JSON.stringify(this.cfg)); } catch (e) { } },
   map() { return Object.assign({}, this.DEF[this.brand] || this.DEF.xb, this.cfg.map || {}); },
-  brandOf(id) { return /054c|playstation|dualsense|dualshock|wireless controller/i.test(id) ? 'ps' : /057e|nintendo|pro controller|joy-con/i.test(id) ? 'sw' : 'xb'; },
+  brandOf(id) { if (/xbox|xinput|045e/i.test(id)) return 'xb';   // 2026-11-15 「Xbox Wireless Controller」がPSと判定され、決定と戻るが逆になっていた
+    return /054c|playstation|dualsense|dualshock|wireless controller/i.test(id) ? 'ps' : /057e|nintendo|pro controller|joy-con/i.test(id) ? 'sw' : 'xb'; },
   glyph(i) { return (this.GLYPH[this.brand] || this.GLYPH.xb)[i] ?? `B${i}`; },
   of(a) { const i = this.map()[a]; return i === undefined ? '—' : this.glyph(i); },
   // キーかボタンか：いま使っている方の表示
@@ -3665,6 +3669,8 @@ const PAD = {
     if (moved || any) this.setUsing(true);
     if (this.wait) { const i = B.findIndex((b, k) => b && !this.prev[k]); if (i >= 0 && i < 16) this.bind(this.wait, i); this.prev = B; return; }
     const M = this.map();
+    if (PADNAV.active()) { PADNAV.poll(B, this.prev, M, dt, this); for (const a of ['menu', 'inv']) { const i = M[a]; if (B[i] && !this.prev[i]) this.press(a); } this.prev = B; this.vibTick(dt); return; }   // 2026-11-15 メニューや画面ではボタンで選んで操作
+    PADNAV.clear();
     for (const a of this.ACTS) { const i = M[a]; if (B[i] && !this.prev[i]) this.press(a); }
     this.prev = B;
     // 見回す（右スティック）。ゲーム中だけ
@@ -11977,20 +11983,31 @@ function shareText(T) {
   return (LANG === 'en' ? `Footage from the old school — ${total} likes` : `旧校舎で撮れた映像　いいね${total}`) + `\n#幽tuber\n${here}` + (F2.clairHeard && MUSIC_CREDIT ? `\n\n${MUSIC_CREDIT}` : '');
 }
 // 2026-11-13 シェアは3つ：動画と結果画像をまとめて（基本）／動画だけ（TikTok・インスタ向け）／結果画像だけ
+/* 2026-11-15 いいねの内訳（横に並ぶ一覧）：マウスのホイールでも、つかんで動かしても横にスクロールできる。PCでは細いスクロールバーも出す */
+(() => {
+  const L = document.getElementById('evList'); if (!L) return;
+  L.addEventListener('wheel', e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && L.scrollWidth > L.clientWidth) { L.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });
+  let dn = null, moved = false;
+  L.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') return; dn = { x: e.clientX, l: L.scrollLeft }; moved = false; });
+  addEventListener('pointermove', e => { if (!dn) return; const d = e.clientX - dn.x; if (Math.abs(d) > 5) { moved = true; L.style.scrollSnapType = 'none'; L.scrollLeft = dn.l - d; } });
+  addEventListener('pointerup', () => { if (!dn) return; dn = null; L.style.scrollSnapType = ''; });
+  L.addEventListener('click', e => { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }, true);   // つかんで動かした時は、カードを押したことにしない
+})();
 function fileStamp() { const st = new Date(); return `${st.getMonth() + 1}${String(st.getDate()).padStart(2, '0')}_${String(st.getHours()).padStart(2, '0')}${String(st.getMinutes()).padStart(2, '0')}`; }
 function videoFiles(msg) { return vidFilesOf(resultBlobs, msg); }   // 2026-11-14 MP4にそろえた方を渡す（変換中は null）
 async function imageFile() { const blob = resultImg || await makeResultImage(); resultImg = blob; return new File([blob], `yutuber_result_${fileStamp()}.png`, { type: 'image/png' }); }
 function copyPost(msg, T) { const post = shareText(T); try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(post).then(() => { if (msg && !msg.textContent) msg.textContent = TR('投稿文（#幽tuber）をコピーしました。アプリで消えていたら貼り付けてください'); }).catch(() => { }); } catch (e) { } return post; }
 // まとめて渡せない環境では、渡せる組み合わせに順に落とす（動画と画像 → 動画だけ → ダウンロード）
+const WINSHARE = /Windows/.test(navigator.userAgent);   // 2026-11-15 Windowsの共有では、LINEなどのアプリが動画を受け取れず何も起きないことがある → 保存して、投稿文をコピー
 async function shareSet(sets, msg, post) {
   try { if (window.claude && typeof window.claude.use === 'function') { const dl = await window.claude.use('downloads'); if (dl) { for (const f of sets[0]) await dl.save({ filename: f.name, data: f }); msg.textContent = TR('保存しました'); return; } } }
   catch (e) { if (e && e.code === 'declined') { msg.textContent = TR('保存をやめました'); return; } }
-  for (const files of sets) {
+  for (const files of WINSHARE ? [] : sets) {
     if (!files.length) continue;
     try { if (navigator.canShare && navigator.canShare({ files })) { await navigator.share({ files, title: '幽tuber', text: post }); return; } }
     catch (e) { if (e && e.name === 'AbortError') return; }
   }
-  try { for (const f of sets[0]) { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); } msg.textContent = TR('ダウンロードを開始しました'); }
+  try { for (const f of sets[0]) { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); } msg.textContent = TR(WINSHARE ? '保存しました。投稿文もコピーしたので、LINEやXに動画を添付して、文を貼り付けて投稿してください' : 'ダウンロードを開始しました'); }
   catch (e) { msg.textContent = TR('この画面では保存できませんでした。'); }
 }
 async function shareOriginal() {   // これまでの共有（元の動画＋結果画像）
@@ -12628,6 +12645,114 @@ const KEYUI = {
 };
 $('#keyReset').addEventListener('click', e => { e.stopPropagation(); KB.map = Object.assign({}, KB.DEF); KB.save(); KEYUI.draw(); hintsRefresh(); });
 /* 2026-11-14 コントローラーの設定（感度・上下反転・振動・ボタンの組み換え） */
+/* 2026-11-15 コントローラーで、スタート画面・設定・持ち物・結果・アーカイブ・ランク一覧・編集・注意書きなど、あらゆる画面を操作する
+   ・十字キー／左スティック：いちばん近いボタンへ移動（黄色の枠）。スライダーは左右で値を変える
+   ・決定（Xbox:A／PS:○／Switch:A）：押す。　戻る（Xbox:B／PS:×／Switch:B）：閉じる・戻る
+   ・右スティック：画面や一覧をスクロール
+   押せる物は、ボタンなどの部品に加えて「カーソルが指の形になる物」を画面から探す（新しい画面を作っても自動で対応） */
+const PADNAV = {
+  cur: null, rep: 0, dirP: '', cache: null, cacheT: 0,
+  SEL: 'button, a[href], input, select, textarea, [data-gear], [role=button], [tabindex]:not([tabindex="-1"]), .opt:not(.col):has(> .sw), .optTop:has(> .sw), #setBright, .invIt, #evList .ev, [data-nav]',
+  active() {
+    if (KB.wait || PAD.wait) return false;
+    if (world.state !== 'play') return true;
+    return !!(SET.open || INV.open || ITEM.modal || ($('#tut') && $('#tut').classList.contains('show') && !world.tutLive) || document.querySelector('#notice.show'));
+  },
+  vis(el) {
+    if (!el.isConnected || el.disabled) return false; const r = el.getBoundingClientRect(); if (r.width < 4 || r.height < 4) return false;
+    const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || cs.display === 'none' || +cs.opacity < 0.05 || cs.pointerEvents === 'none') return false;
+    for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) { const c = getComputedStyle(a); if (c.display === 'none' || c.visibility === 'hidden' || +c.opacity < 0.05) return false; }
+    return true;
+  },
+  scroller(el) { for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) { const c = getComputedStyle(a); if ((/(auto|scroll)/.test(c.overflowY) && a.scrollHeight > a.clientHeight + 2) || (/(auto|scroll)/.test(c.overflowX) && a.scrollWidth > a.clientWidth + 2)) return a; } return null; },
+  // 今の画面で押せる物（上に別の画面が重なって隠れている物は除く）
+  list() {
+    const now = performance.now(); if (this.cache && now - this.cacheT < 250) return this.cache;
+    const W = innerWidth, H = innerHeight, out = [];
+    for (const el of document.body.querySelectorAll('*')) {
+      if (el.closest('#hud') && world.state === 'play' && !el.closest('#tut, #fixUI, #itemPop')) continue;
+      const tag = el.matches(this.SEL); if (!tag && getComputedStyle(el).cursor !== 'pointer') continue;
+      if (el.matches('input[type=hidden], option, label')) continue; if (!this.vis(el)) continue;
+      out.push(el);
+    }
+    // 押せる物の中に押せる物がある時は、外側だけ（入力欄などは別）
+    const set = new Set(out), res = [];
+    for (const el of out) { let a = el.parentElement, inner = false; while (a) { if (set.has(a) && !el.matches('input, select, textarea, button')) { inner = true; break; } a = a.parentElement; } if (!inner) res.push(el); }
+    // 上に重なった画面で隠れている物を除く
+    const top = res.filter(el => {
+      const r = el.getBoundingClientRect(); let x = r.left + r.width / 2, y = r.top + r.height / 2;
+      if (x < 0 || y < 0 || x > W || y > H) { const sc = this.scroller(el); if (!sc) return false; const q = sc.getBoundingClientRect(); x = clamp(x, Math.max(0, q.left) + 2, Math.min(W, q.right) - 2); y = clamp(y, Math.max(0, q.top) + 2, Math.min(H, q.bottom) - 2); const h = document.elementFromPoint(x, y); return !!h && (sc.contains(h)); }
+      const h = document.elementFromPoint(x, y); return !!h && (el === h || el.contains(h) || h.contains(el));
+    });
+    this.cache = top; this.cacheT = now; return top;
+  },
+  set(el) {
+    if (this.cur === el) return; if (this.cur) this.cur.classList.remove('padFocus'); this.cur = el;
+    if (el) { el.classList.add('padFocus'); try { el.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) { } }
+  },
+  clear() { if (this.cur) { this.cur.classList.remove('padFocus'); this.cur = null; } },
+  pickDefault(L) {
+    const pri = L.find(el => el.matches('#goBtn, #nOk, .nBtns .pri')); if (pri) return pri;
+    const nc = L.filter(el => !/^\s*[×✕✖]\s*$/.test(el.textContent || ''));   // ×（閉じる）以外の、いちばん上の物から
+    return (nc.length ? nc : L).slice().sort((a, b) => { const p = a.getBoundingClientRect(), q = b.getBoundingClientRect(); return (p.top - q.top) || (p.left - q.left); })[0] || null;
+  },
+  move(dir) {
+    const L = this.list(); if (!L.length) { this.clear(); return; }
+    if (!this.cur || !L.includes(this.cur)) { this.set(this.pickDefault(L)); return; }
+    const a = this.cur.getBoundingClientRect(), ax = a.left + a.width / 2, ay = a.top + a.height / 2; let best = null, bs = 1e9;
+    for (const el of L) {
+      if (el === this.cur) continue; const b = el.getBoundingClientRect(), bx = b.left + b.width / 2, by = b.top + b.height / 2, dx = bx - ax, dy = by - ay;
+      let main, side;
+      if (dir === 'down') { if (b.top < a.bottom - 4 && dy < 6) continue; main = dy; side = Math.abs(dx); }
+      else if (dir === 'up') { if (b.bottom > a.top + 4 && dy > -6) continue; main = -dy; side = Math.abs(dx); }
+      else if (dir === 'right') { if (b.left < a.right - 4 && dx < 6) continue; main = dx; side = Math.abs(dy); }
+      else { if (b.right > a.left + 4 && dx > -6) continue; main = -dx; side = Math.abs(dy); }
+      if (main <= 0) continue; const ov = (dir === 'up' || dir === 'down') ? Math.min(a.right, b.right) - Math.max(a.left, b.left) : Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+      const sc = main + side * 0.5 + (ov > 0 ? 0 : 400); if (sc < bs) { bs = sc; best = el; }   // 横（縦）に重なっている物を優先
+    }
+    if (best) this.set(best); else { const sc = this.cur && this.scroller(this.cur); if (sc) { if (dir === 'down') sc.scrollBy(0, 120); if (dir === 'up') sc.scrollBy(0, -120); if (dir === 'right') sc.scrollBy(120, 0); if (dir === 'left') sc.scrollBy(-120, 0); this.cache = null; } }
+  },
+  adjust(el, d) {   // スライダー・選択肢
+    if (el.matches('input[type=range]')) { const st = parseFloat(el.step) || 1, mn = parseFloat(el.min), mx = parseFloat(el.max); el.value = clamp(parseFloat(el.value) + d * st, isNaN(mn) ? -1e9 : mn, isNaN(mx) ? 1e9 : mx); el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); return true; }
+    if (el.matches('select')) { const n = el.options.length; if (!n) return true; el.selectedIndex = (el.selectedIndex + d + n) % n; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); return true; }
+    return false;
+  },
+  ok() {
+    const el = this.cur; if (!el || !this.list().includes(el)) { this.move('down'); return; }
+    if (el.matches('select')) { this.adjust(el, 1); return; }
+    if (el.matches('input[type=text], input:not([type]), textarea')) { el.focus(); return; }
+    if (el.matches('input[type=range]')) return;
+    if (el.matches('input[type=checkbox], input[type=radio]')) { el.click(); return; }
+    el.click(); this.cache = null;
+    setTimeout(() => { this.cache = null; const L = this.list(); if (this.cur && !L.includes(this.cur)) this.set(this.pickDefault(L)); }, 120);   // 押して画面が変わったら、新しい画面の最初のボタンへ
+  },
+  back() {
+    const L = this.list(), isClose = el => /(^|[^a-z])(x|close|back)$/i.test(el.id || '') || /閉じる|close/i.test(el.getAttribute('aria-label') || '') || /^\s*(×|✕|✖|閉じる|もどる|戻る|やめる|キャンセル|Close|Back|Cancel)\s*$/i.test(el.textContent || '');
+    const c = L.find(el => /^\s*[×✕✖]\s*$/.test(el.textContent || '')) || L.find(isClose);
+    if (c) { c.click(); this.cache = null; setTimeout(() => { this.cache = null; const L2 = this.list(); if (this.cur && !L2.includes(this.cur)) this.set(this.pickDefault(L2)); }, 120); return; }
+    if (INV.open) { INV.hide(); return; } if (SET.open) { SET.hide(); return; }
+    document.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape', key: 'Escape', bubbles: true })); this.cache = null;
+  },
+  poll(B, P, M, dt, pad) {
+    const nb = i => B[i] && !P[i];
+    // 方向（十字キーまたは左スティック）。押しっぱなしで繰り返し
+    const dir = B[12] ? 'up' : B[13] ? 'down' : B[14] ? 'left' : B[15] ? 'right' : pad.ly < -0.55 ? 'up' : pad.ly > 0.55 ? 'down' : pad.lx < -0.55 ? 'left' : pad.lx > 0.55 ? 'right' : '';
+    if (dir) {
+      if (dir !== this.dirP) { this.rep = 0.38; this.go(dir); } else { this.rep -= dt; if (this.rep <= 0) { this.rep = 0.11; this.go(dir); } }
+    }
+    this.dirP = dir;
+    if (nb(M.act)) this.ok();
+    if (nb(M.back)) this.back();
+    // 右スティック：スクロール
+    if (pad.rx || pad.ry) { const base = this.cur ? this.scroller(this.cur) : null; const sc = base || [...document.querySelectorAll('#settings, #inv, #result, .screen, #rkList, #vedit, #notice')].find(e => this.vis(e) && e.scrollHeight > e.clientHeight + 2); if (sc) { sc.scrollBy(pad.rx * 900 * dt, pad.ry * 900 * dt); this.cache = null; } }
+  },
+  go(dir) {
+    const el = this.cur; if (el && (dir === 'left' || dir === 'right') && this.list().includes(el) && this.adjust(el, dir === 'right' ? 1 : -1)) return;
+    this.move(dir);
+  },
+};
+addEventListener('mousemove', () => { if (PADNAV.cur) PADNAV.clear(); }, { passive: true });
+addEventListener('touchstart', () => { if (PADNAV.cur) PADNAV.clear(); }, { passive: true });
 const PADUI = {
   draw() {
     PAD.label(); const L = $('#padList'); if (!L) return; L.innerHTML = '';
@@ -13269,7 +13394,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.14.9';
+const VERSION = '0.14.10';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -14337,11 +14462,12 @@ const VED = {
     const f = this.file, el = $('#vedit'); $('#veExT').textContent = vt('ready');
     { const mb = f.size / 1048576; $('#veExK').textContent = `${this.fmtName(this.exType || f.type)}・${mb < 10 ? mb.toFixed(1) : Math.round(mb)}MB・${vfmt(this.exTot || 0)}` + (mb > 512 || (this.exTot || 0) > 140 ? '\n' + vt('xover') : '') + (this.okCodec(this.exType || f.type) ? '' : '\n' + vt('codec')); }   // 2026-11-14 実際の形式と容量
     $('#veExP').textContent = ''; $('#veExBtns').innerHTML = ''; const msg = $('#veExMsg'); msg.textContent = '';
-    const can = !!(navigator.canShare && (() => { try { return navigator.canShare({ files: [f] }); } catch (e) { return false; } })());
+    const can = !WINSHARE && !!(navigator.canShare && (() => { try { return navigator.canShare({ files: [f] }); } catch (e) { return false; } })());
     const mk = (t, cls, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; if (cls) b.className = cls; b.onclick = e => { e.stopPropagation(); fn(); }; $('#veExBtns').appendChild(b); return b; };
     mk(vt('back'), 'sec', () => el.classList.remove('exp'));
-    mk(vt('save'), can ? 'sec' : '', () => { try { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 60000); msg.textContent = vt('dl'); } catch (e) { } });
+    mk(vt('save'), can ? 'sec' : '', () => { try { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 60000); msg.textContent = vt('dl'); } catch (e) { } if (WINSHARE) { copyPost(null, this.src.total); msg.textContent = TR('保存しました。投稿文もコピーしたので、LINEやXに動画を添付して、文を貼り付けて投稿してください'); } });
     if (can) mk(vt('share'), '', async () => { const post = copyPost(msg, this.src.total); try { await navigator.share({ files: [f], title: '幽tuber', text: post }); } catch (e) { } });   // 作り終わった後は、もう一度押してもらって共有（ブラウザの決まり）
+    else if (WINSHARE) { }
     else msg.textContent = vt('noShare');
   },
 };
@@ -14390,7 +14516,7 @@ addEventListener('keydown', e => {
   else if ($('#saveNote').classList.contains('show')) { $('#saveNote').classList.remove('show'); e.stopPropagation(); }
 }, true);
 addEventListener('resize', () => { if (VED.on) VED.uiMarks(); });
-if (TEST && window.__G) Object.assign(window.__G, { SIDE, RKLIST, RING, AFIX, SET, A, LID, stalls, CHATGEN });   // 2026-11-14 確認用
+if (TEST && window.__G) Object.assign(window.__G, { SIDE, RKLIST, RING, AFIX, SET, A, LID, stalls, CHATGEN, PADNAV, INV });   // 2026-11-14 確認用
 
 setInterval(() => CHATLOG.tick(), 400);
 setInterval(() => { try { VOICE.tick(); } catch (e) { if (TEST || DEV) console.warn('VOICE', e); } }, 33);   // 2026-11-14 声の判定（約30回/秒）
