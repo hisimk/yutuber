@@ -374,6 +374,14 @@
   .chatMsg{position:absolute;left:0;right:0;top:30px;bottom:0;display:flex;align-items:center;justify-content:center;color:#77736c;font-size:12.5px;pointer-events:none;padding:10px;text-align:center}
   .chatNew{position:absolute;right:8px;bottom:8px;display:none;padding:5px 11px;border-radius:999px;border:1px solid #555;background:rgba(20,20,22,.92);color:#fff;font:600 12px system-ui}.chatNew.show{display:block}
   #godView .chatBox{height:170px}
+  /* 2026-11-14 記録の自動保存のお知らせ（初回だけ） */
+  #saveNote{position:fixed;inset:0;z-index:61;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:16px;box-sizing:border-box}#saveNote.show{display:flex}
+  #snBox{width:min(340px,100%);max-height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;box-sizing:border-box;padding:22px 20px 18px;border-radius:16px;background:#141416;border:1px solid #3a3834;color:#e9e4da;text-align:left}
+  #snT{font-size:20px;font-weight:800;line-height:1.45;color:#fff}
+  #snB{font-size:15px;font-weight:400;line-height:1.85;margin:12px 0 0}
+  #snH{font-size:15px;font-weight:600;line-height:1.7;margin:16px 0 0}
+  #snN{font-size:13px;font-weight:400;line-height:1.7;color:#b4afa6;margin:18px 0 0}
+  #snOk{display:block;width:100%;min-height:48px;margin-top:20px;border:none;border-radius:12px;background:#e9e4da;color:#111;font:700 16px system-ui,-apple-system,"Hiragino Sans",sans-serif}
   #rankPop{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55)}
   #rankPop.show{display:flex}#rankPop.show .rpBox{animation:rpIn .2s cubic-bezier(.2,.7,.3,1)}@keyframes rpIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
   @media (prefers-reduced-motion: reduce){#rankPop.show .rpBox,.chatBox .cm.new{animation:none}}
@@ -664,6 +672,7 @@
 </div>
 <div id="resetAsk"><div class="raBox"><div class="raT">本当に消去していいですか？</div><div class="raD">集めた撮れ高、累計いいね数、歴代の神回など、これまでのプレイデータがすべて消えます。</div><div class="raBtns"><button id="resetYes">はい</button><button id="resetNo">だめ</button></div></div></div>
 <div id="rankPop"><div class="rpBox"><div id="rpT"></div><div id="rpFrom"></div><div id="rpTot"></div><div class="rpNote" id="rpNote"></div><button id="rpOk"></button></div></div>
+<div id="saveNote"><div id="snBox"><div id="snT"></div><p id="snB"></p><p id="snH"></p><p id="snN"></p><button id="snOk"></button></div></div>
 <div id="loading">LOADING</div>
 
 <script type="importmap">
@@ -10105,8 +10114,27 @@ $('#imgBtn').addEventListener('click', async () => {
   const msg = $('#saveMsg'); msg.textContent = TR('画像を作っています…'); const f = await imageFile(); msg.textContent = '';
   await shareSet([[f]], msg, copyPost(msg));
 });
-$('#againBtn').addEventListener('click', () => location.reload());
-$('#retakeBtn').addEventListener('click', () => location.reload());   // 2026-11-14 結果画面の右上の再撮影
+/* 2026-11-14 はじめてのプレイのあと、「再撮影」（もう一度入る）を押した時に一度だけ、記録の自動保存を知らせる。
+   保存できていることを確かめられた時だけ出す。「わかった」を押した時に確認済みにして、次のゲームへ */
+const SAVENOTE = {
+  KEY: 'yt_saveNote',
+  ok() { try { localStorage.setItem('yt_saveTest', '1'); const ok = localStorage.getItem('yt_saveTest') === '1'; localStorage.removeItem('yt_saveTest'); return ok && !!localStorage.getItem(ACH.KEY); } catch (e) { return false; } },
+  seen() { try { return localStorage.getItem(this.KEY) === '1'; } catch (e) { return true; } },
+  go() {
+    if (DEMO || this.seen() || !this.ok()) { location.reload(); return; }
+    const en = LANG === 'en', el = $('#saveNote');
+    $('#snT').textContent = en ? 'Your play record is saved automatically.' : 'プレイ記録は自動保存されます。';
+    $('#snB').textContent = en ? 'Even if you close the game, open it again on the same device and browser to keep your collected footage and lifetime likes.' : 'ゲームを閉じても、同じ端末・同じブラウザで開けば、集めた撮れ高や累計いいねを引き継いで遊べます。';
+    $('#snH').textContent = en ? 'Add it to your home screen to jump right back in next time.' : 'ホーム画面に追加すると、次回からすぐに遊べます。';
+    $('#snN').textContent = en ? '* Records may not be kept in private browsing or incognito mode. They can also be lost if browser site data is cleared or the device runs low on storage.' : '※プライベートブラウズやシークレットモードでは、記録が残らない場合があります。ブラウザのサイトデータ削除や端末の空き容量不足などで、記録が失われることもあります。';
+    $('#snOk').textContent = en ? 'Got it' : 'わかった';
+    el.classList.add('show'); $('#snBox').scrollTop = 0;
+  },
+};
+$('#snOk').addEventListener('click', e => { e.stopPropagation(); try { localStorage.setItem(SAVENOTE.KEY, '1'); } catch (er) { } location.reload(); });   // 押した時点で確認済み
+for (const t of ['pointerdown', 'touchstart', 'touchmove']) $('#saveNote').addEventListener(t, e => e.stopPropagation(), { passive: true });
+$('#againBtn').addEventListener('click', () => SAVENOTE.go());
+$('#retakeBtn').addEventListener('click', () => SAVENOTE.go());   // 2026-11-14 結果画面の右上の再撮影
 $('#overBtn').addEventListener('click', () => location.reload());
 $('#overVideo').addEventListener('click', () => { $('#over').classList.remove('show'); showResult(capturedBlobs); $('#resTitle').textContent = '回収された映像'; $('#resMeta').textContent = 'カメラが壊れる直前まで'; });
 
