@@ -13644,7 +13644,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.14.26';
+const VERSION = '0.14.27';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -13856,7 +13856,7 @@ const NICK = {
     if (/^[\x20-\x7e]+$/.test(raw)) return null;   // 英字・数字・記号だけ
     if (yomi && !KANA.test(yomi)) yomi = '';
     // 2026-11-15 「漢字＋かな」の名前（草野ゆい など）は、よみがなが無くても、かなの部分を下の名前として使う
-    if (!yomi) { const m = raw.match(new RegExp('^' + KAN + '+([\u3041-\u3096\u30a1-\u30faー]+)$')); if (m) { const g = this.hira(m[1]), gm = this.mora(g); if (gm.length < 2 || gm.length >= 6) return null; const n = gm.length <= 3 ? g : gm.slice(0, 2).join(''); return KATA.test(m[1]) ? this.kata(n) : n; } }
+    if (!yomi) { const m = raw.match(new RegExp('^' + KAN + '+([\u3041-\u3096\u30a1-\u30faー]+)$')); if (m) { const g = this.hira(m[1]), gm = this.mora(g); if (gm.length < 2 || gm.length >= 6) return null; const n = gm.slice(0, 2).join('');   /* 2026-11-15 こん◯◯は頭の2音を優先（げんき → げん） */ return KATA.test(m[1]) ? this.kata(n) : n; } }
     const rd = yomi || (KANA.test(raw) ? raw : ''); if (!rd) return null;   // 漢字の名前でよみがな無し
     let kataOut = /[ァ-ヺ]/.test(rd) && !/[ぁ-ゖ]/.test(rd);
     const R = this.hira(rd).replace(/ +/g, ' ').trim(), flat = R.replace(/ /g, ''), fm = this.mora(flat).length;
@@ -13880,13 +13880,16 @@ const NICK = {
     // 4) 分けられない時：4音以下ならそのまま
     if (!g) { if (fm <= 4) g = flat; else return null; }
     const gm = this.mora(g); if (gm.length < 2 || gm.length >= 6) return null;
-    const n = gm.length <= 3 ? g : gm.slice(0, 2).join('');
+    const n = gm.slice(0, 2).join('');   /* 2026-11-15 こん◯◯は頭の2音を優先（げんき → げん） */
     return kataOut ? this.kata(n) : n;
   },
 };
 function chatCallName() {
   const clean = s => String(s || '').replace(/[\u0000-\u001f\u007f\u2028\u2029]/g, '').replace(/\s+/g, ' ').trim();
   let n = clean(world.chRaw);   /* 2026-11-14 呼び名＝名前（別の呼び名の欄はやめた） */ if (!n) return '';   // 空なら、表示の時に「主」／streamer を使う
+  /* 2026-11-15 「げんきチャンネル」「げんきの実況」のような名前は、名前の部分に「さん」を付けて呼ぶ（げんきさん） */
+  { const m = n.match(/^(.+?)[ 　・_-]*(?:の)?[ 　・_-]*(?:ゲーム実況|実況チャンネル|ゲームチャンネル|チャンネル|ちゃんねる|ﾁｬﾝﾈﾙ|channel|ch\.?|ｃｈ|ＣＨ|tv|ＴＶ|実況|配信|公式|の部屋|部屋)$/i);
+    if (m) { const b = m[1].trim(); if (b && !/^[\x20-\x7e]*\d+$/.test(b) && !/^(心霊|しんれい|シンレイ|ホラー|ほらー|怪談|オカルト|ゲーム|げーむ)$/.test(b)) n = /(さん|様|くん|君|ちゃん|さま)$/.test(b) ? b : b + 'さん'; } }
   const a = Array.from(n); return a.length > 16 ? a.slice(0, 15).join('') + '…' : n;
 }
 function chatHash(s) { let h = 2166136261; for (const c of String(s)) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
