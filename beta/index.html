@@ -275,7 +275,7 @@
   .setLink{margin-top:6px;background:none;border:1px solid #3a3a3e;border-radius:12px;color:#e9e4da;font-size:14px;padding:12px}
   .setLink.warn{border-color:#ff453a;color:#ff453a}
   #setClose{margin-top:8px;align-self:center}
-  #setX{position:fixed;top:calc(var(--sat) + 12px);right:14px;z-index:41;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(20,20,22,.7);color:#fff;font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+  #setX,#invX{position:fixed;top:calc(var(--sat) + 12px);right:14px;z-index:41;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(20,20,22,.7);color:#fff;font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
   #setBrightPane{display:none;flex-direction:column;gap:10px;align-items:center}
   #settings.bright #setMain{display:none}#settings.bright #setBrightPane{display:flex}
   #brightCv{width:100%;max-width:300px;aspect-ratio:9/16;border-radius:10px;background:#000}
@@ -783,6 +783,7 @@
   </div>
 </div>
 <div id="inv">
+  <button id="invX" aria-label="閉じる">×</button>
   <div class="setBox">
     <div class="setHead"><span id="invTitle">持ち物</span><span class="invPaused">一時停止中</span></div>
     <div id="invList"></div>
@@ -820,7 +821,7 @@
   <button class="go" id="overBtn">もう一度入る</button>
   <button id="overVideo" style="display:none;margin-top:14px;font-size:13px;color:#cfcac0;background:none;border:1px solid #444;border-radius:10px;padding:10px 16px">残った映像を見る</button>
 </div>
-<div id="resetAsk"><div class="raBox"><div class="raT">本当に消去していいですか？</div><div class="raD">集めた撮れ高、チャンネル登録者数、歴代の神回など、これまでのプレイデータがすべて消えます。</div><div class="raBtns"><button id="resetYes">はい</button><button id="resetNo">だめ</button></div></div></div>
+<div id="resetAsk"><div class="raBox"><div class="raT">本当に消去していいですか？</div><div class="raD">集めた撮れ高、累計いいね数、歴代の神回など、これまでのプレイデータがすべて消えます。</div><div class="raBtns"><button id="resetYes">はい</button><button id="resetNo">だめ</button></div></div></div>
 <div id="rankPop"><div class="rpBox"><div id="rpT"></div><div id="rpFrom"></div><div id="rpTot"></div><div class="rpNote" id="rpNote"></div><button id="rpOk"></button></div></div>
 <div id="shAsk" role="dialog" aria-modal="true" aria-labelledby="shAskT"><div class="shBox"><button id="shAskX" class="mX" type="button">×</button><div id="shAskT"></div><p id="shAskS"></p><div class="shBtns"><button id="shAskNo" type="button"></button><button id="shAskYes" type="button"></button></div></div></div>
 <div id="vedit" role="dialog" aria-modal="true">
@@ -11585,25 +11586,26 @@ const FIXCAM = {
 /* リングライト：鏡やインカメラに映る主人公の手元（両手の間）に付ける */
 const RING = {
   g: null, hid: false,
+  // 2026-11-14 主人公が両手で持っているスマホ（体のモデルの一部）を探し、リングがそのスマホをちょうど囲むように胴体へ取り付ける
   build() {
     if (this.g || !avatar.ready) return;
+    let body = null; avatar.root.traverse(o => { if (o.isSkinnedMesh && !body && o.geometry.attributes.color && o.skeleton.bones.some(b => b.name === 'Torso')) body = o; }); if (!body) return;
+    avatar.root.updateMatrixWorld(true); const B = body.skeleton.bones, ti = B.findIndex(b => b.name === 'Torso'), torso = B[ti], hl = avatar.bones.HandL, hr = avatar.bones.HandR; if (!hl || !hr) return;
+    const hm = hl.getWorldPosition(V()).add(hr.getWorldPosition(V())).multiplyScalar(0.5), P = body.geometry.attributes.position, Cc = body.geometry.attributes.color, SI = body.geometry.attributes.skinIndex, mn = V(1e9, 1e9, 1e9), mx = V(-1e9, -1e9, -1e9), v = V(); let n = 0;
+    for (let k = 0; k < P.count; k++) { if (SI.getX(k) !== ti || Cc.getX(k) + Cc.getY(k) + Cc.getZ(k) > 0.4) continue; v.fromBufferAttribute(P, k); body.applyBoneTransform(k, v); v.applyMatrix4(body.matrixWorld); if (v.distanceTo(hm) > 0.22) continue; mn.min(v); mx.max(v); n++; }
+    if (n < 8) return;   // スマホが見つからない
+    const c = mn.clone().add(mx).multiplyScalar(0.5), h = headWorld(avatar, V());
     const g = new THREE.Group();
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.013, 10, 40), new THREE.MeshLambertMaterial({ color: 0x111113 })); g.add(ring);   // 2026-11-14 輪の外側・裏は黒
-    const glow = new THREE.Mesh(new THREE.RingGeometry(0.089, 0.111, 48), new THREE.MeshBasicMaterial({ color: 0xfff6dc, toneMapped: false })); glow.position.z = 0.0135; g.add(glow);   // 光るのは顔の側の面だけ
-    const ph = new THREE.Mesh(new THREE.BoxGeometry(0.068, 0.135, 0.008), new THREE.MeshLambertMaterial({ color: 0x18181c })); ph.position.z = 0.004; g.add(ph);
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.03, 0.01), new THREE.MeshLambertMaterial({ color: 0x2a2a2e })); arm.position.set(0, -0.082, 0.004); g.add(arm);
-    const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.016, 0.1, 10), new THREE.MeshLambertMaterial({ color: 0x232327 })); grip.position.set(0, -0.15, 0.004); g.add(grip);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.118, 0.013, 10, 40), new THREE.MeshLambertMaterial({ color: 0x111113 })); g.add(ring);   // 輪の外側・裏は黒
+    const glow = new THREE.Mesh(new THREE.RingGeometry(0.107, 0.129, 48), new THREE.MeshBasicMaterial({ color: 0xfff6dc, toneMapped: false })); glow.position.z = 0.0135; g.add(glow);   // 光るのは顔の側の面だけ
+    for (const sx of [-1, 1]) { const arm = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.006, 0.006), new THREE.MeshLambertMaterial({ color: 0x2a2a2e })); arm.position.set(sx * 0.075, 0.03, 0); g.add(arm); }   // 輪とスマホをつなぐ左右の留め具
     g.traverse(o => { if (o.isMesh) { o.castShadow = false; o.frustumCulled = false; } });
-    avatar.root.add(g); this.g = g;
+    scene.add(g); g.position.copy(c); g.lookAt(V(h.x, c.y, h.z)); g.updateMatrixWorld(); torso.attach(g); this.g = g;
   },
   hide(v) { this.hid = v; if (this.g) this.g.visible = !v && PERM.active('light'); },
   update() {
     if (!PERM.active('light')) { if (this.g) this.g.visible = false; return; }
-    this.build(); if (!this.g) return; const B = avatar.bones, hl = B && (B.HandL || B['Hand.L']), hr = B && (B.HandR || B['Hand.R']); if (!hl || !hr) { this.g.visible = false; return; }
-    avatar.root.updateMatrixWorld(true); const m = hl.getWorldPosition(V()).add(hr.getWorldPosition(V())).multiplyScalar(0.5).add(V(0, -0.04, 0)), h = headWorld(avatar, V());   // 顔を隠さないよう、胸の前あたり
-    const o = new THREE.Object3D(); o.position.copy(m); o.lookAt(h); o.updateMatrixWorld();
-    const inv = new THREE.Matrix4().copy(avatar.root.matrixWorld).invert(); const lm = new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld); lm.decompose(this.g.position, this.g.quaternion, this.g.scale);
-    this.g.visible = !this.hid;
+    this.build(); if (!this.g) return; this.g.visible = !this.hid;
   },
 };
 function render() {
@@ -11892,7 +11894,7 @@ const SAVENOTE = {
     const en = LANG === 'en', el = $('#saveNote');
     $('#snX').setAttribute('aria-label', en ? 'Close' : '閉じる');
     $('#snT').textContent = en ? 'Your progress is saved automatically.' : 'プレイ記録は自動保存されます。';
-    $('#snB').textContent = en ? 'You can close the game and return using the same device and browser to keep your footage collection and subscribers.' : 'ゲームを閉じても、同じ端末・同じブラウザで開けば、集めた撮れ高やチャンネル登録者数を引き継いで遊べます。';
+    $('#snB').textContent = en ? 'You can close the game and return using the same device and browser to keep your footage collection and lifetime likes.' : 'ゲームを閉じても、同じ端末・同じブラウザで開けば、集めた撮れ高や累計いいね数を引き継いで遊べます。';
     $('#snH').textContent = en ? 'Add the game to your home screen for quick access next time.' : 'ホーム画面に追加すると、次回からすぐに遊べます。';
     $('#snN').textContent = en ? 'Note: Progress may not be kept in private or incognito mode. Clearing site data, low device storage, or other circumstances may also cause saved progress to be lost.' : '※プライベートブラウズやシークレットモードでは、記録が残らない場合があります。ブラウザのサイトデータ削除や端末の空き容量不足などで、記録が失われることもあります。';
     $('#snOk').textContent = en ? 'Got it' : 'わかった';
@@ -12528,6 +12530,7 @@ const INV = {
 { const el = $('#invBtn'); for (const ev of ['pointerdown', 'touchstart']) el.addEventListener(ev, e => e.stopPropagation(), { passive: true }); el.addEventListener('click', e => { e.stopPropagation(); ensureAudio(); INV.show(); }); }
 for (const ev of ['pointerdown', 'pointermove', 'pointerup', 'touchstart', 'touchmove']) $('#inv').addEventListener(ev, e => e.stopPropagation(), { passive: true });
 $('#invClose').addEventListener('click', e => { e.stopPropagation(); INV.hide(); });
+$('#invX').addEventListener('click', e => { e.stopPropagation(); INV.hide(); });   // 2026-11-14 持ち物が長くなっても、右上の×でいつでも戻れる
 $('#invScore').addEventListener('click', e => { e.stopPropagation(); $('#invScore').classList.remove('show'); });
 /* 2026-11-14 PC：Esc キーで設定を開く・閉じる（持ち物・遊び方・キー組み換え中はそれぞれの Esc を優先） */
 addEventListener('keydown', e => {
@@ -12626,7 +12629,7 @@ const UISND = {
     const id = el.id || '';
     if (id === 'goBtn') return 'start';
     if (/^(tNext|setTut|setCol)$/.test(id) || el.classList.contains('setLink')) return id === 'tNext' && el.textContent.includes('はじめる') ? 'start' : 'next';
-    if (/^(setClose|setX|invClose|tBack|tSkipTop|fxClose)$/.test(id) || /閉じる|もどる/.test(el.textContent || '')) return 'back';
+    if (/^(setClose|setX|invX|invClose|tBack|tSkipTop|fxClose)$/.test(id) || /閉じる|もどる/.test(el.textContent || '')) return 'back';
     const row = el.closest('.opt'); if (row && row.querySelector('.sw')) return row.classList.contains('on') ? 'off' : 'on';
     return 'tap';
   },
@@ -13063,7 +13066,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.13.8';
+const VERSION = '0.13.9';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -13163,7 +13166,7 @@ const RKLIST = {
   gear(id, r) {
     const el = $('#rkList'), d = ACH.load(), ri = yrankIdx(d.total), en = LANG === 'en', D = PERM.DEFS[id], known = r <= ri + 1;
     let pop = el.querySelector('.rkPop'); if (!pop) { pop = document.createElement('div'); pop.className = 'rkPop'; el.appendChild(pop); pop.addEventListener('click', e => { e.stopPropagation(); pop.classList.remove('show'); }); }
-    const st = PERM.has(id) ? (en ? 'Owned — toggle it in your items' : '入手済み（持ち物でオン・オフできます）') : known ? (en ? `Unlocks at ${yrankName(r)} (${Number(YRANK[r][2]).toLocaleString()} subscribers)` : `${yrankName(r)}（登録者 ${Number(YRANK[r][2]).toLocaleString('ja-JP')}人）で入手`) : (en ? 'Unlocks at a higher rank' : 'もっと上のランクで入手');
+    const st = PERM.has(id) ? (en ? 'Owned — toggle it in your items' : '入手済み（持ち物でオン・オフできます）') : known ? (en ? `Unlocks at ${yrankName(r)} (${Number(YRANK[r][2]).toLocaleString()} lifetime likes)` : `${yrankName(r)}（累計 ${Number(YRANK[r][2]).toLocaleString('ja-JP')} いいね）で入手`) : (en ? 'Unlocks at a higher rank' : 'もっと上のランクで入手');
     pop.innerHTML = `<div class="rkPopB"><img src="${PERM_IMG[id]}" alt=""><b>${TR(D.name)}</b><p>${TR(D.desc)}</p><small>${st}</small><button type="button">${TR('閉じる')}</button></div>`;
     pop.classList.add('show');
   },
@@ -13234,8 +13237,8 @@ const CHAT_UI = {
   title: ['チャット', 'Chat'], note: ['映像に合わせた架空のコメント', 'Simulated chat synced to the video'], before: ['再生するとコメントが流れます', 'Play the video to see chat.'],
   novid: ['録画された映像がありません', 'No recorded video.'], nosync: ['この動画には同期コメントがありません', "Synced chat isn't available for this video."], legacy: ['この保存チャットは日本語のみです', 'This saved chat is only available in Japanese.'],
   latest: ['最新へ', 'Jump to latest'], pending: ['動画を仕上げています…', 'Finishing the video…'], nick: ['コメントでの呼び名', 'Name used in chat'], nickHint: ['空欄の場合はチャンネル名を使います', 'Leave blank to use your channel name.'],
-  rkList: ['ランク一覧', 'All ranks'], nextName: ['次のランク', 'Next rank'], rkNow: ['いま', 'NOW'], rkDone: ['到達', 'Reached'], rkNeed: ['あと{count}人', '{count} more to go'], rkReq: ['登録者 {count}人', '{count} subscribers'], rkHidden: ['？？？', '???'], rkNote: ['下から上へ、良いランクになります', 'Ranks get better from bottom to top'], rkMerit: ['ランクが上がるとどうなる？', 'Why rank up?'], rkMeritT: ['ランクはチャンネル登録者数で上がります。動画についたいいねが、そのまま登録者になって貯まっていきます。ランクが上がるほど、動画のチャット欄が賑やかに（コメントが増え、静かな場面でも流れるように）。さらにランクごとに、ずっと使える配信機材が手に入ります。', 'The higher your rank, the livelier your video chat gets: more comments, even during quiet moments. Rank is based on your lifetime likes, which add up every time you film.'], rkMul: ['コメント量 ×{count}', 'Chat ×{count}'], rkGear: ['機材：', 'Gear: '], rkGet: ['入手：', 'Unlocks: '], rkGot: ['入手済み：', 'Owned: '],
-  lifetime: ['チャンネル登録者 {count}人', '{count} subscribers'], subsH: ['チャンネル登録者数', 'Subscribers'], subsN: ['{count}<small>人</small>', '{count}<small> subs</small>'], subsFrom: ['動画のいいねが、そのまま登録者に。', 'Every like on your videos brings in a subscriber.'], next: ['次のランクまで あと{count}人', '{count} more subscribers to the next rank'], top: ['最高ランク到達', 'Highest rank reached'],
+  rkList: ['ランク一覧', 'All ranks'], nextName: ['次のランク', 'Next rank'], rkNow: ['いま', 'NOW'], rkDone: ['到達', 'Reached'], rkNeed: ['あと{count}いいね', '{count} likes to go'], rkReq: ['累計 {count} いいね', '{count} lifetime likes'], rkHidden: ['？？？', '???'], rkNote: ['下から上へ、良いランクになります', 'Ranks get better from bottom to top'], rkMerit: ['ランクが上がるとどうなる？', 'Why rank up?'], rkMeritT: ['ランクは累計いいね数で上がります。動画についたいいねが、撮影のたびに貯まっていきます。ランクが上がるほど、動画のチャット欄が賑やかに（コメントが増え、静かな場面でも流れるように）。さらにランクごとに、ずっと使える配信機材が手に入ります。', 'The higher your rank, the livelier your video chat gets: more comments, even during quiet moments. Rank is based on your lifetime likes, which add up every time you film.'], rkMul: ['コメント量 ×{count}', 'Chat ×{count}'], rkGear: ['機材：', 'Gear: '], rkGet: ['入手：', 'Unlocks: '], rkGot: ['入手済み：', 'Owned: '],
+  lifetime: ['累計 {count} いいね', '{count} lifetime likes'], subsH: ['累計いいね数', 'Lifetime likes'], subsN: ['{count}', '{count}'], subsFrom: ['動画のいいねが、撮影のたびに貯まります。', 'Likes on your videos add up every time you film.'], next: ['次のランクまで あと{count}いいね', '{count} likes to the next rank'], top: ['最高ランク到達', 'Highest rank reached'],
   cnt: ['コメント数{count}件', '{count} comments'], cnt1: ['コメント数{count}件', '{count} comment'], counting: ['集計中…', 'Counting…'], cntNA: ['コメント情報なし', 'Chat data unavailable'],
   congrats: ['おめでとうございます！', 'Congratulations!'], explain: ['これからの動画はコメントが増えやすくなります', 'Your future videos can attract more chat reactions.'], ok: ['やった！', 'Nice!'],
 };
