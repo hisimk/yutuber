@@ -157,7 +157,8 @@
   #notice .nTg{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;background:#151517;border:1px solid #2c2b29;font-size:14px}
   #notice .nTg .sw{flex:none}#notice .nTg.on .sw{background:#34c759}#notice .nTg.on .sw::after{left:23px}
   #notice .nPriv{font-size:13px;line-height:1.7;color:#cfcac0;background:#111113;border:1px solid #2c2b29;border-radius:12px;padding:10px 12px}#notice .nPriv b{color:#fff;display:block;margin-bottom:4px}
-  :root{color-scheme:dark}   /* 2026-11-14 元から暗い画面だとブラウザに伝え、ナイトモードなどで色を塗り替えられにくくする */
+  :root{color-scheme:dark}
+  html.curHide,html.curHide *{cursor:none!important}   /* 2026-11-14 元から暗い画面だとブラウザに伝え、ナイトモードなどで色を塗り替えられにくくする */
   .browserHint{display:none;margin:10px auto 0;max-width:340px;padding:8px 12px;border-radius:10px;border:1px solid rgba(255,214,10,.45);background:rgba(255,214,10,.07);font-size:12px;color:#ffd60a;text-align:center;line-height:1.6}
   .homeHint{display:none;margin-top:8px;font-size:11px;color:#7f7b74;text-align:center;line-height:1.5}
   .credBtn{margin-top:10px;background:none;border:none;color:#9a9a9a;font-size:12px;text-decoration:underline}
@@ -3486,8 +3487,11 @@ const PCLOOK = {
   },
   tick(dt) { if (this.edge && MLOCK.ok() && !MLOCK.on()) look.yaw -= this.edge * 1.7 * dt / Math.max(0.8, Math.sqrt(zoom)); },
 };
+/* 2026-11-15 PC：見回している間はマウスのカーソルを隠す。止めて約0.8秒で再び出す。ボタンや設定などの上では、いつも出す */
+const CURHIDE = { t: 0, set(v) { document.documentElement.classList.toggle('curHide', v); }, move(free) { clearTimeout(this.t); if (!free || world.state !== 'play') { this.set(false); return; } this.set(true); this.t = setTimeout(() => this.set(false), 800); } };
 addEventListener('mousemove', e => {
-  if (!PCLOOK.free(e) || e.buttons) return;   // ドラッグ中はドラッグの見回しだけ
+  const fr = PCLOOK.free(e); if (FRAME.on) CURHIDE.move(fr);
+  if (!fr || e.buttons) return;   // ドラッグ中はドラッグの見回しだけ
   const s = CONFIG.lookSens * CONFIG.mouseLookMul * (typeof opt !== 'undefined' && opt.sens || 1) / Math.max(0.8, Math.sqrt(zoom));
   look.yaw -= e.movementX * s; look.pitch = clamp(look.pitch - e.movementY * s, -1.54, 1.54);
 });
@@ -13262,7 +13266,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.14.7';
+const VERSION = '0.14.8';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
