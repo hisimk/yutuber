@@ -50,6 +50,13 @@
   #cap.low #capFill{background:#ff3b30}#cap.low{color:#ff3b30}
   #hud.off #cap{display:none}
   #fixCap{position:absolute;left:50%;top:calc(var(--sat) + 78px);transform:translateX(-50%);font:700 11px system-ui;color:#e9e4da;background:rgba(0,0,0,.35);padding:2px 8px;border-radius:6px;white-space:nowrap}#fixCap.rec{color:#ff6b6b}#hud.off #fixCap{display:none}
+  #hud.fixMode #topL,#hud.fixMode #invBtn,#hud.fixMode #battery,#hud.fixMode #camBtn,#hud.fixMode #zoomRow,#hud.fixMode #recBtn,#hud.fixMode #recKey,#hud.fixMode #cap,#hud.fixMode #fixCap,#hud.fixMode #rec,#hud.fixMode #micLvl,#hud.fixMode #actBtn,#hud.fixMode #exitBtn{display:none!important}
+  #fixUI:empty{display:none}#fixUI{position:absolute;inset:0;pointer-events:none}
+  #fixUI .fxT{position:absolute;left:0;right:0;top:calc(var(--sat) + 16px);text-align:center;font:700 15px system-ui;color:#fff;text-shadow:0 1px 3px #000}#fixUI .fxT small{display:block;font-size:11.5px;font-weight:500;color:#e0dbd2;margin-top:3px}
+  #fixUI .fxFrame{position:absolute;left:14px;right:14px;top:calc(var(--sat) + 70px);bottom:calc(var(--sab) + 120px);border:1.5px solid rgba(255,255,255,.55);border-radius:6px}
+  #fixUI .fxFrame::before,#fixUI .fxFrame::after{content:'';position:absolute;left:50%;top:50%;background:rgba(255,255,255,.55)}#fixUI .fxFrame::before{width:22px;height:1.5px;margin-left:-11px}#fixUI .fxFrame::after{width:1.5px;height:22px;margin-top:-11px}
+  #fixUI .fxB{position:absolute;left:0;right:0;bottom:calc(var(--sab) + 36px);display:flex;justify-content:center;gap:14px;pointer-events:auto}
+  #fixUI .fxB button{min-width:120px;padding:13px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.6);background:rgba(0,0,0,.5);color:#fff;font:700 15px system-ui}#fixUI .fxB .fxGo{background:#ff3b30;border-color:#ff3b30}
   #micLvl{position:absolute;left:50%;top:calc(var(--sat) + 79px);width:118px;height:4px;margin-left:-59px;border-radius:2px;background:rgba(0,0,0,.38);box-shadow:0 0 0 1px rgba(255,255,255,.06);overflow:hidden;pointer-events:none;display:none}#micLvl.on{display:block}#hud.off #micLvl{display:none}#micLvl i{position:absolute;left:0;top:0;width:100%;height:100%;background:#34d27b;transform:scaleX(.04);transform-origin:50% 50%;will-change:transform}#micLvl.hot i{background:#ff453a}
   #rec .dot{width:10px;height:10px;border-radius:50%;background:#ff3b30;animation:blink 1s steps(1) infinite}
   #rec .lbl{color:#ff3b30}
@@ -504,7 +511,7 @@
   #rkList ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
   #rkList li{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;background:#1b1b1f;border:1px solid #2c2b29}
   #rkList li .rkI{width:22px;text-align:center;font-weight:800;color:#6f6b64}
-  #rkList li .rkN{flex:1;font-weight:700}#rkList .rkM{display:block;font-size:10.5px;font-weight:600;color:#8a867f;margin-top:1px}#rkList .rkG{display:flex;align-items:center;gap:6px;margin-top:5px;font-size:11.5px;font-weight:700;color:#ffd60a}#rkList .rkG img{width:22px;height:22px;object-fit:contain}#rkList .rkG i{width:22px;height:22px;border-radius:6px;background:#2c2b29;color:#8a867f;font-style:normal;display:grid;place-items:center}#rkList .rkG.got{color:#7fd38a}#rkList li.lock .rkG{color:#bdb8ae}
+  #rkList li .rkN{flex:1;font-weight:700}#rkList .rkM{display:block;font-size:10.5px;font-weight:600;color:#8a867f;margin-top:1px}#rkList .rkG{display:flex;align-items:center;gap:6px;margin-top:5px;font-size:11.5px;font-weight:700;color:#ffd60a}#rkList .rkG img{width:22px;height:22px;object-fit:contain}#rkList .rkG i{width:22px;height:22px;border-radius:6px;background:#2c2b29;color:#8a867f;font-style:normal;display:grid;place-items:center}#rkList .rkG.got{color:#7fd38a}#rkList .rkG[data-gear]{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}#rkList .rkPop{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55)}#rkList .rkPop.show{display:flex}#rkList .rkPopB{width:min(300px,84%);padding:18px 16px 14px;border-radius:16px;background:#161618;border:1px solid rgba(255,214,10,.45);text-align:center;color:#e9e4da}#rkList .rkPopB img{width:110px;height:110px;object-fit:contain}#rkList .rkPopB b{display:block;font-size:17px;color:#ffd60a;margin:6px 0}#rkList .rkPopB p{font-size:13px;line-height:1.7;margin:0 0 8px;text-align:left}#rkList .rkPopB small{display:block;font-size:11.5px;color:#9a958c;margin-bottom:12px}#rkList .rkPopB button{width:100%;padding:11px;border-radius:12px;border:1px solid #444;background:#1e1e21;color:#fff;font:700 14px system-ui}#rkList li.lock .rkG{color:#bdb8ae}
   #rkList .rkMerit{font-size:12px;line-height:1.6;color:#cfcac0;background:rgba(255,214,10,.06);border:1px solid rgba(255,214,10,.2);border-radius:10px;padding:8px 10px;margin:8px 0 10px}#rkList .rkMerit b{display:block;color:#ffd60a;font-size:12.5px;margin-bottom:2px}
   #rkList li .rkR{font-size:12px;color:#9a958c;white-space:nowrap}
   #rkList li.done .rkN{color:#cfcac0}#rkList li.done .rkR{color:#7fd38a}
@@ -1281,6 +1288,7 @@ function plane(w, h, mat, x, y, z, ry = 0, rx = 0, o = {}) {
 /* ---------- 言語（日本語／English）：画面の文言は T() で英語に置き換える。英語の表が無い文言は日本語のまま ---------- */
 let LANG = 'ja'; try { const l = localStorage.getItem('yt_lang'); if (l === 'en' || l === 'ja') LANG = l; } catch (e) { }
 const EN = {
+  '歩いたり見回したりして、画角を決めてください': 'Walk and look around to frame the shot', 'ここに設置': 'Place here', 'やめる': 'Cancel', '定点カメラを設置した。怪異が映ると自動で録画します': 'Fixed camera placed. It records automatically when something appears.', '定点カメラを回収した。持ち物からまた置けます': 'Fixed camera picked up. You can place it again from your items.', '定点カメラを回収する': 'Pick up the fixed camera', '置く': 'Place', '設置中': 'In use',
   '定点カメラを置いた。怪異が映ると自動で録画します（15秒まで）': 'Fixed camera placed. It records automatically when something appears (up to 15s).', '定点カメラの容量がいっぱいになった': 'The fixed camera is full', '定点': 'CAM2',
   'ワイプカメラ': 'Wipe camera', '定点カメラ': 'Fixed camera', 'ここに置く': 'Place here', '置いた': 'Placed', 'リングライト': 'Ring light', 'ガンマイク': 'Shotgun mic', '予備バッテリー': 'Spare battery',
   'ひろう': 'Pick up',
@@ -11268,6 +11276,7 @@ function updateInteractions() {
     }
   }
   if (!HIDE.lk) ITEM.offerPick();
+  if (!actFn && !HIDE.lk) FIXCAM.offer();   // 2026-11-14 置いた定点カメラを回収
   const b = $('#actBtn'); if (world.tutAct) return;   // 遊び方の説明でお手本を出している間はそのまま
   b.classList.toggle('show', !!actFn && !world.dark); b.classList.toggle('key', !!actFn && actKey); if (b.textContent !== actLabel) b.textContent = actLabel; if (FRAME.on) { const kl = PAD.using ? PAD.of('act') : KB.of('act'); if (b.dataset.k !== kl) b.dataset.k = kl; }
 }
@@ -11505,24 +11514,50 @@ const GEAR = {
     renderer.setViewport(0, 0, W, H); renderer.autoClear = ac;
   },
 };
-/* 定点カメラ（2台目のスマホ） */
+/* 定点カメラ（2台目のスマホ）
+   ・持ち物の「置く」で、画角を決める画面（いつものスマホの画面から、インカメラ・電池・持ち物・ズームなどを消したもの）。
+     歩いたり見回したりして画角を決め、「ここに設置」で、小さな三脚から伸びた棒の先にスマホを付けて置く
+   ・置いたカメラに近づくと「回収する」。回収したら、また好きな場所に置き直せる（容量の15秒は1周で共通） */
 const FIXCAM = {
-  placed: false, cap: 15, hitT: -99, recOn: false, mesh: null,
-  reset() { this.placed = false; this.cap = 15; this.hitT = -99; this.recOn = false; if (this.mesh) this.mesh.visible = false; this.ui(); },
+  placed: false, cap: 15, hitT: -99, recOn: false, mesh: null, framing: false,
+  reset() { this.placed = false; this.cap = 15; this.hitT = -99; this.recOn = false; if (this.mesh) this.mesh.visible = false; this.endFrame(true); this.ui(); },
   can() { return PERM.active('fixcam') && !this.placed && world.state !== 'title'; },
+  model() {
+    if (this.mesh) return this.mesh;
+    const g = new THREE.Group(), dk = new THREE.MeshLambertMaterial({ color: 0x1b1b1f }), mt = new THREE.MeshLambertMaterial({ color: 0x3a3a40 });
+    for (let k = 0; k < 3; k++) { const a = k * Math.PI * 2 / 3, leg = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.005, 0.2, 6), mt); leg.position.set(Math.sin(a) * 0.055, 0.09, Math.cos(a) * 0.055); leg.rotation.set(Math.cos(a) * 0.55, 0, -Math.sin(a) * 0.55); g.add(leg); }   // 小さな三脚
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.025, 8), dk); hub.position.y = 0.19; g.add(hub);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 1, 8), mt); g.add(pole); this.pole = pole;   // 縦に伸びる棒（高さは置く時に合わせる）
+    const head = new THREE.Group(); g.add(head); this.head = head;
+    const clamp0 = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.02, 0.02), dk); clamp0.position.set(0, -0.08, 0.008); head.add(clamp0);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.15, 0.009), dk); head.add(body);
+    const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, 0.004, 10), new THREE.MeshBasicMaterial({ color: 0x050505 })); lens.rotation.x = Math.PI / 2; lens.position.set(-0.022, 0.058, -0.006); head.add(lens);
+    const led = new THREE.Mesh(new THREE.SphereGeometry(0.005, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff2020, toneMapped: false })); led.position.set(0.026, 0.06, -0.006); head.add(led); this.led = led;
+    g.traverse(o => { if (o.isMesh) o.castShadow = true; }); scene.add(g); this.mesh = g; return g;
+  },
+  // 画角を決める画面
+  startFrame() {
+    if (!PERM.active('fixcam') || this.placed || this.framing || world.state !== 'play') return;
+    this.framing = true; this.wasRec = rec.active; if (rec.active) stopRec('pause'); if (world.selfie) SELF.set(false); setZoom(1); zoom = 1;
+    $('#hud').classList.add('fixMode'); let el = $('#fixUI'); if (!el) { el = document.createElement('div'); el.id = 'fixUI'; $('#hud').appendChild(el); for (const ev of ['pointerdown', 'pointerup', 'touchstart']) el.addEventListener(ev, e => e.stopPropagation()); }
+    el.innerHTML = `<div class="fxT">📹 ${TR('定点カメラ')}<small>${TR('歩いたり見回したりして、画角を決めてください')}</small></div><div class="fxFrame"></div><div class="fxB"><button type="button" class="fxNo">${TR('やめる')}</button><button type="button" class="fxGo">${TR('ここに設置')}</button></div>`;
+    el.querySelector('.fxGo').addEventListener('click', e => { e.stopPropagation(); this.place(); });
+    el.querySelector('.fxNo').addEventListener('click', e => { e.stopPropagation(); this.endFrame(); });
+  },
+  endFrame(silent) { if (!this.framing) return; this.framing = false; $('#hud').classList.remove('fixMode'); const el = $('#fixUI'); if (el) el.innerHTML = ''; if (!silent && this.wasRec && world.state === 'play') startRec(); this.wasRec = false; },
   place() {
     if (!PERM.active('fixcam') || this.placed) return; GEAR.init();
-    const f = camFwd(); const p = camera.position.clone().addScaledVector(f.clone().setY(0).normalize(), 0.3); p.y = camera.position.y - 0.12;
-    const C = GEAR.fixCam; C.position.copy(p); C.quaternion.copy(camera.quaternion); C.updateMatrixWorld(); C.updateProjectionMatrix();
-    if (!this.mesh) {
-      const g = new THREE.Group(); const body = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.15, 0.009), new THREE.MeshLambertMaterial({ color: 0x1b1b1f })); g.add(body);
-      const led = new THREE.Mesh(new THREE.SphereGeometry(0.006, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff2020, toneMapped: false })); led.position.set(0.026, 0.06, -0.006); g.add(led); this.led = led;
-      const stand = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.004, 0.06), new THREE.MeshLambertMaterial({ color: 0x2a2a2e })); stand.position.set(0, -0.078, 0.02); g.add(stand);
-      scene.add(g); this.mesh = g;
-    }
-    this.mesh.position.copy(p); this.mesh.quaternion.copy(camera.quaternion); this.mesh.visible = true; this.placed = true;
-    SND.latch ? SND.latch(p) : null; toast(TR('定点カメラを置いた。怪異が映ると自動で録画します（15秒まで）'), 2600); this.ui();
+    const C = GEAR.fixCam, f = camFwd(), p = camera.position.clone().addScaledVector(f, 0.12);
+    C.fov = CONFIG.fov1x; C.position.copy(p); C.quaternion.copy(camera.quaternion); C.updateMatrixWorld(); C.updateProjectionMatrix();
+    const g = this.model(), fy = player.y || 0; g.position.set(p.x, fy, p.z); g.rotation.set(0, 0, 0);
+    const h = Math.max(0.25, p.y - fy - 0.19 - 0.08); this.pole.scale.y = h; this.pole.position.y = 0.19 + h / 2;   // 三脚の上から、スマホの高さまで棒を伸ばす
+    this.head.position.set(0, p.y - fy, 0); this.head.quaternion.copy(camera.quaternion);
+    g.visible = true; this.placed = true; this.pos = p.clone(); this.endFrame();
+    playSfx('locker_latch', { pos: p, ref: 0.6, gain: 0.5 }) || (SND.latch && SND.latch(p)); toast(TR('定点カメラを設置した。怪異が映ると自動で録画します'), 2400); this.ui();
   },
+  pickUp() { if (!this.placed) return; this.placed = false; this.recOn = false; if (this.mesh) this.mesh.visible = false; playSfx('locker_latch', { pos: this.pos, ref: 0.6, gain: 0.4 }); toast(TR('定点カメラを回収した。持ち物からまた置けます'), 2200); this.ui(); },
+  // 置いたカメラに近づいて向くと「回収する」
+  offer() { if (!this.placed || !this.pos || world.state !== 'play' || player.hidden) return; const d = Math.hypot(this.pos.x - player.x, this.pos.z - player.z); if (d > 1.3 || Math.abs((this.pos.y - (player.y || 0)) - 1) > 1.4) return; const v = this.pos.clone().sub(camera.position).normalize(); if (v.dot(camFwd()) < 0.6) return; offerAction(TR('定点カメラを回収する'), () => this.pickUp()); },
   // この位置が、定点カメラにちゃんと映っているか（スマホと同じく、真っ暗なら映らない）
   sees(pos, maxD, ignore) {
     if (!this.placed || this.cap <= 0 || world.dark) return false; const C = GEAR.fixCam;
@@ -11535,13 +11570,15 @@ const FIXCAM = {
     return q.some(p => this.sees(p, 20, []));
   },
   tick(dt) {
+    if (this.framing && (world.state !== 'play' || world.capture)) this.endFrame(true);
+    if (this.framing) { if (world.selfie) SELF.set(false); if (zoomTarget !== 1) setZoom(1); }   // 画角を決める間は、インカメラ・ズームは使えない
     if (!this.placed || world.state !== 'play') { this.recOn = false; return; }
     this.recOn = this.cap > 0 && (world.t - this.hitT < 0.6 || this.monsterInView());
     if (this.recOn) { this.cap = Math.max(0, this.cap - dt); if (this.cap <= 0) toast(TR('定点カメラの容量がいっぱいになった'), 2000); }
     if (this.led) this.led.visible = this.recOn ? (world.t * 2 % 1) < 0.6 : false;
     this.ui();
   },
-  showInset() { return this.placed && this.recOn && rec.active && world.state === 'play' && !world.selfie; },   // スマホでも録画中なら2カメ
+  showInset() { return this.placed && this.recOn && rec.active && world.state === 'play' && !world.selfie && !this.framing; },   // スマホでも録画中なら2カメ
   ui() { let el = $('#fixCap'); if (!el) { const c = $('#cap'); if (!c) return; el = document.createElement('div'); el.id = 'fixCap'; c.after(el); } el.style.display = this.placed ? '' : 'none'; const s2 = Math.ceil(this.cap); el.textContent = `📹 ${TR('定点')} 0:${String(s2).padStart(2, '0')}${this.recOn ? ' ●' : ''}`; el.classList.toggle('rec', this.recOn); },
 };
 /* リングライト：鏡やインカメラに映る主人公の手元（両手の間）に付ける */
@@ -11550,7 +11587,8 @@ const RING = {
   build() {
     if (this.g || !avatar.ready) return;
     const g = new THREE.Group();
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.013, 10, 40), new THREE.MeshBasicMaterial({ color: 0xfff6dc, toneMapped: false })); g.add(ring);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.013, 10, 40), new THREE.MeshLambertMaterial({ color: 0x111113 })); g.add(ring);   // 2026-11-14 輪の外側・裏は黒
+    const glow = new THREE.Mesh(new THREE.RingGeometry(0.089, 0.111, 48), new THREE.MeshBasicMaterial({ color: 0xfff6dc, toneMapped: false })); glow.position.z = 0.0135; g.add(glow);   // 光るのは顔の側の面だけ
     const ph = new THREE.Mesh(new THREE.BoxGeometry(0.068, 0.135, 0.008), new THREE.MeshLambertMaterial({ color: 0x18181c })); ph.position.z = 0.004; g.add(ph);
     const arm = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.03, 0.01), new THREE.MeshLambertMaterial({ color: 0x2a2a2e })); arm.position.set(0, -0.082, 0.004); g.add(arm);
     const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.016, 0.1, 10), new THREE.MeshLambertMaterial({ color: 0x232327 })); grip.position.set(0, -0.15, 0.004); g.add(grip);
@@ -12460,7 +12498,7 @@ const INV = {
       const txt = v => TR(D.desc) + '　' + TR(v ? '効果：オン' : '効果：オフ');
       el.querySelector('b').innerHTML = `${TR(D.name)}<span class="pTag">${TR('ずっと')}</span>`; el.querySelector('small').textContent = txt(PERM.active(id));
       el.addEventListener('click', e => { e.stopPropagation(); const v = !PERM.active(id); PERM.setOn(id, v); el.classList.toggle('on', v); el.querySelector('small').textContent = txt(v); });
-      if (id === 'fixcam' && PERM.active(id)) { const b = document.createElement('button'); b.className = 'invAct'; b.type = 'button'; b.textContent = TR(FIXCAM.placed ? '置いた' : 'ここに置く'); b.disabled = FIXCAM.placed; b.addEventListener('click', e => { e.stopPropagation(); if (FIXCAM.placed) return; this.hide(); setTimeout(() => FIXCAM.place(), 60); }); el.appendChild(b); }   // 2026-11-14 定点カメラを今いる場所・向きに置く
+      if (id === 'fixcam' && PERM.active(id)) { const b = document.createElement('button'); b.className = 'invAct'; b.type = 'button'; b.textContent = TR(FIXCAM.placed ? '設置中' : '置く'); b.disabled = FIXCAM.placed; b.addEventListener('click', e => { e.stopPropagation(); if (FIXCAM.placed) return; this.hide(); setTimeout(() => FIXCAM.startFrame(), 60); }); el.appendChild(b); }   // 2026-11-14 定点カメラ：画角を決める画面へ（設置中は、カメラに近づいて回収すると置き直せる）
       L.appendChild(el);
     }
     $('#invEmpty').style.display = own.length || PERM.owned().length ? 'none' : 'block';
@@ -12954,7 +12992,7 @@ const PERM = {
     gunmic: { name: 'ガンマイク', desc: '狙った音を拾う外付けマイク。怪異の足音や声が少し遠くまで、方向も分かりやすく聞こえる。' },
     batt: { name: '予備バッテリー', desc: '大容量の予備バッテリー。スマホの電池が少しゆっくり減る。' },
     wipe: { name: 'ワイプカメラ', desc: '外カメラで録画している間、画面の隅にインカメラの小窓が映る。自分のリアクションと背後の怪異も一緒に録画できる。' },
-    fixcam: { name: '定点カメラ', desc: '2台目のスマホ。1周に1台、持ち物から好きな場所に置ける。画角に怪異が入ると自動で録画（15秒まで）。持っているとメモリーカードは出なくなる。' },
+    fixcam: { name: '定点カメラ', desc: '小さな三脚に付けた2台目のスマホ。持ち物から画角を決めて好きな場所に置ける（回収して置き直しもできる）。画角に怪異が入ると自動で録画（1周で15秒まで）。持っているとメモリーカードは出なくなる。' },
   },
   load() {
     if (this.d) return this.d; let d = null; try { d = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) { }
@@ -13024,7 +13062,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.13.6';
+const VERSION = '0.13.7';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -13114,11 +13152,19 @@ const RKLIST = {
       const right = i < ri ? cui('rkDone') : i === ri ? cui('rkNow') : i === ri + 1 ? `${cui('rkReq', r[2])}<br>${cui('rkNeed', r[2] - d.total)}` : cui('rkHidden');
       const name = i > ri + 1 ? cui('rkHidden') : yrankName(i);
       const gi = PERM.rankItem(i), mul = i > ri + 1 ? '' : `<small class="rkM">${cui('rkMul', r[3].toFixed(2))}</small>`;
-      const gear = i === 0 ? '' : gi ? `<span class="rkG${PERM.has(gi) ? ' got' : ''}"><img src="${PERM_IMG[gi]}" alt="">${PERM.has(gi) ? cui('rkGot') : cui('rkGet')}${TR(PERM.DEFS[gi].name)}</span>` : `<span class="rkG"><i>？</i>${cui('rkGet')}${cui('rkHidden')}</span>`;   // 2026-11-14 入手できる配信機材の予告
+      const gear = i === 0 ? '' : gi ? `<span class="rkG${PERM.has(gi) ? ' got' : ''}" data-gear="${gi}" data-r="${i}"><img src="${PERM_IMG[gi]}" alt="">${PERM.has(gi) ? cui('rkGot') : cui('rkGet')}${TR(PERM.DEFS[gi].name)}</span>` : `<span class="rkG"><i>？</i>${cui('rkGet')}${cui('rkHidden')}</span>`;   // 2026-11-14 入手できる配信機材の予告
       return `<li class="${cls}"><span class="rkI">${i + 1}</span><span class="rkN">${name}${mul}${gear}</span><span class="rkR" style="text-align:right">${right}</span></li>`;
     }).reverse().join('');
     el.innerHTML = `<div class="rkBox"><h4>${cui('rkList')}</h4><div class="rkMerit"><b>${cui('rkMerit')}</b>${cui('rkMeritT')}</div><div class="rkNote">${cui('rkNote')}</div><ol>${rows}</ol><button class="rkClose" type="button">${TR('閉じる')}</button></div>`;
     el.classList.add('show');
+    for (const g of el.querySelectorAll('[data-gear]')) g.addEventListener('click', e => { e.stopPropagation(); this.gear(g.dataset.gear, +g.dataset.r); });   // 2026-11-14 機材の詳細
+  },
+  gear(id, r) {
+    const el = $('#rkList'), d = ACH.load(), ri = yrankIdx(d.total), en = LANG === 'en', D = PERM.DEFS[id], known = r <= ri + 1;
+    let pop = el.querySelector('.rkPop'); if (!pop) { pop = document.createElement('div'); pop.className = 'rkPop'; el.appendChild(pop); pop.addEventListener('click', e => { e.stopPropagation(); pop.classList.remove('show'); }); }
+    const st = PERM.has(id) ? (en ? 'Owned — toggle it in your items' : '入手済み（持ち物でオン・オフできます）') : known ? (en ? `Unlocks at ${yrankName(r)} (${Number(YRANK[r][2]).toLocaleString()} subscribers)` : `${yrankName(r)}（登録者 ${Number(YRANK[r][2]).toLocaleString('ja-JP')}人）で入手`) : (en ? 'Unlocks at a higher rank' : 'もっと上のランクで入手');
+    pop.innerHTML = `<div class="rkPopB"><img src="${PERM_IMG[id]}" alt=""><b>${TR(D.name)}</b><p>${TR(D.desc)}</p><small>${st}</small><button type="button">${TR('閉じる')}</button></div>`;
+    pop.classList.add('show');
   },
 };
 function yrankIdx(total) { let i = 0; for (let k = 0; k < YRANK.length; k++) if ((total || 0) >= YRANK[k][2]) i = k; return i; }
@@ -14129,7 +14175,7 @@ addEventListener('keydown', e => {
   else if ($('#saveNote').classList.contains('show')) { $('#saveNote').classList.remove('show'); e.stopPropagation(); }
 }, true);
 addEventListener('resize', () => { if (VED.on) VED.uiMarks(); });
-if (TEST && window.__G) Object.assign(window.__G, { SIDE });   // 2026-11-14 確認用
+if (TEST && window.__G) Object.assign(window.__G, { SIDE, RKLIST, RING });   // 2026-11-14 確認用
 
 setInterval(() => CHATLOG.tick(), 400);
 setInterval(() => { try { VOICE.tick(); } catch (e) { if (TEST || DEV) console.warn('VOICE', e); } }, 33);   // 2026-11-14 声の判定（約30回/秒）
