@@ -109,7 +109,7 @@
     white-space: normal;
     overflow-wrap: anywhere;
     text-wrap: balance;
-    touch-action: manipulation;
+    touch-action: none;   /* 2026-11-15 manipulation だと、ここを押さえたままのピンチで拡大されていた */
   }
   #actBtn.show { display: grid; place-items: center; }
 }
@@ -3675,6 +3675,24 @@ function toast(msg, ms = 2600) { const el = $('#toast'); el.textContent = msg; e
 let actFn = null, actLabel = '', actKey = false, actExit = false;
 function offerAction(label, fn, opt) { actLabel = label; actFn = fn; actKey = !!(opt && opt.key); actExit = !!(opt && opt.exit); }   // key: 鍵を使う操作（ボタンを黄色に）
 hudTap($('#actBtn'), () => { if (actFn) actFn(); });
+/* 2026-11-15 スマホ：ピンチやダブルタップで画面が拡大されて戻せなくなる／長押しで丸いレンズ（拡大鏡）が出る のを防ぐ
+   ・iPhoneのSafariは「拡大しない」の指定を無視するので、拡大の操作そのものを止める
+   ・それでも拡大されてしまった時は、指を離してから元の大きさに戻す */
+const NOZOOM = {
+  init() {
+    const isIn = t => t && t.closest && t.closest('input,textarea,select,[contenteditable="true"]');
+    for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, e => { if (e.cancelable) e.preventDefault(); }, { passive: false });
+    document.addEventListener('touchmove', e => { if ((e.touches.length > 1 || (e.scale && e.scale !== 1)) && e.cancelable) e.preventDefault(); }, { passive: false });
+    for (const ev of ['selectstart', 'contextmenu']) document.addEventListener(ev, e => { if (!isIn(e.target)) e.preventDefault(); });
+    // ゲーム画面（視点・スティック）と丸いボタンは、指を置いた時点でブラウザの長押し・ダブルタップの動きを止める（押した判定は別の仕組みなので影響なし）
+    const stop = e => { if (e.cancelable && !isIn(e.target)) e.preventDefault(); };
+    for (const el of [touchEl, ...document.querySelectorAll('#hud .btn, #actBtn')]) el.addEventListener('touchstart', stop, { passive: false });
+    const vv = window.visualViewport; if (!vv) return; let tm = 0;
+    const fix = () => { clearTimeout(tm); if (vv.scale <= 1.02) return; tm = setTimeout(() => { if (vv.scale <= 1.02) return; const m = document.querySelector('meta[name=viewport]'); if (!m) return; const c = m.getAttribute('content'); m.setAttribute('content', c.replace(/,?\s*maximum-scale=[\d.]+/, '') + ',maximum-scale=1.0001'); setTimeout(() => m.setAttribute('content', c), 60); window.scrollTo(0, 0); }, 500); };
+    vv.addEventListener('resize', fix); document.addEventListener('touchend', () => { if (vv.scale > 1.02) fix(); }, { passive: true });
+  },
+};
+NOZOOM.init();
 /* =========================================================
    2026-11-14 コントローラー（PS・Xbox・Switchプロコン）。ブラウザの Gamepad API。つないだら自動で使える
    ・左スティック：歩く／右スティック：見回す／R2(RT)：録画／○(A)：調べる・開ける・隠れる／△(Y)：インカメラ
@@ -13607,7 +13625,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.14.21';
+const VERSION = '0.14.22';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
