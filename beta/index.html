@@ -13647,7 +13647,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.14.28';
+const VERSION = '0.14.29';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -13852,7 +13852,10 @@ const NICK = {
     raw = String(raw || '').normalize('NFKC').trim(); yomi = String(yomi || '').normalize('NFKC').trim();
     // 2026-11-15 敬称（くん・ちゃん・さん・様・君・chan など）は外してから考える（げんきくん → げんき）
     const HON = /[ 　]*(くん|クン|ちゃん|チャン|さん|サン|さま|サマ|様|君|殿|どの|ちゃま|chan|kun|san|sama)$/i, cut = t => { return t.replace(HON, '').trim(); };
-    raw = cut(raw); yomi = cut(yomi);
+    // 2026-11-15 「げんきチャンネル」「げんきの実況」「ゆいch」は、前の部分が名前（こんげん〜）。「心霊チャンネル」のような一般的な言葉は除く
+    const CH = /^(.+?)[ 　・_-]*(?:の)?[ 　・_-]*(?:ゲーム実況|実況チャンネル|ゲームチャンネル|チャンネル|ちゃんねる|channel|ch\.?|tv|実況|じっきょう|配信|はいしん|公式|の部屋|部屋)$/i, chc = t => { const m = t.match(CH); return m ? m[1].trim() : t; };
+    raw = cut(chc(raw)); yomi = cut(chc(yomi));
+    if (/^(心霊|しんれい|シンレイ|ホラー|ほらー|怪談|オカルト|ゲーム|げーむ)$/.test(raw)) return null;
     const KANA = /^[ぁ-ゖァ-ヺー ]+$/, KATA = /^[ァ-ヺー]+$/, KAN = '[㐀-鿿々〆ヶ]';
     const ng = /ch|チャンネル|ちゃんねる|channel|tv|実況|じっきょう|ゲーム|げーむ|game|公式|こうしき|配信|はいしん/i;
     if (!raw || ng.test(raw) || ng.test(yomi)) return null;
