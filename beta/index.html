@@ -851,7 +851,7 @@
   <div id="resSum"><div id="resCount">今回の撮れ高 <b id="resCountN">0</b>回</div><div id="likeRow"><div id="likeHero"><i class="like" id="likeIcon"></i><b id="evScore">0</b></div><div id="likeSub">いいね</div></div></div>
   <div id="replayRow"><div id="replayWrap"><video id="replay" playsinline controls preload="auto"></video><div id="noVideo">持ち帰った映像はありません</div></div><div id="resChatHost"></div></div>
   <div id="evWrap"><div id="missed"></div><div id="evHead"><span>いいねの内訳</span><span id="evCount"></span></div><div id="evList"></div></div>
-  <div class="rowBtns"><button class="clip" id="clipBtn"><span id="clipL">✂ 動画を切り抜き編集</span><em id="clipNew">おすすめ</em></button></div>
+  <div class="rowBtns"><button class="clip" id="clipBtn"><span id="clipL">動画を切り抜き編集</span><em id="clipNew">おすすめ</em></button></div>
   <div id="clipSub">切り抜き・コメント・結果カード</div>
   <div class="rowBtns sub"><button id="saveBtn">そのまま保存</button><button id="shareBtn">そのままシェア</button></div>
   <div class="rowBtns"><button class="pri" id="againBtn">もう一度入る</button></div>
@@ -1342,7 +1342,7 @@ function plane(w, h, mat, x, y, z, ry = 0, rx = 0, o = {}) {
 let LANG = 'ja'; try { const l = localStorage.getItem('yt_lang'); if (l === 'en' || l === 'ja') LANG = l; } catch (e) { }
 const EN = {
   '机の陰で息を殺す': 'Holding your breath behind a desk', '窓の下をくぐり抜ける': 'Sneaking under the windows', 'もはや筋トレ配信': 'Basically a workout stream now', 'しゃがむ': 'Crouch', '立つ': 'Stand', 'しゃがむ・立つ': 'Crouch / stand', 'しゃがむと窓の下や机の陰に隠れられます': 'Crouch to hide below windows or behind desks',
-  '✂ 動画を切り抜き編集': '✂ Clip & edit', 'おすすめ': 'Recommended', '切り抜き・コメント・結果カード': 'Trim · comments · result card', 'そのまま保存': 'Save as is', 'そのままシェア': 'Share as is',
+  '動画を切り抜き編集': 'Clip & edit', 'おすすめ': 'Recommended', '切り抜き・コメント・結果カード': 'Trim · comments · result card', 'そのまま保存': 'Save as is', 'そのままシェア': 'Share as is',
   '何をシェアする？': 'What to share?', 'X向け': 'For X', 'TikTok・インスタ向け': 'For TikTok / Instagram', '動画': 'Video', '結果画像': 'Result image', '投稿文': 'Post text', '#幽tuber とURL（コピーもします）': '#幽tuber and the link (also copied)',
   'シェアする': 'Share', '結果画像だけ保存': 'Save result image only', 'この環境ではシェアできないため、保存してから投稿してください': 'Sharing isn’t available here, so the files were saved. Please post them from your app.', '（投稿文はコピーしました）': ' (Post text copied.)',
   '共有の画面で': 'In the share sheet,', '『ビデオを保存』': '“Save Video”', 'を選ぶと写真に入ります': ' saves it to Photos.', '保存へ進む': 'Continue', '保存しました': 'Saved',
@@ -13630,7 +13630,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.14.23';
+const VERSION = '0.14.24';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
