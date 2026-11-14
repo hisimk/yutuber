@@ -13227,7 +13227,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.14.2';
+const VERSION = '0.14.3';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -14060,33 +14060,34 @@ const VED = {
     $('#vedit').classList.remove('show', 'list', 'exp'); RBGM.level();
   },
   // ---- 2026-11-14 マイク音・ゲーム音（別録り）。動画の音は消して、2本を動画の時刻に合わせて鳴らす
+  //   iPhone・MacのSafariでは、画面に触れた瞬間以外に <audio> を再生できず、書き出した動画にゲーム音が入らないことがあった。
+  //   → 音を先にすべて読み込み（デコード）、Web Audio で直接鳴らす。読めない・無音の時は、動画にもともと入っている音（ゲーム音＋マイク音）を使う
   async sideOpen(sd, n) {
     this.sideClose(); if (!sd || !this.mix || !sd.game || sd.game.length !== n) return;
     try {
-      const mk = (b, gn) => { if (!b || !b.size) return null; const u = URL.createObjectURL(b); this.surls.push(u); const a = new Audio(); a.preload = 'auto'; a.src = u; const s = A.ctx.createMediaElementSource(a); s.connect(gn); this.srcs.push(s); return a; };
+      const dec = async b => { if (!b || !b.size) return null; const ab = await b.arrayBuffer(); return await new Promise((ok, ng) => { try { const p = A.ctx.decodeAudioData(ab, ok, ng); if (p && p.then) p.then(ok, ng); } catch (e) { ng(e); } }); };
+      const peak = B => { let m = 0; if (!B) return 0; for (let c = 0; c < B.numberOfChannels; c++) { const d = B.getChannelData(c); for (let i = 0; i < d.length; i += 37) m = Math.max(m, Math.abs(d[i])); } return m; };
       this.gg = A.ctx.createGain(); this.gg.connect(this.mix); this.gm = A.ctx.createGain(); this.gm.connect(this.mix);
-      this.ag = sd.game.map(b => mk(b, this.gg)); if (sd.mic && sd.mic.length === n) this.am = sd.mic.map(b => mk(b, this.gm));
-      let bad = false; const els = [...this.ag, ...this.am].filter(Boolean);
-      await Promise.all(els.map(a => new Promise(ok => { if (a.readyState >= 1) ok(); else { a.addEventListener('loadedmetadata', ok, { once: true }); a.addEventListener('error', () => { bad = true; ok(); }, { once: true }); setTimeout(ok, 4000); } })));
-      if (bad || this.ag.some(a => !a)) throw new Error('side');
-      this.split = true; this.hasMic = this.am.some(Boolean);
-    } catch (e) { console.warn('個別の音を使えません', e); this.sideClose(); }
+      this.bg = await Promise.all(sd.game.map(dec)); if (this.bg.some(b => !b)) throw new Error('side-game');
+      if (Math.max(...this.bg.map(peak)) < 0.003) throw new Error('side-silent');   // ゲーム音が空（録れていない）
+      if (sd.mic && sd.mic.length === n) { this.bm = await Promise.all(sd.mic.map(dec)); if (this.bm.some(b => !b)) throw new Error('side-mic'); }
+      this.split = true; this.hasMic = this.bm.some(Boolean);
+    } catch (e) { console.warn('個別の音を使えません（動画の音を使います）', e); this.sideClose(); }
   },
   sideClose() {
-    for (const a of [...(this.ag || []), ...(this.am || [])]) if (a) try { a.pause(); a.removeAttribute('src'); a.load(); } catch (e) { }
-    (this.surls || []).forEach(u => URL.revokeObjectURL(u)); for (const g of [this.gg, this.gm]) try { g && g.disconnect(); } catch (e) { }
-    this.ag = []; this.am = []; this.surls = []; this.split = false; this.hasMic = false; this.gg = this.gm = null;
+    this.sideStop(); for (const g of [this.gg, this.gm]) try { g && g.disconnect(); } catch (e) { }
+    this.bg = []; this.bm = []; this.np = {}; this.split = false; this.hasMic = false; this.gg = this.gm = null;
   },
-  vsync() {   // 毎フレーム：今の区間の2本だけ鳴らす。80ms以上ずれたら合わせ直し、小さいずれは速さを少し変えて寄せる
-    if (!this.split) return; const v = this.vids[this.cur], run = !!(v && !v.paused && !v.ended && !v.seeking && v.readyState >= 2) && this.cardT < 0;
-    for (let k = 0; k < this.ag.length; k++) for (const a of [this.ag[k], this.am[k]]) {
-      if (!a) continue;
-      if (k !== this.cur || !run) { if (!a.paused) a.pause(); continue; }
-      const t = v.currentTime, d = a.currentTime - t, end = isFinite(a.duration) && a.duration > 0 ? a.duration : 1e9;
-      if (t >= end - 0.02) { if (!a.paused) a.pause(); continue; }
-      if (a.paused) { if (Math.abs(d) > 0.02) try { a.currentTime = t; } catch (e) { } a.playbackRate = 1; a.play().catch(() => { }); }
-      else if (Math.abs(d) > 0.08) { if (!a.seeking) try { a.currentTime = t; a.playbackRate = 1; } catch (e) { } }
-      else if (!a.seeking) { const r = Math.abs(d) > 0.02 ? (d > 0 ? 0.97 : 1.03) : 1; if (a.playbackRate !== r) a.playbackRate = r; }
+  sideStop(which) { const np = this.np || {}; for (const w of which ? [which] : ['g', 'm']) { const x = np[w]; if (x) { try { x.s.stop(); } catch (e) { } try { x.s.disconnect(); } catch (e) { } np[w] = null; } } },
+  vsync() {   // 毎フレーム：今の区間の音を、動画の再生位置に合わせて鳴らす（80ms以上ずれたら鳴らし直す）
+    if (!this.split || !A.ctx) return; const v = this.vids[this.cur], run = !!(v && !v.paused && !v.ended && !v.seeking && v.readyState >= 2) && this.cardT < 0;
+    this.np = this.np || {}; const now = A.ctx.currentTime;
+    for (const [w, list, gn] of [['g', this.bg, this.gg], ['m', this.bm, this.gm]]) {
+      const B = list && list[this.cur], x = this.np[w];
+      if (!run || !B) { if (x) this.sideStop(w); continue; }
+      const t = v.currentTime; if (t >= B.duration - 0.02) { if (x) this.sideStop(w); continue; }
+      if (x && x.k === this.cur && Math.abs(x.off + (now - x.at) - t) <= 0.08) continue;
+      this.sideStop(w); const s = A.ctx.createBufferSource(); s.buffer = B; s.connect(gn); s.start(now, t); this.np[w] = { s, k: this.cur, at: now, off: t };
     }
   },
   applyVol(vs) {   // プレビューも書き出しも同じ経路（mix）なので、同じ音量になる
