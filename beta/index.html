@@ -4,21 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>幽tuber -撮レ高ヲ狙エ-</title>
-<meta name="description" content="夜の旧校舎で、心霊現象をスマホで撮って「いいね」を稼げ。撮った動画は切り抜いてそのままSNSへ。スマホでもPCでも、ブラウザですぐ遊べる実況ホラー撮影ゲーム。">
+<meta name="description" content="夜の旧校舎で、心霊現象をスマホで撮って「いいね」と「コメント」を稼げ！撮った動画は切り抜いてそのままSNSへ。スマホでもPCでも、ブラウザですぐ遊べる実況ホラー撮影ゲーム。">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="幽tuber">
 <meta property="og:title" content="幽tuber -撮レ高ヲ狙エ-">
-<meta property="og:description" content="夜の旧校舎で、心霊現象をスマホで撮って「いいね」を稼げ。撮った動画は切り抜いてそのままSNSへ。ブラウザですぐ遊べる実況ホラー撮影ゲーム。">
+<meta property="og:description" content="夜の旧校舎で、心霊現象をスマホで撮って「いいね」と「コメント」を稼げ！撮った動画は切り抜いてそのままSNSへ。ブラウザですぐ遊べる実況ホラー撮影ゲーム。">
 <meta property="og:url" content="https://hisimk.github.io/yutuber/">
-<meta property="og:image" content="https://hisimk.github.io/yutuber/og.jpg">
+<meta property="og:image" content="https://hisimk.github.io/yutuber/og.jpg?v=2">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="夜の教室を背景にした「幽tuber -撮レ高ヲ狙エ-」のロゴ">
 <meta property="og:locale" content="ja_JP">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="幽tuber -撮レ高ヲ狙エ-">
-<meta name="twitter:description" content="夜の旧校舎で、心霊現象を撮って「いいね」を稼げ。ブラウザですぐ遊べる実況ホラー撮影ゲーム。">
-<meta name="twitter:image" content="https://hisimk.github.io/yutuber/og.jpg">
+<meta name="twitter:description" content="夜の旧校舎で、心霊現象を撮って「いいね」と「コメント」を稼げ！ブラウザですぐ遊べる実況ホラー撮影ゲーム。">
+<meta name="twitter:image" content="https://hisimk.github.io/yutuber/og.jpg?v=2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13092,6 +13092,16 @@ const LOGOANIM = {   // 2026-11-14 タイトルロゴの登場（AEの参考動�
       { offset: at(1.6), opacity: 1, filter: 'brightness(1)', transform: 'translateX(0)' }, { offset: 1, opacity: 1, filter: 'brightness(1)', transform: 'none' }]);   // 2026-11-14 「幽」の後ろから右へ飛び出し、少し行き過ぎて戻る
     an(E.sub, [{ offset: 0, opacity: 0, filter: 'brightness(.3)' }, { offset: at(1.15), opacity: 0, filter: 'brightness(.3)', easing: eo }, { offset: at(1.45), opacity: 1, filter: 'brightness(.8)' }, { offset: at(1.6), opacity: 1, filter: 'brightness(1)' }, { offset: 1, opacity: 1, filter: 'brightness(1)' }]);
     an(E.tri, [{ offset: 0, opacity: 0, transform: 'scale(.4)' }, { offset: at(1.6), opacity: 0, transform: 'scale(.4)', easing: bk }, { offset: at(1.74), opacity: 1, transform: 'scale(1)' }, { offset: 1, opacity: 1, transform: 'scale(1)' }]);
+    setTimeout(() => this.idle(), 2000);   /* 2026-11-15 登場が終わったら、おばけがふわふわ */
+  },
+  /* 2026-11-15 おばけ：上下にふわふわ（2秒で1往復）。ときどき（7〜15秒ごと）フェードで約2秒消えて、また現れる */
+  idle() {
+    const g = this.el.ghost; if (!g || !g.animate || this.idling) return; this.idling = true;
+    g.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-20%)' }, { transform: 'translateY(0)' }], { duration: 2000, iterations: Infinity, easing: 'ease-in-out' });
+    const fade = () => setTimeout(() => {
+      if (world.state === 'title' && !document.hidden) g.animate([{ opacity: 1 }, { opacity: 0, offset: 0.2 }, { opacity: 0, offset: 0.8 }, { opacity: 1 }], { duration: 3000, easing: 'ease-in-out' });
+      fade(); }, 7000 + Math.random() * 8000);
+    fade();
   },
 };
 LOGOANIM.build();
@@ -13578,7 +13588,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.14.12';
+const VERSION = '0.14.13';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
