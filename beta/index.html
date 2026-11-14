@@ -4792,7 +4792,7 @@ const WD = {
       let ok = false;
       if (dd < 9.5 && enemySees(head)) {
         const fwd = V(Math.sin(this.heading + SG.ovYaw), 0, Math.cos(this.heading + SG.ovYaw)); const to = V(player.x - this.pos.x, 0, player.z - this.pos.z).normalize();
-        ok = fwd.dot(to) > Math.cos(0.95) || dd < 1.6 || NOISE.fresh(this.pos);   // 2026-11-14 鈴や笛の音が聞こえたら、向きに関係なく気づく（見通せる時だけ）
+        ok = fwd.dot(to) > Math.cos(0.95) || dd < 1.6 || NOISE.fresh(this.pos) || (PHAN.on && -fwd.dot(to) > Math.cos(0.95));   // 2026-11-15 幻の怪異は背中の頭（人体模型）でも見る   // 2026-11-14 鈴や笛の音が聞こえたら、向きに関係なく気づく（見通せる時だけ）
       } else if (!NOISE.used && NOISE.fresh(this.pos, 0.8) && !this.scripted && !this.borrowed && this.wait <= 0) { NOISE.used = true; if (chance(0.35)) this.goTo(V(NOISE.x, NOISE.y, NOISE.z)); }   // 見えない所の音：ときどき様子を見に来る
       this.detect = ok ? this.detect + dt : Math.max(0, this.detect - dt * 0.5);
       if (this.detect > 0.6) { this.detect = 0; CH.start(); }
@@ -4857,7 +4857,8 @@ const CH = {
     if (PHAN.on) speed = CONFIG.walkSpeed * 1.2;   // 2026-11-15 合体した化け物：最初の歩く速さの1.2倍   // 2026-11-13 0.9 → 1.0
     const target = this.state === 'hunt' ? V(player.x, player.y, player.z) : this.lastSeen;
     const dP = distTo(WD.pos.x, WD.pos.z) + (Math.abs(WD.pos.y - player.y) > 1.0 ? 30 : 0);   /* 別の階なら届かない */
-    if (this.state !== 'hunt' && distTo(WD.pos.x, WD.pos.z) > CONFIG.loseDist && Math.abs(WD.pos.y - player.y) < 1.0) { this.stop(); return; }   // 離れすぎると見失う
+    if (this.state !== 'hunt' && distTo(WD.pos.x, WD.pos.z) > CONFIG.loseDist && Math.abs(WD.pos.y - player.y) < 1.0) { this.stop(); return; }
+    if (this.state !== 'hunt' && Math.abs(WD.pos.y - player.y) > 2.2 && !stairZone(WD.pos.x, WD.pos.z) && world.t - this.seenAt > 5) { this.stop(); return; }   // 2026-11-15 別の階にいて、しばらく見えていなければ見失う   // 離れすぎると見失う
     this.repath -= dt;
     const direct = world.t > (this.noDirect || 0) && !segBlocked(WD.pos.x, WD.pos.z, target.x, target.z, WD.pos.y > 1.6 ? 1 : 0);   // 2026-11-14 壁を横切る近道はしない
     if (direct && ((los && dP < 8) || (this.state === 'hunt' && dP < 6 && clearLine(V(WD.pos.x, WD.pos.y + 1.5, WD.pos.z))))) { WD.path = []; WD.extra = target.clone(); }
@@ -14287,7 +14288,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.7';
+const VERSION = '0.15.8';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -15106,7 +15107,7 @@ class ChatView {
   reset() { this.list.textContent = ''; this.shown = 0; this.lastG = 0; this.items = []; this.follow = true; this.btn.classList.remove('show'); cancelAnimationFrame(this.raf); this.raf = 0; }
   loop() { if (this.raf) return; const f = () => { this.raf = 0; this.sync(); if (!this.video.paused && !this.video.ended && this.el.isConnected) this.raf = requestAnimationFrame(f); }; this.raf = requestAnimationFrame(f); }
   ban(i, d) {
-    const D = this.data, B = D.ban || (D.ban = []); if (!B.includes(i)) { B.push(i); const x = D.items && D.items[i]; if (x && x[1] === -1) PHAN.onBan(); }   // 2026-11-15 荒らしをBANすると幻の怪異の段階が進む
+    const D = this.data, B = D.ban || (D.ban = []); if (!B.includes(i)) { B.push(i); const x = D.items && D.items[i]; if (x && x[1] === -1 && x[2] === 'troll') PHAN.onBan(); }   // 2026-11-15 荒らしをBANすると幻の怪異の段階が進む
     this.shown = Math.max(0, this.shown - 1);   // 一覧を作り直さず、この行だけ「BANされました」と見せてから消す
     d.classList.add('ban'); d.querySelector('.tx').textContent = cui('banned'); setTimeout(() => { d.remove(); }, 900);
     try { if (typeof PAD !== 'undefined' && PAD.rumble) PAD.rumble(0.3, 0.3, 80); } catch (e) { }
@@ -15343,7 +15344,7 @@ const VED = {
       if (this.hidden.has(it.i)) continue; const text = lang === 'en' ? it.en : it.ja, w = g.measureText(text).width;
       let L = -1; for (let k = 0; k < n; k++) if (free[k] <= it.g) { L = k; break; }
       if (L < 0) continue;   // 空いた段がなければ間引く（後でまとめて流さない）
-      const tv = it.id === 'troll' ? v * 0.72 : v, o = { g: it.g, L, w, text, end: it.g + (W + w) / tv, id: it.id, v: tv, troll: it.id === 'troll' };   // 2026-11-15 荒らしは赤く、少しゆっくり流れる
+      const tr = /^troll/.test(it.id || ''), tv = tr ? v * 0.72 : v, o = { g: it.g, L, w, text, end: it.g + (W + w) / tv, id: it.id, v: tv, troll: tr };   // 2026-11-15 荒らしは赤く、少しゆっくり流れる
       if (CD.reply.has(it.id)) { const p = out.slice().reverse().find(q => CD.replyTo.has(q.id) && it.g - q.g >= 0 && it.g - q.g < 4.5); if (!p) continue; o.par = p; }   // 返答は、親コメントが出ている時だけ
       if (CD.react.has(it.id)) { const m = this.marks.filter(q => q.g <= it.g + 0.2 && it.g - q.g < 4); if (m.length) o.anc = m[m.length - 1].g; }   // 何に反応したか（直前の撮れ高）
       o.lead = CD.lead.get(it.id) || 0; o.mic = CD.micDep.has(it.id) ? (CD.micLoudDep.has(it.id) ? 2 : 1) : 0; o.game = CD.gameDep.has(it.id);   // この秒数より前から映っていないと意味が通らない（静けさ・止まっている等）
@@ -15836,7 +15837,8 @@ const PHAN = {
   onResult() { },   // 2026-11-15 段階3へは、結果画面ではなく段階2での通算20件BANで進む
   // ── 周のはじめ
   begin() {
-    this.runSt = this.stage(); this.on = this.runSt === 3; world.phanRun = this.on;
+    this.runSt = this.stage(); this.rand = this.runSt !== 3 && (chance(0.01) || ((TEST || BETA) && /[?&]phanrand\b/.test(location.search)));   // 2026-11-15 ごくまれに（1%）段階に関係なく出る。この周だけ（続けて挑戦はできない）
+    this.on = this.runSt === 3 || this.rand; world.phanRun = this.on; this.partsOff(); if (this.h0 && SG.bones && SG.bones.Head) SG.bones.Head.position.copy(this.h0);
     this.hits = 0; this.mode = 'idle'; this.nextHunt = 0; this.trackT = 0; this.sndT = 3; this.tintK = this.on ? 1 : 0; this.wasCh = false; this.dead = null;
     this.troll0 = ((this.runSt === 0 && chance(0.25)) || (this.runSt === 9 && chance(0.1)) || ((TEST || BETA) && /[?&]troll\b/.test(location.search)));   // 段階0：数周に1回くらい
     if (this.tag) this.tag.visible = false;
@@ -15885,11 +15887,11 @@ const PHAN = {
       if (keepN > 0 && src.length) for (let i = 0; i < keepN; i++) keep.push(src[Math.min(src.length - 1, Math.floor((i + 0.5) * src.length / keepN))]);
       d.items = [...new Set(keep)];
     }
-    else if (st === 3) {
+    if (this.on) {   /* 化け物の周（段階3・ランダム） */
       const ev = CHATLOG.ev || [], win = ev.find(e => e.k === 'phanWin'), tEnd = win ? win.t : maxR;
       for (let t = rnd2(3, 7); t < tEnd; t += rnd2(9, 16)) say(t, this.L.scared3, 'phanFear');
       for (const e of ev) if (e.k === 'phan' && e.n < 3) { const n = 3 + Math.floor(R() * 2); for (let i = 0; i < n; i++) say(e.t + 0.5 + i * rnd2(0.6, 1.1), this.L.hit, 'phanHit'); }
-      if (win) { const n = 18 + Math.floor(R() * 7); for (let i = 0; i < n; i++) say(win.t + 0.4 + i * rnd2(0.12, 0.3), this.L.win, 'phanWin'); }
+      if (win) { const n = 18 + Math.floor(R() * 7); for (let i = 0; i < n; i++) say(win.t + 0.4 + i * rnd2(0.12, 0.3), this.L.win, 'phanWin'); if (win.t + 2.6 <= maxR) out.push([Math.round((win.t + 2.6) * 100) / 100, -1, 'trollThanks', 'アリガトウ', 'THANK YOU']); }   // 2026-11-15 赤いアイコンが一度だけ
     }
     if (!out.length) return;
     d.items = d.items.concat(out).sort((a, b) => a[0] - b[0]); d.ph = st;
@@ -15940,8 +15942,8 @@ const PHAN = {
     if (!this.nextHunt) this.nextHunt = world.t + rnd(14, 24);
     if (CH.state === 'off' && this.wasCh) this.nextHunt = world.t + rnd(14, 26);   // 見失ったら、しばらくしてまた来る
     this.wasCh = CH.state !== 'off';
-    if (CH.state === 'off' && !WD.borrowed && !CAP.on && !world.capture && !player.hidden && world.t >= this.nextHunt) this.hunt();
-    if (CH.state !== 'off' && this.trackT > 0) { this.trackT -= dt; if (!player.hidden) { CH.lastSeen.set(player.x, player.y, player.z); CH.seenAt = world.t; if (CH.state === 'search') CH.state = 'chase'; } }
+    if (CH.state === 'off' && !WD.borrowed && !CAP.on && !world.capture && !player.hidden && !stairZone(player.x, player.z) && world.t >= this.nextHunt) this.hunt();
+    if (CH.state !== 'off' && this.trackT > 0) { this.trackT -= dt; if (!player.hidden && Math.abs(WD.pos.y - player.y) < 1.2) {   /* 2026-11-15 別の階にいる時は居場所を知らない */ CH.lastSeen.set(player.x, player.y, player.z); CH.seenAt = world.t; if (CH.state === 'search') CH.state = 'chase'; } }
     // 声と物音は混ぜこぜ（女の叫び・クモ女のささやき・人体模型のきしみ）
     this.sndT -= dt;
     if (CH.state !== 'off' && this.sndT <= 0 && SG.root.visible) {
@@ -15955,7 +15957,7 @@ const PHAN = {
   },
   // 少し離れた見えない所から現れて、追ってくる
   hunt() {
-    const cands = Object.keys(NAV).filter(k => { const n = NAV[k], y = n[3] || 0; if (['E1', 'E0', 'Aa'].includes(k) || Math.abs(y - (player.lv ? LH : 0)) > 1) return false; const d = distTo(n[0], n[1]); return d > 8 && d < 16 && !clearLine(V(n[0], y + 1.5, n[1])); });
+    const cands = Object.keys(NAV).filter(k => { const n = NAV[k], y = n[3] || 0; if (['E1', 'E0', 'Aa'].includes(k) || Math.abs(y - player.y) > 1) return false; const d = distTo(n[0], n[1]); return d > 8 && d < 16 && !clearLine(V(n[0], y + 1.5, n[1])); });
     if (!cands.length) { this.nextHunt = world.t + 4; return; }
     const k = pick(cands); WD.node = k; WD.pos.copy(nodePos(k)); WD.path = []; WD.extra = null; WD.noDetectUntil = 0; WD.wait = 0;
     CH.start('chase'); this.trackT = 9; this.wasCh = true; this.sndT = 0.6;
@@ -16004,33 +16006,62 @@ const PHAN = {
     world.vhs = Math.max(world.vhs, 0.7); try { PAD.hit && PAD.hit(1); } catch (e) { }
     wdScream(0.05, 0.9, 1.8); SND.glitch && SND.glitch(0.5);
     if (rec.active) award(PHAN_AW[0], PHAN_AW[1], PHAN_AW[2]);   // 倒した瞬間を録画していた時だけ
-    CHATLOG.add('phanWin'); this.setStage(9);
+    CHATLOG.add('phanWin'); if (!this.rand) this.setStage(9);   /* ランダムで出た周は、段階は変えない */
+    setTimeout(() => this.thanks(), 650);
+  },
+  // 消える時に「ア…リガト…ウ」（かなの録音を一音ずつ）
+  thanks() {
+    if (!A.ctx || !(KANA.ok && KANA.ok())) return; const p = V(WD.pos.x, WD.pos.y + 1.2, WD.pos.z), pn = panAt(p, 1.2, 1.2, undefined, 0);
+    const len = SPV.speakFrags(pn, [{ m: 'あ', gap: 0.7 }, { m: 'り', gap: 0.06 }, { m: 'が', gap: 0.06 }, { m: 'と', gap: 0.6 }, { m: 'う', gap: 0 }], A.ctx.currentTime + 0.05); freeLater(len + 2, pn);
   },
   deadUpd(dt) {
-    const D = this.dead; D.t += dt; const t = D.t, k = clamp(t / 2.2, 0, 1);
+    const D = this.dead; D.t += dt; const t = D.t, k = clamp(t / 3.0, 0, 1);
     SG.ovRoll = Math.sin(t * 30) * 0.12 * (1 - k); WD.heading = D.h0 + Math.sin(t * 13) * 0.3 * (1 - k);
     SG.root.position.set(WD.pos.x, D.y0 - 1.1 * k * k, WD.pos.z); SG.root.rotation.set(0.9 * k * k, WD.heading, 0.35 * k);
     sgSetOpacity((Math.floor(t * 18) % 3 ? 1 : 0.3) * (1 - k));
     world.vhs = Math.max(world.vhs, 0.3 * (1 - k));
-    if (t > 2.4) { sgSetOpacity(0); this.mode = 'done'; SG.root.rotation.set(0, 0, 0); }   // 女は借りたまま（この周はもう出さない）
+    if (t > 3.2) { sgSetOpacity(0); this.mode = 'done'; SG.root.rotation.set(0, 0, 0); }   // 女は借りたまま（この周はもう出さない）
   },
   // ── 描く直前：女の体に、人体模型とクモ女をくっつける（新しいモデルは作らない）
+  // 2026-11-15 人体模型を手・足・頭の5つに分けて、逆さ女のマントからばらばらに生やす（頭は背中側。背中にも目がある）
+  partsOn() {
+    if (this.parts || !MANN.ready || !SG.ready) return; this.parts = [];
+    for (const n of ['Head', 'UpperR', 'UpperL', 'ThighR', 'ThighL']) {
+      const o = MANN.root.getObjectByName(n); if (!o) continue; const pv = new THREE.Group(); SG.root.add(pv);
+      const head = n === 'Head', a = head ? Math.PI + rnd(-0.25, 0.25) : rnd(-2.5, 2.5), y = head ? rnd(0.85, 0.98) : rnd(0.45, 1.25), r = head ? 0.27 : rnd(0.2, 0.3);
+      pv.position.set(Math.sin(a) * r, y, Math.cos(a) * r); pv.rotation.order = 'YXZ'; pv.rotation.set(head ? rnd(-0.2, 0.2) : rnd(-2.4, -1.2), a + (head ? 0 : rnd(-0.5, 0.5)), head ? 0 : rnd(-0.6, 0.6));
+      this.parts.push({ o, par: o.parent, pos: o.position.clone(), q: o.quaternion.clone(), pv }); pv.add(o); if (head) o.position.set(0, -0.12, 0);
+    }
+  },
+  partsOff() {
+    if (!this.parts) return; for (const P of this.parts) { P.par.add(P.o); P.o.position.copy(P.pos); P.o.quaternion.copy(P.q); if (P.pv.parent) P.pv.parent.remove(P.pv); } this.parts = null;
+  },
+  // ── 描く直前：逆さ女の体に、クモ女の顔・人体模型の手足と頭をくっつける（新しいモデルは作らない）
+  // ふだん：逆さ女の顔の場所にクモ女の顔、その下に逆さ女の顔。捕まった時の顔は、これまでどおり
   late() {
     const show = this.on && SG.ready && SG.root.visible && this.mode !== 'gone' && this.mode !== 'done';
-    const a = show ? (SG.opacity ?? 1) : 0;
+    const a = show ? (SG.opacity ?? 1) : 0, Hb = SG.bones && SG.bones.Head;
+    if (Hb && world.phanRun) { if (!this.h0) this.h0 = Hb.position.clone(); Hb.position.copy(this.h0); }
     if (MANN.ready && world.phanRun) {
-      if (a > 0.02) {
-        SG.root.updateMatrixWorld(true); const r = MANN.root, dd = this.dead;
-        r.position.copy(SG.root.localToWorld(V(0.22, dd ? -0.15 : 0, -0.08))); r.rotation.set(dd ? 0.8 * clamp(dd.t / 2.2, 0, 1) : 0, SG.root.rotation.y + 0.35, dd ? -0.5 * clamp(dd.t / 2.2, 0, 1) : 0.1);
-        MANN.setOp(Math.min(1, a * 1.05)); if (MANN.col) MANN.col.on = false;
-      } else MANN.setOp(0);
+      if (this.on && !this.parts) this.partsOn();
+      MANN.setOp(a > 0.02 ? Math.min(1, a * 1.05) : 0); MANN.root.visible = false; if (MANN.col) MANN.col.on = false;
+      if (this.parts) for (const P of this.parts) P.pv.visible = a > 0.02;
     }
     if (SP.ready && SP.wrap && world.phanRun) {
       if (!this.spMats) { this.spMats = []; SP.wrap.traverse(o => { if (o.isMesh) for (const m of [].concat(o.material)) if (!this.spMats.includes(m)) this.spMats.push(m); }); }
       SP.wrap.visible = a > 0.02;
       if (a > 0.02) {
-        SG.root.updateMatrixWorld(true); const w = SP.wrap; w.scale.setScalar(0.62);
-        w.position.copy(SG.root.localToWorld(V(-0.05, 1.42, -0.2))); w.rotation.set(Math.PI, SG.root.rotation.y + Math.PI, 0.15);
+        SG.root.updateMatrixWorld(true); const w = SP.wrap;
+        if (CAP.on || !Hb) { w.scale.setScalar(0.62); w.position.copy(SG.root.localToWorld(V(-0.05, 1.42, -0.2))); w.rotation.set(Math.PI, SG.root.rotation.y + Math.PI, 0.15); }   /* 捕まった時：これまでどおり */
+        else {
+          const hw = Hb.getWorldPosition(V()), fwd = V(Math.sin(SG.root.rotation.y), 0, Math.cos(SG.root.rotation.y));
+          w.scale.setScalar(0.7); w.position.set(0, 0, 0); w.quaternion.identity(); w.updateMatrixWorld(true);
+          const fb = SP.face.getWorldPosition(V()), fc = spFacePos(V()), front = fc.clone().sub(fb); front.y *= 0.3;
+          if (front.lengthSq() > 1e-8) { w.quaternion.premultiply(new THREE.Quaternion().setFromUnitVectors(front.normalize(), fwd)); w.updateMatrixWorld(true); }
+          const tgt = hw.clone().addScaledVector(fwd, 0.06); tgt.y += 0.06; w.position.add(tgt.sub(spFacePos(V()))); w.updateMatrixWorld(true);
+          // 逆さ女の顔は、クモ女の顔の下へずらす
+          const ww = Hb.getWorldPosition(V()); ww.y -= 0.3; ww.addScaledVector(fwd, 0.04); Hb.position.copy(Hb.parent.worldToLocal(ww)); Hb.updateMatrixWorld(true);
+        }
         for (const m of this.spMats) { const tr = a < 0.995; if (m.transparent !== tr) { m.transparent = tr; m.needsUpdate = true; } m.opacity = a; }
       }
     }
