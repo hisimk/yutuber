@@ -472,7 +472,32 @@
   .achBox{background:none;border:none;padding:0;margin:0}
   .achTop{border-radius:14px;padding:12px 14px 12px;background:linear-gradient(160deg,#1d1810,#121214 60%);border:1px solid rgba(255,211,77,.35)}
   .achRk{display:flex;align-items:baseline;gap:8px}.achRk span{font-size:11px;color:#9a958c;letter-spacing:.1em}.achRk b{font-size:17px;font-weight:800;color:#ffd60a;letter-spacing:.03em}
-  .achTotH{font-size:15px;font-weight:800;color:#ffd34d;margin-top:12px;letter-spacing:.04em}
+  .achTotH{font-size:15px;font-weight:800;color:#ffd60a;margin-top:12px;letter-spacing:.04em}
+  /* 2026-11-14 ランクの枠：横幅いっぱいに。右上にランク一覧ボタン、右下に次のランクまでの進み具合 */
+  .achRow1{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .achRkBtn{flex:none;padding:6px 11px;border-radius:999px;border:1px solid rgba(255,214,10,.55);background:rgba(255,214,10,.08);color:#ffd60a;font:700 12px system-ui}
+  .achRow2{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+  .achRow2 .achTotH{margin-top:10px}
+  .achNext{flex:1;min-width:0;max-width:56%;display:flex;flex-direction:column;align-items:flex-end;gap:5px;padding-bottom:3px}
+  .achNxT{font-size:11px;color:#9a958c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}.achNxT b{color:#e9e4da;font-weight:700;margin-left:6px}
+  .achBar{width:100%;height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden}.achBar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#c99a1e,#ffd60a)}
+  .achNxN{font-size:12px;color:#cfcac0;white-space:nowrap}
+  /* ランク一覧（下から上へ、良いランクになる） */
+  #rkList{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.62)}
+  #rkList.show{display:flex}
+  #rkList .rkBox{width:min(340px,90%);max-height:86%;overflow:auto;padding:18px 14px 14px;border-radius:16px;background:#141416;border:1px solid rgba(255,211,77,.35);color:#e9e4da}
+  #rkList h4{margin:0 0 4px;font-size:17px;color:#ffd60a;text-align:center}#rkList .rkNote{font-size:11px;color:#9a958c;text-align:center;margin-bottom:10px}
+  #rkList ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+  #rkList li{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;background:#1b1b1f;border:1px solid #2c2b29}
+  #rkList li .rkI{width:22px;text-align:center;font-weight:800;color:#6f6b64}
+  #rkList li .rkN{flex:1;font-weight:700}#rkList .rkM{display:block;font-size:10.5px;font-weight:600;color:#8a867f;margin-top:1px}
+  #rkList .rkMerit{font-size:12px;line-height:1.6;color:#cfcac0;background:rgba(255,214,10,.06);border:1px solid rgba(255,214,10,.2);border-radius:10px;padding:8px 10px;margin:8px 0 10px}#rkList .rkMerit b{display:block;color:#ffd60a;font-size:12.5px;margin-bottom:2px}
+  #rkList li .rkR{font-size:12px;color:#9a958c;white-space:nowrap}
+  #rkList li.done .rkN{color:#cfcac0}#rkList li.done .rkR{color:#7fd38a}
+  #rkList li.now{border-color:#ffd60a;background:linear-gradient(90deg,rgba(255,214,10,.14),#1b1b1f)}#rkList li.now .rkN{color:#ffd60a}#rkList li.now .rkI{color:#ffd60a}
+  #rkList li.next{border-color:rgba(255,255,255,.35)}#rkList li.next .rkR{color:#fff;font-weight:700}
+  #rkList li.lock .rkN{color:#6f6b64}
+  #rkList .rkClose{display:block;width:100%;margin-top:12px;padding:11px;border-radius:12px;border:1px solid #444;background:#1b1b1f;color:#fff;font:700 14px system-ui}
   .achTop .achTot{flex-direction:column;align-items:flex-start;gap:4px;margin:4px 0 0}.achTop .achTot span{font-size:12px;color:#cfcac0}
   .achH{font-size:17px;font-weight:800;color:#fff;letter-spacing:.08em;margin:18px 2px 10px;padding-bottom:6px;border-bottom:1px solid rgba(255,211,77,.35)}
   .achSub{border-top:none;padding-top:0;margin:0 2px 6px}
@@ -12767,7 +12792,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.13.2';
+const VERSION = '0.13.3';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -12847,6 +12872,22 @@ const GOD = {
 // 累計いいねのランク（チャットの量にだけ効く）
 const YRANK = [['rookie', '新人幽tuber', 0, 1.00, 'Newbie Yutuber', "You're now a Newbie Yutuber!"], ['rising', '駆け出し幽tuber', 1000, 1.15, 'Rising Yutuber', "You're now a Rising Yutuber!"], ['regular', '中堅幽tuber', 5000, 1.35, 'Established Yutuber', "You're now an Established Yutuber!"], ['popular', '人気幽tuber', 20000, 1.6, 'Popular Yutuber', "You're now a Popular Yutuber!"], ['star', '大物幽tuber', 50000, 1.85, 'Superstar Yutuber', "You're now a Superstar Yutuber!"], ['legend', '伝説の幽tuber', 100000, 2.1, 'Legendary Yutuber', "You're now a Legendary Yutuber!"]];
 const yrankName = i => YRANK[i][LANG === 'en' ? 4 : 1];
+/* 2026-11-14 ランク一覧：下から上へ行くほど良いランク。いまのランクと、次のランクの必要いいね数だけ分かる（その先は？？？） */
+const RKLIST = {
+  open() {
+    let el = $('#rkList'); if (!el) { el = document.createElement('div'); el.id = 'rkList'; document.body.appendChild(el); for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'click']) el.addEventListener(ev, e => e.stopPropagation()); el.addEventListener('click', e => { if (e.target === el || e.target.closest('.rkClose')) el.classList.remove('show'); }); }
+    const d = ACH.load(), ri = yrankIdx(d.total), L = n => Number(n).toLocaleString(LANG === 'en' ? 'en-US' : 'ja-JP');
+    const rows = YRANK.map((r, i) => {
+      const cls = i < ri ? 'done' : i === ri ? 'now' : i === ri + 1 ? 'next' : 'lock';
+      const right = i < ri ? cui('rkDone') : i === ri ? cui('rkNow') : i === ri + 1 ? `${cui('rkReq', r[2])}<br>${cui('rkNeed', r[2] - d.total)}` : cui('rkHidden');
+      const name = i > ri + 1 ? cui('rkHidden') : yrankName(i);
+      const mul = i > ri + 1 ? '' : `<small class="rkM">${cui('rkMul', r[3].toFixed(2))}</small>`;
+      return `<li class="${cls}"><span class="rkI">${i + 1}</span><span class="rkN">${name}${mul}</span><span class="rkR" style="text-align:right">${right}</span></li>`;
+    }).reverse().join('');
+    el.innerHTML = `<div class="rkBox"><h4>${cui('rkList')}</h4><div class="rkMerit"><b>${cui('rkMerit')}</b>${cui('rkMeritT')}</div><div class="rkNote">${cui('rkNote')}</div><ol>${rows}</ol><button class="rkClose" type="button">${TR('閉じる')}</button></div>`;
+    el.classList.add('show');
+  },
+};
 function yrankIdx(total) { let i = 0; for (let k = 0; k < YRANK.length; k++) if ((total || 0) >= YRANK[k][2]) i = k; return i; }
 const ACH = {
   KEY: 'yutuber_achieve_v1', d: null,
@@ -12887,9 +12928,14 @@ const ACH = {
   box() {
     const d = this.load(), el = document.createElement('div'); el.className = 'achBox'; const L = n => Number(n).toLocaleString('ja-JP');
     const ri = yrankIdx(d.total), nx = YRANK[ri + 1];   // 2026-11-14 ランク → 累計いいね → 撮れ高実績（神回ランキング）の順
-    el.innerHTML = `<div class="achTop"><div class="achRk"><span>${TR('ランク')}</span><b>${yrankName(ri)}</b></div><div class="achTotH">${TR('累計いいね数')}</div><div class="achTot"><b><i class="like"></i>${L(d.total)}</b><span>${nx ? cui('next', nx[2] - d.total) : cui('top')}</span></div></div><div class="achH">${TR('撮れ高実績')}</div><div class="achSub">${TR('歴代の神回ランキング')}</div>`
+    /* 2026-11-14 ランクの枠：左にランク、右上に「ランク一覧」、左下に累計いいね、右下に次のランクまでの進み具合（横幅いっぱいに使う） */
+    const cur = YRANK[ri][2], pr = nx ? clamp((d.total - cur) / (nx[2] - cur), 0, 1) : 1;
+    el.innerHTML = `<div class="achTop"><div class="achRow1"><div class="achRk"><span>${TR('ランク')}</span><b>${yrankName(ri)}</b></div><button class="achRkBtn" type="button">${cui('rkList')} ›</button></div>`
+      + `<div class="achRow2"><div><div class="achTotH">${TR('累計いいね数')}</div><div class="achTot"><b><i class="like"></i>${L(d.total)}</b></div></div>`
+      + `<div class="achNext">${nx ? `<div class="achNxT">${cui('nextName')}<b>${LANG === 'en' ? nx[4] : nx[1]}</b></div><div class="achBar"><i style="width:${(pr * 100).toFixed(1)}%"></i></div><div class="achNxN">${cui('next', nx[2] - d.total)}</div>` : `<div class="achNxN">${cui('top')}</div>`}</div></div></div>` + `<div class="achH">${TR('撮れ高実績')}</div><div class="achSub">${TR('歴代の神回ランキング')}</div>`
       + (d.best.length ? `<ol class="achList">${d.best.map((b, i) => `<li data-i="${i}"><span class="ar">${i + 1}</span><span class="al"><i class="like"></i>${L(b.n)}</span><span class="atl">${i < 3 && b.v ? '<span></span>' : ''}</span><span class="ad">${b.d}${b.v ? '<i class="achCam">▶</i>' : ''}</span></li>`).join('')}</ol><div class="achHint">${TR('タップで、その回の内訳（上位3位は動画も）を見られます')}</div>` : `<div class="achNone">${TR('まだ記録がありません')}</div>`);
     for (const li of el.querySelectorAll('.achList li')) li.addEventListener('click', e => { e.stopPropagation(); GOD.open(+li.dataset.i); });
+    el.querySelector('.achRkBtn').addEventListener('click', e => { e.stopPropagation(); RKLIST.open(); });
     VTITLE.prune();
     for (const li of el.querySelectorAll('.achList li')) { const sp = li.querySelector('.atl span'); if (!sp) continue; VTITLE.show(sp, d.best[+li.dataset.i].id); }   // 2026-11-14 動画タイトル（1行。編集は開いてから）
     return el;
@@ -12908,6 +12954,7 @@ const CHAT_UI = {
   title: ['チャット', 'Chat'], note: ['映像に合わせた架空のコメント', 'Simulated chat synced to the video'], before: ['再生するとコメントが流れます', 'Play the video to see chat.'],
   novid: ['録画された映像がありません', 'No recorded video.'], nosync: ['この動画には同期コメントがありません', "Synced chat isn't available for this video."], legacy: ['この保存チャットは日本語のみです', 'This saved chat is only available in Japanese.'],
   latest: ['最新へ', 'Jump to latest'], pending: ['動画を仕上げています…', 'Finishing the video…'], nick: ['コメントでの呼び名', 'Name used in chat'], nickHint: ['空欄の場合はチャンネル名を使います', 'Leave blank to use your channel name.'],
+  rkList: ['ランク一覧', 'All ranks'], nextName: ['次のランク', 'Next rank'], rkNow: ['いま', 'NOW'], rkDone: ['到達', 'Reached'], rkNeed: ['あと{count}いいね', '{count} likes to go'], rkReq: ['累計 {count} いいね', '{count} lifetime likes'], rkHidden: ['？？？', '???'], rkNote: ['下から上へ、良いランクになります', 'Ranks get better from bottom to top'], rkMerit: ['ランクが上がるとどうなる？', 'Why rank up?'], rkMeritT: ['ランクが上がるほど、動画のチャット欄が賑やかになります。コメントの数が増え、何も起きていない静かな場面でも視聴者のコメントが流れるように。ランクは累計いいね数で決まり、撮影のたびに貯まります。', 'The higher your rank, the livelier your video chat gets: more comments, even during quiet moments. Rank is based on your lifetime likes, which add up every time you film.'], rkMul: ['コメント量 ×{count}', 'Chat ×{count}'],
   lifetime: ['累計 {count} いいね', '{count} lifetime likes'], next: ['次のランクまで あと{count}いいね', '{count} likes to the next rank'], top: ['最高ランク到達', 'Highest rank reached'],
   cnt: ['コメント数{count}件', '{count} comments'], cnt1: ['コメント数{count}件', '{count} comment'], counting: ['集計中…', 'Counting…'], cntNA: ['コメント情報なし', 'Chat data unavailable'],
   congrats: ['おめでとうございます！', 'Congratulations!'], explain: ['これからの動画はコメントが増えやすくなります', 'Your future videos can attract more chat reactions.'], ok: ['やった！', 'Nice!'],
