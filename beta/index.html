@@ -732,11 +732,11 @@
   </div>
   <button class="go" id="goBtn">旧校舎に入る</button>
   <button class="colBtn" id="colBtn">心霊アーカイブ</button>
-  <button class="credBtn" data-cred>使用素材・クレジット</button>
   <div class="verTag"></div>
   <div class="warnLine" id="warnLine">⚠ 大きな音・点滅があります</div>
   <div class="homeHint" id="homeHint">ホーム画面に追加して遊ぶと、記録が消えにくくなります</div>
   <div class="howto" id="howto"></div>
+  <button class="credBtn" data-cred>使用素材・クレジット</button>   <!-- 2026-11-14 クレジットはスタート画面のいちばん下 -->
 </div>
 
 <div id="itemModal"><img id="imImg" alt=""><div id="imTitle"></div><div id="imDesc"></div><div id="imTap">タップして進める。</div><div id="imBtns"></div></div>
@@ -1289,6 +1289,7 @@ function plane(w, h, mat, x, y, z, ry = 0, rx = 0, o = {}) {
 /* ---------- 言語（日本語／English）：画面の文言は T() で英語に置き換える。英語の表が無い文言は日本語のまま ---------- */
 let LANG = 'ja'; try { const l = localStorage.getItem('yt_lang'); if (l === 'en' || l === 'ja') LANG = l; } catch (e) { }
 const EN = {
+  '音が出ないときは、画面をもう一度タップしてください': 'If there is no sound, tap the screen again.',
   '歩いたり見回したりして、画角を決めてください': 'Walk and look around to frame the shot', 'ここに設置': 'Place here', 'やめる': 'Cancel', '定点カメラを設置した。怪異が映ると自動で録画します': 'Fixed camera placed. It records automatically when something appears.', '定点カメラを回収した。持ち物からまた置けます': 'Fixed camera picked up. You can place it again from your items.', '定点カメラを回収する': 'Pick up the fixed camera', '置く': 'Place', '設置中': 'In use',
   '定点カメラを置いた。怪異が映ると自動で録画します（15秒まで）': 'Fixed camera placed. It records automatically when something appears (up to 15s).', '定点カメラの容量がいっぱいになった': 'The fixed camera is full', '定点': 'CAM2',
   '2台目のスマホを定点カメラに。持ち物から好きな場所に設置できる。画角に撮れ高が入ると自動で録画（15秒まで）する。所持しているとメモリーカードは出なくなる。': 'A second phone used as a fixed camera. Place it anywhere from your items. It records automatically when something worth filming enters the frame (up to 15s). Once owned, memory cards no longer appear.',
@@ -12614,6 +12615,26 @@ LOGOANIM.build();
 // iPhoneで音が途中で止まった（電話・通知・ほかのアプリの音などで中断された）ときは、次に画面に触れた時に音を再開する
 for (const ev of ['touchstart', 'pointerdown']) document.addEventListener(ev, () => { if (A.ctx && A.ctx.state !== 'running' && world.state !== 'title') A.ctx.resume().catch(() => { }); }, { passive: true, capture: true });
 setInterval(() => { if (A.ctx && A.ctx.state !== 'running' && world.state === 'play' && !document.hidden) A.ctx.resume().catch(() => { }); }, 1500);
+/* 2026-11-14 裏に回して戻った後に音が消える対策（iPhoneのSafari）
+   ・ゲーム中に裏に回ったら、設定画面を開いて一時停止にしておく（戻ってきた時に必ず1回タップしてもらうため）
+   ・戻ってから最初に画面に触れた時：音の出口を作り直す（いったん止めて再開＋無音を1回鳴らす）。マイクが切れていたら取り直す
+   ・それでも音が止まったままなら、案内を出す */
+const AFIX = {
+  away: 0, need: false,
+  hidden() { this.away = performance.now(); if (world.state === 'play' && !SET.open) SET.show(); },
+  back() { if (this.away && performance.now() - this.away > 500) this.need = true; this.away = 0; },
+  async kick() {
+    if (!this.need || !A.ctx) return; this.need = false; const c = A.ctx;
+    try { if (c.state === 'running') await c.suspend(); } catch (e) { }
+    try { await c.resume(); } catch (e) { }
+    try { const b = c.createBuffer(1, 1, c.sampleRate), s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start(); } catch (e) { }
+    if (opt.mic && rec.mic) { const t = rec.mic.getAudioTracks()[0]; if (!t || t.readyState === 'ended') { micOff(); micOn(); } }   // マイクが切れていたら取り直す
+    setTimeout(() => { if (A.ctx && A.ctx.state !== 'running' && !document.hidden) toast(TR('音が出ないときは、画面をもう一度タップしてください'), 3000); }, 600);
+  },
+};
+document.addEventListener('visibilitychange', () => { if (document.hidden) AFIX.hidden(); else AFIX.back(); });
+addEventListener('pagehide', () => AFIX.hidden()); addEventListener('pageshow', () => AFIX.back());
+for (const ev of ['touchend', 'click', 'keydown']) document.addEventListener(ev, () => AFIX.kick(), { capture: true });
 /* 2026-11-13 ボタンの効果音（小さめ。合成音なので容量はほぼ使わない。録画には入らない） */
 const UISND = {
   play(kind) {
@@ -13066,7 +13087,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.13.9';
+const VERSION = '0.13.10';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -14179,7 +14200,7 @@ addEventListener('keydown', e => {
   else if ($('#saveNote').classList.contains('show')) { $('#saveNote').classList.remove('show'); e.stopPropagation(); }
 }, true);
 addEventListener('resize', () => { if (VED.on) VED.uiMarks(); });
-if (TEST && window.__G) Object.assign(window.__G, { SIDE, RKLIST, RING });   // 2026-11-14 確認用
+if (TEST && window.__G) Object.assign(window.__G, { SIDE, RKLIST, RING, AFIX, SET, A });   // 2026-11-14 確認用
 
 setInterval(() => CHATLOG.tick(), 400);
 setInterval(() => { try { VOICE.tick(); } catch (e) { if (TEST || DEV) console.warn('VOICE', e); } }, 33);   // 2026-11-14 声の判定（約30回/秒）
