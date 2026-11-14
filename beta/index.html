@@ -3954,15 +3954,13 @@ const ENDCARD = {
   },
   ORD: { SS: 0, S: 1, A: 2, B: 3, C: 4, D: 5 },
   // 並べる行：ランク順（同じランクはいいねの多い順）。max 行に入らない時は、下のランクから「×件数・合計」の1行にまとめる
+  // 並べる行：ランク順（同じランクはいいねの多い順）。max 行に入らない時は、残りを1行に「A×2 B×5 C×8 D×1　合計」でまとめる（2026-11-15）
   rows(list, max) {
     const L = list.map(e => ({ r: e._r || rankOf(e), label: e.label, pts: e.pts || 0 })).sort((a, b) => (this.ORD[a.r] ?? 9) - (this.ORD[b.r] ?? 9) || b.pts - a.pts);
     if (L.length <= max) return L;
-    for (const edge of [true, false]) for (let k = Math.min(L.length, max); k >= 0; k--) {   // まずはランクの切れ目で分ける（同じランクを1件ずつとまとめに分けない）
-      if (edge && k > 0 && k < L.length && L[k - 1].r === L[k].r) continue;
-      const g = []; for (const e of L.slice(k)) { const x = g.find(q => q.r === e.r); if (x) { x.n++; x.pts += e.pts; } else g.push({ r: e.r, n: 1, pts: e.pts }); }
-      if (k + g.length <= max) return L.slice(0, k).concat(g.map(q => q.n === 1 ? Object.assign(L.find(e => e.r === q.r && !L.slice(0, k).includes(e)), {}) : q));
-    }
-    const rest = L.slice(max - 1); return L.slice(0, max - 1).concat([{ r: '', n: rest.length, pts: rest.reduce((a, e) => a + e.pts, 0), other: true }]);   // それでも入らない時は「ほか ×件数」
+    const k = Math.max(0, max - 1), rest = L.slice(k), parts = [];
+    for (const e of rest) { const x = parts.find(q => q.r === e.r); if (x) x.n++; else parts.push({ r: e.r, n: 1 }); }
+    return L.slice(0, k).concat([{ multi: parts, n: rest.length, pts: rest.reduce((a, e) => a + e.pts, 0) }]);
   },
   draw(g, W, H, t, d) {
     const u = Math.min(W / 900, H / 1100), cx = W / 2, sans = '-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif', serif = '"Shippori Mincho","Hiragino Mincho ProN",serif';
@@ -3985,6 +3983,11 @@ const ENDCARD = {
     /* 2026-11-15 撮れ高はランクの高い順に。入りきらない分は、ランクごとに「D ×4　100」のようにまとめる */
     rows.forEach((e, i) => {
       const a = Math.min(1, Math.max(0, (t - 1.1 - i * 0.18) / 0.3)); if (!a) return; g.globalAlpha = fade * out * a;
+      if (e.multi) {   // まとめの1行：ランクの色の文字＋件数を横に並べる
+        let x = cx - 380 * u; g.textAlign = 'left';
+        for (const q of e.multi) { g.fillStyle = RANK_COL[q.r] || '#fff'; g.font = `italic 800 ${30 * u}px ${sans}`; g.fillText(q.r, x, y); x += g.measureText(q.r).width + 6 * u; g.fillStyle = '#b4afa6'; g.font = `700 ${30 * u}px ${sans}`; const s2 = `×${q.n}`; g.fillText(s2, x, y); x += g.measureText(s2).width + 26 * u; }
+        g.fillStyle = '#e9e4da'; g.textAlign = 'right'; g.font = `700 ${32 * u}px ${sans}`; g.fillText(String(e.pts), cx + 380 * u, y); y += rowH; return;
+      }
       const r = e.r; g.fillStyle = RANK_COL[r] || '#fff'; g.font = `italic 800 ${30 * u}px ${sans}`; g.textAlign = 'left'; g.fillText(r, cx - 380 * u, y);
       g.fillStyle = e.n ? '#b4afa6' : '#e9e4da'; g.font = `${e.n ? 700 : 400} ${32 * u}px ${sans}`; let lb = e.other ? (LANG === 'en' ? `others ×${e.n}` : `ほか ×${e.n}`) : e.n ? `×${e.n}` : TR(e.label); while (g.measureText(lb).width > 560 * u && lb.length > 4) lb = lb.slice(0, -2) + '…'; g.fillText(lb, cx - 320 * u, y);
       g.fillStyle = '#e9e4da'; g.textAlign = 'right'; g.font = `700 ${32 * u}px ${sans}`; g.fillText(String(e.pts), cx + 380 * u, y); y += rowH;
@@ -13647,7 +13650,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.14.29';
+const VERSION = '0.14.30';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
