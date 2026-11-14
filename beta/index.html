@@ -3905,8 +3905,8 @@ setInterval(() => { if (stickId !== null && performance.now() - stickEvT > 5000 
 const keys = {};
 /* 2026-11-13 PCのキー操作（設定で組み換えられる。この端末に保存） */
 const KB = {
-  DEF: { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD', lookL: 'ArrowLeft', lookR: 'ArrowRight', lookU: 'ArrowUp', lookD: 'ArrowDown', rec: 'KeyR', act: 'KeyE', selfie: 'KeyF', crouch: 'KeyC', inv: 'KeyI', z1: 'Digit1', z2: 'Digit2', z3: 'Digit3' },
-  NAME: { crouch: 'しゃがむ・立つ', up: '前へ歩く', down: '後ろへ歩く', left: '左へ歩く', right: '右へ歩く', lookL: '左を向く', lookR: '右を向く', lookU: '上を向く', lookD: '下を向く', rec: '録画の開始・停止', act: '調べる・開ける', selfie: 'インカメラの切り替え', inv: '持ち物', z1: 'ズーム 1倍', z2: 'ズーム 2倍', z3: 'ズーム 3倍' },
+  DEF: { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD', lookL: 'ArrowLeft', lookR: 'ArrowRight', lookU: 'ArrowUp', lookD: 'ArrowDown', rec: 'KeyR', act: 'KeyE', selfie: 'KeyF', crouch: 'KeyC', inv: 'KeyI', quit: 'KeyQ', z1: 'Digit1', z2: 'Digit2', z3: 'Digit3' },
+  NAME: { quit: 'こっくりさんをやめる', crouch: 'しゃがむ・立つ', up: '前へ歩く', down: '後ろへ歩く', left: '左へ歩く', right: '右へ歩く', lookL: '左を向く', lookR: '右を向く', lookU: '上を向く', lookD: '下を向く', rec: '録画の開始・停止', act: '調べる・開ける', selfie: 'インカメラの切り替え', inv: '持ち物', z1: 'ズーム 1倍', z2: 'ズーム 2倍', z3: 'ズーム 3倍' },
   map: {},
   load() { let s = {}; try { s = JSON.parse(localStorage.getItem('yt_keys') || '{}'); } catch (e) { } this.map = Object.assign({}, this.DEF, s); },
   save() { try { localStorage.setItem('yt_keys', JSON.stringify(this.map)); } catch (e) { } },
@@ -3922,6 +3922,7 @@ addEventListener('keydown', e => {
   if (e.code === M.rec) toggleRec(); if (e.code === M.act) $('#actBtn').click();
   if (e.code === M.selfie && typeof SELF !== 'undefined' && world.state === 'play') SELF.set(!world.selfie);
   if (e.code === M.crouch && typeof CROUCH !== 'undefined') CROUCH.toggle();
+  if (e.code === M.quit && world.state === 'play' && KOK.on) KOK.exit();   // 2026-11-15 こっくりさんをやめる（Escは使わない）
   if (e.code === M.inv && typeof INV !== 'undefined') INV.open ? INV.hide() : INV.show();
   for (const [i, k] of [[0, 'z1'], [1, 'z2'], [2, 'z3']]) if (e.code === M[k]) { const z = CONFIG.zoomStops[i]; if (z) setZoom(z); }
 });
@@ -4070,6 +4071,7 @@ const PAD = {
     if (typeof CALL !== 'undefined' && CALL.ph && CALL.pad(a)) return;   // 2026-11-15 着信中：○/Aで応答、×/Bで拒否
     const play = world.state === 'play';
     if (a === 'menu') { if (INV.open) INV.hide(); else if (SET.open) SET.hide(); else if (play || world.state === 'title') SET.show(); return; }
+    if (a === 'back' && !INV.open && !SET.open && play && KOK.on) { KOK.exit(); return; }   // 2026-11-15 ×/B：こっくりさんをやめる
     if (a === 'back') { if (INV.open) { if ($('#invScore').classList.contains('show')) $('#invScore').classList.remove('show'); else INV.hide(); } else if (SET.open) SET.hide(); return; }
     if (a === 'inv') { if (INV.open) INV.hide(); else if (play) INV.show(); return; }
     if (!play) return;
@@ -12186,7 +12188,7 @@ addEventListener('keydown', e => { if (CALL.ph && CALL.key(e)) { e.preventDefaul
 const FDET = {
   done: false, on: false, list: [], t: 0, vis1: 0,
   reset() { this.clear(); this.done = false; },
-  mat() { if (!this.m) { const c = document.createElement('canvas'); c.width = 96; c.height = 128; const g = c.getContext('2d'); g.strokeStyle = '#ffd400'; g.lineWidth = 5; g.beginPath(); g.roundRect ? g.roundRect(6, 6, 84, 116, 12) : g.rect(6, 6, 84, 116); g.stroke(); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; this.m = t; } return new THREE.MeshBasicMaterial({ map: this.m, transparent: true, depthTest: true, depthWrite: false, toneMapped: false, opacity: 0 }); },
+  mat() { if (!this.m) { const c = document.createElement('canvas'); c.width = 96; c.height = 128; const g = c.getContext('2d'); g.strokeStyle = '#ffd400'; g.lineWidth = 5; g.beginPath(); g.roundRect ? g.roundRect(6, 6, 84, 116, 12) : g.rect(6, 6, 84, 116); g.stroke(); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; this.m = t; } return new THREE.MeshBasicMaterial({ map: this.m, transparent: true, depthTest: false, depthWrite: false, toneMapped: false, opacity: 0 }); },   // 2026-11-15 スマホの画面上の枠：奥行きで欠けない
   start(many) {
     this.done = true; this.on = true; this.t = 0; this.vis1 = 0; this.many = many; this.list = [];
     const n = many ? 5 : 1, b = player.yaw;
@@ -12199,6 +12201,21 @@ const FDET = {
     }
     CHATLOG.add('face', { n }); if (TEST || DEV) console.log('FDET', n);
   },
+  // 2026-11-15 インカメラに映る主人公の体の範囲（画面を細かいマスに分け、体の頂点が入るマスに印）。少し太らせて隙間を埋める
+  bodyMask(cam) {
+    if (!avatar.ready) return null; const GW = 36, GH = 64, g = this.mk || (this.mk = new Uint8Array(GW * GH)), t = this.mk2 || (this.mk2 = new Uint8Array(GW * GH)); g.fill(0);
+    if (!this.av) { this.av = []; avatar.root.traverse(o => { if (o.isMesh && o.geometry && o.geometry.attributes.position) this.av.push(o); }); }
+    avatar.root.updateMatrixWorld(true); const v = V();
+    for (const o of this.av) { if (!o.visible) continue; const Pp = o.geometry.attributes.position, st = Math.max(1, Math.floor(Pp.count / 1500));
+      for (let k = 0; k < Pp.count; k += st) { v.fromBufferAttribute(Pp, k); if (o.isSkinnedMesh) o.applyBoneTransform(k, v); v.applyMatrix4(o.matrixWorld).project(cam); if (v.z >= 1 || v.z <= -1) continue;
+        const gx = Math.floor((v.x + 1) / 2 * GW), gy = Math.floor((v.y + 1) / 2 * GH); if (gx >= 0 && gx < GW && gy >= 0 && gy < GH) g[gy * GW + gx] = 1; } }
+    t.set(g); for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) if (t[y * GW + x]) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const X = x + dx, Y = y + dy; if (X >= 0 && X < GW && Y >= 0 && Y < GH) g[Y * GW + X] = 1; }
+    return { g, GW, GH };
+  },
+  hitMask(M, x0, x1, y0, y1) {
+    const gx0 = Math.max(0, Math.floor((x0 + 1) / 2 * M.GW)), gx1 = Math.min(M.GW - 1, Math.floor((x1 + 1) / 2 * M.GW)), gy0 = Math.max(0, Math.floor((y0 + 1) / 2 * M.GH)), gy1 = Math.min(M.GH - 1, Math.floor((y1 + 1) / 2 * M.GH));
+    for (let y = gy0; y <= gy1; y++) for (let x = gx0; x <= gx1; x++) if (M.g[y * M.GW + x]) return true; return false;
+  },
   clear() { for (const f of this.list) { scene.remove(f.m); f.m.geometry.dispose(); f.m.material.dispose(); } this.list = []; this.on = false; },
   update(dt) {
     if (!this.on) { if (!this.done && world.state === 'play' && world.selfie && !CAP.on && !world.capture) { const p = /[?&]face/.test(location.search) ? 1 : 0.1 / 60; if (Math.random() < p * dt * (/[?&]face/.test(location.search) ? 1 : 1)) this.start(chance(0.3) || /[?&]facemany/.test(location.search)); } return; }
@@ -12206,16 +12223,20 @@ const FDET = {
     const fade = this.t < 0.6 ? this.t / 0.6 : this.t > 7.7 ? Math.max(0, 1 - (this.t - 7.7) / 0.3) : 1; if (this.t > 8) { this.clear(); return; }
     // 目標：いまのプレイヤーの背中側（インカメラに映る位置）
     const fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw), rx = Math.cos(player.yaw), rz = -Math.sin(player.yaw), cy = player.camY + CONFIG.eyeHeight;
-    let inView = 0; const P = V(), cam = selfCam; cam.updateMatrixWorld();
+    let inView = 0; const P = V(), cam = selfCam; cam.updateMatrixWorld(); const mask = this.bodyMask(cam);
     for (const f of this.list) {
       const tx = player.x - fx * f.dist + rx * f.side, tz = player.z - fz * f.dist + rz * f.side, ty = cy + f.hy;
       const m = f.m, dx = tx - m.position.x, dy = ty - m.position.y, dz = tz - m.position.z, d = Math.hypot(dx, dy, dz), st = Math.min(d, f.sp * dt);
       if (d > 1e-3) { m.position.x += dx / d * st; m.position.y += dy / d * st; m.position.z += dz / d * st; }
-      P.copy(m.position).project(cam); const on = P.z < 1 && Math.abs(P.x) < 0.95 && Math.abs(P.y) < 0.95 && m.position.clone().sub(cam.position).dot(cam.getWorldDirection(V())) > 0;
+      // 2026-11-15 枠はスマホの画面上の四角：カメラと平行（斜めにならない）。枠がまるごと画角に入っている時だけ出し、
+      // 主人公の体と少しでも重なったら（体の後ろにいる）その間は一気に消す
+      m.quaternion.copy(cam.quaternion);
+      f.ph += dt * 9; const j = f.shown ? 1 : 0; m.scale.setScalar(1 + j * 0.05 * Math.sin(f.ph * 0.7)); m.position.x += j * Math.sin(f.ph) * 0.002; m.position.y += j * Math.cos(f.ph * 1.3) * 0.002;   // 映っている間だけ少し揺れる
+      m.updateMatrixWorld(true); let full = m.position.clone().sub(cam.position).dot(cam.getWorldDirection(V())) > 0.05, x0 = 9, x1 = -9, y0 = 9, y1 = -9;
+      if (full) for (const [cx, cy2] of [[-0.12, -0.16], [0.12, -0.16], [-0.12, 0.16], [0.12, 0.16]]) { P.set(cx, cy2, 0).applyMatrix4(m.matrixWorld).project(cam); if (P.z >= 1 || Math.abs(P.x) > 0.985 || Math.abs(P.y) > 0.985) full = false; x0 = Math.min(x0, P.x); x1 = Math.max(x1, P.x); y0 = Math.min(y0, P.y); y1 = Math.max(y1, P.y); }
+      const on = full && !(mask && this.hitMask(mask, x0, x1, y0, y1));
+      f.shown = on; m.visible = on; m.material.opacity = fade;
       if (on) inView++;
-      // 顔を追いかけているように、映っている間だけ少し揺れる・大きさが変わる
-      f.ph += dt * 9; const j = on ? 1 : 0; m.scale.setScalar(1 + j * 0.05 * Math.sin(f.ph * 0.7)); m.position.x += j * Math.sin(f.ph) * 0.002; m.position.y += j * Math.cos(f.ph * 1.3) * 0.002;
-      m.lookAt(cam.position); m.material.opacity = fade;
     }
     if (rec.active) { if (!this.many) { this.vis1 = inView ? this.vis1 + dt : this.vis1; if (this.vis1 >= 2) award('faceOne', '誰もいない場所に顔を検出', 60); } else if (inView >= 3) award('faceMany', '大量に検出された顔', 100); }
   },
@@ -12243,7 +12264,8 @@ function updateInteractions() {
     for (const sk of sinks) if (distTo(3.45, sk.z) < 1.2 && camFwd().x < -0.4) offerAction(water.on ? '蛇口を閉める' : '蛇口をひねる', () => toggleWater(sk));
   }
   for (const l of lockers) if (l.openAt !== undefined && HIDE.lk !== l) { const k = Math.min(1, (world.t - l.openAt) / 0.6); l.hinge.rotation.y = 1.3 * (1 - Math.pow(1 - k, 3)); }   // 開けた扉が開いていく
-  if (UNDER.on) { actFn = null; offerAction('出る', () => { if (UNDER.ph !== 'peek') UNDER.exit(); }); }   // 2026-11-15 ベッド・ピアノの下
+  if (UNDER.on) { actFn = null; offerAction('出る', () => { if (UNDER.ph !== 'peek') UNDER.exit(); }); }
+  else if (KOK.on) { actFn = null; offerAction('やめる', () => KOK.exit()); }   // 2026-11-15 こっくりさん   // 2026-11-15 ベッド・ピアノの下
   else if (HIDE.lk) { actFn = null; offerAction('扉を開ける', () => HIDE.exit()); }
   else if (!world.capture && !stairZone(player.x, player.z)) {   // どのロッカーも：扉の正面に立ち、扉の方を向いている時
     const f = camFwd(); const lk = lockers.find(l => { if (l.lv !== player.lv || l.locked || l.noHide) return false; const [a, b] = lkLocal(l, player.x, player.z); return Math.abs(a) < 0.3 && b > 0.1 && b < 1.1 && (f.x * Math.sin(l.yaw) + f.z * Math.cos(l.yaw)) > 0.55; });
@@ -12253,9 +12275,10 @@ function updateInteractions() {
       else offerAction('ロッカーを開ける', () => HIDE.open(lk));
     }
   }
-  if (!HIDE.lk) ITEM.offerPick();
+  if (!HIDE.lk && !KOK.on) ITEM.offerPick();
   if (!actFn && !HIDE.lk) FIXCAM.offer();   // 2026-11-14 置いた定点カメラを回収
   if (player.z > 4.1 && world.leftDoor && rec.time > 0.3 && !player.hidden && !world.capture && !world.dark && world.outro === 0 && !world.exitWait) offerAction(TR('帰還する'), () => doExit(), { exit: true });   // 2026-11-14 玄関：帰還する（黄色）
+  KOK.offer();   // 2026-11-15 紙に近づくと「こっくりさんを始める」
   offerUnder();   // 2026-11-15 しゃがんでベッド・ピアノに近づくと「下にもぐる」
   const b = $('#actBtn'); if (world.tutAct) return;   // 遊び方の説明でお手本を出している間はそのまま
   b.classList.toggle('show', !!actFn && !world.dark); b.classList.toggle('key', !!actFn && actKey && !actExit); b.classList.toggle('exit', !!actFn && actExit); if (b.textContent !== actLabel) b.textContent = actLabel; if (FRAME.on) { const kl = PAD.using ? PAD.of('act') : KB.of('act'); if (b.dataset.k !== kl) b.dataset.k = kl; }
@@ -12274,7 +12297,7 @@ function tick(now) {
   if (Math.abs(zoom - prevZoom) > 0.0015) focus.lastZoomMove = world.t; prevZoom = zoom;
   camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(CONFIG.fov1x / 2)) / zoom)); camera.updateProjectionMatrix();
   // 視点
-  if (KB.down('lookL')) look.yaw += 1.8 * dt; if (KB.down('lookR')) look.yaw -= 1.8 * dt; PCLOOK.tick(dt); FIXCAM.tick(dt); LID.tick(dt); UNDER.update(dt); CALL.update(dt); FDET.update(dt); CROUCH.tick(dt);
+  if (KB.down('lookL')) look.yaw += 1.8 * dt; if (KB.down('lookR')) look.yaw -= 1.8 * dt; PCLOOK.tick(dt); FIXCAM.tick(dt); LID.tick(dt); UNDER.update(dt); KOK.update(dt); CALL.update(dt); FDET.update(dt); CROUCH.tick(dt);
   if (KB.down('lookU')) look.pitch = clamp(look.pitch + 1.2 * dt, -1.54, 1.54); if (KB.down('lookD')) look.pitch = clamp(look.pitch - 1.2 * dt, -1.54, 1.54);
   if (gyro.on && gyro.got) { player.yaw = look.yaw + (gyro.acc - gyro.ref); player.pitch = clamp(gyro.pitch + look.pitch, -1.55, 1.55); }
   else { player.yaw = look.yaw; player.pitch = look.pitch; }
@@ -12287,11 +12310,12 @@ function tick(now) {
     const b0 = HIDE.lk ? HIDE.lk.yaw : 0, rel = y => b0 + clamp(Math.atan2(Math.sin(y - b0), Math.cos(y - b0)), -0.5, 0.5);
     look.yaw = rel(look.yaw); look.pitch = clamp(look.pitch, -0.35, 0.35); player.yaw = rel(player.yaw); player.pitch = clamp(player.pitch, -0.35, 0.35);
   }
+  KOK.look(dt);   // 2026-11-15 こっくりさん：座って紙を見下ろす（±15度）
   // 移動
   let mx = input.sx, my = input.sy;
   if (PAD.lx || PAD.ly) { mx = PAD.lx; my = PAD.ly; }   // 2026-11-14 コントローラーの左スティック
   if (KB.down('up')) my = -1; if (KB.down('down')) my = 1; if (KB.down('left')) mx = -1; if (KB.down('right')) mx = 1;
-  if (world.outro > 0 || world.capture || player.hidden || REVIVE.on) { mx = 0; my = 0; }
+  if (world.outro > 0 || world.capture || player.hidden || REVIVE.on || KOK.k > 0) { mx = 0; my = 0; }
   const fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw), rx = Math.cos(player.yaw), rz = -Math.sin(player.yaw);
   const wsp = CONFIG.walkSpeed * PERM.speedMul() * CROUCH.spd();   // シュン足：1.08倍。しゃがむと半分
   const vx = (fx * -my + rx * mx) * wsp, vz = (fz * -my + rz * mx) * wsp;
@@ -12333,7 +12357,8 @@ function tick(now) {
   const shX = (Math.sin(shakeT * 1.1 + 1) * 0.004 + Math.sin(shakeT * 3.7) * 0.0015) / zoom;
   let outroP = 0; if (world.outro > 0) { world.outro += dt; outroP = smooth(0, 0.9, world.outro - 1); }
   camera.position.set(player.x, player.camY + CROUCH.eye() + Math.abs(Math.sin(player.bob * 0.5)) * 0.03 * walkAmt - outroP * 0.45, player.z);
-  if (UNDER.on) camera.position.copy(UNDER.cam);   // 2026-11-15 ベッド・ピアノの下
+  if (UNDER.on) camera.position.copy(UNDER.cam);
+  KOK.cam(camera.position);   // 2026-11-15 こっくりさん：机の前に座った目の高さへ   // 2026-11-15 ベッド・ピアノの下
   if (player.hidden && HIDE.lk) {   // ロッカーの扉の内側、スリットの高さ
     camera.position.copy(lkP(HIDE.lk, 0, 1.505, -0.13));
     if (HIDE.ph === 'peekOpen') { const k = smooth(0, 0.35, HIDE.t); camera.position.copy(lkP(HIDE.lk, 0.08 * k, 1.505, -0.13)); player.yaw = lerp(player.yaw, HIDE.lk.yaw - 0.42, k); camera.rotation.set(player.pitch * (1 - k), player.yaw, 0); }   // 扉を押して隙間をのぞく
@@ -12343,9 +12368,9 @@ function tick(now) {
   // 鏡・ガラスに映る自分
   if (!world.avatarFrozen) {
     // 鏡の中の自分：通常は即時。world.avatarLag>0 の間だけ、少し前の自分を映す
-    avHist.push({ t: world.t, x: player.x, z: player.z, yaw: player.yaw, pitch: player.pitch, sp: player.speed }); while (avHist.length > 2 && avHist[1].t < world.t - 1.5) avHist.shift();
+    avHist.push({ t: world.t, x: player.x, y: player.y || 0, z: player.z, yaw: player.yaw, pitch: player.pitch, sp: player.speed }); while (avHist.length > 2 && avHist[1].t < world.t - 1.5) avHist.shift();
     let hs = avHist[avHist.length - 1]; if (world.avatarLag > 0) { for (const h of avHist) if (h.t <= world.t - world.avatarLag) hs = h; }
-    avatar.root.position.set(hs.x, -outroP * 0.1 - smooth(0, 1, CROUCH.k) * (CONFIG.eyeHeight - CROUCH.LOW), hs.z); avatar.root.rotation.y = hs.yaw + Math.PI;   // しゃがむと鏡・インカメラの自分も低く
+    avatar.root.position.set(hs.x, (hs.y || 0) - outroP * 0.1 - smooth(0, 1, CROUCH.k) * (CONFIG.eyeHeight - CROUCH.LOW), hs.z);   /* 2026-11-15 足元の高さ（階段・2階）に立たせる。以前は常に1階の床の高さで、階段では体が段に埋まっていた */ avatar.root.rotation.y = hs.yaw + Math.PI;   // しゃがむと鏡・インカメラの自分も低く
     avatar.c.headPitch = clamp(-hs.pitch * 0.6, -0.5, 0.6); avatar.c.speed = hs.sp;
     if (!world.avatarOverride) avatar.c.pose = outroP > 0.2 ? 'stand' : 'film';
     animHuman(avatar, dt); ACC.pose(dt);   // 2026-11-14 身につける物（リコーダーを片手で支える）
@@ -13951,7 +13976,7 @@ $('#goBtn').addEventListener('click', () => {
   INTRO.run(beginPlay);
 });
 function beginPlay() {
-  $('#hud').classList.remove('off'); PHAN.place();   // 2026-11-15 化け物の周だけ、お札5枚
+  $('#hud').classList.remove('off'); PHAN.place(); KOK.reset();   // 2026-11-15 化け物の周だけ、お札5枚
   world.state = 'play';
   postMat.uniforms.black.value = 1; postMat.uniforms.grain.value = 1;
   if (DEV) $('#dev').classList.add('show'), $('#devInfo').style.display = 'block';
@@ -14262,7 +14287,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.6';
+const VERSION = '0.15.7';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -15011,6 +15036,7 @@ const CHAT = {
     try { d.items = CHATGEN.make({ seed: d.seed, log: CHATLOG.ev, end: d.end, P, M: d.M, rk: d.rk, name: d.name, nick: d.nick }); d.users = null; } catch (e) { console.warn('チャットを作れませんでした', e); d.items = []; }
     // 話者の名前と色（生成と同じシードで並べ直す）
     d.users = CHAT.usersOf(d.seed, d.lang);
+    try { KOK.chat(d); } catch (e) { console.warn('こっくりさんのコメント', e); }
     try { PHAN.chat(d); } catch (e) { console.warn('荒らしコメント', e); }   // 2026-11-15 段階に合わせて荒らし・反応を混ぜる   // 話者の名前と色はこの動画で固定（英語で始めた撮影は英語の名前）
     this.cur = d; return d;
   },
@@ -15575,9 +15601,211 @@ const REVIVE = {
 };
 
 /* =========================================================
+   2026-11-15 こっくりさん（1階・2階の教室のどれか1つの机。周ごとにランダム）
+   ・紙（鳥居・はい・いいえ・五十音・数字。ゲームの中で描く）と十円玉。紙に近づくと「こっくりさんを始める」
+   ・こっくりさんモード：机の前に座って紙を見下ろす（視点は左右・上下15度まで・ズーム可・歩けない）。「やめる」（Qキー・×/B）で戻る
+     追われている時・ほかの演出中は入れない。敵が近づくと自動で抜ける
+   ・反応する周は40%。マイクで喋って2秒黙ると（マイクがオフなら10秒じっとすると）十円玉がすべり出す
+     はい／いいえ・言葉（かえれ・うしろ・いるよ・みてる）・数字・まれに呼び名。3〜5回目に「か・え・れ」→ 机から落ちて、その周は終わり
+   ・確認用：?koktest で小さな画面（反応する／しない・紙の前へ・声を出したことにする）、?kok=1 / ?kok=0
+   ========================================================= */
+const KOK = {
+  on: false, k: 0, react: false, desk: null, g: null, coin: null, done: false, n: 0, finalAt: 4, seq: null, heard: false, lastV: -9, idleT: 0, stillT: -99,
+  ROWS: ['あいうえおかきくけこさし', 'すせそたちつてとなにぬね', 'のはひふへほまみむめも', 'やゆよらりるれろわをん'],
+  W: 0.42, D: 0.3,
+  // ── 紙の絵（黄ばみ・しわ・鳥居・はい・いいえ・五十音・数字）
+  tex() {
+    if (this.tx) return this.tx; const c = document.createElement('canvas'); c.width = 512; c.height = 366; const g = c.getContext('2d'), R = chatRng(4242), P = this.pos = {};
+    g.fillStyle = '#e4d6b0'; g.fillRect(0, 0, 512, 366);
+    const st = g.createRadialGradient(150, 250, 10, 150, 250, 260); st.addColorStop(0, 'rgba(170,130,60,.28)'); st.addColorStop(1, 'rgba(170,130,60,0)'); g.fillStyle = st; g.fillRect(0, 0, 512, 366);
+    for (let i = 0; i < 26; i++) { const x = R() * 512, y = R() * 366, a = R() * 6.28, l = 60 + R() * 200; g.strokeStyle = `rgba(${R() < 0.5 ? '255,250,235' : '110,85,50'},${0.08 + R() * 0.12})`; g.lineWidth = 1 + R() * 2; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + Math.cos(a + 0.4) * l * 0.5, y + Math.sin(a + 0.4) * l * 0.5, x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke(); }   // しわ
+    const ink = '#2a1a12', serif = '"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    // 鳥居
+    g.strokeStyle = '#a3241c'; g.lineCap = 'round'; g.lineWidth = 6; g.beginPath(); g.moveTo(222, 36); g.quadraticCurveTo(256, 30, 290, 36); g.stroke(); g.lineWidth = 4; g.beginPath(); g.moveTo(230, 50); g.lineTo(282, 50); g.stroke();
+    g.beginPath(); g.moveTo(238, 38); g.lineTo(235, 88); g.moveTo(274, 38); g.lineTo(277, 88); g.stroke(); P.T = [256, 66];
+    g.fillStyle = ink; g.font = `700 30px ${serif}`; g.fillText('はい', 112, 62); P.YES = [112, 62]; g.fillText('いいえ', 400, 62); P.NO = [400, 62];
+    g.font = `700 25px ${serif}`;
+    this.ROWS.forEach((row, r) => { const y = 128 + r * 50, n = row.length; Array.from(row).forEach((ch, i) => { const x = 40 + (i + 0.5) * 432 / n; g.fillText(ch, x, y); P[ch] = [x, y]; }); });
+    for (let i = 0; i < 10; i++) { const x = 68 + i * 41.8, y = 334; g.fillText(String(i), x, y); P[String(i)] = [x, y]; }
+    g.strokeStyle = 'rgba(42,26,18,.45)'; g.lineWidth = 1.5; g.strokeRect(10, 10, 492, 346);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; this.tx = t; return t;
+  },
+  lp(key) { const p = this.pos[key] || this.pos.T; return V((p[0] / 512 - 0.5) * this.W, 0, (p[1] / 366 - 0.5) * this.D); },   // 紙の上の位置（机の上の集まりの中）
+  // ── 周のはじめ：机を選んで置く
+  reset() {
+    this.exit(true); this.k = 0;
+    if (this.g && this.g.parent) this.g.parent.remove(this.g);
+    const q = (TEST || BETA) && location.search.match(/[?&]kok=([01])/);
+    this.react = q ? q[1] === '1' : chance(0.4); this.done = false; this.n = 0; this.finalAt = 3 + Math.floor(Math.random() * 3); this.seq = null; this.heard = false; this.idleT = 0; this.stillT = -99; this.drop = null; this.accMove = 0; this.accName = 0; this.nameSeen = false;
+    const used = new Set(ITEM.list.filter(i => !i.taken && i.spot && i.spot.desk).map(i => i.spot.desk));
+    const cands = []; for (const rk of ['R2', 'R3', '2A', '2B']) for (const d of (rooms[rk] && rooms[rk].desks || [])) if (!used.has(d) && !(Math.abs(d.x - 7.5) < 0.2 && (Math.abs(d.z + 19) < 0.3 || Math.abs(d.z + 17.1) < 0.3))) cands.push(d);
+    if (!cands.length) { this.desk = null; return; }
+    const d = this.desk = pick(cands), side = d.zmax > 0.3 ? 1 : -1; this.side = side;
+    const g = this.g = new THREE.Group(); g.position.set(0, 0.757, 0); g.rotation.y = side > 0 ? 0 : Math.PI; d.g.add(g);
+    const paper = new THREE.Mesh(new THREE.PlaneGeometry(this.W, this.D, 6, 4), new THREE.MeshLambertMaterial({ map: this.tex() }));
+    { const P = paper.geometry.attributes.position; for (let i = 0; i < P.count; i++) P.setZ(i, (Math.sin(P.getX(i) * 40) + Math.cos(P.getY(i) * 31)) * 0.0012); P.needsUpdate = true; paper.geometry.computeVertexNormals(); }   // 少し波打つ紙
+    paper.rotation.x = -Math.PI / 2; paper.position.y = 0.002; paper.rotation.z = rnd(-0.04, 0.04); g.add(paper);
+    const coin = this.coin = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.0024, 20), new THREE.MeshLambertMaterial({ color: 0xc4703a, emissive: 0x2e1406 }));
+    coin.position.copy(this.lp('T')).setY(0.0045); g.add(coin);
+    if (TEST || DEV) console.log('KOK', d.x.toFixed(1), d.z.toFixed(1), this.react ? 'react' : 'quiet', 'final', this.finalAt);
+    this.panel();
+  },
+  near() {
+    if (!this.desk || this.on || world.state !== 'play') return false;
+    const lv = this.desk.y > 1.6 ? 1 : 0; if (lv !== player.lv) return false;
+    const p = this.g.getWorldPosition(V()); if (Math.hypot(p.x - player.x, p.z - player.z) > 1.15) return false;
+    const f = camFwd(), dx = p.x - player.x, dz = p.z - player.z, n = Math.hypot(dx, dz) || 1; return (f.x * dx + f.z * dz) / n > 0.3 || n < 0.5;
+  },
+  canStart() {
+    return !(CH.state !== 'off' || (typeof SP !== 'undefined' && SP.st === 'chase') || CROUCH.chasing() || CAP.on || world.capture || WD.borrowed || DIR.active || (typeof CALL !== 'undefined' && CALL.ph) || UNDER.on || HIDE.lk || player.hidden || REVIVE.on || world.outro > 0);
+  },
+  offer() { if (!this.on && !actFn && this.near() && this.canStart()) offerAction('こっくりさんを始める', () => this.enter()); },
+  enter() {
+    if (!this.canStart()) return; if (world.selfie) SELF.set(false);
+    this.on = true; this.t = 0; this.y0 = player.yaw; this.p0 = player.pitch; this.ly0 = look.yaw; this.lp0 = look.pitch; this.heard = false; this.idleT = 0;
+    this.g.updateMatrixWorld(true); this.seat = this.g.localToWorld(V(0, 0.42, 0.37)); const tg = this.g.localToWorld(V(0, 0, 0.05)), dx = tg.x - this.seat.x, dz = tg.z - this.seat.z;
+    this.by = Math.atan2(-dx, -dz); this.bp = Math.atan2(tg.y - this.seat.y, Math.hypot(dx, dz)); look.yaw = this.by; look.pitch = this.bp; if (gyro.got) gyro.ref = gyro.acc;
+    CHATLOG.add('kok', { w: 'enter' }); SND.rustle && SND.rustle(this.seat.clone(), 0.4);
+    if (TEST || DEV) console.log('KOK enter');
+  },
+  exit(quiet) {
+    if (!this.on) return; this.on = false; this.seqStop(); if (this.foc && focus.override === this.foc) focus.override = null; this.foc = 0;
+    look.yaw = this.ly0 ?? look.yaw; look.pitch = this.lp0 ?? look.pitch; if (gyro.got) gyro.ref = gyro.acc - (this.ly0 - look.yaw);
+    if (!quiet && (TEST || DEV)) console.log('KOK exit');
+  },
+  // 視点：座った位置へなめらかに。左右・上下ともに±15度まで
+  look(dt) {
+    this.k = clamp(this.k + (this.on ? dt / 0.8 : -dt / 0.6), 0, 1); if (!this.on && this.k <= 0) return;
+    const e = this.k * this.k * (3 - 2 * this.k), L = 0.26;
+    if (this.on) { const rel = y => this.by + clamp(Math.atan2(Math.sin(y - this.by), Math.cos(y - this.by)), -L, L); look.yaw = rel(look.yaw); look.pitch = clamp(look.pitch, this.bp - L, this.bp + L); player.yaw = rel(player.yaw); player.pitch = clamp(player.pitch, this.bp - L, this.bp + L); }
+    const ty = this.on ? player.yaw : this.by, tp = this.on ? player.pitch : this.bp, fy = this.on ? this.y0 : player.yaw, fp = this.on ? this.p0 : player.pitch;
+    player.yaw = fy + Math.atan2(Math.sin(ty - fy), Math.cos(ty - fy)) * e; player.pitch = lerp(fp, tp, e);
+  },
+  cam(pos) { if (this.k > 0 && this.seat) { const e = this.k * this.k * (3 - 2 * this.k); pos.lerp(this.seat, e); } },
+  // ── 毎フレーム
+  update(dt) {
+    if (!this.g) return;
+    this.dropUpd(dt);
+    if (!this.on) { if (this.seq) this.seqUpd(dt); return; }
+    this.t += dt; if (world.selfie) SELF.set(false);
+    if (this.k > 0.5 && this.seat && (focus.override === null || this.foc)) { focus.override = this.foc = Math.max(0.3, camera.position.distanceTo(this.coin.getWorldPosition(V()))); }   /* 手元の紙にピントを合わせる */
+    // 敵が近づいたら自動で抜ける
+    const lv = player.lv, sgNear = SG.root.visible && (SG.opacity ?? 0) > 0.3 && Math.abs(WD.pos.y - player.y) < 1.2 && distTo(WD.pos.x, WD.pos.z) < 7;
+    if (CH.state !== 'off' || (typeof SP !== 'undefined' && SP.st === 'chase') || CROUCH.chasing() || CAP.on || world.capture || sgNear || world.state !== 'play') { this.exit(); return; }
+    if (this.seq) { this.seqUpd(dt); return; }
+    if (this.t < 0.8) return;
+    // 質問：声がして、そのあと2秒静か（マイクがオフ・使えない時は、10秒じっとする）
+    const mic = typeof VOICE !== 'undefined' && VOICE.ok, sp = (mic && VOICE.sp) || world.t < (this.fakeV || 0);
+    if (sp) { this.heard = true; this.lastV = world.t; this.idleT = 0; }
+    let ask = false;
+    if (this.heard && !sp && world.t - this.lastV >= 2) { ask = true; this.heard = false; CHATLOG.add('kok', { w: 'ask' }); }
+    if (!mic && !this.heard) { this.idleT += dt; if (this.idleT >= 10) { ask = true; this.idleT = 0; } }
+    if (!ask) return;
+    if (!this.react || this.done) { if (world.t - this.stillT > 8) { this.stillT = world.t; CHATLOG.add('kok', { w: 'still' }); } if (TEST || DEV) console.log('KOK no reaction'); return; }
+    this.answer();
+  },
+  // ── 答え（めちゃくちゃ）
+  nameKana() {
+    const kana = /^[ぁ-ゟ゠-ヿー\s]+$/, y = (world.yomi || '').trim(), r = (world.chRaw || '').trim(), s = y && kana.test(y) ? y : r && kana.test(r) ? r : '';
+    const SM = { 'ぁ': 'あ', 'ぃ': 'い', 'ぅ': 'う', 'ぇ': 'え', 'ぉ': 'お', 'っ': 'つ', 'ゃ': 'や', 'ゅ': 'ゆ', 'ょ': 'よ', 'ゎ': 'わ', 'ゔ': 'う' };
+    const out = []; for (let ch of s.normalize('NFD')) { const c = ch.charCodeAt(0); if (c >= 0x30a1 && c <= 0x30f6) ch = String.fromCharCode(c - 0x60); ch = SM[ch] || ch; if (this.pos && this.pos[ch]) out.push(ch); }
+    return out.slice(0, 8);
+  },
+  answer() {
+    this.n++; let keys, kind;
+    const nm = this.nameKana(), x = Math.random();
+    if (this.n >= this.finalAt) { keys = ['か', 'え', 'れ']; kind = 'final'; }
+    else if (nm.length && (x < 0.07 || /[?&]kokname\b/.test(location.search))) { keys = nm; kind = 'name'; }
+    else if (x < 0.55) { keys = [Math.random() < 0.5 ? 'YES' : 'NO']; kind = 'yesno'; }
+    else if (x < 0.8) { keys = Array.from(pick(['かえれ', 'うしろ', 'いるよ', 'みてる'])); kind = 'word'; }
+    else { const n = 1 + Math.floor(Math.random() * 2); keys = Array.from({ length: n }, () => String(Math.floor(Math.random() * 10))); kind = 'num'; }
+    this.seq = { keys, i: 0, kind, ph: 'wait', t: 0, wait: rnd(0.5, 1.0), from: this.coin.position.clone(), to: null, dur: 0 };
+    if (kind === 'name') this.accName = 0;
+    if (TEST || DEV) console.log('KOK answer', this.n, kind, keys.join(''));
+  },
+  seqStop() { },   // 抜けても、すべり出した十円玉は最後まで動く（周の内容は変えない）
+  seqUpd(dt) {
+    const S = this.seq; if (!S) return; S.t += dt; const c = this.coin;
+    const go = to => { S.from = c.position.clone(); S.to = to; S.dur = 0.45 + S.from.distanceTo(to) * 3.2; S.t = 0; S.ph = 'move'; this.scrape(S.dur); };
+    if (S.ph === 'wait') { if (S.t >= S.wait) { if (S.i === 0 && !S.started) { S.started = true; CHATLOG.add('kok', { w: 'move' }); } if (S.i < S.keys.length) go(this.lp(S.keys[S.i])); else if (S.kind === 'final') { go(V(rnd(-0.12, 0.12), 0, -0.34)); S.off = true; }   /* 紙の外へ、机の向こうのふちから落ちる（座った位置から見える） */ else { go(this.lp('T')); S.back = true; } } }
+    else if (S.ph === 'move') {
+      const k = clamp(S.t / S.dur, 0, 1), e = k * k * (3 - 2 * k); c.position.lerpVectors(S.from, S.to, e); c.position.x += Math.sin(S.t * 23) * 0.0012 * (1 - k); c.position.y = 0.0045;
+      if (S.off && c.position.z < -0.235) { this.startDrop(); this.seq = null; return; }   // 机のふちを越えた
+      if (k >= 1) { if (S.back) { this.seq = null; this.idleT = 0; return; } S.i++; S.ph = 'wait'; S.t = 0; S.wait = S.i >= S.keys.length ? rnd(0.6, 1.0) : rnd(0.55, 0.95);
+        if (S.i >= S.keys.length) { CHATLOG.add('kok', { w: S.kind === 'name' ? 'name' : S.kind === 'yesno' ? 'yesno' : S.kind === 'final' ? 'final' : 'move2' }); if (S.kind === 'name' && rec.active && this.accName >= 0.8) award('kokName', '十円玉が自分の名前をなぞった', 70); } }
+    }
+    // 撮れ高：動いているところを録画で撮った
+    if (S.ph === 'move' && rec.active) { const w = c.getWorldPosition(V()); if (seen(w, { maxD: 4, margin: 1.05 })) { if (S.off) this.offSeen = true; this.accMove += dt; if (S.kind === 'name') this.accName += dt; if (this.accMove >= 0.4) award('kokMove', '十円玉が動いた', 40); } }
+  },
+  // 机から落ちる（最後の「か・え・れ」のあと）
+  startDrop() { this.done = true; const os = !!this.offSeen; this.offSeen = false; this.drop = { os, t: 0, vx: rnd(-0.08, 0.08), vy: 0.35, vz: -0.55, spin: rnd(8, 14), hit: 0, seen: false }; this.scrape(0.25); },
+  dropUpd(dt) {
+    const D = this.drop; if (!D || D.rest) return; const c = this.coin; D.t += dt;
+    D.vy -= 9.8 * dt; c.position.x += D.vx * dt; c.position.z += D.vz * dt; c.position.y += D.vy * dt; c.rotation.x -= D.spin * dt; c.rotation.z += D.spin * 0.3 * dt;
+    if (rec.active && !D.seen && seen(c.getWorldPosition(V()), { maxD: 4, margin: 1.05 })) D.seen = true;
+    const floor = -0.757 + 0.0013;
+    if (c.position.y <= floor) { c.position.y = floor; D.hit++; this.clink(D.hit);
+      if (D.hit === 1) { CHATLOG.add('kok', { w: 'drop' }); if (rec.active && (D.seen || D.os)) award('kokDrop', '机から落ちた十円玉', 25); }
+      if (D.hit < 3) { D.vy = Math.abs(D.vy) * 0.3; D.vx *= 0.5; D.vz *= 0.5; } else { D.rest = true; c.rotation.set(0, c.rotation.y, 0); } }
+  },
+  // ── 音：紙の上をすべる「ズズッ」／床に落ちる「チャリン」（その場で作る音）
+  scrape(dur) {
+    if (!A.ctx || !this.coin) return; const p = this.coin.getWorldPosition(V()), d = panAt(p, 0.8, 1.4), t0 = A.ctx.currentTime + 0.01;
+    for (let t = 0; t < dur; t += rnd(0.06, 0.14)) nb(d, { t: t0 + t, f: rnd(700, 1400), q: 0.8, a: 0.015, peak: rnd(0.25, 0.45), d: rnd(0.05, 0.12), rate: 0.6 });
+    nb(d, { t: t0, f: 420, q: 0.7, a: 0.05, peak: 0.18, d: dur, rate: 0.5 }); freeLater(dur + 1.5, d);
+  },
+  clink(n) {
+    if (!A.ctx || !this.coin) return; const p = this.coin.getWorldPosition(V()), d = panAt(p, 1.0, 1.3), t = A.ctx.currentTime, a = n === 1 ? 0.5 : 0.25;
+    for (const [f, k] of [[3150, 1], [4720, 0.6], [6830, 0.35]]) tn(d, { t, type: 'sine', f0: f, f1: f * 0.99, dur: 0.5 / n, peak: a * k }); nb(d, { t, f: 5000, q: 1.5, a: 0.002, peak: a * 0.5, d: 0.03 }); freeLater(2, d);
+  },
+  // ── チャット（撮影1本ぶんのチャットに、こっくりさんの反応を足す）。ツッコミ系は2〜3割
+  TSUK: ['kok.move.03', 'kok.move.04', 'kok.yesno.03'],
+  chat(d) {
+    if (!d || !d.items || !d.end) return; const ev = (CHATLOG.ev || []).filter(e => e.k === 'kok'); if (!ev.length) return;
+    const R = chatRng((d.seed ^ 0x2545f491) >>> 0), T = CHAT_DICT.t, U = Math.max(6, (d.users || []).length || 12), maxR = d.end.R + (d.end.ec ? 3 : -0.2), out = [];
+    const CAT = { enter: 'kok_enter', ask: 'kok_ask', still: 'kok_still', move: 'kok_move', move2: 'kok_move', yesno: 'kok_yesno', name: 'kok_name', final: 'kok_drop', drop: 'kok_drop' };
+    const N = { enter: 2, ask: 1, still: 2, move: 3, move2: 1, yesno: 2, name: 3, final: 1, drop: 3 };
+    for (const e of ev) { const cat = CAT[e.w]; if (!cat) continue; const ids = CHAT_DICT.c[cat] || []; const n = N[e.w] + (R() < 0.4 ? 1 : 0);
+      for (let i = 0; i < n; i++) { const tk = ids.filter(id => this.TSUK.includes(id)), sr = ids.filter(id => !this.TSUK.includes(id)); const pool = tk.length && R() < 0.33 ? tk : sr; const id = pool[Math.floor(R() * pool.length)]; if (!id || !T[id]) continue;
+        const t = e.t + (e.w === 'still' ? 2 : 0.6) + i * (0.7 + R() * 0.9); if (t > maxR) continue; if (out.some(x => x[2] === id && Math.abs(x[0] - t) < 8) || d.items.some(x => x[2] === id && Math.abs(x[0] - t) < 8)) continue;
+        out.push([Math.round(t * 100) / 100, Math.floor(R() * U), id, T[id][0], T[id][1]]); } }
+    if (out.length) d.items = d.items.concat(out).sort((a, b) => a[0] - b[0]);
+  },
+  // ── 確認用の小さな画面（?koktest）
+  panel() {
+    if (!(TEST || BETA) || !/[?&]koktest\b/.test(location.search)) return; let el = this.el;
+    if (!el) { el = this.el = document.createElement('div'); el.style.cssText = 'position:fixed;right:6px;bottom:calc(env(safe-area-inset-bottom) + 150px);z-index:99998;background:rgba(10,10,12,.82);color:#eee;font:12px/1.4 system-ui,sans-serif;padding:6px 8px;border-radius:8px;border:1px solid #553;max-width:190px';
+      for (const t of ['pointerdown', 'pointerup', 'touchstart', 'touchmove', 'click']) el.addEventListener(t, e => e.stopPropagation(), { passive: t !== 'click' });
+      el.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const a = b.dataset.a;
+        if (a === 'r1') this.react = true; else if (a === 'r0') this.react = false;
+        else if (a === 'go' && this.g) { this.g.updateMatrixWorld(true); const s = this.g.localToWorld(V(0, 0, 0.75)); player.x = s.x; player.z = s.z; player.lv = this.desk.y > 1.6 ? 1 : 0; player.y = player.lv ? LH : 0; if ('camY' in player) player.camY = player.y; const p = this.g.getWorldPosition(V()); look.yaw = Math.atan2(-(p.x - s.x), -(p.z - s.z)); look.pitch = -0.5; }
+        else if (a === 'v') this.fakeV = world.t + 1.0;
+        this.panel(); });
+      document.body.appendChild(el); setInterval(() => { if (world.state === 'play') this.panel(); }, 1000); }
+    el.innerHTML = `<b>こっくりさん（確認用）</b><br>この周：${this.react ? '反応する' : '反応しない'}・答え${this.n}回（${this.finalAt}回目で終わり）${this.done ? '・済' : ''}<br>`
+      + `<button data-a="r1" style="margin:2px;padding:3px 6px">反応する</button><button data-a="r0" style="margin:2px;padding:3px 6px">反応しない</button><br><button data-a="go" style="margin:2px;padding:3px 6px">紙の前へ</button><button data-a="v" style="margin:2px;padding:3px 6px">声を出したことにする</button>`;
+  },
+};
+Object.assign(CHAT_DICT.t, {
+  'kok.enter.01': ['こっくりさんやるの？', 'are you seriously doing kokkuri-san?'], 'kok.enter.02': ['まじでやめとけ', 'seriously, stop'], 'kok.enter.03': ['絶対やっちゃダメなやつ', 'you should never do this'],
+  'kok.ask.01': ['何聞いたの', 'what did you ask?'], 'kok.ask.02': ['答えて…', 'answer…'],
+  'kok.still.01': ['動かない', "it's not moving"], 'kok.still.02': ['何も起きない', 'nothing happened'], 'kok.still.03': ['今日はお休み？', 'day off today?'], 'kok.still.04': ['ほっとした', 'phew'],
+  'kok.move.01': ['動いた！！', 'IT MOVED'], 'kok.move.02': ['え、まじで', 'wait, seriously'], 'kok.move.03': ['自分で動かしてるでしょw', "you're moving it yourself lol"], 'kok.move.04': ['仕込み？w', 'staged? lol'],
+  'kok.yesno.01': ['答えたw', 'it answered lol'], 'kok.yesno.02': ['会話成立してる', "it's actually talking back"], 'kok.yesno.03': ['適当すぎるw', 'that answer was so random lol'],
+  'kok.name.01': ['名前呼ばれた', 'it spelled your name'], 'kok.name.02': ['なんで名前知ってんの', 'how does it know your name'], 'kok.name.03': ['やばいやばい', 'nope nope nope'],
+  'kok.drop.01': ['落ちた…', 'it fell…'], 'kok.drop.02': ['帰れって言われた', 'it told us to leave'], 'kok.drop.03': ['もう終わりにしよう', "let's end this now"],
+});
+Object.assign(CHAT_DICT.c, { kok_enter: ['kok.enter.01', 'kok.enter.02', 'kok.enter.03'], kok_ask: ['kok.ask.01', 'kok.ask.02'], kok_still: ['kok.still.01', 'kok.still.02', 'kok.still.03', 'kok.still.04'], kok_move: ['kok.move.01', 'kok.move.02', 'kok.move.03', 'kok.move.04'], kok_yesno: ['kok.yesno.01', 'kok.yesno.02', 'kok.yesno.03'], kok_name: ['kok.name.01', 'kok.name.02', 'kok.name.03'], kok_drop: ['kok.drop.01', 'kok.drop.02', 'kok.drop.03'] });
+if (CHAT_DICT.ev) Object.assign(CHAT_DICT.ev, { '十円玉が動いた': ['kok.move.01', 'kok.move.02'], '十円玉が自分の名前をなぞった': ['kok.name.01', 'kok.name.02'], '机から落ちた十円玉': ['kok.drop.01', 'kok.drop.02'] });
+Object.assign(AW_TABLE, { kokMove: ['B', 40], kokName: ['A', 70], kokDrop: ['C', 25] });
+COL.LIST.push(['kokMove', '十円玉が動いた', 40], ['kokName', '十円玉が自分の名前をなぞった', 70], ['kokDrop', '机から落ちた十円玉', 25]);
+Object.assign(CHIP_DESC, { kokMove: ['こっくりさんの十円玉が、ひとりでに紙の上をすべった。', "The coin slid across the kokkuri-san sheet on its own."], kokName: ['十円玉が、自分の呼び名を一文字ずつなぞった。', 'The coin spelled out your name, one letter at a time.'], kokDrop: ['「か・え・れ」のあと、十円玉は机から落ちた。', 'After spelling "LEAVE", the coin fell off the desk.'] });
+Object.assign(EN, { '十円玉が動いた': 'The coin moved', '十円玉が自分の名前をなぞった': 'The coin spelled your name', '机から落ちた十円玉': 'The coin that fell off the desk', 'こっくりさんを始める': 'Start kokkuri-san', 'やめる': 'Stop', 'こっくりさんをやめる': 'Stop kokkuri-san' });
+/* =========================================================
    2026-11-15 隠しイベント「幻の怪異」（151種類目の撮れ高）
    ・チャットに混ざる荒らしコメントをBANしていくと段階が進む（この端末に記録。データをリセットで0に戻す）
-     0 ふつう（数周に1回、荒らしが1つだけ）→ BANで1 → 荒らしを合計3回BANで2 → 2の周の結果画面を見たら3 → 倒したら「済」
+     0 ふつう（数周に1回、荒らしが1つだけ）→ BANで1 → 荒らしを合計3回BANで2 → 段階2で通算20件BANで3 → 倒したら「済」
+     「済」のあとも10周に1回くらい荒らしが1つ出て、BANするとまた段階1から
    ・段階3の周：校舎の明かりが赤っぽくなり、逆さ女・クモ女・人体模型を合体させた化け物が、逆さ女の追跡のしくみで追ってくる（ほかの敵は出ない）
      この周だけ「封印のお札」が5枚どこかにある（ピアノの「運命」のお札も数に入る）。お札を持って捕まると貼る
      1・2枚目：うめいて背を向けて去り、消えて20〜40秒後にまた来る／3枚目：崩れて消え、色が戻り、撮れ高「幻の怪異を倒す」
@@ -15599,17 +15827,18 @@ const PHAN = {
   // ── 荒らしコメントをBANした
   onBan() {
     const d = this.load();
-    if (d.st === 0) { d.st = 1; d.bans = 0; }
+    if (d.st === 0 || d.st === 9) { d.st = 1; d.bans = 0; }   // 倒した後（済）も、まれに出る荒らしをBANするとまた始まる
     else if (d.st === 1) { d.bans = (d.bans || 0) + 1; if (d.bans >= 3) { d.st = 2; d.bans = 0; } }
+    else if (d.st === 2) { d.bans = (d.bans || 0) + 1; if (d.bans >= 20) { d.st = 3; d.bans = 0; } }   // 2026-11-15 段階2：通算20件BANで段階3（周をまたいで数える）
     this.save(); if (TEST || DEV) console.log('PHAN ban', d.st, d.bans); this.panel();
   },
   // ── 結果画面を開いた（段階2の周 → 次の周から段階3）
-  onResult() { if (this.runSt === 2 && this.stage() === 2) this.setStage(3); },
+  onResult() { },   // 2026-11-15 段階3へは、結果画面ではなく段階2での通算20件BANで進む
   // ── 周のはじめ
   begin() {
     this.runSt = this.stage(); this.on = this.runSt === 3; world.phanRun = this.on;
     this.hits = 0; this.mode = 'idle'; this.nextHunt = 0; this.trackT = 0; this.sndT = 3; this.tintK = this.on ? 1 : 0; this.wasCh = false; this.dead = null;
-    this.troll0 = this.runSt === 0 && (chance(0.25) || ((TEST || BETA) && /[?&]troll\b/.test(location.search)));   // 段階0：数周に1回くらい
+    this.troll0 = ((this.runSt === 0 && chance(0.25)) || (this.runSt === 9 && chance(0.1)) || ((TEST || BETA) && /[?&]troll\b/.test(location.search)));   // 段階0：数周に1回くらい
     if (this.tag) this.tag.visible = false;
     if (!this.on) postMat.uniforms.tint.value.set(1, 1, 1);
     if (TEST || DEV) console.log('PHAN run', this.runSt, this.on ? 'monster' : '', this.troll0 ? 'troll' : '');
@@ -15647,7 +15876,7 @@ const PHAN = {
     const U = Math.max(6, (d.users || []).length || 12), rnd2 = (a, b) => a + (b - a) * R(), pk = a => a[Math.floor(R() * a.length)];
     const out = [], last = new Map(), say = (t, list, id) => { if (t < 0.3 || t > maxR) return; let v, g = 0; do v = pk(list); while (list.length > 2 && v === last.get(list) && g++ < 6); last.set(list, v); const [ja, en] = v; out.push([Math.round(t * 100) / 100, Math.floor(R() * U), id, ja, en]); };
     const troll = t => { if (t < 0.3 || t > maxR) return; const [ja, en] = this.trollText(R); out.push([Math.round(t * 100) / 100, -1, 'troll', ja, en]); };
-    if (st === 0 && this.troll0) troll(rnd2(0.25, 0.85) * end);
+    if ((st === 0 || st === 9) && this.troll0) troll(rnd2(0.25, 0.85) * end);
     else if (st === 1) { const n = 3 + Math.floor(R() * 3); for (let i = 0; i < n; i++) { const t = (i + rnd2(0.2, 0.8)) / n * end; troll(t); if (R() < 0.75) say(t + rnd2(1.2, 3.5), this.L.react, 'phanReact'); if (R() < 0.3) say(t + rnd2(3.5, 6), this.L.react, 'phanReact'); } }
     else if (st === 2) {   // ほぼ荒らしで埋まる。ゲームの内容のコメントは1割くらい
       for (let t = rnd2(0.5, 1.5); t < maxR; t += rnd2(0.55, 1.3)) troll(t);
@@ -15822,7 +16051,7 @@ const PHAN = {
       document.body.appendChild(el);
     }
     const d = this.load(), nm = { 0: '0 ふつう', 1: '1', 2: '2', 3: '3 化け物', 9: '済' };
-    el.innerHTML = `<b>幻の怪異（確認用）</b><br>段階：${nm[d.st] ?? d.st}${d.st === 1 ? `（BAN ${d.bans || 0}/3）` : ''}<br>この周：${this.runSt}${this.on ? `・お札${ITEM.have && ITEM.have.ofuda | 0}枚・貼った${this.hits}` : ''}<br>`
+    el.innerHTML = `<b>幻の怪異（確認用）</b><br>段階：${nm[d.st] ?? d.st}${d.st === 1 ? `（BAN ${d.bans || 0}/3）` : d.st === 2 ? `（BAN ${d.bans || 0}/20）` : ''}<br>この周：${this.runSt}${this.on ? `・お札${ITEM.have && ITEM.have.ofuda | 0}枚・貼った${this.hits}` : ''}<br>`
       + [0, 1, 2, 3, 9].map(v => `<button data-a="st" data-v="${v}" style="margin:2px;padding:3px 7px">${v === 9 ? '済' : v}</button>`).join('')
       + `<br><button data-a="hunt" style="margin:2px;padding:3px 7px">化け物を呼ぶ</button><button data-a="fuda" style="margin:2px;padding:3px 7px">お札+1</button><br><small>段階の変更は次の周から</small>`;
   },
@@ -15835,7 +16064,7 @@ ENDCARD.ORD.PH = -1;
 CHAT_CFG.coef.PH = 1.2;
 setInterval(() => { if (PHAN.el && world.state === 'play') PHAN.panel(); }, 1000);
 PHAN.load(); PHAN.panel();
-if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, WD, CH, SP, MANN, NAV, RED: typeof RED !== 'undefined' ? RED : null, postMat, CHAT, RES_CHAT, COL, ENDCARD, makeResultImage, escapeRun: escape, evid: () => evidence, recS: () => rec, world });
+if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, WD, CH, SP, MANN, NAV, RED: typeof RED !== 'undefined' ? RED : null, postMat, CHAT, RES_CHAT, COL, ENDCARD, makeResultImage, KOK, SELF, avatar, selfCam, STAIRS, groundAt, escapeRun: escape, evid: () => evidence, recS: () => rec, world });
 
 /* =========================================================
    2026-11-14 データをリセット（スタート画面・設定の「撮れ高コレクション」の直下）
