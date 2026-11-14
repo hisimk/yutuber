@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="幽tuber">
 <meta name="theme-color" content="#000000">
-<link rel="manifest" href="../manifest.webmanifest">
-<link rel="apple-touch-icon" href="../icon-180.png">
-<link rel="icon" type="image/png" href="../icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&display=swap" rel="stylesheet">
 <style>
@@ -2459,7 +2459,7 @@ function setupSG(g) {
   SG.model.traverse(o => {
     if (o.isBone || o.type === 'Bone' || o.name) SG.bones[o.name] = SG.bones[o.name] || o;
     if (o.isSkinnedMesh || o.isMesh) {
-      const src = o.material; const m = new THREE.MeshLambertMaterial({ map: src.map, side: THREE.DoubleSide, transparent: true, emissive: 0x2a1010 });
+      const src = o.material; const m = new THREE.MeshLambertMaterial({ map: src.map, emissiveMap: src.map, side: THREE.DoubleSide, transparent: true, emissive: 0x2a1010 });   /* 2026-11-14 発光は模様の色で（以前は一色の灰色が乗って薄く見えた） */
       m.onBeforeCompile = sh => {
         Object.assign(sh.uniforms, SGU);
         sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uSat, uBright, uFootK, uFootLo, uFootHi;').replace('#include <map_fragment>', '#include <map_fragment>\ndiffuseColor.rgb = mix(vec3(dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114))), diffuseColor.rgb, uSat) * uBright;');
@@ -2504,6 +2504,9 @@ function sgvApplyLook(v) {   // 彩度・明るさ・足元・発光
   _sgvE.set(SGV.emis).multiplyScalar(v.emisK); for (const m of SG.mats) m.emissive.copy(_sgvE);
 }
 function sgEmissive(hex) { for (const m of SG.mats) m.emissive.setHex(hex); }
+function sgScareLook(hex = 0x9a8a8a, foot = 0) {   /* 2026-11-14 インカメラの背後・階段の角：足元まで透けさせず、模様の色で顔を浮かせる */
+  sgEmissive(hex); SGU.uFootK.value = SGV.footK * foot; SGU.uSat.value = Math.max(1.2, SGV.sat * 0.6); SGU.uBright.value = 1; for (const m of SG.mats) m.depthWrite = true;
+}
 function sgSetOpacity(a) { if (world.mannRun) a = 0;   /* 2026-11-13 人体模型が敵の周は、逆さ女は出ない */ SG.opacity = a; SG.root.visible = a > 0.01; for (const m of SG.mats) { m.opacity = a; m.depthWrite = a > 0.6; } }
 function sgHead(out = V()) { const h = SG.bones.Head; if (!h) return out.copy(SG.root.position).add(V(0, 1.75, 0)); h.getWorldPosition(out); return out.add(V(0, 0.1, 0)); }
 function sgJaw(out = V()) { const j = SG.bones.Jaw; if (!j) return sgHead(out); return j.getWorldPosition(out); }
@@ -5292,13 +5295,15 @@ const SELF = {
     this.ph = 'wait'; this.t = -delay; this.side = chance(0.5) ? 1 : -1; this.dur = rnd(0.9, 1.5);
   },
   place() {
-    const { f, r } = this.pose();
-    const p = camera.position.clone().addScaledVector(f, -0.26).addScaledVector(r, 0.2 * this.side); p.y = camera.position.y - 0.08;
-    sgPlaceHead(p, selfCam.position);
+    this.pose();   /* 2026-11-14 画面の中で位置を決める：主人公の顔の斜め上・肩越しに、顔がまるごと映る */
+    const face = avatar.ready ? headWorld(avatar, V()) : camera.position.clone();
+    const d = selfCam.position.distanceTo(face) + 0.22;
+    const dir = V(0.42 * this.side, 0.3, 0.5).unproject(selfCam).sub(selfCam.position).normalize();
+    sgPlaceHead(selfCam.position.clone().addScaledVector(dir, d), selfCam.position);
   },
   vanish(quiet) {
     const U = postMat.uniforms; if (this.ph === 'glitch') { U.stat.value = 0; U.tear.value = 0; }   // 乱れの途中で切り替えても、ノイズを残さない
-    sgSetOpacity(0); sgEmissive(0x2a1010); SG.ovRoll = 0; SG.ovYaw = 0; if (WD.borrowed) WD.release(true); this.ph = 'off';
+    sgSetOpacity(0); sgEmissive(0x2a1010); SGU.uFootK.value = SGV.footK; SG.ovRoll = 0; SG.ovYaw = 0; if (WD.borrowed) WD.release(true); this.ph = 'off';
     if (!quiet) { this.cool = world.t + 40; }
   },
   /* 2026-11-14 主人公（インカメラにだけ映る）のシェーダーは、初めてインカメラにした瞬間に作られ、画面と音が長く止まっていた
@@ -5322,7 +5327,7 @@ const SELF = {
     if (this.ph === 'off' && this.turnAcc > 2.4) { this.turnAcc = 0; if (this.allowed() && chance(0.3)) this.appear(rnd(0.1, 0.6)); }
     const U = postMat.uniforms;
     if (this.ph === 'wait') { this.t += dt; if (this.t >= 0) { if (!this.allowed() && this.shown >= 2) { this.ph = 'off'; return; } if (WD.borrowed) { this.ph = 'off'; return; }
-      WD.borrow(); sgPlay('Walk', 0); sgSetOpacity(1); sgEmissive(0x4a3030); SG.ovYaw = 0; SG.ovPitch = 0.1; this.place(); this.ph = 'show';   /* 画面の明かりだけでは顔が沈むので、ほかの場面と同じくらいに浮かせる */ this.t = 0; this.shown++; jumpSting('jump_b', 0.9, 4); } }
+      WD.borrow(); sgPlay('Walk', 0); sgSetOpacity(1); sgScareLook(); SG.ovYaw = 0; SG.ovPitch = 0.1; this.place(); this.ph = 'show';   /* 画面の明かりだけでは顔が沈むので、ほかの場面と同じくらいに浮かせる */ this.t = 0; this.shown++; jumpSting('jump_b', 0.9, 4); } }
     else if (this.ph === 'show') {
       this.t += dt; this.place();
       if (chance(0.06)) SG.ovRoll = rnd(-0.25, 0.25);
@@ -5331,7 +5336,7 @@ const SELF = {
     } else if (this.ph === 'glitch') {
       this.t += dt; this.place();
       U.stat.value = Math.random() < 0.6 ? 0.55 : 0.1; U.tear.value = rnd(0.1, 0.4); SG.ovRoll = rnd(-0.8, 0.8); SG.ovYaw = rnd(-0.4, 0.4);
-      sgSetOpacity(Math.random() < 0.5 ? 1 : 0.3);
+      sgSetOpacity(Math.random() < 0.5 ? 1 : 0);   /* 半透明にはしない（薄く見えるため） */
       if (this.t > 0.3) { U.stat.value = 0; U.tear.value = 0; this.vanish(); }
     }
   },
@@ -6527,12 +6532,12 @@ F2.updStairFace = function (dt) {
   const S = this.st; const s = STAIRS.find(x => x.id === this.plan.stair);
   const edge = s.id === 'S1' ? DOOR2.S1[0] : DOOR2.S2[0];
   const peek = k => V(-1.32, LH + 1.42, edge + 0.03 - k * 0.32);   // k=0:角から覗く位置、k=1:壁の陰
-  const end = () => { sgSetOpacity(0); SG.ovYaw = SG.ovPitch = SG.ovRoll = 0; SG.root.scale.setScalar(1); sgEmissive(0x2a1010); if (WD.borrowed) WD.release(true); F2.busy = false; };
+  const end = () => { sgSetOpacity(0); SG.ovYaw = SG.ovPitch = SG.ovRoll = 0; SG.root.scale.setScalar(1); sgEmissive(0x2a1010); SGU.uFootK.value = SGV.footK; if (WD.borrowed) WD.release(true); F2.busy = false; };
   if (S.face === 'wait') {
     if (playerZone() !== s.id || player.y < 1.2 || player.y > 2.9) return;
     if (!f2free() || !SG.ready || WD.borrowed || CH.state !== 'off' || CAP.on) return;
     if (onScreen(V(-1.5, LH + 1.5, edge + 0.1), 1.3)) return;   // 見ていない間に置く
-    WD.borrow(); sgSetOpacity(1); sgPlay('Scare_MouthOpen', 0); sgEmissive(0x3a2424); SG.root.scale.setScalar(1.02);   // ほかの場面の逆さ女と同じ色に（以前は白く浮かせていて薄く見えた）
+    WD.borrow(); sgSetOpacity(1); sgPlay('Scare_MouthOpen', 0); sgScareLook(0x8a7a7a, 0.5); SG.root.scale.setScalar(1.02);   /* 2026-11-14 顔は濃くはっきり。角の下の体だけ少し透かす */
     SG.ovRoll = 0.5; sgPlaceHead(peek(0)); S.face = 'armed'; S.faceT = 0; F2.busy = true; f2hold(6);
   } else if (S.face === 'armed') {
     S.faceT += dt; f2hold(4); SG.ovRoll = 0.5 + Math.sin(world.t * 2.3) * 0.04; sgPlaceHead(peek(0)); const hp = sgHead(V());
@@ -12106,7 +12111,7 @@ if (CHK) {
     read.textContent = `速さ 自分1.00／クモ${sm.toFixed(2)}（${SP.st}・${sd}）／逆さ${wm.toFixed(2)}（${CH.state}・${wd}）`;
   }, 300);
 }
-if (TEST) window.__G = { colliders, collide, CLK, LIP, BALL, MIC, stairH, STAIRS, postMat, ITEM, F2, lockers, HIDE, NURSE_X, MANN, look, evidence, RACK, STAIR_LAMPS, PASUB, sgEmissive, camFwd, UISND, KB, MINOR, INV, MIDI, AUDIO_OUT, FRAME, input, STAY, occluders, ray, glassPanes, groundAt, EXITF, exitSigns, sole, runner, drainEye, prints, winFog, stainMesh, bloodDecal, fireDoor, broadcastFog, KNOB: null, render, sgHead, spFacePos, BLEED, NURSE, MICO: mic, OFUDA, SPV, speak, PACALL, award, COL, MISS, TAP, sinks, awarded, PIANO, UWA, selfCam, avatar, ITEM, escape, FL, HANDS, NEKO, stairH, SET, MIC, opt, snapEntrance, makeResultImage, shareText, CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
+if (TEST) window.__G = { sgScareLook, sgPlay, sgSetOpacity, colliders, collide, CLK, LIP, BALL, MIC, stairH, STAIRS, postMat, ITEM, F2, lockers, HIDE, NURSE_X, MANN, look, evidence, RACK, STAIR_LAMPS, PASUB, sgEmissive, camFwd, UISND, KB, MINOR, INV, MIDI, AUDIO_OUT, FRAME, input, STAY, occluders, ray, glassPanes, groundAt, EXITF, exitSigns, sole, runner, drainEye, prints, winFog, stainMesh, bloodDecal, fireDoor, broadcastFog, KNOB: null, render, sgHead, spFacePos, BLEED, NURSE, MICO: mic, OFUDA, SPV, speak, PACALL, award, COL, MISS, TAP, sinks, awarded, PIANO, UWA, selfCam, avatar, ITEM, escape, FL, HANDS, NEKO, stairH, SET, MIC, opt, snapEntrance, makeResultImage, shareText, CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
 loadSG().then(() => Promise.all([setupGlbHuman(woman, GHOST_B64), setupGlbHuman(avatar, PROT_B64)])).then(() => loadF2()).then(() => loadSpider()).then(() => NEKO.load()).then(() => UWA.load()).then(() => loadHands()).then(() => { $('#loading').remove(); LOGOANIM.play(); setTimeout(() => RANKPOP.check(), 700); try { ensureAudio(); if (A.ctx && A.ctx.state === 'running') titleSeKick(); } catch (e) { } });
 requestAnimationFrame(tick);
 // 効果音の大きさ（端末に保存。プレイ中・録画の両方に効く）
