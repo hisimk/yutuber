@@ -2361,8 +2361,8 @@ const FURN = {
   { const lv = 0;
     const ext = (lv, x, z, ry) => { const g = F.g('extinguisher', lv, x, z, ry); F.cy(g, 0.075, 0.075, 0.48, FM.fire, 0, 0.24, 0, 10); F.cy(g, 0.03, 0.04, 0.06, FM.black, 0, 0.51, 0, 8); F.bx(g, 0.12, 0.015, 0.03, FM.black, 0.04, 0.55, 0); F.col(lv, x - 0.1, x + 0.1, z - 0.1, z + 0.1); return g; };
     const bell = (lv, x, z, s) => { const g = F.g('fireBell', lv, x, z, 0); F.bx(g, 0.04, 0.32, 0.22, C(0x7a1a14), s * 0.13, 1.5, 0); F.cy(g, 0.045, 0.045, 0.03, C(0x3a0808), s * 0.16, 1.72, 0, 10, 0, Math.PI / 2); F.cy(g, 0.05, 0.05, 0.02, FM.dgrey, s * 0.155, 1.45, 0, 10, 0, Math.PI / 2); return g; };
-    ext(lv, 1.3, -12.2, 0); ext(lv, -1.3, -24.3, 0); ext(lv, 21.9, -6.3, 0);
-    bell(lv, -1.5, -19.6, 1); bell(lv, -1.5, -8.6, 1);
+    ext(lv, 1.3, -12.2, 0); ext(lv, -1.3, -24.3, 0); ext(lv, 21.9, -5.35, 0);   /* 2026-11-15 -6.3 は奥の扉と重なっていた */
+    bell(lv, -1.5, -19.6, 1);   /* 2026-11-15 -8.6 の非常ベルはロッカーに埋まっていたので外した */
     { const g = F.g('posters', lv, 0, 0, 0); F.wallX(g, 0.42, 0.58, ML.run, -1.5, 1.55, -10.4, 1); F.wallX(g, 0.42, 0.58, ML.hand, -1.5, 1.5, -22.4, 1); F.wallX(g, 0.42, 0.58, ML.tidy, 1.5, 1.5, -3.0, -1); F.wallZ(g, 0.42, 0.58, ML.run, 16.5, 1.55, -4.95, -1); }
     // 落とし物箱（下駄箱の端）・傘立てと置き忘れの傘
     { const x = 2.15, z = -0.62, g = F.g('lostBox', lv, x, z, 0.2); F.bx(g, 0.42, 0.26, 0.32, FM.card, 0, 0.13, 0); F.pl(g, 0.3, 0.08, L({ map: plateTex('おとしもの', '#e8e0c8', '#333', 96, 26, 15) }), 0, 0.17, 0.161); F.bx(g, 0.2, 0.05, 0.14, FM.blue, 0.05, 0.27, 0.02, 0, 0.4, 0.1); F.bx(g, 0.12, 0.03, 0.06, FM.red, -0.1, 0.27, -0.06, 0, 1.0, 0); F.cy(g, 0.04, 0.04, 0.12, FM.white, -0.12, 0.28, 0.08, 8, 1.4, 0.3); F.col(lv, x - 0.24, x + 0.24, z - 0.2, z + 0.2); }
@@ -2402,10 +2402,100 @@ const FURN = {
     { const g = F.g('toiletPaper', lv, 3.32, -4.55, 0.3); for (const [ox, y, oz] of [[0, 0.06, 0], [0.12, 0.06, 0.02], [0.06, 0.17, 0.01], [-0.02, 0.06, 0.13]]) { F.cy(g, 0.055, 0.055, 0.11, FM.white, ox, y, oz, 10); F.cy(g, 0.02, 0.02, 0.112, C(0x9a8a6a), ox, y, oz, 6); } }
     for (const z of [-3.3, -2.1]) { const g = F.g('soap', lv, 3.3, z + 0.17, jit(0.4), 0.875); F.bx(g, 0.07, 0.024, 0.045, Math.random() < 0.5 ? C(0xa8c8a0) : C(0xd8d0a0), 0, 0.012, 0); }
   }
+  // ═══ 2026-11-15 廊下・渡り廊下・踊り場に散らばった物（机・椅子・段ボールは当たりあり／通り道は1m以上あける／影なし） ═══
+  if (!/[?&]noprops\b/.test(location.search)) { const g0 = F.g; F.g = function (...a) { const g = g0.apply(this, a); g.userData.corr = true; return g; };   // 廊下の物は、あとで階ごとに1つにまとめる
+    const PR = tx(96, 128, (g, w, h) => { g.fillStyle = '#ece9e0'; g.fillRect(0, 0, w, h); g.fillStyle = '#333'; g.font = 'bold 10px sans-serif'; g.fillText('おしらせ', 30, 14); g.fillStyle = '#777'; for (let i = 0; i < 12; i++) g.fillRect(10, 24 + i * 8, 50 + rr() * 26, 2); g.strokeStyle = '#999'; g.strokeRect(58, 96, 28, 22); });
+    const PR2 = tx(96, 128, (g, w, h) => { g.fillStyle = '#e6e2d2'; g.fillRect(0, 0, w, h); g.fillStyle = '#444'; g.font = '9px sans-serif'; g.fillText('さんすう　名前', 8, 14); g.strokeStyle = '#666'; g.strokeRect(54, 5, 36, 12); for (let i = 0; i < 6; i++) { g.fillText((i + 1) + '）', 8, 34 + i * 16); g.fillRect(28, 32 + i * 16, 30, 1); } g.strokeStyle = '#b03030'; g.lineWidth = 2; g.beginPath(); g.arc(70, 60, 9, 0, 6.3); g.stroke(); });
+    const MP = [L({ map: PR, side: THREE.DoubleSide }), L({ map: PR2, side: THREE.DoubleSide }), L({ map: TXF.script, side: THREE.DoubleSide })];
+    const flat = g => { for (const b of g.children.slice()) { if (!b.isGroup) continue; b.updateMatrix(); for (const m of b.children.slice()) { m.updateMatrix(); m.matrix.premultiply(b.matrix); m.matrix.decompose(m.position, m.quaternion, m.scale); g.add(m); } g.remove(b); } };   // 入れ子をなくして、まとめやすく
+    const tape = C(0xb8a070), card2 = C(0x8a6c48), red = FM.red;
+    // 回した箱の当たり（向き ry の時の外側の四角）
+    const colR = (lv, x, z, hw, hd, ry) => { const c = Math.abs(Math.cos(ry)), s2 = Math.abs(Math.sin(ry)), ex = hw * c + hd * s2, ez = hw * s2 + hd * c; F.col(lv, x - ex, x + ex, z - ez, z + ez); return [ex, ez]; };
+    const paper = (lv, x, z, n = 2, y = 0) => { const g = F.g('paperC', lv, x, z, rr() * 6.28, y); for (let i = 0; i < n; i++) F.pl(g, 0.21, 0.297, MP[Math.floor(rr() * 3)], (rr() - 0.5) * 0.35, 0.003 + i * 0.002, (rr() - 0.5) * 0.35, -Math.PI / 2, 0, rr() * 6.28); return g; };
+    const cbox = (lv, x, z, w, h, d, ry, y = 0, kind = 'cardboard', open = false) => { const g = F.g(kind, lv, x, z, ry, y); F.bx(g, w, h, d, FM.card, 0, h / 2, 0); F.bx(g, w + 0.004, 0.004, 0.05, tape, 0, h + 0.001, 0);
+      if (open) { F.bx(g, w, 0.01, d * 0.5, card2, 0, h + 0.08, -d * 0.62, -1.1); F.bx(g, w, 0.01, d * 0.5, card2, 0, h + 0.06, d * 0.6, 1.25); } return g; };
+    const boxes = (lv, x, z, ry, list) => { let hmax = 0, ex = 0, ez = 0; for (const [w, h, d, ox, oz, y, r2, op] of list) { const c = Math.cos(ry), s2 = Math.sin(ry); cbox(lv, x + ox * c + oz * s2, z - ox * s2 + oz * c, w, h, d, ry + (r2 || 0), y || 0, 'cardboard', op); hmax = Math.max(hmax, (y || 0) + h); ex = Math.max(ex, Math.abs(ox) + w / 2); ez = Math.max(ez, Math.abs(oz) + d / 2); }
+      const [ax, az] = colR(lv, x, z, ex + 0.02, ez + 0.02, ry); if (hmax >= 0.7) F.cov(lv, x - ax, x + ax, hmax, z - az, z + az); };
+    // 横倒しの机（天板が横を向く）。x,z は床の中心
+    const deskDown = (lv, x, z, ry) => { const g = F.g('deskDown', lv, x, z, ry); const b = new THREE.Group(); g.add(b); b.rotation.z = Math.PI / 2;
+      F.bx(b, 0.62, 0.035, 0.46, FM.wood, 0, 0.72, 0); F.bx(b, 0.58, 0.18, 0.03, FM.metal, 0, 0.6, -0.21); for (const [a, c] of [[-0.28, -0.2], [0.28, -0.2], [-0.28, 0.2], [0.28, 0.2]]) F.bx(b, 0.022, 0.7, 0.022, FM.metal, a, 0.35, c);
+      b.position.set(0.367, 0.31, 0); flat(g); colR(lv, x, z, 0.4, 0.26, ry); F.cov(lv, x - 0.4, x + 0.4, 0.64, z - 0.3, z + 0.3); return g; };
+    const chairDown = (lv, x, z, ry) => { const g = F.g('chairDown', lv, x, z, ry); const b = new THREE.Group(); g.add(b); b.rotation.z = Math.PI / 2; b.position.set(0.43, 0.2, 0);
+      F.bx(b, 0.4, 0.03, 0.38, FM.wood, 0, 0.43, 0); F.bx(b, 0.4, 0.28, 0.025, FM.wood, 0, 0.72, 0.19); for (const [a, c] of [[-0.18, -0.17], [0.18, -0.17], [-0.18, 0.17], [0.18, 0.17]]) F.bx(b, 0.02, 0.43, 0.02, FM.metal, a, 0.215, c); F.bx(b, 0.02, 0.32, 0.02, FM.metal, -0.18, 0.6, 0.18); F.bx(b, 0.02, 0.32, 0.02, FM.metal, 0.18, 0.6, 0.18);
+      flat(g); colR(lv, x, z, 0.42, 0.22, ry); return g; };
+    // 机の上に逆さの椅子（片付けの途中）
+    const deskStack = (lv, x, z, ry) => { desk(lv, x, z, ry); const g = F.g('chairUp', lv, x, z, ry, 0.755); const b = new THREE.Group(); g.add(b); b.rotation.x = Math.PI; b.position.set(0, 0.02, -0.1);
+      F.bx(b, 0.4, 0.03, 0.38, FM.wood, 0, 0.0, 0); F.bx(b, 0.4, 0.28, 0.025, FM.wood, 0, 0.29, 0.19); for (const [a, c] of [[-0.18, -0.17], [0.18, -0.17], [-0.18, 0.17], [0.18, 0.17]]) F.bx(b, 0.02, 0.43, 0.02, FM.metal, a, -0.215, c); flat(g); F.cov(lv, x - 0.31, x + 0.31, 1.2, z - 0.24, z + 0.24); return g; };
+    // ほうきとちりとり（壁に立てかける。s は壁の向き：+1 なら +x 側の壁）
+    const broomSet = (lv, x, z, ry, lean = 0.18) => { const g = F.g('broomC', lv, x, z, ry); F.cy(g, 0.012, 0.012, 1.25, FM.lwood, 0, 0.66, 0, 6, lean, 0); F.bx(g, 0.26, 0.1, 0.05, C(0x4a3d2a), 0, 0.06, -0.12 + 0, lean, 0, 0);
+      F.bx(g, 0.24, 0.006, 0.2, C(0x8a2a24), 0.36, 0.03, 0.02, 0.15, 0, 0); F.bx(g, 0.24, 0.07, 0.006, C(0x8a2a24), 0.36, 0.05, 0.12, 0, 0, 0); F.cy(g, 0.01, 0.01, 0.45, FM.dgrey, 0.36, 0.3, 0.14, 6, 0.12, 0); return g; };
+    const broomFloor = (lv, x, z, ry) => { const g = F.g('broomC', lv, x, z, ry); F.cy(g, 0.012, 0.012, 1.25, FM.lwood, 0, 0.02, 0, 6, Math.PI / 2, 0); F.bx(g, 0.26, 0.05, 0.1, C(0x4a3d2a), 0, 0.03, 0.66); return g; };
+    const shoe1 = (lv, x, z, ry, col, side = false, y = 0) => { const g = F.g('shoeC', lv, x, z, ry, y); const b = new THREE.Group(); g.add(b); if (side) { b.rotation.z = Math.PI / 2; b.position.y = 0.045; } F.bx(b, 0.09, 0.05, 0.24, FM.white, 0, 0.025, 0); F.bx(b, 0.092, 0.012, 0.08, col, 0, 0.006, 0.08); F.bx(b, 0.07, 0.003, 0.12, C(0x9a9a92), 0, 0.051, -0.04); flat(g); return g; };
+    const shoes = (lv, x, z, ry, col, y = 0) => { shoe1(lv, x, z, ry, col, false, y); shoe1(lv, x + Math.cos(ry) * 0.11 + 0.06, z - Math.sin(ry) * 0.11 + 0.1, ry + 0.5, col, true, y); };
+    const randFloor = (lv, x, z, ry, col, y = 0) => { const g = F.g('bagC', lv, x, z, ry, y); const b = new THREE.Group(); g.add(b); b.rotation.x = -1.35; b.position.y = 0.09; F.bx(b, 0.26, 0.3, 0.18, col, 0, 0.15, 0); F.bx(b, 0.265, 0.2, 0.03, col, 0, 0.2, 0.1); F.bx(b, 0.05, 0.04, 0.012, FM.silver, 0, 0.12, 0.118); F.bx(b, 0.03, 0.25, 0.012, col, -0.08, 0.15, -0.1); F.bx(b, 0.03, 0.25, 0.012, col, 0.08, 0.15, -0.1); flat(g); return g; };
+    const gymBag = (lv, x, z, ry, col, y = 0) => { const g = F.g('bagC', lv, x, z, ry, y); F.bx(g, 0.3, 0.06, 0.36, col, 0, 0.03, 0, 0, 0, 0.06); F.cy(g, 0.005, 0.005, 0.3, FM.white, 0.12, 0.065, 0.05, 4, 0, Math.PI / 2 - 0.3); F.bx(g, 0.12, 0.002, 0.07, FM.white, -0.04, 0.062, 0.05); return g; };
+
+    // ── 1階 廊下A（x ±1.4・z -1〜-33）。西の壁：S1 -5.3〜-3.9／保健室 -14.2〜-12.8／S2 -28.9〜-27.3、東の壁：教室の戸 -20.4〜-19.4・-17.4〜-16.2
+    { const lv = 0;
+      desk(lv, 1.04, -10.4, Math.PI + 0.22); chairDown(lv, 0.42, -11.15, 0.9);
+      broomSet(lv, -1.3, -10.2, Math.PI / 2);
+      boxes(lv, -1.08, -22.2, 0.05, [[0.5, 0.42, 0.4, 0, 0], [0.46, 0.36, 0.38, 0.02, 0.02, 0.42, 0.12], [0.36, 0.3, 0.3, 0, -0.42, 0, 0.3, true]]);
+      gymBag(lv, -1.15, -16.2, 0.4, FM.navy); randFloor(lv, 1.15, -23.6, -1.9, FM.red);
+      shoes(lv, 0.35, -25.6, 0.7, FM.blue); shoe1(lv, -0.55, -30.1, 2.2, FM.red, true);
+      deskDown(lv, -1.0, -31.4, 0.15);
+      for (const [x, z, n] of [[0.2, -6.2, 2], [-0.5, -14.9, 3], [0.6, -21.1, 1], [-0.2, -27.1, 2], [0.9, -32.2, 2]]) paper(lv, x, z, n);
+    }
+    // ── 1階 廊下L（z -7.9〜-5.05・x 1.5〜22）。北側のロッカー x 13〜18 の前は空ける
+    { const lv = 0;
+      desk(lv, 6.1, -7.52, 0.12); chairDown(lv, 6.95, -7.2, -2.2);
+      boxes(lv, 17.0, -7.48, -0.1, [[0.55, 0.45, 0.42, 0, 0], [0.5, 0.4, 0.4, 0.03, 0, 0.45, -0.2]]);
+      paper(lv, 4.1, -6.3, 2); paper(lv, 10.6, -6.9, 1); paper(lv, 15.2, -6.6, 2); shoe1(lv, 19.4, -6.0, 0.6, FM.green);
+    }
+    // ── 渡り廊下W（x 19.1〜21.9・z -8〜-30）。窓の霧 z -18（東）・水たまり (20.5, -21) は空ける
+    { const lv = 0;
+      desk(lv, 19.48, -10.9, Math.PI / 2 + 0.15); chairDown(lv, 20.25, -11.75, 2.6);
+      deskDown(lv, 21.5, -14.4, Math.PI / 2 - 0.2);
+      boxes(lv, 19.42, -16.3, 0.12, [[0.5, 0.44, 0.42, 0, 0], [0.44, 0.38, 0.38, -0.02, 0.03, 0.44, 0.25], [0.4, 0.34, 0.34, 0.02, -0.45, 0, -0.2, true]]);
+      broomFloor(lv, 20.15, -19.3, 1.25);
+      deskStack(lv, 21.48, -24.4, -Math.PI / 2 + 0.1);
+      chairDown(lv, 19.55, -25.6, 1.3);
+      boxes(lv, 21.52, -28.75, -0.15, [[0.5, 0.4, 0.4, 0, 0], [0.42, 0.34, 0.36, 0.03, 0, 0.4, 0.3]]);
+      shoes(lv, 20.9, -12.7, 2.4, FM.blue); shoe1(lv, 20.25, -27.4, -0.9, FM.red, true); randFloor(lv, 21.55, -22.5, 1.9, C(0x2a2a2a)); gymBag(lv, 19.4, -27.9, 0.9, FM.green);
+      for (const [x, z, n] of [[20.1, -9.4, 2], [21.0, -17.3, 1], [19.7, -22.9, 2], [20.8, -26.3, 1], [20.6, -29.3, 2], [20.9, -13.6, 1]]) paper(lv, x, z, n);
+    }
+    // ── 1階 廊下B（z -33.1〜-30・x 1.5〜26）。南の壁ぞい
+    { const lv = 0;
+      desk(lv, 10.4, -32.62, 0.08); chairDown(lv, 15.6, -32.6, 0.3);
+      boxes(lv, 23.6, -32.68, 0.06, [[0.5, 0.42, 0.4, 0, 0], [0.5, 0.42, 0.4, 0.55, 0.02, 0, 0.1], [0.44, 0.36, 0.36, 0.25, 0, 0.42, -0.15]]);
+      paper(lv, 4.6, -31.2, 2); paper(lv, 12.8, -31.9, 1); paper(lv, 19.4, -31.3, 2); shoe1(lv, 8.2, -30.9, 1.1, FM.blue);
+    }
+    // ── 2階 廊下（x ±1.4・z -3〜-32）。西：S1 -6.9〜-5.5／図書 -13.7〜-12.3／音楽 -22.2〜-20.8／S2 -30.5〜-28.9、東：-17〜-15.8・-20.4〜-19.2
+    { const lv = 1;
+      desk(lv, 1.04, -12.0, Math.PI - 0.18); chairDown(lv, 0.45, -12.75, -0.6);
+      deskDown(lv, -1.0, -9.6, -0.12);
+      boxes(lv, -1.08, -18.3, -0.08, [[0.5, 0.45, 0.42, 0, 0], [0.46, 0.4, 0.4, 0.02, 0, 0.45, 0.2], [0.34, 0.28, 0.3, 0.02, 0.44, 0, -0.3, true]]);
+      broomSet(lv, 1.3, -23.6, -Math.PI / 2);
+      gymBag(lv, -1.18, -24.3, -0.5, FM.red); randFloor(lv, 1.1, -27.0, -1.3, FM.navy);
+      shoes(lv, 0.7, -14.9, -0.4, FM.green); shoe1(lv, -0.4, -30.8, 1.4, FM.blue, true);
+      for (const [x, z, n] of [[0.4, -7.6, 2], [-0.3, -15.6, 3], [0.6, -24.9, 1], [-0.5, -28.1, 2], [0.2, -19.9, 1]]) paper(lv, x, z, n);
+    }
+    // ── 階段の踊り場（高さ1.6・x -5.78〜-4.42）。曲がる通り道（中ほど）はあけて、奥の壁ぎわと隅に
+    for (const z0 of [-5.4, -28.9]) { const lv = 0, y = 1.6;
+      paper(lv, -5.45, z0 - 1.25, 2, y); paper(lv, -5.1, z0 + 1.1, 1, y);
+      if (z0 > -10) { randFloor(lv, -5.62, z0 + 1.45, Math.PI / 2 + 0.3, FM.red, y); shoe1(lv, -5.5, z0 - 1.45, 2.0, FM.blue, true, y); }
+      else { const g = cbox(lv, -5.55, z0 - 1.38, 0.34, 0.26, 0.3, 0.3, y, 'cardboard', true); broomSet(lv, -5.68, z0 + 1.35, Math.PI / 2); gymBag(lv, -5.45, z0 + 0.95, 0.3, FM.navy, y); }
+    }
+    // 踊り場のほうきは高さを合わせる
+    for (const g of FURN.items.broomC || []) if (g.position.x < -5 && g.position.y < 0.1) g.position.y = 1.6;
+    F.g = g0;
+  }
   // 動かす予定のない小物（給食袋・体操着袋・床の楽譜・掲示物以外の細かい物）は、階ごとに1つにまとめる
-  for (const lv of [0, 1]) { const tmp = new THREE.Group(); for (const k of ['lunchBag', 'gymBag', 'sheet', 'chalkTray', 'soap', 'toiletPaper']) { const L2 = FURN.items[k] || []; for (const g of L2.filter(g => g.userData.lv === lv)) { g.updateMatrix(); for (const m of g.children.slice()) { m.updateMatrix(); m.matrix.premultiply(g.matrix); m.matrix.decompose(m.position, m.quaternion, m.scale); tmp.add(m); } g.parent.remove(g); } FURN.items[k] = L2.filter(g => g.userData.lv !== lv); }
+  if (!/[?&]nomerge\b/.test(location.search)) for (const lv of [0, 1]) { const tmp = new THREE.Group(); for (const k of ['lunchBag', 'gymBag', 'sheet', 'chalkTray', 'soap', 'toiletPaper', 'paperC', 'shoeC', 'bagC', 'broomC']) { const L2 = FURN.items[k] || []; for (const g of L2.filter(g => g.userData.lv === lv)) { g.updateMatrix(); for (const m of g.children.slice()) { m.updateMatrix(); m.matrix.premultiply(g.matrix); m.matrix.decompose(m.position, m.quaternion, m.scale); tmp.add(m); } g.parent.remove(g); } FURN.items[k] = L2.filter(g => g.userData.lv !== lv); }
     FURN.bake(tmp); if (tmp.children.length) FURN.par(lv).add(tmp); }
-  for (const k in FURN.items) for (const g of FURN.items[k]) FURN.bake(g);   // 同じ色の部品をまとめて軽く
+  // 2026-11-15 廊下に散らばった物（動かさない）も、階ごとに1つにまとめる
+  if (!/[?&]nomerge\b/.test(location.search)) for (const lv of [0, 1]) { const tmp = new THREE.Group(); for (const k in FURN.items) { const L2 = FURN.items[k]; for (const g of L2.filter(g => g.userData.corr && g.userData.lv === lv)) { g.updateMatrix(); for (const m of g.children.slice()) { m.updateMatrix(); m.matrix.premultiply(g.matrix); m.matrix.decompose(m.position, m.quaternion, m.scale); tmp.add(m); } g.parent.remove(g); } FURN.items[k] = L2.filter(g => !(g.userData.corr && g.userData.lv === lv)); }
+    FURN.bake(tmp); if (tmp.children.length) FURN.par(lv).add(tmp); }
+  if (!/[?&]nomerge\b/.test(location.search)) for (const k in FURN.items) for (const g of FURN.items[k]) FURN.bake(g);   // 同じ色の部品をまとめて軽く（?nomerge は重なり調べ用）
 }
 
 
@@ -10942,7 +11032,7 @@ const CLK = {
   list: [],
   build() {
     for (const [room, z] of [['2A', -8.35], ['2B', -28.65]]) {
-      const ox = 1.98, G = new THREE.Group(); G.position.set(ox, LH, z); G.rotation.y = -Math.PI / 2; F2G.add(G);   // 扉が部屋の中（東）を向く。背中は西の壁
+      const ox = 2.08, G = new THREE.Group(); G.position.set(ox, LH, z);   /* 2026-11-15 1.98 だと背中が西の壁に約9cm埋まっていたので、部屋の内側へ10cm */ G.rotation.y = -Math.PI / 2; F2G.add(G);   // 扉が部屋の中（東）を向く。背中は西の壁
       const piv = new THREE.Group(); G.add(piv);   // 支点：扉の下の辺（ここを軸に前へ倒れる）
       const body = new THREE.Group(); piv.add(body); hollowLocker(0, 0.9, 0.23, body);
       const dm = L({ map: TX.locker }), sm = M.steel; const hinge = new THREE.Group(); hinge.position.set(-0.235, 0, 0); piv.add(hinge); const parts = [];   // 2026-11-14 扉は蝶番に（ふつうのロッカーと同じ）
@@ -14151,7 +14241,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.4';
+const VERSION = '0.15.5';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -15393,11 +15483,11 @@ addEventListener('keydown', e => {
   else if ($('#saveNote').classList.contains('show')) { $('#saveNote').classList.remove('show'); e.stopPropagation(); }
 }, true);
 addEventListener('resize', () => { if (VED.on) VED.uiMarks(); });
-if (TEST && window.__G) Object.assign(window.__G, { SIDE, RKLIST, RING, AFIX, SET, A, LID, stalls, CHATGEN, PADNAV, INV, RES_CHAT, SHX, CROUCH, COVER, enemySees, F2, startRec, SFXLAZY, NICK, ENDCARD, UNDER, HIDE, GKEEP, POPINFO, VDB, GODV: GOD, FURN, CALL, FDET, woman, selfCam });   // 2026-11-14 確認用
+if (TEST && window.__G) Object.assign(window.__G, { SIDE, RKLIST, RING, AFIX, SET, A, LID, stalls, CHATGEN, PADNAV, INV, RES_CHAT, SHX, CROUCH, COVER, enemySees, F2, startRec, SFXLAZY, NICK, ENDCARD, UNDER, HIDE, GKEEP, POPINFO, VDB, GODV: GOD, FURN, CALL, FDET, woman, selfCam, lockers, lkP, CLK, occluders });   // 2026-11-14 確認用
 
 setInterval(() => CHATLOG.tick(), 400);
 setInterval(() => { try { VOICE.tick(); } catch (e) { if (TEST || DEV) console.warn('VOICE', e); } }, 33);   // 2026-11-14 声の判定（約30回/秒）
-if (TEST && window.__G) Object.assign(window.__G, { VOICE, CONFIG, player });
+if (TEST && window.__G) Object.assign(window.__G, { VOICE, CONFIG, player, renderer });
 
 /* ---------- ランク昇格のお知らせ（タイトルに戻った時に1回） ---------- */
 const RANKPOP = {
