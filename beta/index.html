@@ -8367,6 +8367,7 @@ const ITEM = {
       const miss = chance(0.3) ? new Set(shuffle([1, 2, 3, 4, 5, 6, 7]).slice(0, chance(0.5) ? 1 : 2)) : new Set(), fin = pick([[7, 4], [9, 5], [-8, -3], [11, 3]]);   // 最後の外し方は数種類
       let at = t + 0.42;   // 8分休符から
       this.MEL.forEach((m0, i) => {
+        if (i === 6 || (i === 3 && chance(0.4))) { const br = i === 6 ? rnd(0.35, 0.7) : rnd(0.15, 0.3); nb(A.bus, { t: at + 0.04, f: 1800, q: 0.6, type: 'bandpass', a: 0.06, peak: 0.018, d: br * 0.8 }); at += br; }   // 2026-11-14 息継ぎの間（スーッと吸う音を小さく）
         const du = this.DUR[i] * rnd(0.82, 1.2); let m = m0;
         if (miss.has(i)) m += pick([-2, -1, 1, 2]);
         if (i === 8) { m = 85 + fin[0]; this.fluteNote(m, at, du, fin[1]); this.fluteNote(96, at + 0.02, 0.16, 5, 0.45); }   // 9音目：大きく外して、裏返った「ピョエッ」
@@ -12676,7 +12677,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.12.0';
+const VERSION = '0.13.0';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
