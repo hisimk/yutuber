@@ -642,6 +642,12 @@
   /* SSレア：虹色。文字はゆっくり色が流れ、枠のふちが虹色に光る */
   .rk.ss small,.rk.ss b{background:linear-gradient(100deg,#ff6b8b,#ffb35c,#ffe66b,#7dffa8,#6bd8ff,#9a8bff,#ff7ae0,#ff6b8b);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rbFlow 3.2s linear infinite}
   .rk.ss b{filter:drop-shadow(0 0 6px rgba(255,160,230,.55))}
+  /* 2026-11-15 レア「幻」：黒地に金 */
+  .rk.ph{background:#000;border:1px solid #b8912f;border-radius:6px;box-shadow:0 0 8px rgba(233,195,91,.35)}
+  .rk.ph small,.rk.ph b{background:linear-gradient(100deg,#9c771b,#f7dc85,#fff4c8,#d9aa3e,#9c771b);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rbFlow 3.2s linear infinite}
+  html[lang=en] .rk.ph b{font-size:11px;letter-spacing:0}
+  .ev.r-ph,.colItem.r-ph{background:linear-gradient(90deg,rgba(0,0,0,.92),rgba(52,40,10,.75))!important;border-color:#b8912f!important}
+  .chatBox .cm.troll .tx{color:#f1dede}
   .ev.r-ss{border:1.5px solid transparent;background:linear-gradient(160deg,#1a1520,#121214 60%) padding-box,linear-gradient(100deg,#ff6b8b,#ffb35c,#ffe66b,#7dffa8,#6bd8ff,#9a8bff,#ff7ae0,#ff6b8b) border-box;background-size:100% 100%,300% 100%;animation:rbBorder 3.2s linear infinite,rbGlow 2.4s ease-in-out infinite}
   .ev.kira.r-ss{animation:rbBorder 3.2s linear infinite,rbFlash .9s ease-out}
   .spk{position:absolute;width:15px;height:15px;opacity:0;background:#fff;clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);filter:drop-shadow(0 0 4px #ffe27a)}
@@ -4293,10 +4299,10 @@ const ENDCARD = {
       const a = Math.min(1, Math.max(0, (t - 1.1 - i * 0.18) / 0.3)); if (!a) return; g.globalAlpha = fade * out * a;
       if (e.multi) {   // まとめの1行：ランクの色の文字＋件数を横に並べる
         let x = cx - 380 * u; g.textAlign = 'left';
-        for (const q of e.multi) { g.fillStyle = RANK_COL[q.r] || '#fff'; g.font = `italic 800 ${30 * u}px ${sans}`; g.fillText(q.r, x, y); x += g.measureText(q.r).width + 6 * u; g.fillStyle = '#b4afa6'; g.font = `700 ${30 * u}px ${sans}`; const s2 = `×${q.n}`; g.fillText(s2, x, y); x += g.measureText(s2).width + 26 * u; }
+        for (const q of e.multi) { g.fillStyle = RANK_COL[q.r] || '#fff'; g.font = `italic 800 ${30 * u}px ${sans}`; g.fillText(rkTxt(q.r), x, y); x += g.measureText(rkTxt(q.r)).width + 6 * u; g.fillStyle = '#b4afa6'; g.font = `700 ${30 * u}px ${sans}`; const s2 = `×${q.n}`; g.fillText(s2, x, y); x += g.measureText(s2).width + 26 * u; }
         g.fillStyle = '#e9e4da'; g.textAlign = 'right'; g.font = `700 ${32 * u}px ${sans}`; g.fillText(String(e.pts), cx + 380 * u, y); y += rowH; return;
       }
-      const r = e.r; g.fillStyle = RANK_COL[r] || '#fff'; g.font = `italic 800 ${30 * u}px ${sans}`; g.textAlign = 'left'; g.fillText(r, cx - 380 * u, y);
+      const r = e.r; g.fillStyle = RANK_COL[r] || '#fff'; g.font = `italic 800 ${(r === 'PH' && LANG === 'en' ? 22 : 30) * u}px ${sans}`; g.textAlign = 'left'; g.fillText(rkTxt(r), cx - 380 * u, y);
       g.fillStyle = e.n ? '#b4afa6' : '#e9e4da'; g.font = `${e.n ? 700 : 400} ${32 * u}px ${sans}`; let lb = e.other ? (LANG === 'en' ? `others ×${e.n}` : `ほか ×${e.n}`) : e.n ? `×${e.n}` : TR(e.label); while (g.measureText(lb).width > 560 * u && lb.length > 4) lb = lb.slice(0, -2) + '…'; g.fillText(lb, cx - 320 * u, y);
       g.fillStyle = '#e9e4da'; g.textAlign = 'right'; g.font = `700 ${32 * u}px ${sans}`; g.fillText(String(e.pts), cx + 380 * u, y); y += rowH;
     });
@@ -4598,7 +4604,7 @@ function doorStallTick(who, dt) {
 }
 // 逆さ女がはっきり見え、追ってくるようになったか（電池残り60%〜30%の間のどこかから）
 function womanOn() {
-  const on = world.chime30 || (world.batUsed || 0) >= (world.sgShowUsed ?? 30);
+  const on = world.chime30 || (world.batUsed || 0) >= (world.sgShowUsed ?? 30) || (typeof PHAN !== 'undefined' && PHAN.on);   // 2026-11-15 化け物の周は最初から
   if (on && WD.showUsed === undefined) { WD.showUsed = world.batUsed || 0; if (TEST || DEV) console.log('WOMAN on', (world.battery || 0).toFixed(1)); }
   return on;
 }
@@ -4845,7 +4851,8 @@ const CH = {
     const base = this.state === 'hunt' ? CONFIG.stalker : null;
     let speed;
     if (base) { this.speedMul = Math.min(base.maxSpeed, (this.speedMul || base.startSpeed) + base.accel * dt); speed = this.speedMul; }
-    else { this.speedMul = Math.min(1, this.speedMul + dt * 0.3); const k = rampK(WD.showUsed); speed = CONFIG.walkSpeed * lerp(CONFIG.womanChaseMul, CONFIG.womanChaseMax, k) * this.speedMul; }   // 2026-11-13 0.9 → 1.0
+    else { this.speedMul = Math.min(1, this.speedMul + dt * 0.3); const k = rampK(WD.showUsed); speed = CONFIG.walkSpeed * lerp(CONFIG.womanChaseMul, CONFIG.womanChaseMax, k) * this.speedMul; }
+    if (PHAN.on) speed = CONFIG.walkSpeed * 1.2;   // 2026-11-15 合体した化け物：最初の歩く速さの1.2倍   // 2026-11-13 0.9 → 1.0
     const target = this.state === 'hunt' ? V(player.x, player.y, player.z) : this.lastSeen;
     const dP = distTo(WD.pos.x, WD.pos.z) + (Math.abs(WD.pos.y - player.y) > 1.0 ? 30 : 0);   /* 別の階なら届かない */
     if (this.state !== 'hunt' && distTo(WD.pos.x, WD.pos.z) > CONFIG.loseDist && Math.abs(WD.pos.y - player.y) < 1.0) { this.stop(); return; }   // 離れすぎると見失う
@@ -5046,7 +5053,7 @@ const CAP = {
   on: false, t: 0, camYaw: 0, camPitch: 0,
   start() {
     if (this.on || world.state !== 'play') return; scareZoom1();
-    if (ITEM.charm('woman')) { if (!OFUDA.on) ITEM.banishWoman(); return; }   // おまもり／封印のお札が一度だけ身代わりに
+    if (ITEM.charm('woman')) { if (!OFUDA.on && !PHAN.on) ITEM.banishWoman(); return; }   // おまもり／封印のお札が一度だけ身代わりに
     if (world.selfie) SELF.set(false);
     this.on = true; this.t = 0; this.seenS = 0; world.capture = 0.0001; PAD.hit(1); CH.state = 'off'; $('#hud').classList.add('off'); $('#actBtn').classList.remove('show');
     if (DIR.active) DIR.end(DIR.active);
@@ -5989,7 +5996,7 @@ const DIR = {
       const e = EV[id]; if (e.done || world.t < e.notBefore) continue;
       if (e.zones.length && !e.zones.includes(z)) continue;
       if (e.sg && (WD.borrowed || CH.state !== 'off')) continue;
-      if (world.mannRun && (e.sg || e.id === 'cornerFace')) continue;   // 逆さ女の出る怪異は起こさない
+      if ((world.mannRun || world.phanRun) && (e.sg || e.id === 'cornerFace')) continue;   // 逆さ女の出る怪異は起こさない
       if (e.ready()) {
         // 2026-11-14 スパイダーセンス：30%の確率で、始まる2秒前に録画ボタンのまわりが赤く光る
         if (!e.sensed) { e.sensed = true; if (PERM.sense()) { e.omened = true; this.omen = { e, until: world.t + 2 }; return; } }
@@ -6138,7 +6145,7 @@ const SELF = {
   turnAcc: 0, lastYaw: 0, shown: 0, cool: 0, ph: 'off', t: 0, side: 1,
   reset() { this.turnAcc = 0; this.shown = 0; this.cool = 0; this.ph = 'off'; world.selfie = false; this.ui(); },
   ui() { $('#camBtn').classList.toggle('on', !!world.selfie); $('#zoomRow').style.visibility = world.selfie ? 'hidden' : ''; },
-  allowed() { return world.state === 'play' && SG.ready && !world.mannRun && !WD.borrowed && CH.state === 'off' && !DIR.active && !CAP.on && !player.hidden && !HIDE.lk && !world.dark && world.t > 15 && this.shown < 2 && world.t > this.cool; },
+  allowed() { return world.state === 'play' && SG.ready && !world.mannRun && !world.phanRun && !WD.borrowed && CH.state === 'off' && !DIR.active && !CAP.on && !player.hidden && !HIDE.lk && !world.dark && world.t > 15 && this.shown < 2 && world.t > this.cool; },
   set(on) {
     if (on && (player.hidden || HIDE.lk || CAP.on || world.dark || world.state !== 'play')) return;
     if (!!on !== !!world.selfie) try { CHATLOG.bhEvent('selfie', !!on); } catch (e) { }
@@ -6676,7 +6683,7 @@ const MD = {
       if (this.t > 0.32) { U.stat.value = 0; U.tear.value = 0; sgSetOpacity(0); SG.root.scale.setScalar(1); sgEmissive(0x2a1010); focus.override = null; WD.release(true); this.ph = 'done'; world.lastEventEnd = world.t; world.quietUntil = world.t + 15; }
     }
   },
-  canStartScare() { return SG.ready && !world.mannRun && !WD.borrowed && CH.state === 'off' && !CAP.on && !world.dark && !player.hidden; },
+  canStartScare() { return SG.ready && !world.mannRun && !world.phanRun && !WD.borrowed && CH.state === 'off' && !CAP.on && !world.dark && !player.hidden; },
   placeFace(d) { d *= NEAR_K; const f = camFwd(); f.y = 0; f.normalize(); const p = camera.position.clone().addScaledVector(f, d); p.y = camera.position.y - 0.25; sgPlaceHead(p); },
 };
 
@@ -6948,7 +6955,7 @@ const MF = {
   reset() { this.ph = 'idle'; this.look = 0; this.used = false; this.cool = 0; this.need = rnd(2.5, 4.2); },
   tube() { return tubes.find(t => Math.hypot(t.pos.x - 7.2, t.pos.z + 2) < 1); },
   set(on) { const t = this.tube(); if (!t) return; t.light.intensity = on ? t.base * 1.25 : 0.03; for (const m of t.meshes) m.material.color.setScalar(on ? 1.1 : 0.1); if (on) SND.kata(t.pos, 0.25); },
-  ok() { return !this.used && SG.ready && !world.mannRun && !WD.borrowed && CH.state === 'off' && !DIR.active && !CAP.on && !world.selfie && !world.dark && !world.blackout && (MD.ph === 'idle' || MD.ph === 'done') && playerZone() === 'T' && player.x < 5.2; },
+  ok() { return !this.used && SG.ready && !world.mannRun && !world.phanRun && !WD.borrowed && CH.state === 'off' && !DIR.active && !CAP.on && !world.selfie && !world.dark && !world.blackout && (MD.ph === 'idle' || MD.ph === 'done') && playerZone() === 'T' && player.x < 5.2; },
   update(dt) {
     if (this.ph === 'idle') {
       if (world.t < (this.cool || 0) || !this.ok()) { this.look = 0; return; }
@@ -7869,6 +7876,7 @@ SP.canDrop = function () {
 };
 
 SP.update = function (dt) {
+  if (world.phanRun) return;   // 2026-11-15 化け物の周は、クモ女は単体で出ない
   if (this.st === 'sealed') return;   // 封印のお札で消えていく途中
   // 出現の判定（録画で得た累計得点。初めて規定値に届いた瞬間の電池で一度だけ決める）
   if (!this.decided) { const tot = evidence.reduce((a, e) => a + e.pts, 0); if (tot > SPIDER_SCORE && (world.batUsed || 0) >= 50) { this.decided = true; this.flag = true;   /* 2026-11-14 電池を50%以上使い、得点が300を超えている時 */ if (TEST || DEV) console.log('SPIDER flag', this.flag, tot, world.battery.toFixed(1)); } }
@@ -8765,6 +8773,7 @@ const ITEM = {
       if (sp.type === 'bed') return !!sp.bed && sp.bed.duv > 0.8;
       return true;
     }
+    if (it.ph) return PHAN.shown(it);   // 2026-11-15 化け物の周のお札
     if (it.id === 'key' && this.keyAt === 'bed') { const b = F2.beds && F2.beds.find(x => x.i === F2.plan.bedClosed); return !!b && b.duv > 0.8; }
     if (it.id === 'ofuda') return !!F2.bFallen;
     if (it.id === 'memo') return false;   // ロッカーに入った時に読む
@@ -8839,7 +8848,7 @@ const ITEM = {
   pick(it) {
     CHATLOG.add('pick', { id: it.id });
     if (it.taken || world.state !== 'play') return;
-    it.taken = true; it.s.visible = false; this.have[it.id] = true; if (it.id === 'omamori' && this.lockLk) this.lockLk.noHide = false;   // 取ったら隠れられる
+    it.taken = true; it.s.visible = false; this.have[it.id] = it.id === 'ofuda' ? (this.have.ofuda | 0) + 1 : true;   /* 2026-11-15 お札は枚数で持つ */ if (it.id === 'omamori' && this.lockLk) this.lockLk.noHide = false;   // 取ったら隠れられる
     const D = this.defs[it.id];
     const el = $('#itemModal'); el.classList.toggle('score', it.id === 'memo'); $('#imImg').src = it.id === 'memo' ? this.memoScore(this.memoSong) : this.defs[it.id].view && typeof ACC_VIEW !== 'undefined' && ACC_VIEW[it.id] ? ACC_VIEW[it.id]() : ITEM_IMG[it.id]; if (this.defs[it.id].view) el.classList.add('score'); $('#imTitle').textContent = TR(D.name + 'を入手した'); $('#imDesc').textContent = TR(D.desc); $('#imTap').textContent = TR('タップして進める。');
     world.state = 'paused'; input.sx = input.sy = 0;
@@ -8969,7 +8978,8 @@ const ITEM = {
   // おまもり：捕まった瞬間に一度だけ身代わりになる
   charm(kind) {
     if (world.state !== 'play') return false;
-    if (this.have.ofuda) { this.have.ofuda = false; OFUDA.start(kind); return true; }   // 封印のお札：顔に貼って、点滅しながら消す
+    if (kind === 'woman' && PHAN.on) { if (!(this.have.ofuda > 0)) return false; this.have.ofuda = (this.have.ofuda | 0) - 1; PHAN.seal(); return true; }   // 2026-11-15 化け物の周：お札だけが効く
+    if (this.have.ofuda) { this.have.ofuda = (this.have.ofuda | 0) - 1; OFUDA.start(kind); return true; }   // 封印のお札：顔に貼って、点滅しながら消す
     if (!this.have.omamori) return false;
     this.have.omamori = false;
     const fl = $('#itemFlash'); fl.style.transition = 'none'; fl.style.opacity = '0.85'; void fl.offsetWidth; fl.style.transition = 'opacity 1.1s'; fl.style.opacity = '0';
@@ -9595,7 +9605,7 @@ const COL = {
     if (rec.time > 0.3 || evs.length) d.runs = (d.runs || 0) + 1;
     for (const e of evs) {
       if (!(e.pts > 0)) continue; const name = this.base(e.label);
-      if (!this.LIST.some(x => x[1] === name)) continue;
+      if (!this.LIST.some(x => x[1] === name) && name !== PHAN_AW[1]) continue;   // 2026-11-15 151番目（幻）も記録
       const it = d.items[name] || (d.items[name] = { n: 0, first: today }); if (!it.n) fresh.add(name); it.n++;
     }
     this.save(); return fresh;
@@ -9629,6 +9639,14 @@ const COL = {
       c.addEventListener('click', e => { e.stopPropagation(); CHIP.open(x, show); });   // 2026-11-14 タップで軽い説明
       list.appendChild(c);
     }
+    // 2026-11-15 151番目の枠（幻）：撮れ高が全部そろった時か、幻を初めて撮った時から、一番下に出る
+    { const it = d.items[PHAN_AW[1]], has = !!(it && it.n), show = has || ALL;
+      if (show || got === rows.length) {
+        const c = document.createElement('div'); c.className = 'colItem r-ph' + (show ? '' : ' unk'); c.style.setProperty('--rc', RANK_COL.PH);
+        c.innerHTML = `<span class="rk ph"><small>レア</small><b>${rkTxt('PH')}</b></span><div class="ci"><div class="cn">${show ? TR(PHAN_AW[1]) : TR('？？？（幻）')}</div><div class="cs">${show ? `<i class="like"></i>${PHAN_AW[2]}　<span class="cc">${has ? it.n + '回' : '未'}</span>` : 'まだ撮れていない'}</div></div>`;
+        c.addEventListener('click', e => { e.stopPropagation(); CHIP.open({ key: PHAN_AW[0], name: PHAN_AW[1], pts: PHAN_AW[2], r: 'PH', it }, show); });
+        list.appendChild(c);
+      } }
     this.el.classList.add('show'); list.scrollTop = 0;
   },
   close() { if (this.el) this.el.classList.remove('show'); },
@@ -10033,7 +10051,7 @@ const MANN = {
     if (!this.ready) return;
     const q = location.search.match(/[?&]mann=(\w+)/); const force = q ? q[1] : '';   // 確認用 ?mann=enemy / ?mann=run
     let unlocked = false; try { unlocked = localStorage.getItem('yt_mann_unlock') === '1'; } catch (e) { }
-    world.mannRun = force === 'enemy' || (force !== 'run' && unlocked && chance(0.5));   // 2026-11-14 かくれんぼFINALをクリアするまでは出ない。クリア後は半分の周で逆さ女と交代
+    world.mannRun = !world.phanRun && (force === 'enemy' || (force !== 'run' && unlocked && chance(0.5)));   // 2026-11-14 かくれんぼFINALをクリアするまでは出ない。クリア後は半分の周で逆さ女と交代
     // 交代の回の出方：半分は保健室の前から（さらに半分ずつ「目を離した隙に」／「離れたら」動き出す）。残り半分は電池を20%使うまでどこにもいない
     const qv = location.search.match(/[?&]mannv=(\w+)/); this.ev = qv ? qv[1] : pick(['look', 'far', 'spawn', 'spawn']); this.seenOnce = false;
     this.runPlan = !world.mannRun;   // 2026-11-14 走り出す回の抽選はなし（首が回った後、6秒写せば必ず走る）
@@ -10042,7 +10060,8 @@ const MANN = {
     if (this.broken) for (const g of this.broken) g.visible = true; this.broken = [];
     this.cap = null; this.rattleStop(); this.col.on = true; this.root.rotation.set(0, this.heading, 0); this.root.position.copy(this.pos);
     this.setOp(1); this.play(null); this.tilt = 0; this.hy = -0.9; this.hp = 0.05; this.stare = null; this.stareT = 0; this.eye = V(0, 0, 0); this.lookHead();   // 2026-11-14 首は正面から見て左へ回したまま
-    if (world.mannRun && this.ev === 'spawn') { this.st = 'absent'; this.setOp(0); this.col.on = false; }   // 電池を20%使うまで、どこにもいない
+    if (world.mannRun && this.ev === 'spawn') { this.st = 'absent'; this.setOp(0); this.col.on = false; }
+    if (world.phanRun) { this.st = 'absent'; this.setOp(0); this.col.on = false; this.runPlan = false; }   // 2026-11-15 化け物の体の一部になる   // 電池を20%使うまで、どこにもいない
     if (TEST || DEV) console.log('MANN', world.mannRun ? 'enemy:' + this.ev : this.runPlan ? 'run' : 'stand');
   },
   // ── 音
@@ -10154,6 +10173,7 @@ const MANN = {
   update(dt) {
     if (!this.ready) return;
     if (this.mixer) this.mixer.update(dt);
+    if (world.phanRun) return;   // 2026-11-15 化け物の周は、動きは PHAN が決める
     this.updPieces(dt);
     if (world.mannRun && world.state === 'play' && ['windup', 'dash', 'skid', 'hunt', 'turn'].includes(this.st)) {   // 2026-11-14 追ってくる間は、首と黒目は常にカメラの方（見つけた瞬間・激突の後の首回しは別）
       const H0 = this.head(), lp = this.root.worldToLocal(camera.position.clone()), hp0 = this.root.worldToLocal(H0.clone());
@@ -12020,7 +12040,7 @@ const UNDER = {
    ========================================================= */
 const CALL = {
   plan: false, done: false, ph: '', t: 0, qT: 0, ring: null, noise: null, tk: 0, card: null, lastSec: -1,
-  reset() { this.stopAll(); this.plan = chance(0.3) || /[?&]call/.test(location.search); this.done = false; this.ph = ''; this.qT = 0; this.t0 = world.t; this.look = null; this.hide(); },
+  reset() { this.stopAll(); this.plan = !world.phanRun && (chance(0.3) || /[?&]call/.test(location.search)); this.done = false; this.ph = ''; this.qT = 0; this.t0 = world.t; this.look = null; this.hide(); },
   busy() { return this.ph === 'ring' || this.ph === 'talk' || this.ph === 'end' || this.ph === 'scare'; },
   can() {
     return world.state === 'play' && typeof AMB !== 'undefined' && AMB.quiet() && !world.selfie && !(typeof SP !== 'undefined' && SP.st === 'chase') && !CROUCH.chasing() && !UNDER.on && !SET.open && !INV.open && !world.capture && !REVIVE.on && world.outro === 0;
@@ -12350,7 +12370,7 @@ function tick(now) {
   updateInteractions();
   DIM.update(dt); applyLights(dt); FL.update(dt); STAIRBLINK.update(dt);
   WD.update(dt);
-  CH.update(dt); MANN.update(dt); cvoiceUpdate(dt);
+  CH.update(dt); MANN.update(dt); PHAN.update(dt); cvoiceUpdate(dt);
   HIDE.update(dt);
   // 2026-11-14 追われている間の継続点（1秒あたり）：撮りながら逃げる＝逆さ女4・クモ女5・人体模型6／インカメラに追ってくる姿が映る＝逆さ女8・クモ女10・人体模型12
   if (rec.active && world.state === 'play' && !CAP.on) {
@@ -12575,6 +12595,7 @@ function render() {
   postMat.uniforms.time.value = performance.now() / 1000;
   let cam = camera; const av = avatar.root.visible;
   RING.update();   // 2026-11-14 リングライト（鏡に映る手元）
+  PHAN.late();   // 2026-11-15 合体した化け物（女の体に人体模型とクモ女をくっつける）
   if (world.selfie) { SELF.pose(); cam = selfCam; avatar.root.visible = true; RING.hide(true); }
   postMat.uniforms.near.value = cam.near;   // 被写界深度の距離計算をそのカメラに合わせる
   renderer.setRenderTarget(rt); renderer.render(scene, cam); avatar.root.visible = av; RING.hide(false);
@@ -12656,8 +12677,8 @@ function likePop(e) {
 function likePopShow(e) {
   let host = $('#likePops'); if (!host) { host = document.createElement('div'); host.id = 'likePops'; document.body.appendChild(host); }
   const b = $('#camBtn'), r = b ? frameRect(b) : { left: vpW() - 70, top: 120, width: 44, height: 44 };
-  const rk = rankOf(e), col = { SS: '#ff9ae6', S: '#ffd34d', A: '#ff5a5a', B: '#4fb3ff', C: '#5fd38a', D: '#cfcfd4' }[rk] || '#fff';
-  const gw = { SS: '12px', S: '10px', A: '8px', B: '6px', C: '5px', D: '2px' }[rk] || '4px';
+  const rk = rankOf(e), col = { PH: '#f2cf6a', SS: '#ff9ae6', S: '#ffd34d', A: '#ff5a5a', B: '#4fb3ff', C: '#5fd38a', D: '#cfcfd4' }[rk] || '#fff';
+  const gw = { PH: '16px', SS: '12px', S: '10px', A: '8px', B: '6px', C: '5px', D: '2px' }[rk] || '4px';
   const el = document.createElement('div'); el.className = 'lpop ' + rk;
   const live = host.querySelectorAll('.lpop').length; LIKEPOP.z = (LIKEPOP.z || 0) + 1; el.style.zIndex = String(LIKEPOP.z);
   const g = $('#cap'), gr = g && g.getBoundingClientRect().width ? frameRect(g).right : r.left - 50; el.style.left = ((gr + r.left) / 2 + live * 9) + 'px'; el.style.top = (r.top + r.height / 2 + live * 9) + 'px'; el.style.setProperty('--rc', col); el.style.setProperty('--gw', gw);
@@ -12691,12 +12712,12 @@ function showResult(blobs) {
   $('#evScore').textContent = '0'; $('#evCount').textContent = evidence.length ? `${evidence.length}件　← スライド →` : '';
   const list = $('#evList'); list.innerHTML = '';
   const fresh = DEMO ? new Set() : COL.record(evidence);
-  if (!DEMO) { CHAT.build(total); ACH.pendVid = ACH.record(total, world.runId, evidence); }   // 2026-11-14 累計いいね・歴代の神回ランキング（同じ周は二度足さない。上位3位なら動画も残す）
+  if (!DEMO) { CHAT.build(total); PHAN.onResult(); ACH.pendVid = ACH.record(total, world.runId, evidence); }   // 2026-11-14 累計いいね・歴代の神回ランキング（同じ周は二度足さない。上位3位なら動画も残す）
   { const pi = $('#permIcons'); pi.innerHTML = ''; for (const id of PERM.owned()) if (PERM.active(id)) { const im = document.createElement('img'); im.src = PERM_IMG[id]; im.alt = im.title = TR(PERM.DEFS[id].name); pi.appendChild(im); } }   // 撮れ高コレクションに記録（初めて撮れたものにNEW）。リザルト確認用のデモでは記録しない
   const evs = evidence.slice().sort((a, b) => a.t - b.t);
   if (!evs.length) list.innerHTML = '<div class="ev none">撮れ高なし。次は仕込みをするべき？</div>';
   for (const e of evs) { const r = rankOf(e), d = document.createElement('div'); d.className = 'ev r-' + r.toLowerCase(); d.style.setProperty('--rc', RANK_COL[r]);
-    d.innerHTML = `<span class="t">${fmt(e.t)}</span><span class="n">${e.cam === 'fix' ? '📹' : ''}${e.label}</span><span class="p"><i class="like"></i>${e.pts}</span><span class="rk${r === 'SS' ? ' ss' : r === 'S' ? ' s' : ''}"><small>レア</small><b>${r}</b>${r === 'SS' ? '<i class="spk s1"></i><i class="spk s2"></i><i class="spk s3"></i>' : r === 'S' ? '<i class="spk s1"></i><i class="spk s2"></i>' : ''}</span>${fresh.has(COL.base(e.label)) ? '<span class="newTag">NEW</span>' : ''}`;
+    d.innerHTML = `<span class="t">${fmt(e.t)}</span><span class="n">${e.cam === 'fix' ? '📹' : ''}${e.label}</span><span class="p"><i class="like"></i>${e.pts}</span><span class="rk${r === 'PH' ? ' ph' : r === 'SS' ? ' ss' : r === 'S' ? ' s' : ''}"><small>レア</small><b>${rkTxt(r)}</b>${r === 'SS' ? '<i class="spk s1"></i><i class="spk s2"></i><i class="spk s3"></i>' : r === 'S' ? '<i class="spk s1"></i><i class="spk s2"></i>' : ''}</span>${fresh.has(COL.base(e.label)) ? '<span class="newTag">NEW</span>' : ''}`;
     d.addEventListener('click', () => seekTo(e.t)); list.appendChild(d); RANK_IO && RANK_IO.observe(d); }
   attachVideo(blobs || [], !blobs);
   $('#saveMsg').textContent = ''; $('#result').classList.add('show'); $('#result').scrollTop = 0;
@@ -12894,7 +12915,7 @@ async function makeResultImage() {
   if (!rows.length) { g.fillStyle = '#8a867f'; g.font = `30px ${sans}`; g.fillText(TR('撮れ高なし。次は仕込みをするべき？'), W / 2, y + 30); }
   for (const e of rows) {
     g.textAlign = 'left'; g.fillStyle = '#ffd60a'; g.font = `700 28px ${sans}`; g.fillText(fmt(e.t), 90, y);
-    { const r = rankOf(e); g.textAlign = 'center'; if (r === 'SS') { const gr = g.createLinearGradient(208, 0, 256, 0); ['#ff6b8b', '#ffb35c', '#ffe66b', '#7dffa8', '#6bd8ff', '#9a8bff', '#ff7ae0'].forEach((c, i, a) => gr.addColorStop(i / (a.length - 1), c)); g.fillStyle = gr; } else g.fillStyle = RANK_COL[r]; g.font = `700 13px ${sans}`; g.fillText(LANG === 'en' ? 'RARE' : 'レア', 232, y - 25); g.font = `italic 800 30px ${sans}`; g.fillText(r, 232, y + 2); g.textAlign = 'left'; }
+    { const r = rankOf(e); g.textAlign = 'center'; if (r === 'SS') { const gr = g.createLinearGradient(208, 0, 256, 0); ['#ff6b8b', '#ffb35c', '#ffe66b', '#7dffa8', '#6bd8ff', '#9a8bff', '#ff7ae0'].forEach((c, i, a) => gr.addColorStop(i / (a.length - 1), c)); g.fillStyle = gr; } else if (r === 'PH') { g.fillStyle = '#000'; g.fillRect(196, y - 46, 72, 58); g.strokeStyle = '#c9a23c'; g.lineWidth = 2; g.strokeRect(196, y - 46, 72, 58); const gr = g.createLinearGradient(200, 0, 264, 0); ['#a8801f', '#f7dc85', '#fff4c8', '#d9aa3e'].forEach((c, i, a) => gr.addColorStop(i / (a.length - 1), c)); g.fillStyle = gr; } else g.fillStyle = RANK_COL[r]; g.font = `700 13px ${sans}`; g.fillText(LANG === 'en' ? 'RARE' : 'レア', 232, y - 25); g.font = `italic 800 ${r === 'PH' && LANG === 'en' ? 17 : 30}px ${sans}`; g.fillText(rkTxt(r), 232, y + 2); g.textAlign = 'left'; }
     g.fillStyle = '#e9e4da'; g.font = `30px ${sans}`; let lb = TR(e.label); while (g.measureText(lb).width > 580 && lb.length > 4) lb = lb.slice(0, -2) + '…'; g.fillText(lb, 280, y);
     g.textAlign = 'right'; g.font = `700 30px ${sans}`; g.fillText(String(e.pts), W - 90, y);
     if (like) g.drawImage(like, W - 90 - g.measureText(String(e.pts)).width - 42, y - 26, 32, 32 * like.height / like.width);
@@ -13620,7 +13641,7 @@ const INV = {
     const L = $('#invList'); L.innerHTML = ''; const own = this.owned();
     for (const id of own) {
       const D = ITEM.defs[id], el = document.createElement('div'); el.className = 'invIt' + (id === 'memo' ? ' tap' : '');
-      el.innerHTML = `<img alt=""><div><b></b><small></small></div>`; el.querySelector('img').src = ITEM_IMG[id]; el.querySelector('b').textContent = TR(D.name); el.querySelector('small').textContent = TR(D.desc);
+      el.innerHTML = `<img alt=""><div><b></b><small></small></div>`; el.querySelector('img').src = ITEM_IMG[id]; el.querySelector('b').textContent = TR(D.name) + (id === 'ofuda' && ITEM.have.ofuda > 1 ? ' ×' + ITEM.have.ofuda : ''); el.querySelector('small').textContent = TR(D.desc);
       if (id === 'memo') el.addEventListener('click', e => { e.stopPropagation(); $('#invScoreImg').src = ITEM.memoScore(ITEM.memoSong); $('#invScore').classList.add('show'); });
       this.acts(id, el, D);   // 2026-11-14 使う・着ける・見る
       L.appendChild(el);
@@ -13922,7 +13943,7 @@ $('#goBtn').addEventListener('click', () => {
   world.channel = ($('#chName').value || '').trim() || '心霊チャンネル';
   world.chRaw = ($('#chName').value || '').trim(); world.yomi = world.chRaw ? ($('#chYomi').value || '').trim() : '';
   CHATLOG.reset(); world.chatRk = yrankIdx(ACH.load().total); world.chatM = YRANK[world.chatRk][3]; world.chatName = chatCallName(); world.chatNick = NICK.of(world.chRaw, world.yomi); world.chatLang = LANG;   // 2026-11-14 チャット：撮影開始時のランク倍率と呼び名をこの動画に固定
-  MANN.reset(); WD.init(); WARP.reset(); VO.stopAll(); FIXCAM.reset(); CROUCH.reset(); UNDER.reset(); CALL.reset(); FDET.reset(); if (LID.list.length) LID.reset(); DIR.planRun(); MINOR.reset(); SELF.reset(); MD.reset(); DOORS2.reset(); TAP.reset(); F2.reset(); SP.reset(); NEKO.reset(); OFUDA.reset(); ITEM.reset(); SNAKE.reset(); UWA.reset(); TEN.reset(); GG.reset(); POLT.reset(); MF.reset(); STREETFIG.reset(); EXITF.reset(); STAY.reset(); RED.reset(); MG.reset();
+  PHAN.begin(); MANN.reset(); WD.init(); WARP.reset(); VO.stopAll(); FIXCAM.reset(); CROUCH.reset(); UNDER.reset(); CALL.reset(); FDET.reset(); if (LID.list.length) LID.reset(); DIR.planRun(); MINOR.reset(); SELF.reset(); MD.reset(); DOORS2.reset(); TAP.reset(); F2.reset(); SP.reset(); NEKO.reset(); OFUDA.reset(); ITEM.reset(); SNAKE.reset(); UWA.reset(); TEN.reset(); GG.reset(); POLT.reset(); MF.reset(); STREETFIG.reset(); EXITF.reset(); STAY.reset(); RED.reset(); MG.reset();
   if (MIC30) CONFIG.recMaxSec = 30;   // 2026-11-14 開発用の30秒テスト（本番の120秒は変えない）
   $('#start').classList.remove('show');
   world.state = 'intro'; world.battery = CONFIG.battery.start; world.batUsed = Math.max(0, 100 - CONFIG.battery.start); world.sgShowUsed = rnd(50, 70);   /* 2026-11-14 逆さ女が見えるようになる時（電池の残り50〜30%のどこか。検証版から） */
@@ -13930,7 +13951,7 @@ $('#goBtn').addEventListener('click', () => {
   INTRO.run(beginPlay);
 });
 function beginPlay() {
-  $('#hud').classList.remove('off');
+  $('#hud').classList.remove('off'); PHAN.place();   // 2026-11-15 化け物の周だけ、お札5枚
   world.state = 'play';
   postMat.uniforms.black.value = 1; postMat.uniforms.grain.value = 1;
   if (DEV) $('#dev').classList.add('show'), $('#devInfo').style.display = 'block';
@@ -14211,7 +14232,7 @@ const CHIP_DESC = {"callAnswer": ["非通知の着信に、思わず出てしま
 const CHIP = {
   open(x, show) {
     const en = LANG === 'en', d = CHIP_DESC[x.key];
-    $('#chipRk').textContent = (en ? 'Rarity ' : 'レア ') + x.r; $('#chipRk').style.color = RANK_COL[x.r] || '#ccc';
+    $('#chipRk').textContent = (en ? 'Rarity ' : 'レア ') + rkTxt(x.r); $('#chipRk').style.color = RANK_COL[x.r] || '#ccc';
     $('#chipT').textContent = show ? TR(x.name) : '？？？';
     $('#chipD').textContent = show ? (d ? d[en ? 1 : 0] : '') : (en ? "You haven't caught this one yet. What it is stays a secret until you film it." : 'まだ撮れていない。どんな撮れ高かは、撮れてからのお楽しみ。');
     $('#chipOk').textContent = en ? 'Close' : '閉じる'; $('#chipPop').classList.add('show');
@@ -14241,7 +14262,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.5';
+const VERSION = '0.15.6';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -14784,13 +14805,13 @@ const CHATGEN = {
     const groups = [];
     const MICAW = new Set(['micNonstop', 'micLoud', 'micScream', 'micLate', 'micRunScream', 'micChaseTalk', 'micHideLoud', 'micHideTalk', 'micQuiet', 'micHush', 'micSilent', 'micResume']);
     const aws = ev.filter(e => (e.k === 'aw' || e.k === 'awc') && !MICAW.has(e.key)).map(e => ({ t: e.t, key: e.key, label: e.label, rank: rankOf({ key: e.key, pts: e.pts || 0 }) }));
-    const RK = ['D', 'C', 'B', 'A', 'S', 'SS'];
+    const RK = ['D', 'C', 'B', 'A', 'S', 'SS', 'PH'];
     for (const a of aws) { const g = groups.find(x => Math.abs(x.t - a.t) < 1.5 && !this.END.has(a.key) && !this.END.has(x.key)); if (g) { if (RK.indexOf(a.rank) > RK.indexOf(g.rank)) Object.assign(g, { rank: a.rank, key: a.key, label: a.label, alt: g.label }); else g.alt = g.alt || a.label; } else groups.push(Object.assign({}, a)); }
     for (const g of groups) {
       let t0 = g.t, endG = this.END.has(g.key);
       if (endG) { if (!end.ec || end.lost) continue; t0 = end.R + 0.3; }   // 帰還の反応は結果カードが見えてから
       const raw = N * (CHAT_CFG.coef[g.rank] || 0.15);
-      const minN = { SS: 3, S: 3, A: 2, B: 2, C: 2, D: R() < 0.5 ? 2 : 1 }[g.rank] || 1;   // 2026-11-14 撮れ高への反応は最低でも2件前後（いちばん優先）
+      const minN = { PH: 4, SS: 3, S: 3, A: 2, B: 2, C: 2, D: R() < 0.5 ? 2 : 1 }[g.rank] || 1;   // 2026-11-14 撮れ高への反応は最低でも2件前後（いちばん優先）
       let n = Math.max(minN, Math.round(raw));
       if (!n) continue; n = Math.min(18, n); g.n = n;
       const mood = endG ? 'skill' : this.mood(g.key); let P = this.POOL[mood];
@@ -14989,7 +15010,8 @@ const CHAT = {
     const d = { v: 3, dict: CHAT_DICT.v, seed: chatHash(world.runId || String(Date.now())), P, M: world.chatM || 1, rk: world.chatRk || 0, name: world.chatName ?? chatCallName(), nick: world.chatNick ?? null, lang: world.chatLang || LANG, segs: CHATLOG.segs.map(s => [Math.round(s[0] * 100) / 100, Math.round(s[1] * 100) / 100]), end: CHATLOG.end };
     try { d.items = CHATGEN.make({ seed: d.seed, log: CHATLOG.ev, end: d.end, P, M: d.M, rk: d.rk, name: d.name, nick: d.nick }); d.users = null; } catch (e) { console.warn('チャットを作れませんでした', e); d.items = []; }
     // 話者の名前と色（生成と同じシードで並べ直す）
-    d.users = CHAT.usersOf(d.seed, d.lang);   // 話者の名前と色はこの動画で固定（英語で始めた撮影は英語の名前）
+    d.users = CHAT.usersOf(d.seed, d.lang);
+    try { PHAN.chat(d); } catch (e) { console.warn('荒らしコメント', e); }   // 2026-11-15 段階に合わせて荒らし・反応を混ぜる   // 話者の名前と色はこの動画で固定（英語で始めた撮影は英語の名前）
     this.cur = d; return d;
   },
   usersOf(seed, lang) {   // 話者は別の決まったシードで作る
@@ -15058,14 +15080,14 @@ class ChatView {
   reset() { this.list.textContent = ''; this.shown = 0; this.lastG = 0; this.items = []; this.follow = true; this.btn.classList.remove('show'); cancelAnimationFrame(this.raf); this.raf = 0; }
   loop() { if (this.raf) return; const f = () => { this.raf = 0; this.sync(); if (!this.video.paused && !this.video.ended && this.el.isConnected) this.raf = requestAnimationFrame(f); }; this.raf = requestAnimationFrame(f); }
   ban(i, d) {
-    const D = this.data; (D.ban || (D.ban = [])).includes(i) || D.ban.push(i);
+    const D = this.data, B = D.ban || (D.ban = []); if (!B.includes(i)) { B.push(i); const x = D.items && D.items[i]; if (x && x[1] === -1) PHAN.onBan(); }   // 2026-11-15 荒らしをBANすると幻の怪異の段階が進む
     this.shown = Math.max(0, this.shown - 1);   // 一覧を作り直さず、この行だけ「BANされました」と見せてから消す
     d.classList.add('ban'); d.querySelector('.tx').textContent = cui('banned'); setTimeout(() => { d.remove(); }, 900);
     try { if (typeof PAD !== 'undefined' && PAD.rumble) PAD.rumble(0.3, 0.3, 80); } catch (e) { }
   }
   row(it, anim) {
-    const u = (this.data.users || [])[it[1]] || ['viewer', '#9aa'];
-    const d = document.createElement('div'); d.className = 'cm' + (anim && !this.reduce ? ' new' : ''); d.style.setProperty('--c', u[1]); d.dataset.i = it[3]; d.title = cui('banTip');
+    const tr = it[1] === -1, u = tr ? ['■■■', '#d3141c'] : (this.data.users || [])[it[1]] || ['viewer', '#9aa'];   // 2026-11-15 荒らしはアイコンが赤
+    const d = document.createElement('div'); d.className = 'cm' + (tr ? ' troll' : '') + (anim && !this.reduce ? ' new' : ''); d.style.setProperty('--c', u[1]); d.dataset.i = it[3]; d.title = cui('banTip');
     const av = document.createElement('i'); av.className = 'av'; av.innerHTML = CHATVIEW_SVG;
     const tx = document.createElement('div'); tx.className = 'tx'; tx.appendChild(document.createTextNode(it[2]));   // 2026-11-14 名前は出さない（アイコンの色で話者を見分ける）   // 本文は文字として入れる（HTMLにしない）
     d.appendChild(av); d.appendChild(tx); return d;
@@ -15295,11 +15317,11 @@ const VED = {
       if (this.hidden.has(it.i)) continue; const text = lang === 'en' ? it.en : it.ja, w = g.measureText(text).width;
       let L = -1; for (let k = 0; k < n; k++) if (free[k] <= it.g) { L = k; break; }
       if (L < 0) continue;   // 空いた段がなければ間引く（後でまとめて流さない）
-      const o = { g: it.g, L, w, text, end: it.g + (W + w) / v, id: it.id };
+      const tv = it.id === 'troll' ? v * 0.72 : v, o = { g: it.g, L, w, text, end: it.g + (W + w) / tv, id: it.id, v: tv, troll: it.id === 'troll' };   // 2026-11-15 荒らしは赤く、少しゆっくり流れる
       if (CD.reply.has(it.id)) { const p = out.slice().reverse().find(q => CD.replyTo.has(q.id) && it.g - q.g >= 0 && it.g - q.g < 4.5); if (!p) continue; o.par = p; }   // 返答は、親コメントが出ている時だけ
       if (CD.react.has(it.id)) { const m = this.marks.filter(q => q.g <= it.g + 0.2 && it.g - q.g < 4); if (m.length) o.anc = m[m.length - 1].g; }   // 何に反応したか（直前の撮れ高）
       o.lead = CD.lead.get(it.id) || 0; o.mic = CD.micDep.has(it.id) ? (CD.micLoudDep.has(it.id) ? 2 : 1) : 0; o.game = CD.gameDep.has(it.id);   // この秒数より前から映っていないと意味が通らない（静けさ・止まっている等）
-      free[L] = it.g + (w + gap) / v; out.push(o);
+      free[L] = it.g + (w + gap) / o.v; out.push(o);
     }
     const top = H * 0.07, bot = H * 0.1;
     this.lay = { fs, lh, n, v, items: out, y: L => S.pos === 'top' ? top + L * lh + fs * 0.9 : H - bot - L * lh - fs * 0.2 };
@@ -15319,7 +15341,7 @@ const VED = {
     const A0 = this.drawA ?? 0, VV = this.vol || { mic: 1, game: 1 };
     for (const it of lay.items) { if (it.g > G) break; if (G > it.end) continue; if ((it.mic && VV.mic <= 0.01) || (it.mic === 2 && VV.mic < 0.6) || (it.game && VV.game <= 0.01) || (it.par && (it.par.mic && VV.mic <= 0.01))) continue;   // 2026-11-14 消した音が根拠のコメントは出さない
       if (A0 > 0.05 && ((it.par && it.par.end <= A0) || (it.anc !== undefined && it.anc < A0 - 0.2) || (it.lead && it.g - A0 < it.lead))) continue;   // 切り出しで前提が見えなくなったものは出さない
-      const x = W - (G - it.g) * lay.v, y = lay.y(it.L); g.strokeText(it.text, x, y); g.fillText(it.text, x, y); }
+      const x = W - (G - it.g) * (it.v || lay.v), y = lay.y(it.L); g.fillStyle = it.troll ? '#ff4a4a' : '#fff'; g.strokeText(it.text, x, y); g.fillText(it.text, x, y); }
     g.globalAlpha = 1;
   },
   // ---- 画面
@@ -15553,18 +15575,281 @@ const REVIVE = {
 };
 
 /* =========================================================
+   2026-11-15 隠しイベント「幻の怪異」（151種類目の撮れ高）
+   ・チャットに混ざる荒らしコメントをBANしていくと段階が進む（この端末に記録。データをリセットで0に戻す）
+     0 ふつう（数周に1回、荒らしが1つだけ）→ BANで1 → 荒らしを合計3回BANで2 → 2の周の結果画面を見たら3 → 倒したら「済」
+   ・段階3の周：校舎の明かりが赤っぽくなり、逆さ女・クモ女・人体模型を合体させた化け物が、逆さ女の追跡のしくみで追ってくる（ほかの敵は出ない）
+     この周だけ「封印のお札」が5枚どこかにある（ピアノの「運命」のお札も数に入る）。お札を持って捕まると貼る
+     1・2枚目：うめいて背を向けて去り、消えて20〜40秒後にまた来る／3枚目：崩れて消え、色が戻り、撮れ高「幻の怪異を倒す」
+   ・試し版の確認用：?phantest で段階を切り替える小さな画面、?phan=0〜3 / ?phan=9（済）で段階を指定
+   ========================================================= */
+const PHAN_AW = ['phantom', '幻の怪異を倒す', 550];
+function rkTxt(r) { return r === 'PH' ? (LANG === 'en' ? 'Phantom' : '幻') : r; }
+const PHAN = {
+  KEY: 'yt_phan', d: null, runSt: 0, on: false, hits: 0, mode: 'idle', tintK: 0, troll0: false, nextHunt: 0, trackT: 0, sndT: 3,
+  load() {
+    if (this.d) return this.d; let d = null; try { d = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) { }
+    this.d = d && typeof d.st === 'number' ? d : { st: 0, bans: 0 };
+    const q = (TEST || BETA) && !this._q && location.search.match(/[?&]phan=(\d)/); this._q = true; if (q) { this.d.st = +q[1]; this.d.bans = 0; this.save(); }   // 確認用
+    return this.d;
+  },
+  save() { try { localStorage.setItem(this.KEY, JSON.stringify(this.d)); } catch (e) { } },
+  stage() { return this.load().st; },
+  setStage(n) { const d = this.load(); d.st = n; d.bans = 0; this.save(); if (TEST || DEV) console.log('PHAN stage', n); this.panel(); },
+  // ── 荒らしコメントをBANした
+  onBan() {
+    const d = this.load();
+    if (d.st === 0) { d.st = 1; d.bans = 0; }
+    else if (d.st === 1) { d.bans = (d.bans || 0) + 1; if (d.bans >= 3) { d.st = 2; d.bans = 0; } }
+    this.save(); if (TEST || DEV) console.log('PHAN ban', d.st, d.bans); this.panel();
+  },
+  // ── 結果画面を開いた（段階2の周 → 次の周から段階3）
+  onResult() { if (this.runSt === 2 && this.stage() === 2) this.setStage(3); },
+  // ── 周のはじめ
+  begin() {
+    this.runSt = this.stage(); this.on = this.runSt === 3; world.phanRun = this.on;
+    this.hits = 0; this.mode = 'idle'; this.nextHunt = 0; this.trackT = 0; this.sndT = 3; this.tintK = this.on ? 1 : 0; this.wasCh = false; this.dead = null;
+    this.troll0 = this.runSt === 0 && (chance(0.25) || ((TEST || BETA) && /[?&]troll\b/.test(location.search)));   // 段階0：数周に1回くらい
+    if (this.tag) this.tag.visible = false;
+    if (!this.on) postMat.uniforms.tint.value.set(1, 1, 1);
+    if (TEST || DEV) console.log('PHAN run', this.runSt, this.on ? 'monster' : '', this.troll0 ? 'troll' : '');
+  },
+  // ── 荒らしの文面（日本語・英語は同じ言葉の組で作る）
+  WJ: ['ﾐﾂｹﾀ', 'ﾀｽｹﾃ', 'ﾕﾙﾅｻﾅｲ', 'ｺｯﾁｦﾐﾃ', 'ｱｿﾎﾞ', 'ｶｴﾚﾅｲ'], WE: ['FOUNDYOU', 'HELPME', 'NEVERFORGIVE', 'LOOKATME', 'PLAYWITHME', 'CANTGOHOME'],
+  trollText(R) {
+    const ri = n => Math.floor(R() * n), x = R();
+    const rep = (w, n) => w.repeat(n);
+    const brk = s => { const a = Array.from(s); for (let k = 0; k < 2; k++) { const i = 4 + ri(Math.max(1, a.length - 8)); a.splice(i, ri(3), '…'); } return a.join(''); };
+    if (x < 0.62) {   // 同じ言葉のくり返し（回数を変える。タスケテは日本語ではカタカナの全角）
+      const i = ri(6), n = 8 + ri(9), wj = i === 1 && R() < 0.6 ? 'タスケテ' : this.WJ[i];
+      return [rep(wj, wj === 'タスケテ' ? Math.min(n, 10) : n), rep(this.WE[i], Math.max(6, n - 3))];
+    }
+    if (x < 0.82) {   // 混ぜたもの（すき間で区切る）
+      const k = 4 + ri(2), ja = [], en = [];
+      for (let j = 0; j < k; j++) { const i = ri(6), n = 1 + ri(3); ja.push(rep(this.WJ[i], n)); en.push(rep(this.WE[i], Math.min(2, n))); }
+      return [ja.join(' '), en.join(' ')];
+    }
+    const i = ri(6), n = 7 + ri(5); return [brk(rep(this.WJ[i], n)), brk(rep(this.WE[i], n - 2))];   // 崩れたもの
+  },
+  L: {
+    react: [['荒らさないで', 'stop spamming'], ['荒らし消えて', 'go away troll'], ['荒らしに反応する奴も荒らし', "don't feed the troll"], ['通報した', 'reported'], ['なにこのコメント', 'what is this comment']],
+    angry: [['荒らし多すぎ', 'too much spam'], ['BANしろ', 'ban them'], ['運営仕事しろ', 'mods do something']],
+    scared2: [['なんか怖い', 'this is creepy'], ['これ人間？', 'is this even a person?'], ['配信止めた方がいい', 'maybe stop the stream']],
+    scared3: [['なんか変', "something's off"], ['いつもと違う', "this isn't normal"], ['ライト赤くない？', 'why are the lights red?'], ['やばい回だ', 'this run is cursed']],
+    hit: [['効いてる！', "it's working!"], ['まだ終わってない', "it's not over"], ['戻ってくるぞ', "it's coming back"]],
+    win: [['うおおおお', 'LETS GOOO'], ['うおおおお', 'LETS GOOO'], ['うおおおお', 'LETS GOOO'], ['勝った！！', 'WE WON'], ['伝説', 'legendary'], ['神回確定', 'best stream ever']],
+  },
+  // ── 撮影1本ぶんのチャットに、段階に合わせて荒らし・反応を混ぜる（CHAT.build のあと）
+  chat(d) {
+    if (!d || !d.items || !d.end) return;
+    const st = this.runSt, R = chatRng((d.seed ^ 0x5f3759df) >>> 0), end = d.end.R || 0, maxR = end + (d.end.ec ? 3 : -0.2);
+    if (maxR < 2) return;
+    const U = Math.max(6, (d.users || []).length || 12), rnd2 = (a, b) => a + (b - a) * R(), pk = a => a[Math.floor(R() * a.length)];
+    const out = [], last = new Map(), say = (t, list, id) => { if (t < 0.3 || t > maxR) return; let v, g = 0; do v = pk(list); while (list.length > 2 && v === last.get(list) && g++ < 6); last.set(list, v); const [ja, en] = v; out.push([Math.round(t * 100) / 100, Math.floor(R() * U), id, ja, en]); };
+    const troll = t => { if (t < 0.3 || t > maxR) return; const [ja, en] = this.trollText(R); out.push([Math.round(t * 100) / 100, -1, 'troll', ja, en]); };
+    if (st === 0 && this.troll0) troll(rnd2(0.25, 0.85) * end);
+    else if (st === 1) { const n = 3 + Math.floor(R() * 3); for (let i = 0; i < n; i++) { const t = (i + rnd2(0.2, 0.8)) / n * end; troll(t); if (R() < 0.75) say(t + rnd2(1.2, 3.5), this.L.react, 'phanReact'); if (R() < 0.3) say(t + rnd2(3.5, 6), this.L.react, 'phanReact'); } }
+    else if (st === 2) {   // ほぼ荒らしで埋まる。ゲームの内容のコメントは1割くらい
+      for (let t = rnd2(0.5, 1.5); t < maxR; t += rnd2(0.55, 1.3)) troll(t);
+      for (let t = rnd2(4, 8); t < maxR; t += rnd2(4.5, 8)) say(t, R() < 0.55 ? this.L.angry : this.L.scared2, 'phanFear');
+      const keepN = Math.round(out.length / 9), src = d.items.slice().sort((a, b) => a[0] - b[0]), keep = [];
+      if (keepN > 0 && src.length) for (let i = 0; i < keepN; i++) keep.push(src[Math.min(src.length - 1, Math.floor((i + 0.5) * src.length / keepN))]);
+      d.items = [...new Set(keep)];
+    }
+    else if (st === 3) {
+      const ev = CHATLOG.ev || [], win = ev.find(e => e.k === 'phanWin'), tEnd = win ? win.t : maxR;
+      for (let t = rnd2(3, 7); t < tEnd; t += rnd2(9, 16)) say(t, this.L.scared3, 'phanFear');
+      for (const e of ev) if (e.k === 'phan' && e.n < 3) { const n = 3 + Math.floor(R() * 2); for (let i = 0; i < n; i++) say(e.t + 0.5 + i * rnd2(0.6, 1.1), this.L.hit, 'phanHit'); }
+      if (win) { const n = 18 + Math.floor(R() * 7); for (let i = 0; i < n; i++) say(win.t + 0.4 + i * rnd2(0.12, 0.3), this.L.win, 'phanWin'); }
+    }
+    if (!out.length) return;
+    d.items = d.items.concat(out).sort((a, b) => a[0] - b[0]); d.ph = st;
+  },
+  // ── 化け物の周：お札5枚（ロッカーの中・机の上・布団の中・本棚・下駄箱の上から）
+  place() {
+    for (const it of ITEM.list.filter(i => i.ph)) { scene.remove(it.s); it.s.material.dispose(); }
+    ITEM.list = ITEM.list.filter(i => !i.ph); if (!this.on || !ITEM.ready) return;
+    const usedLk = new Set(ITEM.list.filter(i => !i.taken && i.lk).map(i => i.lk)), usedDesk = new Set(ITEM.list.filter(i => !i.taken && i.spot && i.spot.desk).map(i => i.spot.desk));
+    const pool = { locker: lockers.filter(l => l.hinge && !l.noHide && l !== ITEM.lockLk && l !== ITEM.memoLk && !usedLk.has(l)).map(lk => ({ type: 'locker', lk })), desk: [], bed: [], lib: [], shoe: [] };
+    for (const rk of ['R2', 'R3', '2A', '2B']) { const ds = (rooms[rk] && rooms[rk].desks || []).filter(x => !usedDesk.has(x)); if (ds.length) pool.desk.push({ type: 'desk', desk: pick(ds), lv: rk[0] === '2' ? 1 : 0 }); }
+    if (F2.ready && F2.beds) for (const b of F2.beds) if (b.i !== F2.plan.bedClosed && !ITEM.list.some(i => !i.taken && i.spot && i.spot.bed === b)) pool.bed.push({ type: 'bed', bed: b });
+    for (const z of [-11.6, -14.4]) pool.lib.push({ type: 'lib', p: V(-8.75, LH + 1.02, z) });   // 図書室の本棚の中段
+    pool.shoe.push({ type: 'shoe', p: V(-2.6, 1.93, 1.7) }, { type: 'shoe', p: V(2.6, 1.93, 0.6) });   // 玄関の下駄箱の上
+    const sz = ITEM.defs.ofuda ? ITEM.defs.ofuda.size : 0.3, types = Object.keys(pool).filter(t => pool[t].length).sort(() => Math.random() - 0.5);
+    let n = 0, guard = 0;
+    while (n < 5 && guard++ < 40) {
+      const tl = types.filter(t => pool[t].length); if (!tl.length) break; const tp = tl[n % tl.length];
+      const sp = pool[tp].splice(Math.floor(Math.random() * pool[tp].length), 1)[0];
+      const m = new THREE.SpriteMaterial({ transparent: true, depthWrite: false, opacity: 0.95, fog: false, toneMapped: false }), s = new THREE.Sprite(m); s.scale.set(sz, sz, 1); s.renderOrder = 4; scene.add(s);
+      const it = { id: 'ofuda', s, lv: 0, taken: false, near: false, pos: s.position, ph: true, spot: sp };
+      if (tp === 'locker') { it.lk = sp.lk; it.lv = sp.lk.lv; it.pos.copy(lkP(sp.lk, rnd(-0.1, 0.1), 0.16 + sz * 0.4, -0.2)); }
+      else if (tp === 'desk') { it.lv = sp.lv; ITEM.deskPos(it); }
+      else if (tp === 'bed') { it.lv = 0; it.pos.set(sp.bed.top.x - 0.1, sp.bed.top.y + 0.12, sp.bed.top.z + 0.1); }
+      else { it.lv = sp.p.y > 2.5 ? 1 : 0; it.pos.copy(sp.p); }
+      ITEM.list.push(it); ITEM.skin(it); n++;
+    }
+    if (TEST || DEV) console.log('PHAN ofuda', ITEM.list.filter(i => i.ph).map(i => i.spot.type).join(','));
+  },
+  shown(it) {
+    if (it.taken || !this.on) return false; const sp = it.spot;
+    if (sp.type === 'locker') return !!it.lk && !HIDE.lk && it.lk.hinge.rotation.y > 0.6;
+    if (sp.type === 'bed') return !!sp.bed && sp.bed.duv > 0.8;
+    return true;
+  },
+  // ── 毎フレーム（追跡の更新のあと）
+  update(dt) {
+    if (!this.on || world.state !== 'play') return;
+    if (typeof RED === 'undefined' || !RED.on) { const k = this.tintK; postMat.uniforms.tint.value.set(1 + 0.5 * k, 1 - 0.42 * k, 1 - 0.46 * k); }   // 校舎の明かりが赤っぽい（録画にも入る）
+    if (!SG.ready) return;
+    if (SP.ready && SP.mixer && this.mode !== 'done') { if (!SP.cur || SP.cur !== SP.act.CeilingCrawl) spPlay('CeilingCrawl', 0); SP.mixer.update(dt * 1.3); }
+    if (MANN.ready && this.mode !== 'done' && MANN.cur !== 'Run') MANN.play('Run', 1.15);
+    if (this.tagT !== undefined) this.tagUpd(dt);
+    if (this.mode === 'retreat') return this.retreatUpd(dt);
+    if (this.mode === 'gone') { if (world.t >= this.retAt) { this.mode = 'idle'; WD.release(true); this.hunt(); } return; }
+    if (this.mode === 'dead') return this.deadUpd(dt);
+    if (this.mode === 'done') return;
+    if (!this.nextHunt) this.nextHunt = world.t + rnd(14, 24);
+    if (CH.state === 'off' && this.wasCh) this.nextHunt = world.t + rnd(14, 26);   // 見失ったら、しばらくしてまた来る
+    this.wasCh = CH.state !== 'off';
+    if (CH.state === 'off' && !WD.borrowed && !CAP.on && !world.capture && !player.hidden && world.t >= this.nextHunt) this.hunt();
+    if (CH.state !== 'off' && this.trackT > 0) { this.trackT -= dt; if (!player.hidden) { CH.lastSeen.set(player.x, player.y, player.z); CH.seenAt = world.t; if (CH.state === 'search') CH.state = 'chase'; } }
+    // 声と物音は混ぜこぜ（女の叫び・クモ女のささやき・人体模型のきしみ）
+    this.sndT -= dt;
+    if (CH.state !== 'off' && this.sndT <= 0 && SG.root.visible) {
+      const p = V(WD.pos.x, WD.pos.y + 1.4, WD.pos.z), d = camera.position.distanceTo(p), x = Math.random();
+      if (x < 0.4) { const r = playSfx('mann_rattle', { pos: p, ref: 1.0, roll: 1.4, gain: 0.8, offset: rnd(0, 4), dur: rnd(1.2, 2.2) }); if (!r) SND.scrape(p, 0.4, 0.5); }
+      else if (x < 0.75 && A.ctx && KANA.ok && KANA.ok()) { const pn = panAt(p.clone(), 0.9, 1.6, undefined, 0); const len = SPV.utter(pn, A.ctx.currentTime + 0.05); freeLater(len + 2, pn); if (rec.active) CHATLOG.voice && CHATLOG.voice('sp'); }
+      else if (d < 9) wdScream(0, 0.55, 0.7);
+      else SND.breath(rnd(-0.6, 0.6), 1.2);
+      this.sndT = rnd(2.2, 4.5);
+    }
+  },
+  // 少し離れた見えない所から現れて、追ってくる
+  hunt() {
+    const cands = Object.keys(NAV).filter(k => { const n = NAV[k], y = n[3] || 0; if (['E1', 'E0', 'Aa'].includes(k) || Math.abs(y - (player.lv ? LH : 0)) > 1) return false; const d = distTo(n[0], n[1]); return d > 8 && d < 16 && !clearLine(V(n[0], y + 1.5, n[1])); });
+    if (!cands.length) { this.nextHunt = world.t + 4; return; }
+    const k = pick(cands); WD.node = k; WD.pos.copy(nodePos(k)); WD.path = []; WD.extra = null; WD.noDetectUntil = 0; WD.wait = 0;
+    CH.start('chase'); this.trackT = 9; this.wasCh = true; this.sndT = 0.6;
+    if (TEST || DEV) console.log('PHAN hunt', k);
+  },
+  // ── お札を貼る（捕まった時、お札があれば）
+  seal() {
+    this.hits++; CHATLOG.add('phan', { n: this.hits });
+    OFUDA.build(); this.tag = OFUDA.mesh; this.tagT = 0; this.tagBig = this.hits >= 3;
+    CH.stop(); WD.borrow(); SG.ovRoll = 0; this.trackT = 0;
+    if (!playSfx('static_raw', { gain: 0.5 })) SND.glitch(0.25);
+    if (rec.active) award('akuryo', '悪霊退散', 300);
+    if (this.hits >= 3) this.die(); else { this.mode = 'retreat'; this.rt = 0; this.moaned = false; }
+    if (TEST || DEV) console.log('PHAN seal', this.hits);
+  },
+  tagUpd(dt) {
+    this.tagT += dt; const t = this.tagT, f = sgHead(V()), toCam = camera.position.clone().sub(f).normalize();
+    this.tag.position.copy(f).addScaledVector(toCam, 0.1); this.tag.lookAt(camera.position); this.tag.rotateZ(0.12);
+    const life = this.tagBig ? 2.4 : 1.1, on = t < 0.4 || Math.floor(t * 14) % 2 === 0;
+    this.tag.visible = t < life; this.tag.material.opacity = on ? 1 : 0.25; this.tag.scale.setScalar(this.tagBig ? 1.6 : 1);
+    if (t >= life) { this.tag.visible = false; this.tagT = undefined; this.tag.scale.setScalar(1); }
+  },
+  // 1・2枚目：うめきながら背を向けて去り、遠ざかりながら消える → 20〜40秒後にまた来る
+  retreatUpd(dt) {
+    this.rt += dt; const t = this.rt;
+    if (!this.moaned && t > 0.35) { this.moaned = true; this.moan(); }
+    const away = Math.atan2(WD.pos.x - player.x, WD.pos.z - player.z);
+    if (t < 0.7) { SG.ovRoll = Math.sin(t * 40) * 0.08; sgSetOpacity(Math.floor(t * 16) % 2 ? 0.55 : 1); }
+    else {
+      SG.ovRoll = 0; let dh = Math.atan2(Math.sin(away - WD.heading), Math.cos(away - WD.heading)); WD.heading += clamp(dh, -4 * dt, 4 * dt);
+      const sp = t < 1.2 ? 0.6 : 1.5, nx = WD.pos.x + Math.sin(WD.heading) * sp * dt, nz = WD.pos.z + Math.cos(WD.heading) * sp * dt, lv = WD.pos.y > 1.6 ? 1 : 0; const [cx, cz] = collide(nx, nz, 0.25, lv); WD.pos.x = cx; WD.pos.z = cz;
+      sgSetOpacity(clamp(1 - (t - 1.0) / 2.6, 0, 1));
+    }
+    sgPlay('Walk'); SG.root.position.set(WD.pos.x, WD.pos.y, WD.pos.z); SG.root.rotation.set(0, WD.heading, 0);
+    if (t > 3.7) { sgSetOpacity(0); this.mode = 'gone'; this.retAt = world.t + rnd(20, 40); if (TEST || DEV) console.log('PHAN gone, back in', (this.retAt - world.t).toFixed(1)); }
+  },
+  moan() {
+    const p = V(WD.pos.x, WD.pos.y + 1.4, WD.pos.z);
+    if (A.ctx && KANA.ok && KANA.ok()) { const pn = panAt(p.clone(), 1.0, 1.4, undefined, 0); const len = SPV.speakFrags(pn, [{ m: 'う', gap: 0.05, low: true }, { m: 'あ', gap: 0.1, low: true }, { m: 'あ', gap: 0.05, low: true }], A.ctx.currentTime + 0.02); freeLater(len + 2, pn); }
+    playSfx('mann_rattle', { pos: p, ref: 1.0, gain: 0.7, dur: 1.6 }); SND.breath(0, 1.3);
+  },
+  // 3枚目：苦しんで崩れて消える。赤い色味もその場で消える
+  die() {
+    this.mode = 'dead'; this.dead = { t: 0, y0: WD.pos.y, h0: WD.heading }; this.tintK = 0; postMat.uniforms.tint.value.set(1, 1, 1);
+    const fl = $('#itemFlash'); if (fl) { fl.style.transition = 'none'; fl.style.opacity = '1'; void fl.offsetWidth; fl.style.transition = 'opacity 1.8s'; fl.style.opacity = '0'; }
+    world.vhs = Math.max(world.vhs, 0.7); try { PAD.hit && PAD.hit(1); } catch (e) { }
+    wdScream(0.05, 0.9, 1.8); SND.glitch && SND.glitch(0.5);
+    if (rec.active) award(PHAN_AW[0], PHAN_AW[1], PHAN_AW[2]);   // 倒した瞬間を録画していた時だけ
+    CHATLOG.add('phanWin'); this.setStage(9);
+  },
+  deadUpd(dt) {
+    const D = this.dead; D.t += dt; const t = D.t, k = clamp(t / 2.2, 0, 1);
+    SG.ovRoll = Math.sin(t * 30) * 0.12 * (1 - k); WD.heading = D.h0 + Math.sin(t * 13) * 0.3 * (1 - k);
+    SG.root.position.set(WD.pos.x, D.y0 - 1.1 * k * k, WD.pos.z); SG.root.rotation.set(0.9 * k * k, WD.heading, 0.35 * k);
+    sgSetOpacity((Math.floor(t * 18) % 3 ? 1 : 0.3) * (1 - k));
+    world.vhs = Math.max(world.vhs, 0.3 * (1 - k));
+    if (t > 2.4) { sgSetOpacity(0); this.mode = 'done'; SG.root.rotation.set(0, 0, 0); }   // 女は借りたまま（この周はもう出さない）
+  },
+  // ── 描く直前：女の体に、人体模型とクモ女をくっつける（新しいモデルは作らない）
+  late() {
+    const show = this.on && SG.ready && SG.root.visible && this.mode !== 'gone' && this.mode !== 'done';
+    const a = show ? (SG.opacity ?? 1) : 0;
+    if (MANN.ready && world.phanRun) {
+      if (a > 0.02) {
+        SG.root.updateMatrixWorld(true); const r = MANN.root, dd = this.dead;
+        r.position.copy(SG.root.localToWorld(V(0.22, dd ? -0.15 : 0, -0.08))); r.rotation.set(dd ? 0.8 * clamp(dd.t / 2.2, 0, 1) : 0, SG.root.rotation.y + 0.35, dd ? -0.5 * clamp(dd.t / 2.2, 0, 1) : 0.1);
+        MANN.setOp(Math.min(1, a * 1.05)); if (MANN.col) MANN.col.on = false;
+      } else MANN.setOp(0);
+    }
+    if (SP.ready && SP.wrap && world.phanRun) {
+      if (!this.spMats) { this.spMats = []; SP.wrap.traverse(o => { if (o.isMesh) for (const m of [].concat(o.material)) if (!this.spMats.includes(m)) this.spMats.push(m); }); }
+      SP.wrap.visible = a > 0.02;
+      if (a > 0.02) {
+        SG.root.updateMatrixWorld(true); const w = SP.wrap; w.scale.setScalar(0.62);
+        w.position.copy(SG.root.localToWorld(V(-0.05, 1.42, -0.2))); w.rotation.set(Math.PI, SG.root.rotation.y + Math.PI, 0.15);
+        for (const m of this.spMats) { const tr = a < 0.995; if (m.transparent !== tr) { m.transparent = tr; m.needsUpdate = true; } m.opacity = a; }
+      }
+    }
+  },
+  // ── 確認用の小さな画面（?phantest）
+  panel() {
+    if (!(TEST || BETA) || !/[?&]phantest\b/.test(location.search)) return;
+    let el = this.el;
+    if (!el) {
+      el = this.el = document.createElement('div'); el.id = 'phanTest';
+      el.style.cssText = 'position:fixed;left:6px;bottom:calc(env(safe-area-inset-bottom) + 150px);z-index:99998;background:rgba(10,10,12,.82);color:#eee;font:12px/1.4 system-ui,sans-serif;padding:6px 8px;border-radius:8px;border:1px solid #533;max-width:200px';
+      for (const t of ['pointerdown', 'pointerup', 'touchstart', 'touchmove', 'click']) el.addEventListener(t, e => e.stopPropagation(), { passive: t !== 'click' });
+      el.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const a = b.dataset.a;
+        if (a === 'st') this.setStage(+b.dataset.v);
+        else if (a === 'hunt' && this.on) { this.nextHunt = 0.01; if (this.mode === 'gone') this.retAt = world.t; else if (CH.state === 'off' && !WD.borrowed) this.hunt(); }
+        else if (a === 'fuda') { ITEM.have.ofuda = (ITEM.have.ofuda | 0) + 1; }
+        this.panel(); });
+      document.body.appendChild(el);
+    }
+    const d = this.load(), nm = { 0: '0 ふつう', 1: '1', 2: '2', 3: '3 化け物', 9: '済' };
+    el.innerHTML = `<b>幻の怪異（確認用）</b><br>段階：${nm[d.st] ?? d.st}${d.st === 1 ? `（BAN ${d.bans || 0}/3）` : ''}<br>この周：${this.runSt}${this.on ? `・お札${ITEM.have && ITEM.have.ofuda | 0}枚・貼った${this.hits}` : ''}<br>`
+      + [0, 1, 2, 3, 9].map(v => `<button data-a="st" data-v="${v}" style="margin:2px;padding:3px 7px">${v === 9 ? '済' : v}</button>`).join('')
+      + `<br><button data-a="hunt" style="margin:2px;padding:3px 7px">化け物を呼ぶ</button><button data-a="fuda" style="margin:2px;padding:3px 7px">お札+1</button><br><small>段階の変更は次の周から</small>`;
+  },
+};
+Object.assign(EN, { '幻の怪異を倒す': 'Defeat the Phantom Horror', '？？？（幻）': '??? (Phantom)', '幻': 'Phantom' });
+CHIP_DESC.phantom = ['荒らしコメントの向こうから現れた、合体した怪異を封じた。', 'You sealed away the merged horror that came through the spam.'];
+AW_TABLE.phantom = ['PH', 550];
+RANK_COL.PH = '#e9c35b';
+ENDCARD.ORD.PH = -1;
+CHAT_CFG.coef.PH = 1.2;
+setInterval(() => { if (PHAN.el && world.state === 'play') PHAN.panel(); }, 1000);
+PHAN.load(); PHAN.panel();
+if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, WD, CH, SP, MANN, NAV, RED: typeof RED !== 'undefined' ? RED : null, postMat, CHAT, RES_CHAT, COL, ENDCARD, makeResultImage, escapeRun: escape, evid: () => evidence, recS: () => rec, world });
+
+/* =========================================================
    2026-11-14 データをリセット（スタート画面・設定の「撮れ高コレクション」の直下）
    ・撮れ高コレクション、撮れ高実績、永続アイテム、進行状況（人体模型の交代の解禁・遊び方を見たかどうか）を消し、スタート画面からやり直す
    ・音量・言語・キー操作・チャンネル名などの設定は残す。撮った映像は端末に保存していない（読み込み直しで消える）
    ========================================================= */
 const RESET = {
-  keys() { return [COL.KEY, ACH.KEY, PERM.KEY, 'yt_mann_unlock', 'yt_tut']; },
+  keys() { return [COL.KEY, ACH.KEY, PERM.KEY, 'yt_mann_unlock', 'yt_tut', PHAN.KEY]; },   // 2026-11-15 幻の怪異の段階も0に
   ask() { $('#resetAsk').classList.add('show'); },
   no() { $('#resetAsk').classList.remove('show'); },
   yes() {
     try { for (const k of this.keys()) localStorage.removeItem(k); for (let i = localStorage.length - 1; i >= 0; i--) { const k0 = localStorage.key(i), k = k0 && (BETA ? (k0.startsWith('beta:') ? k0.slice(5) : null) : (k0.startsWith('beta:') ? null : k0)); if (k && /^yutuber_/.test(k)) localStorage.removeItem(k); } } catch (e) { }
     try { resultUrls.forEach(u => URL.revokeObjectURL(u)); } catch (e) { }
-    COL.data = null; ACH.d = null; PERM.d = null;
+    COL.data = null; ACH.d = null; PERM.d = null; PHAN.d = null;
     const go = () => { const u = new URL(location.href); u.searchParams.delete('perm'); location.replace(u.toString()); };   // スタート画面から（初めて遊ぶ時と同じ状態）
     VDB.wipe().then(go, go); setTimeout(go, 1500);   // 神回ランキングの保存映像も消す
   },
