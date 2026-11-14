@@ -1289,6 +1289,7 @@ function plane(w, h, mat, x, y, z, ry = 0, rx = 0, o = {}) {
 /* ---------- 言語（日本語／English）：画面の文言は T() で英語に置き換える。英語の表が無い文言は日本語のまま ---------- */
 let LANG = 'ja'; try { const l = localStorage.getItem('yt_lang'); if (l === 'en' || l === 'ja') LANG = l; } catch (e) { }
 const EN = {
+  '便器の中の血溜まり': 'A pool of blood in the toilet bowl', '便器の中からのぞく目': 'An eye peering up from the toilet', 'フタを開けたら閉じ込められた': 'Locked in after opening the lid', 'フタを開ける': 'Open the lid', 'フタを閉める': 'Close the lid', '開かない…': 'It won’t open…',
   '振り向いた掲示板の女': 'The girl at the notice board turns around',
   '音が出ないときは、画面をもう一度タップしてください': 'If there is no sound, tap the screen again.',
   '歩いたり見回したりして、画角を決めてください': 'Walk and look around to frame the shot', 'ここに設置': 'Place here', 'やめる': 'Cancel', '定点カメラを設置した。怪異が映ると自動で録画します': 'Fixed camera placed. It records automatically when something appears.', '定点カメラを回収した。持ち物からまた置けます': 'Fixed camera picked up. You can place it again from your items.', '定点カメラを回収する': 'Pick up the fixed camera', '置く': 'Place', '設置中': 'In use',
@@ -2406,7 +2407,6 @@ function makeInvFaces(H) {
     f.mouth = (() => {
       const nimg = f.normal.map && f.normal.map.image || img; const c = document.createElement('canvas'); c.width = W; c.height = Hh; const g = c.getContext('2d'); g.drawImage(nimg, 0, 0, W, Hh);
       g.save(); g.beginPath(); g.rect(x0, y0, w, h); g.clip();
-      if (/[?&]cal/.test(location.search)) { const cols = ['#f00', '#0f0', '#00f', '#ff0', '#0ff']; [0.1, 0.3, 0.5, 0.7, 0.9].forEach((fy, k) => { g.fillStyle = cols[k]; for (const fx of [0.3, 0.5, 0.7]) { g.beginPath(); g.arc(x0 + w * fx, y0 + h * fy, w * 0.02, 0, 7); g.fill(); } }); }
       const hole = (cx, cy, rx, ry) => { const r = g.createRadialGradient(cx, cy, 0, cx, cy, rx * 1.4); r.addColorStop(0, 'rgba(0,0,0,1)'); r.addColorStop(0.68, 'rgba(0,0,0,1)'); r.addColorStop(1, 'rgba(25,8,8,0)'); g.fillStyle = r; g.save(); g.translate(cx, cy); g.scale(1, ry / rx); g.beginPath(); g.arc(0, 0, rx * 1.4, 0, 7); g.restore(); g.fill(); };
       for (const ex of [0.3, 0.7]) hole(x0 + w * ex, y0 + h * 0.5, w * 0.085, h * 0.05);   // 目
       const mx = x0 + w * MOUTH_UV[0], my = y0 + h * MOUTH_UV[1], rx = w * 0.075, ry = h * 0.06;
@@ -3887,7 +3887,7 @@ const STAY = {
 };
 /* ---------- 採点 ---------- */
 /* 撮れ高のレア度と得点（2026-11-13 出やすさ・撮りやすさから見直し。ここが正。award()の第3引数より優先） */
-const AW_TABLE = { micNonstop: ['S', 50], micLoud: ['S', 50], micScream: ['S', 50], micLate: ['A', 30], micRunScream: ['S', 50], micChaseTalk: ['S', 50], micHideLoud: ['A', 30], micHideTalk: ['A', 30], micQuiet: ['A', 30], micHush: ['A', 30], micSilent: ['A', 30], micResume: ['B', 20], eqShades: ['D', 10], eqParty: ['D', 10], eqEars: ['D', 10], eqHood: ['D', 10], eqFlute: ['D', 10], tailTurn: ['A', 60], snake: ['S', 80], clsLocker: ['B', 45], soccer: ['C', 10], mannTurn: ['C', 20], mannBurst: ['A', 70], mannHide1: ['S', 50], mannHide2: ['S', 50], mannHide3: ['SS', 300], mannRun: ['B', 50], mannOrgan: ['D', 10], nakayoshi: ['SS', 300], wallEyes: ['A', 60], metronome: ['C', 20], scaleNeedle: ['D', 8], lockerSeq: ['C', 25], stallFeet: ['C', 20], curtain: ['D', 8], rackFall: ['C', 20], clockRev: ['C', 25], ball: ['C', 20], shoeBlood: ['C', 30], fireExit: ['B', 50], f2bed: ['B', 40], exitFlip: ['B', 45], wander: ['C', 25], glance: ['B', 45], slitCloth: ['A', 60], lockerFace: ['S', 120], capture: ['B', 120], toes: ['A', 70], stand: ['C', 25], semari: ['S', 100], trio: ['SS', 300], dripRipple: ['A', 60], doorBlood: ['B', 40], stallTop: ['A', 80], basinBlood: ['A', 60], peek: ['A', 60], boardWoman: ['B', 40], boardLunge: ['A', 80], blackoutFace: ['A', 60], micLamp: ['B', 40], micTurn: ['A', 70], glassSelf: ['A', 60], innerLock: ['A', 70], mirrorLag: ['S', 90], drainEye: ['S', 120], runner: ['A', 60], smudge: ['B', 40], fireFace: ['A', 60], prints: ['A', 60], chalk: ['C', 20], broom: ['C', 20], selfieShoulder: ['A', 70], mirrorDoor: ['B', 45], mirrorGiant: ['S', 100], slideCreep: ['C', 30], lookBack: ['A', 70], turnFace: ['S', 100], polter: ['C', 25], mirrorFlash: ['A', 60], cornerFace: ['A', 60], streetFig: ['A', 50], mirrorGirl: ['A', 60], f2blood: ['S', 100], f2stairFace: ['B', 50], f2teddy: ['A', 60], tTurnFace: ['S', 150], f2turnFace: ['S', 100], f2chair: ['B', 40], f2fall: ['A', 70], f2crows: ['A', 50], f2books: ['B', 40], f2pages: ['B', 40], f2libChair: ['B', 40], f2piano: ['B', 50], f2blink: ['A', 70], f2float: ['A', 70], f2vase: ['A', 60], spWarp: ['S', 120], spHead: ['B', 50], spDescend: ['A', 80], spLatch: ['S', 120], hpFirst: ['A', 60], boardGlyph: ['A', 60], stall20: ['S', 100], hand: ['C', 20], nekomata: ['A', 50], uwaSeen: ['S', 90], uwaWalk: ['SS', 300], ceilBleed: ['S', 100], paCall: ['A', 80], akuryo: ['SS', 550], nurseBack: ['A', 60], nursePeek: ['S', 90], pianoPlay: ['C', 15], clairPlay: ['A', 50], requiem: ['SS', 300], nekoPiano: ['S', 100], twinkle: ['S', 100], chaseRec: ['C', 4], chaseSelfie: ['A', 8], close: ['C', 10], chaseOut: ['A', 50], alive: ['D', 50] };
+const AW_TABLE = { micNonstop: ['S', 50], micLoud: ['S', 50], micScream: ['S', 50], micLate: ['A', 30], micRunScream: ['S', 50], micChaseTalk: ['S', 50], micHideLoud: ['A', 30], micHideTalk: ['A', 30], micQuiet: ['A', 30], micHush: ['A', 30], micSilent: ['A', 30], micResume: ['B', 20], eqShades: ['D', 10], eqParty: ['D', 10], eqEars: ['D', 10], eqHood: ['D', 10], eqFlute: ['D', 10], tailTurn: ['A', 60], snake: ['S', 80], clsLocker: ['B', 45], soccer: ['C', 10], mannTurn: ['C', 20], mannBurst: ['A', 70], mannHide1: ['S', 50], mannHide2: ['S', 50], mannHide3: ['SS', 300], mannRun: ['B', 50], mannOrgan: ['D', 10], nakayoshi: ['SS', 300], wallEyes: ['A', 60], metronome: ['C', 20], scaleNeedle: ['D', 8], lockerSeq: ['C', 25], stallFeet: ['C', 20], curtain: ['D', 8], rackFall: ['C', 20], clockRev: ['C', 25], ball: ['C', 20], shoeBlood: ['C', 30], fireExit: ['B', 50], f2bed: ['B', 40], exitFlip: ['B', 45], wander: ['C', 25], glance: ['B', 45], slitCloth: ['A', 60], lockerFace: ['S', 120], capture: ['B', 120], toes: ['A', 70], stand: ['C', 25], semari: ['S', 100], trio: ['SS', 300], dripRipple: ['A', 60], doorBlood: ['B', 40], stallTop: ['A', 80], basinBlood: ['A', 60], peek: ['A', 60], boardWoman: ['B', 40], boardLunge: ['A', 80], lidBlood: ['B', 40], lidEye: ['A', 60], lidTrap: ['S', 80], blackoutFace: ['A', 60], micLamp: ['B', 40], micTurn: ['A', 70], glassSelf: ['A', 60], innerLock: ['A', 70], mirrorLag: ['S', 90], drainEye: ['S', 120], runner: ['A', 60], smudge: ['B', 40], fireFace: ['A', 60], prints: ['A', 60], chalk: ['C', 20], broom: ['C', 20], selfieShoulder: ['A', 70], mirrorDoor: ['B', 45], mirrorGiant: ['S', 100], slideCreep: ['C', 30], lookBack: ['A', 70], turnFace: ['S', 100], polter: ['C', 25], mirrorFlash: ['A', 60], cornerFace: ['A', 60], streetFig: ['A', 50], mirrorGirl: ['A', 60], f2blood: ['S', 100], f2stairFace: ['B', 50], f2teddy: ['A', 60], tTurnFace: ['S', 150], f2turnFace: ['S', 100], f2chair: ['B', 40], f2fall: ['A', 70], f2crows: ['A', 50], f2books: ['B', 40], f2pages: ['B', 40], f2libChair: ['B', 40], f2piano: ['B', 50], f2blink: ['A', 70], f2float: ['A', 70], f2vase: ['A', 60], spWarp: ['S', 120], spHead: ['B', 50], spDescend: ['A', 80], spLatch: ['S', 120], hpFirst: ['A', 60], boardGlyph: ['A', 60], stall20: ['S', 100], hand: ['C', 20], nekomata: ['A', 50], uwaSeen: ['S', 90], uwaWalk: ['SS', 300], ceilBleed: ['S', 100], paCall: ['A', 80], akuryo: ['SS', 550], nurseBack: ['A', 60], nursePeek: ['S', 90], pianoPlay: ['C', 15], clairPlay: ['A', 50], requiem: ['SS', 300], nekoPiano: ['S', 100], twinkle: ['S', 100], chaseRec: ['C', 4], chaseSelfie: ['A', 8], close: ['C', 10], chaseOut: ['A', 50], alive: ['D', 50] };
 function awBase(key) { const k = String(key || ''); if (typeof AW_TABLE !== 'undefined' && AW_TABLE[k]) return k;   /* 2026-11-13 stall20 のように数字で終わる名前そのものが表にある時はそのまま */ return k.startsWith('broom') ? 'broom' : k.replace(/\d+$/, ''); }
 
 const awarded = new Map(); const evidence = []; const evAcc = {};
@@ -9099,7 +9099,7 @@ const COL = {
     ['wander', '暗がりを滑る逆さ女', 40], ['glance', 'こっちを見た？', 60], ['slitCloth', 'ロッカーの前を横切る赤い布', 50], ['lockerFace', 'ロッカーに隠れたのがバレる', 80], ['capture', '逆さ女に襲われた瞬間', 120],
     ['toes', '戸口から覗く上履き', 70], ['stand', '教室に立つ女子高生', 15], ['semari', 'ズームで迫り来る女子高生の霊', 100], ['trio', '奇跡の3ショット', 300],
     ['dripRipple', '床に落ちる血の滴と広がる波紋', 60], ['doorBlood', 'トイレの扉の内側に垂れる血の筋', 40], ['stallTop', 'トイレの個室の上から覗く逆さ顔', 100], ['basinBlood', '洗面器に溜まっていく血溜まり', 40], ['peek', '戸口から真横に覗く顔', 60],
-    ['boardWoman', '掲示板を読む女', 30], ['boardLunge', '振り向いた掲示板の女', 80], ['f2bed', 'めくった布団の中', 25], ['exitFlip', '逆さまに走る非常口', 45],
+    ['boardWoman', '掲示板を読む女', 30], ['boardLunge', '振り向いた掲示板の女', 80], ['lidBlood', '便器の中の血溜まり', 40], ['lidEye', '便器の中からのぞく目', 60], ['lidTrap', 'フタを開けたら閉じ込められた', 80], ['f2bed', 'めくった布団の中', 25], ['exitFlip', '逆さまに走る非常口', 45],
     ['blackoutFace', '復電の一瞬に立つ女', 50], ['micLamp', '一度だけ点いた赤ランプ', 20], ['micTurn', 'こちらを向くマイク', 60], ['glassSelf', 'ガラスに残ったカメラを構えたままの自分', 60], ['innerLock', '勝手に回るトイレの内鍵', 50],
     ['mirrorLag', '鏡の中の自分だけが遅れて動く', 70], ['drainEye', '排水口の暗がりの片目', 50], ['runner', '窓の外の人影', 60],
     ['smudge', '小窓に残る五本の指跡', 30], ['fireFace', 'レンズ前に割り込む顔', 60], ['prints', '近づいてくる濡れた足跡', 60], ['chalk', '床に落ちていたチョーク', 10], ['broom', '倒れていたほうき', 10],
@@ -11278,6 +11278,86 @@ function stallHide(st) {
   const d = distTo(WD.pos.x, WD.pos.z) + (Math.abs(WD.pos.y - player.y) > 1 ? 30 : 0);
   if (d >= CONFIG.hideMinDist && !seenIn) { CH.stop(); world.stallHid = st; WD.noDetectUntil = world.t + 1e6; }
 }
+/* 2026-11-14 洋式トイレのフタ
+   ・1周ごとに、フタが開いているか閉まっているかはランダム。個室の中で便器を見下ろすと「フタを開ける／閉める」
+   ・2周に1回くらい、どれか1つの閉まったフタに仕掛けがある。開けると次のどれか
+     ① 中に血溜まり　② 中に目があり、パチクリして1秒で消える（控えめな驚かし音）
+     ③（珍しめ）何も無いが、開けた瞬間に個室の戸がすごい勢いで閉まり、開かなくなる。電灯も消え、上から覗き込まれる怪異へ */
+const LID = {
+  list: [], armed: null, kind: null, ev: null,
+  init() {
+    if (this.list.length) return true; const seats = [];
+    scene.traverse(o => { if (o.isMesh && o.name === 'Pivot_Seat') seats.push(o); }); if (seats.length < stalls.length) return false;
+    for (const st of stalls) {
+      const seat = seats.reduce((a, b) => Math.abs(a.getWorldPosition(V()).z - st.zc) < Math.abs(b.getWorldPosition(V()).z - st.zc) ? a : b);
+      const bb = new THREE.Box3().setFromObject(seat), sx = bb.max.x - bb.min.x, sz = bb.max.z - bb.min.z;
+      const hinge = new THREE.Group(); hinge.position.set(bb.max.x - 0.02, bb.max.y + 0.012, (bb.min.z + bb.max.z) / 2); scene.add(hinge);
+      const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.024, 28), M.porcelain); lid.scale.set(sx * 0.98, 1, sz * 0.98); lid.position.set(-sx * 0.49 + 0.01, 0, 0); lid.castShadow = true; hinge.add(lid);
+      occluders.push(lid);
+      const c = V((bb.min.x + bb.max.x) / 2 - 0.02, bb.max.y - 0.16, (bb.min.z + bb.max.z) / 2);
+      this.list.push({ st, hinge, lid, c, r: Math.min(sx, sz) * 0.3, open: false, a: 0 });
+    }
+    this.reset(); return true;
+  },
+  reset() {
+    this.armed = null; this.kind = null; this.ev = null; this.hideStuff();
+    for (const L of this.list) { L.open = chance(0.5); L.a = L.open ? 1 : 0; this.pose(L); L.used = false; }
+    if (this.list.length && chance(0.5)) { const L = pick(this.list); L.open = false; L.a = 0; this.pose(L); this.armed = L; this.kind = pickW([['blood', 0.4], ['eye', 0.4], ['trap', 0.2]]); }
+  },
+  pose(L) { L.hinge.rotation.z = -1.66 * L.a; },
+  of(st) { return this.list.find(L => L.st === st); },
+  toggle(L) {
+    L.open = !L.open; const lp = L.c.clone().setY(L.c.y + 0.2);
+    if (!playSfx('locker_latch', { pos: lp, ref: 0.6, gain: 0.35, rate: 0.7, dur: 0.35 })) SND.kata && SND.kata(lp, 0.3);
+    if (L.open && this.armed === L && !L.used) { L.used = true; this.fire(L); }
+  },
+  fire(L) {
+    const k = this.kind; this.ev = { k, L, t: 0 };
+    if (k === 'blood') { this.blood.position.copy(L.c); this.blood.scale.setScalar(L.r); this.blood.visible = true; }
+    if (k === 'eye') { this.eye.position.copy(L.c).setY(L.c.y + 0.03); this.eye.visible = true; this.eye.scale.set(1, 1, 1); }
+    if (k === 'trap') {   // 何もない。開けた瞬間、戸がすごい勢いで閉まって開かなくなる
+      const st = L.st; st.slow = 40; setStall(st, true, true); st.stuck = true; world.inStall = st;
+      const lp = V(10.55, 1.05, st.zc); SND.thud(lp, 1.0); playSfx('locker_latch', { pos: lp, ref: 0.6, gain: 0.9, delay: 0.05 }); noiseHit(0.5); PAD.hit(0.8);
+      this.ev.light = DIM.lightNear(V(7.2, 0, -2)); if (this.ev.light) DIM.dimAt(this.ev.light, 999);   // 電灯は必ず消える
+      if (rec.active) award('lidTrap', 'フタを開けたら閉じ込められた', 80);
+    }
+  },
+  hideStuff() { if (this.blood) this.blood.visible = false; if (this.eye) this.eye.visible = false; },
+  build() {
+    if (this.blood) return;
+    this.blood = new THREE.Mesh(new THREE.CircleGeometry(1, 28), new THREE.MeshLambertMaterial({ color: 0x3a0505, emissive: 0x080000 })); this.blood.rotation.x = -Math.PI / 2; this.blood.visible = false; scene.add(this.blood);
+    const e = new THREE.Group(); e.visible = false; scene.add(e); this.eye = e;
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(0.075, 18, 12), new THREE.MeshLambertMaterial({ color: 0xece6da, emissive: 0x2a2826 })); ball.scale.y = 0.6; e.add(ball);
+    const iris = new THREE.Mesh(new THREE.CircleGeometry(0.034, 20), new THREE.MeshLambertMaterial({ color: 0x4a2a18, emissive: 0x100804 })); iris.rotation.x = -Math.PI / 2; iris.position.y = 0.0455; e.add(iris);
+    const pup = new THREE.Mesh(new THREE.CircleGeometry(0.016, 16), new THREE.MeshBasicMaterial({ color: 0x000000 })); pup.rotation.x = -Math.PI / 2; pup.position.y = 0.046; e.add(pup);
+    this.lid = new THREE.Mesh(new THREE.SphereGeometry(0.078, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshLambertMaterial({ color: 0x9c8070 })); this.lid.scale.y = 0.62; e.add(this.lid); this.lidK = 0;   // まぶた
+  },
+  offer() {
+    if (!this.list.length) return;
+    const st = stallOf(player.x, player.z); if (!st || st.occupied) return; const L = this.of(st); if (!L) return;
+    if (camFwd().x < 0.3 || player.pitch > -0.2 || Math.hypot(L.c.x - player.x, L.c.z - player.z) > 1.3) return;
+    offerAction(L.open ? 'フタを閉める' : 'フタを開ける', () => this.toggle(L));
+  },
+  tick(dt) {
+    if (!this.list.length) { this.tryT = (this.tryT || 0) - dt; if (this.tryT <= 0) { this.tryT = 1; if (this.init()) this.build(); } return; }   // 便器のモデルが読み込まれたらフタを付ける
+    for (const L of this.list) { const to = L.open ? 1 : 0; if (L.a !== to) { L.a += Math.sign(to - L.a) * Math.min(Math.abs(to - L.a), dt * 3.2); this.pose(L); } }
+    const E = this.ev; if (!E) return; E.t += dt;
+    if (E.k === 'blood') { this.blood.scale.setScalar(E.L.r * Math.min(1, 0.85 + E.t * 0.05)); if (E.L.a > 0.7 && accum('lidBlood', seen(E.L.c, { maxD: 2.5 }), dt, 0.5)) award('lidBlood', '便器の中の血溜まり', 40); if (!E.L.open) this.blood.visible = E.L.a > 0.05; }
+    if (E.k === 'eye') {
+      if (E.t > 0.25 && !E.st) { E.st = 1; jumpSting('jump_b', 0.45, 1.5); }   // 控えめな驚かし音
+      const b = E.t - 0.35, blink = (b > 0 && b < 0.18) || (b > 0.42 && b < 0.58) ? 1 : 0;   // パチクリ（2回）
+      this.lidK += (blink - this.lidK) * Math.min(1, dt * 30); this.lid.visible = this.lidK > 0.05; this.lid.scale.set(1, 0.62 * this.lidK + 0.01, 1);
+      if (this.eye.visible && seen(this.eye.position, { maxD: 2.5 })) award('lidEye', '便器の中からのぞく目', 60);
+      if (E.t > 1.3) { this.eye.visible = false; this.ev = null; }
+    }
+    if (E.k === 'trap') {
+      const st = E.L.st;
+      if (E.t > 1.6 && !E.go) { E.go = 1; if (SG.ready && EV.toilet.ready()) { DIR.force('toilet'); E.forced = true; } }   // 上から覗き込まれる怪異へ
+      const busy = E.forced && DIR.active === EV.toilet;
+      if (E.t > 2 && !busy && (!E.forced || E.t > 3)) { if (E.t > (E.forced ? 3 : 9)) { st.stuck = false; st.slow = 0; if (E.light && !E.forced) E.light.dimUntil = 0; this.ev = null; } }
+    }
+  },
+};
 function updateInteractions() {
   actFn = null; actLabel = ''; actKey = false;
   DOORS2.offer(); F2.offer(); ITEM.offer(); PIANO.offer();
@@ -11287,10 +11367,12 @@ function updateInteractions() {
     if (world.inStall !== st && st.locked) world.inStall = st;
     offerAction(st.locked ? '鍵を開ける' : '鍵をかける', () => {
       const lp = V(10.6, 1.05, st.zc); const click = () => { if (!playSfx('locker_latch', { pos: lp, ref: 0.6, gain: 0.5, dur: 0.5 })) SND.latch(lp); };
+      if (st.stuck) { SND.thud(lp, 0.5); click(); st.knobTarget = 0.4; setTimeout(() => { st.knobTarget = undefined; }, 160); toast(TR('開かない…'), 1200); return; }   // 2026-11-14 閉じ込められている
       if (st.locked) { setStall(st, false, false); world.inStall = null; if (world.stallHid) { world.stallHid = null; WD.noDetectUntil = world.t + 8; } }
       else { setStall(st, true, true); world.inStall = st; if (CH.state !== 'off') stallHide(st); }
     });
     if (!st.locked && st.target === 0) offerAction('戸を開ける', () => setStall(st, false, false));
+    LID.offer();   // 便器を見下ろすと「フタを開ける」
   } else world.inStall = null;
   if (MD.ph === 'wait' && !st && distTo(10.0, MD.st.zc) < 1.7 && camFwd().x > 0.4) offerAction('戸を開ける', () => MD.open());
   if (playerZone() === 'T' && !st) {
@@ -11326,7 +11408,7 @@ function tick(now) {
   if (Math.abs(zoom - prevZoom) > 0.0015) focus.lastZoomMove = world.t; prevZoom = zoom;
   camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(CONFIG.fov1x / 2)) / zoom)); camera.updateProjectionMatrix();
   // 視点
-  if (KB.down('lookL')) look.yaw += 1.8 * dt; if (KB.down('lookR')) look.yaw -= 1.8 * dt; PCLOOK.tick(dt); FIXCAM.tick(dt);
+  if (KB.down('lookL')) look.yaw += 1.8 * dt; if (KB.down('lookR')) look.yaw -= 1.8 * dt; PCLOOK.tick(dt); FIXCAM.tick(dt); LID.tick(dt);
   if (KB.down('lookU')) look.pitch = clamp(look.pitch + 1.2 * dt, -1.54, 1.54); if (KB.down('lookD')) look.pitch = clamp(look.pitch - 1.2 * dt, -1.54, 1.54);
   if (gyro.on && gyro.got) { player.yaw = look.yaw + (gyro.acc - gyro.ref); player.pitch = clamp(gyro.pitch + look.pitch, -1.55, 1.55); }
   else { player.yaw = look.yaw; player.pitch = look.pitch; }
@@ -12797,7 +12879,7 @@ $('#goBtn').addEventListener('click', () => {
   world.channel = ($('#chName').value || '').trim() || '心霊チャンネル';
   world.chRaw = ($('#chName').value || '').trim(); world.yomi = world.chRaw ? ($('#chYomi').value || '').trim() : '';
   CHATLOG.reset(); world.chatRk = yrankIdx(ACH.load().total); world.chatM = YRANK[world.chatRk][3]; world.chatName = chatCallName(); world.chatLang = LANG;   // 2026-11-14 チャット：撮影開始時のランク倍率と呼び名をこの動画に固定
-  MANN.reset(); WD.init(); WARP.reset(); VO.stopAll(); FIXCAM.reset(); DIR.planRun(); MINOR.reset(); SELF.reset(); MD.reset(); DOORS2.reset(); TAP.reset(); F2.reset(); SP.reset(); NEKO.reset(); OFUDA.reset(); ITEM.reset(); SNAKE.reset(); UWA.reset(); TEN.reset(); GG.reset(); POLT.reset(); MF.reset(); STREETFIG.reset(); EXITF.reset(); STAY.reset(); RED.reset(); MG.reset();
+  MANN.reset(); WD.init(); WARP.reset(); VO.stopAll(); FIXCAM.reset(); if (LID.list.length) LID.reset(); DIR.planRun(); MINOR.reset(); SELF.reset(); MD.reset(); DOORS2.reset(); TAP.reset(); F2.reset(); SP.reset(); NEKO.reset(); OFUDA.reset(); ITEM.reset(); SNAKE.reset(); UWA.reset(); TEN.reset(); GG.reset(); POLT.reset(); MF.reset(); STREETFIG.reset(); EXITF.reset(); STAY.reset(); RED.reset(); MG.reset();
   if (MIC30) CONFIG.recMaxSec = 30;   // 2026-11-14 開発用の30秒テスト（本番の120秒は変えない）
   $('#start').classList.remove('show');
   world.state = 'intro'; world.battery = CONFIG.battery.start; world.batUsed = Math.max(0, 100 - CONFIG.battery.start); world.sgShowUsed = rnd(50, 70);   /* 2026-11-14 逆さ女が見えるようになる時（電池の残り50〜30%のどこか。検証版から） */
@@ -13116,7 +13198,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.13.11';
+const VERSION = '0.13.12';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -14229,7 +14311,7 @@ addEventListener('keydown', e => {
   else if ($('#saveNote').classList.contains('show')) { $('#saveNote').classList.remove('show'); e.stopPropagation(); }
 }, true);
 addEventListener('resize', () => { if (VED.on) VED.uiMarks(); });
-if (TEST && window.__G) Object.assign(window.__G, { SIDE, RKLIST, RING, AFIX, SET, A });   // 2026-11-14 確認用
+if (TEST && window.__G) Object.assign(window.__G, { SIDE, RKLIST, RING, AFIX, SET, A, LID, stalls });   // 2026-11-14 確認用
 
 setInterval(() => CHATLOG.tick(), 400);
 setInterval(() => { try { VOICE.tick(); } catch (e) { if (TEST || DEV) console.warn('VOICE', e); } }, 33);   // 2026-11-14 声の判定（約30回/秒）
