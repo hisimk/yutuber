@@ -357,8 +357,29 @@
   #resCount{text-align:center;font-size:13px;letter-spacing:.12em;color:#c9c4ba;margin:0}
   #resCount b{font-size:18px;font-weight:800;color:#fff;margin:0 2px;font-variant-numeric:tabular-nums}
   #likeSub{font-size:12px;letter-spacing:.3em;color:#9a958c;margin:2px 0 12px}
-  #replayWrap{width:100%;max-width:360px;height:clamp(260px, calc(100 * var(--vh) - 448px), 720px);background:#000;border-radius:10px;overflow:hidden;position:relative;flex:none}   /* 2026-11-14 動画を大きく（「動画だけ・結果画像だけ」は少し下に見切れてよい） */
+  #replayWrap{width:100%;max-width:360px;height:clamp(250px, calc(100 * var(--vh) - 448px - 130px), 720px);background:#000;border-radius:10px;overflow:hidden;position:relative;flex:none}   /* 2026-11-14 動画を大きく（「動画だけ・結果画像だけ」は少し下に見切れてよい） */
   #replay{width:100%;height:100%;object-fit:contain;background:#000}
+  /* 2026-11-14 リザルトの同期チャット（動画の下。動画には重ねない） */
+  #resChatHost{width:100%;max-width:360px;flex:none}
+  .chatBox{position:relative;height:200px;display:flex;flex-direction:column;margin-top:8px;background:#0d0d0f;border:1px solid #2b2a28;border-radius:10px;overflow:hidden;text-align:left}
+  .chatHead{display:flex;align-items:baseline;gap:8px;padding:6px 10px 5px;border-bottom:1px solid #222;flex:none}.chatHead b{font-size:13px;color:#e9e4da}.chatHead span{font-size:10.5px;color:#8a867f}
+  .chatList{flex:1;overflow-y:auto;padding:4px 8px 8px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  .chatBox .cm{display:flex;align-items:flex-start;gap:7px;padding:3px 0;font-size:13px;line-height:1.4;color:#ece7dd}
+  .chatBox .cm.new{animation:cmIn .15s ease-out}@keyframes cmIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .chatBox .av{flex:none;width:20px;height:20px;margin-top:1px;border-radius:50%;border:1.5px solid var(--c);display:grid;place-items:center;box-sizing:border-box}.chatBox .av svg{width:15px;height:15px;fill:var(--c)}
+  .chatBox .tx{min-width:0;overflow-wrap:anywhere}.chatBox .tx b{color:var(--c);font-weight:700;margin-right:7px;font-size:12px}
+  .chatMsg{position:absolute;left:0;right:0;top:30px;bottom:0;display:flex;align-items:center;justify-content:center;color:#77736c;font-size:12.5px;pointer-events:none;padding:10px;text-align:center}
+  .chatNew{position:absolute;right:8px;bottom:8px;display:none;padding:5px 11px;border-radius:999px;border:1px solid #555;background:rgba(20,20,22,.92);color:#fff;font:600 12px system-ui}.chatNew.show{display:block}
+  #godView .chatBox{height:170px}
+  #rankPop{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55)}
+  #rankPop.show{display:flex}#rankPop.show .rpBox{animation:rpIn .2s cubic-bezier(.2,.7,.3,1)}@keyframes rpIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion: reduce){#rankPop.show .rpBox,.chatBox .cm.new{animation:none}}
+  .rpBox{width:min(320px,86%);padding:22px 18px 18px;border-radius:16px;background:#141416;border:1px solid #3a3834;text-align:center;color:#e9e4da}
+  #rpT{font-family:"Shippori Mincho",serif;font-size:19px;line-height:1.6;color:#ffd60a;letter-spacing:.04em}#rpFrom{font-size:12px;color:#8a867f;margin-top:6px}
+  #rpTot{font-size:15px;font-weight:700;margin-top:12px}.rpNote{font-size:12.5px;color:#cfcac0;margin-top:4px}#rpOk{margin-top:16px;width:100%;padding:12px;border-radius:12px;border:none;background:#e9e4da;color:#111;font:700 15px system-ui}
+  #rankTag{font-size:11px;color:#ffd60a;letter-spacing:.08em;margin:-2px 0 2px;text-align:center}
+  #callOpt{font-size:12px;color:#8a867f;margin:2px 0 0}#callOpt summary{cursor:pointer;list-style:none;text-align:center}#callOpt summary::-webkit-details-marker{display:none}#callOpt input{width:100%;margin-top:6px;box-sizing:border-box}#callOpt small{display:block;margin-top:3px;text-align:center}
+  .achRank{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:#cfcac0;margin:2px 0 8px}.achRank b{color:#ffd60a;font-size:13px}
   #noVideo{position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:#777;font-size:13px;text-align:center;padding:20px}
   #evWrap{width:100%;max-width:360px;margin-top:10px}
   #evHead{display:flex;justify-content:space-between;font-size:12px;color:#9a958c;margin:0 2px 6px;letter-spacing:.08em}
@@ -554,6 +575,8 @@
     <div class="opt"><div>なまえ</div><input id="chName" maxlength="20" placeholder="心霊チャンネル"></div>
     <div class="opt" id="yomiRow"><div>よみがな</div><input id="chYomi" maxlength="20" placeholder="ひらがなで入力"></div>
   </div>
+  <div id="rankTag"></div>
+  <details id="callOpt"><summary id="callSum">コメントでの呼び名 ›</summary><input id="callName" maxlength="32"><small id="callHint"></small></details>
   <button class="go" id="goBtn">旧校舎に入る</button>
   <button class="colBtn" id="colBtn">撮れ高コレクション</button>
   <button class="credBtn" data-cred>使用素材・クレジット</button>
@@ -613,6 +636,7 @@
   <div id="resTop"><div id="permIcons"></div><div id="resHeadL"><h2 id="resTitle">帰還</h2><div class="meta" id="resMeta"></div></div><div id="resR"><button id="retakeBtn">再撮影</button></div></div>
   <div id="resSum"><div id="resCount">今回の撮れ高 <b id="resCountN">0</b>回</div><div id="likeRow"><div id="likeHero"><i class="like" id="likeIcon"></i><b id="evScore">0</b></div><div id="likeSub">いいね</div></div></div>
   <div id="replayWrap"><video id="replay" playsinline controls preload="auto"></video><div id="noVideo">持ち帰った映像はありません</div></div>
+  <div id="resChatHost"></div>
   <div id="evWrap"><div id="missed"></div><div id="evHead"><span>いいねの内訳</span><span id="evCount"></span></div><div id="evList"></div></div>
   <div class="rowBtns"><button class="share" id="shareBtn">動画と結果をシェア</button></div>
   <div class="rowBtns sub"><button id="saveBtn">動画だけ</button><button id="imgBtn">結果画像だけ</button></div>
@@ -637,6 +661,7 @@
   <button id="overVideo" style="display:none;margin-top:14px;font-size:13px;color:#cfcac0;background:none;border:1px solid #444;border-radius:10px;padding:10px 16px">残った映像を見る</button>
 </div>
 <div id="resetAsk"><div class="raBox"><div class="raT">本当に消去していいですか？</div><div class="raD">集めた撮れ高、累計いいね数、歴代の神回など、これまでのプレイデータがすべて消えます。</div><div class="raBtns"><button id="resetYes">はい</button><button id="resetNo">だめ</button></div></div></div>
+<div id="rankPop"><div class="rpBox"><div id="rpT"></div><div id="rpFrom"></div><div id="rpTot"></div><div class="rpNote" id="rpNote"></div><button id="rpOk"></button></div></div>
 <div id="loading">LOADING</div>
 
 <script type="importmap">
@@ -1102,7 +1127,7 @@ const EN = {
   'ロッカーから出る': 'Leave locker',
   '怪奇現象を': 'Capture the paranormal', 'カメラに収めろ！': 'on camera!', '心霊動画の撮れ高を': 'Capture the ghostly money shot',
   // 結果
-  '決定的瞬間は映っていなかった': 'No decisive moment was caught',
+  '決定的瞬間は映っていなかった': 'No decisive moment was caught', '撮れ高なし。次は仕込みをするべき？': 'Nothing worth posting. Time to set something up next time?',
   '帰還': 'Escaped', 'スマホだけ回収': 'Only the phone was recovered', '回収された映像': 'Recovered footage', 'カメラが壊れる直前まで': 'Until just before the camera broke',
   '最後まで回っていた映像': 'Footage that kept rolling to the end', 'クモ女に捕まった': 'Caught by the Spider Woman', '（暗闇から生還）': ' (survived the dark)',
   'いいね': 'Likes', 'いいねの内訳': 'Likes breakdown', '持ち帰った映像はありません': 'No footage brought back', 'この環境では映像を書き出せませんでした（撮れ高のみ）': 'Video couldn’t be exported here (likes only)',
@@ -3231,7 +3256,7 @@ function makeRecorder() {
 }
 function startRec() {
   if (world.state !== 'play' || world.dark || rec.time >= CONFIG.recMaxSec - 0.05) return;
-  rec.active = true;
+  rec.active = true; CHATLOG.segStart();   // チャット用：録画の区間の頭
   if (rec.available) {
     try {
       if (rec.mode === 'pause') { if (!rec.recorder) { rec.recorder = makeRecorder(); rec.recorder.start(500); } else if (rec.recorder.state === 'paused') rec.recorder.resume(); }
@@ -3243,7 +3268,7 @@ function startRec() {
   syncRecUI();
 }
 function stopRec(reason) {
-  if (!rec.active) return; rec.active = false;
+  if (!rec.active) return; CHATLOG.segStop(); rec.active = false;
   if (rec.micGain) rec.micGain.gain.setTargetAtTime(0, A.ctx.currentTime, 0.01);
   if (rec.available && rec.recorder) {
     try {
@@ -3316,6 +3341,7 @@ const ENDCARD = {
   },
 };
 function finalizeRec() {
+  CHATLOG.finish();   // チャット用：録画の終わりと結末（結果カードが入るか）
   if (ENDCARD.will()) {   // 2026-11-14 結果画面を先に出す（結果カードは画面の裏で録画し、保存する動画にだけ入る）
     showResult(null);
     if (world.state === 'over') { $('#resTitle').textContent = TR('スマホだけ回収'); setResMeta('最後まで回っていた映像'); }
@@ -3375,11 +3401,11 @@ function closeBonus(extra) {
   e.acc += extra; e.pts = Math.floor(e.acc);
 }
 function awardCont(key, label, pps, dt, cap = 200) {
-  let e = contAw[key]; if (!e) { e = contAw[key] = { t: rec.time, label, pts: 0, acc: 0, sec: 0, key }; evidence.push(e); likePop(e); }
+  let e = contAw[key]; if (!e) { e = contAw[key] = { t: rec.time, label, pts: 0, acc: 0, sec: 0, key }; evidence.push(e); likePop(e); CHATLOG.add('awc', { key, label, pts: 0 }); }
   const add = Math.min(cap - e.acc, pps * dt); e.acc = Math.min(cap, e.acc + pps * dt); e.sec += dt; e.pts = Math.floor(e.acc); e.label = `${label}（${Math.round(e.sec)}秒）`;
   if (add > 0 && closeUp()) closeBonus(add * (CLOSE.mul - 1));
 }
-function award(key, label, pts) { if (awarded.has(key)) return; { const a = AW_TABLE[awBase(key)]; if (a) pts = a[1]; } awarded.set(key, true); const ev = { t: rec.time, label, pts, key }; evidence.push(ev); likePop(ev); if (closeUp()) closeBonus(pts * (CLOSE.mul - 1)); if (TEST || DEV) console.log('EVIDENCE', key, rec.time.toFixed(2)); }
+function award(key, label, pts) { if (awarded.has(key)) return; { const a = AW_TABLE[awBase(key)]; if (a) pts = a[1]; } awarded.set(key, true); const ev = { t: rec.time, label, pts, key }; evidence.push(ev); CHATLOG.add('aw', { key, label, pts }); likePop(ev); if (closeUp()) closeBonus(pts * (CLOSE.mul - 1)); if (TEST || DEV) console.log('EVIDENCE', key, rec.time.toFixed(2)); }
 function accum(key, cond, dt, need) { if (!cond) return false; evAcc[key] = (evAcc[key] || 0) + dt; return evAcc[key] >= need; }
 const _v = V(), _dir = V(), ray = new THREE.Raycaster();
 function onScreen(pos, margin = 1) { _v.copy(pos).project(camera); return _v.z < 1 && _v.z > -1 && Math.abs(_v.x) <= margin && Math.abs(_v.y) <= margin; }
@@ -7245,6 +7271,7 @@ const ITEM = {
   },
   // 拾う：一時停止して説明
   pick(it) {
+    CHATLOG.add('pick');
     if (it.taken || world.state !== 'play') return;
     it.taken = true; it.s.visible = false; this.have[it.id] = true; if (it.id === 'omamori' && this.lockLk) this.lockLk.noHide = false;   // 取ったら隠れられる
     const D = this.defs[it.id];
@@ -9290,6 +9317,138 @@ const CLK = {
   },
 };
 CLK.build();
+/* =========================================================
+   2026-11-14 小物・美術（第1弾）：放送室・保健室の「人が使っていた形跡」と、最初から割れている窓1枚（廊下Bの中庭側）
+   ・静止した飾りだけ。部屋ごとに1つの形にまとめて描く（共通の画像1枚＋頂点の色）。影・光・物理・毎フレームの処理なし
+   ・当たり判定は通り道に関わる大きな物（放送室の棚）だけ。視線の遮り判定には入れない（撮れ高・怪異の判定は今まで通り）
+   ・文字は入れない（紙は罫線だけ、時計は目盛りだけ）
+   ========================================================= */
+const DECO = (() => {
+  const S = 256;
+  const R = { white: [0, 0, 8, 8], mixer: [8, 0, 136, 64], amp: [136, 0, 256, 40], tape: [136, 40, 256, 64], paper: [0, 64, 64, 160], clock: [64, 64, 160, 160], cab: [160, 64, 256, 256], aid: [0, 160, 64, 224], karte: [64, 160, 128, 224], slip: [128, 160, 160, 224], tray: [0, 224, 64, 256] };
+  const atlas = ctex(S, S, g => {
+    g.fillStyle = '#fff'; g.fillRect(0, 0, 8, 8);
+    // ミキサーの上面：つまみと縦のフェーダー
+    g.fillStyle = '#2b2d2f'; g.fillRect(8, 0, 128, 64);
+    for (let i = 0; i < 8; i++) { const x = 16 + i * 15;
+      for (let k = 0; k < 3; k++) { g.fillStyle = k === 0 && i % 3 === 0 ? '#7a8fb0' : '#b9b9b4'; g.beginPath(); g.arc(x, 8 + k * 9, 3, 0, 7); g.fill(); }
+      g.fillStyle = '#111'; g.fillRect(x - 1, 36, 2, 24); g.fillStyle = '#d8d6cf'; g.fillRect(x - 3, 40 + (i * 7) % 14, 6, 4); }
+    // アンプの前面：つまみ2つと針のメーター（緑の小さなランプ）
+    g.fillStyle = '#161616'; g.fillRect(136, 0, 120, 40);
+    g.fillStyle = '#d9c88a'; g.fillRect(144, 8, 34, 22); g.strokeStyle = '#222'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(161, 28); g.lineTo(152, 12); g.stroke();
+    for (const x of [200, 228]) { g.fillStyle = '#8c8c88'; g.beginPath(); g.arc(x, 20, 9, 0, 7); g.fill(); g.fillStyle = '#333'; g.fillRect(x - 1, 11, 2, 7); }
+    g.fillStyle = '#3d6a3a'; g.fillRect(246, 6, 4, 4);
+    // カセットの背：クリーム色のラベルと色の帯
+    g.fillStyle = '#2a2a2a'; g.fillRect(136, 40, 120, 24); g.fillStyle = '#e8dfc4'; g.fillRect(140, 44, 112, 16); g.fillStyle = '#b8483a'; g.fillRect(140, 44, 112, 4); g.fillStyle = '#555'; g.fillRect(150, 52, 90, 1);
+    // 紙：罫線だけ（文字なし）
+    g.fillStyle = '#ece8dd'; g.fillRect(0, 64, 64, 96); g.fillStyle = '#a7a39a'; for (let y = 78; y < 154; y += 7) g.fillRect(6, y, 48 - (y * 13) % 17, 1); g.fillStyle = '#7d8a99'; g.fillRect(6, 68, 30, 4);
+    // 時計の文字盤：目盛りと針（7時20分で止まっている）
+    g.fillStyle = '#3a3a38'; g.fillRect(64, 64, 96, 96); g.fillStyle = '#efece4'; g.beginPath(); g.arc(112, 112, 46, 0, 7); g.fill();
+    g.strokeStyle = '#222'; for (let k = 0; k < 60; k++) { const a = k / 60 * Math.PI * 2, r0 = k % 5 ? 41 : 36; g.lineWidth = k % 5 ? 1 : 3; g.beginPath(); g.moveTo(112 + Math.sin(a) * r0, 112 - Math.cos(a) * r0); g.lineTo(112 + Math.sin(a) * 44, 112 - Math.cos(a) * 44); g.stroke(); }
+    const hand = (a, l, w) => { g.lineWidth = w; g.beginPath(); g.moveTo(112, 112); g.lineTo(112 + Math.sin(a) * l, 112 - Math.cos(a) * l); g.stroke(); };
+    hand((7 + 20 / 60) / 12 * Math.PI * 2, 22, 4); hand(20 / 60 * Math.PI * 2, 33, 3);
+    // 薬品棚の前面：ガラス戸の中に棚4段と瓶・箱
+    g.fillStyle = '#d6d3ca'; g.fillRect(160, 64, 96, 192); g.fillStyle = '#39403f'; g.fillRect(166, 70, 40, 180); g.fillRect(210, 70, 40, 180);
+    const cols = ['#6b3d1e', '#e9e6dc', '#4d6f8f', '#8a5a2a', '#cfd6d2', '#a33b2f'];
+    for (let r = 0; r < 4; r++) { const y = 70 + r * 45; g.fillStyle = '#9a9890'; g.fillRect(166, y + 42, 84, 3);
+      for (let i = 0; i < 9; i++) { const x = 168 + i * 9 + (i > 4 ? 6 : 0); const h = 14 + ((i * 7 + r * 5) % 4) * 6; g.fillStyle = cols[(i + r * 2) % cols.length];
+        if ((i + r) % 4 === 3) g.fillRect(x, y + 42 - 18, 8, 18); else { g.fillRect(x + 1, y + 42 - h, 6, h); g.fillRect(x + 2, y + 42 - h - 3, 4, 3); } } }
+    g.fillStyle = 'rgba(255,255,255,0.18)'; g.fillRect(170, 72, 6, 170); g.fillRect(214, 72, 6, 170); g.fillStyle = '#8a8880'; g.fillRect(206, 150, 4, 16);
+    // 救急箱の前面：赤い十字
+    g.fillStyle = '#ecebe6'; g.fillRect(0, 160, 64, 64); g.fillStyle = '#b3241d'; g.fillRect(26, 172, 12, 40); g.fillRect(12, 186, 40, 12);
+    // カルテ（クリップボード）：茶色の板に罫線の紙
+    g.fillStyle = '#7a5532'; g.fillRect(64, 160, 64, 64); g.fillStyle = '#efece3'; g.fillRect(70, 168, 52, 54); g.fillStyle = '#5d7d9e'; g.fillRect(70, 168, 52, 6);
+    g.fillStyle = '#9f9b92'; for (let y = 180; y < 220; y += 6) g.fillRect(74, y, 44 - (y % 11), 1); g.fillStyle = '#9a9a96'; g.fillRect(88, 162, 16, 6);
+    // スリッパの甲
+    g.fillStyle = '#3f7a5c'; g.fillRect(128, 160, 32, 64); g.fillStyle = '#5c9a78'; g.fillRect(128, 176, 32, 10);
+    // 金属のトレー
+    const gr = g.createLinearGradient(0, 224, 64, 256); gr.addColorStop(0, '#b9bcbd'); gr.addColorStop(1, '#8c9091'); g.fillStyle = gr; g.fillRect(0, 224, 64, 32);
+  }, { nearest: false, rep: false });
+  const mat = new THREE.MeshLambertMaterial({ map: atlas, vertexColors: true });
+  const uvOf = r => { const q = R[r || 'white']; return r ? [(q[0] + 0.5) / S, 1 - (q[3] - 0.5) / S, (q[2] - 0.5) / S, 1 - (q[1] + 0.5) / S] : [2 / S, 1 - 6 / S, 6 / S, 1 - 2 / S]; };
+  const GEO = { box: new THREE.BoxGeometry(1, 1, 1), cyl: new THREE.CylinderGeometry(1, 1, 1, 12), cyl6: new THREE.CylinderGeometry(1, 1, 1, 6), plane: new THREE.PlaneGeometry(1, 1), circ: new THREE.CircleGeometry(1, 24), tri: new THREE.CircleGeometry(1, 3), arc: new THREE.TorusGeometry(1, 0.14, 6, 14, Math.PI) };
+  const _q = new THREE.Quaternion(), _e = new THREE.Euler(), _m = new THREE.Matrix4(), _c = new THREE.Color();
+  function group() { return { parts: [] }; }
+  // 1つ足す：形・位置・回転（YXZ）・大きさ・色・画像の区画
+  function add(G, kind, x, y, z, { s = [1, 1, 1], ry = 0, rx = 0, rz = 0, c = 0xffffff, r = null } = {}) {
+    const g = GEO[kind].toNonIndexed(); const uv = g.attributes.uv, [u0, v0, u1, v1] = uvOf(r);
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, u0 + clamp(uv.getX(i), 0, 1) * (u1 - u0), v0 + clamp(uv.getY(i), 0, 1) * (v1 - v0));
+    _c.set(c); const n = g.attributes.position.count, ca = new Float32Array(n * 3); for (let i = 0; i < n; i++) { ca[i * 3] = _c.r; ca[i * 3 + 1] = _c.g; ca[i * 3 + 2] = _c.b; }
+    g.setAttribute('color', new THREE.BufferAttribute(ca, 3));
+    _m.compose(V(x, y, z), _q.setFromEuler(_e.set(rx, ry, rz, 'YXZ')), V(s[0], s[1], s[2])); g.applyMatrix4(_m); G.parts.push(g);
+  }
+  // まとめて1つの形にする
+  function build(G, parent, name) {
+    let n = 0; for (const g of G.parts) n += g.attributes.position.count;
+    const P = new Float32Array(n * 3), N = new Float32Array(n * 3), U = new Float32Array(n * 2), C = new Float32Array(n * 3); let o = 0;
+    for (const g of G.parts) { const k = g.attributes.position.count; P.set(g.attributes.position.array, o * 3); N.set(g.attributes.normal.array, o * 3); U.set(g.attributes.uv.array, o * 2); C.set(g.attributes.color.array, o * 3); o += k; g.dispose(); }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(P, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(N, 3)); geo.setAttribute('uv', new THREE.BufferAttribute(U, 2)); geo.setAttribute('color', new THREE.BufferAttribute(C, 3));
+    geo.computeBoundingSphere(); const m = new THREE.Mesh(geo, mat); m.name = name; m.receiveShadow = true; m.castShadow = false; m.matrixAutoUpdate = false; m.updateMatrix(); parent.add(m); G.parts = []; return m;
+  }
+  return { R, atlas, mat, GEO, group, add, build };
+})();
+{ const { add } = DECO; const W = DECO.group(), H = Math.PI / 2;
+  // ── 放送室：机の上に機材（マイクのまわりは空ける）、北の壁際に棚とアンプ、ケーブルは机の裏と壁際、東の壁に時計
+  add(W, 'box', 27.80, 0.775, -32.30, { s: [0.42, 0.05, 0.27], c: 0x3a3c3e });                                   // ミキサーの本体
+  add(W, 'plane', 27.80, 0.801, -32.30, { s: [0.40, 0.25, 1], rx: -H, r: 'mixer' });                              // 上面
+  add(W, 'cyl', 28.02, 0.758, -32.02, { s: [0.04, 0.035, 0.04], c: 0x1d1d1d }); add(W, 'cyl', 28.16, 0.758, -32.02, { s: [0.04, 0.035, 0.04], c: 0x1d1d1d });   // ヘッドホン（耳あて2つと頭の輪）
+  add(W, 'arc', 28.09, 0.765, -32.02, { s: [0.07, 0.07, 0.07], rx: -H, c: 0x2a2a2a });
+  for (let i = 0; i < 3; i++) { add(W, 'box', 27.48 + i * 0.005, 0.758 + i * 0.017, -32.02 - i * 0.004, { s: [0.105, 0.016, 0.068], ry: 0.15 * i, c: 0x2a2a2a }); add(W, 'plane', 27.48 + i * 0.005, 0.7665 + i * 0.017, -32.02 - i * 0.004, { s: [0.1, 0.064, 1], rx: -H, ry: 0.15 * i, r: 'tape' }); }   // カセット
+  add(W, 'plane', 27.62, 0.752, -32.06, { s: [0.21, 0.297, 1], rx: -H, ry: 0.25, r: 'paper' }); add(W, 'plane', 27.66, 0.754, -32.10, { s: [0.21, 0.297, 1], rx: -H, ry: -0.1, r: 'paper' });   // 放送原稿
+  add(W, 'box', 28.95, 0.40, -32.76, { s: [0.70, 0.80, 0.40], c: 0x5b4a38 }); for (const y of [0.27, 0.55]) add(W, 'box', 28.95, y, -32.555, { s: [0.66, 0.02, 0.02], c: 0x2c241b });   // 棚
+  add(W, 'box', 28.95, 0.865, -32.76, { s: [0.44, 0.13, 0.30], c: 0x1a1a1a }); add(W, 'plane', 28.95, 0.865, -32.609, { s: [0.44, 0.13, 1], r: 'amp' });   // アンプ
+  for (let i = 0; i < 5; i++) add(W, 'box', 28.72 + i * 0.07, 0.355, -32.66, { s: [0.016, 0.068, 0.105], c: 0x2a2a2a });   // 棚のカセット
+  add(W, 'box', 29.33, 0.09, -32.15, { s: [0.32, 0.18, 0.22], c: 0x7d8580 }); add(W, 'box', 29.33, 0.185, -32.15, { s: [0.33, 0.012, 0.23], c: 0x5d6560 });   // 収納ケース
+  add(W, 'cyl6', 28.18, 0.375, -32.70, { s: [0.007, 0.75, 0.007], c: 0x111111 }); add(W, 'box', 28.40, 0.006, -32.86, { s: [0.5, 0.012, 0.012], c: 0x111111 });   // ケーブル（机の裏→壁際→棚）
+  add(W, 'box', 28.18, 0.006, -32.78, { s: [0.012, 0.012, 0.16], c: 0x111111 }); add(W, 'arc', 28.50, 0.008, -32.80, { s: [0.08, 0.08, 0.05], rx: -H, c: 0x151515 }); add(W, 'arc', 28.50, 0.008, -32.80, { s: [0.08, 0.08, 0.05], rx: H, c: 0x151515 });
+  add(W, 'cyl', 29.485, 2.30, -31.10, { s: [0.17, 0.03, 0.17], rz: H, c: 0x3a3a38 }); add(W, 'circ', 29.468, 2.30, -31.10, { s: [0.15, 0.15, 1], ry: -H, r: 'clock' });   // 壁掛け時計（止まっている）
+  DECO.build(W, scene, 'deco_bc');
+  { const c = addCol(28.6, 29.3, -32.97, -32.55); c.lv = 0; }   // 棚だけ当たり判定
+}
+{ const { add } = DECO; const W = DECO.group(), H = Math.PI / 2;
+  // ── 保健室：先生の机（救急箱・カルテ・包帯・脱脂綿）と薬品棚（ガラス戸の中・上に瓶）、ベッドの脇にスリッパ、丸椅子と金属トレー
+  add(W, 'box', -3.30, 0.81, -16.50, { s: [0.30, 0.14, 0.20], c: 0xecebe6 }); add(W, 'plane', -3.30, 0.81, -16.399, { s: [0.29, 0.13, 1], r: 'aid' }); add(W, 'box', -3.30, 0.885, -16.50, { s: [0.10, 0.012, 0.03], c: 0x9a9a96 });   // 救急箱
+  add(W, 'box', -2.86, 0.746, -16.32, { s: [0.23, 0.012, 0.32], ry: 0.18, c: 0x7a5532 }); add(W, 'plane', -2.86, 0.7525, -16.32, { s: [0.23, 0.32, 1], rx: -H, ry: 0.18, r: 'karte' });   // カルテ
+  add(W, 'plane', -2.92, 0.7415, -16.40, { s: [0.21, 0.297, 1], rx: -H, ry: -0.12, r: 'paper' });
+  add(W, 'cyl', -2.62, 0.775, -16.57, { s: [0.035, 0.07, 0.035], rz: H, c: 0xf2f0ea }); add(W, 'cyl', -2.70, 0.775, -16.52, { s: [0.033, 0.065, 0.033], rz: H, ry: 0.4, c: 0xf2f0ea });   // 包帯
+  add(W, 'cyl', -2.56, 0.795, -16.36, { s: [0.05, 0.11, 0.05], c: 0xe3e6e2 }); add(W, 'cyl', -2.56, 0.856, -16.36, { s: [0.052, 0.014, 0.052], c: 0x9da3a6 });   // 脱脂綿の容器
+  add(W, 'plane', -2.30, 0.85, -10.493, { s: [0.86, 1.62, 1], ry: Math.PI, r: 'cab' });   // 薬品棚の前面（ガラス戸の中）
+  for (const [x, h, c] of [[-2.62, 0.16, 0x6b3d1e], [-2.52, 0.12, 0xe9e6dc], [-2.43, 0.14, 0x4d6f8f]]) { add(W, 'cyl', x, 1.70 + h / 2, -10.30, { s: [0.035, h, 0.035], c }); add(W, 'cyl', x, 1.70 + h + 0.012, -10.30, { s: [0.02, 0.024, 0.02], c: 0xd8d8d2 }); }   // 棚の上の薬瓶
+  add(W, 'box', -2.08, 1.76, -10.30, { s: [0.26, 0.12, 0.18], c: 0xd9d2bd });
+  const slip = (x, z, ry) => { for (const d of [-0.07, 0.07]) { const ox = Math.cos(ry) * d, oz = -Math.sin(ry) * d; add(W, 'box', x + ox, 0.012, z + oz, { s: [0.10, 0.024, 0.25], ry, c: 0x2e5a44 }); add(W, 'plane', x + ox - Math.sin(ry) * 0.05, 0.032, z + oz - Math.cos(ry) * 0.05, { s: [0.095, 0.12, 1], rx: -H, ry, r: 'slip' }); } };
+  slip(-6.55, -11.52, 0.2); slip(-6.95, -15.48, Math.PI - 0.15);   // ベッドの脇のスリッパ（カーテンの外）
+  add(W, 'cyl', -5.35, 0.45, -16.30, { s: [0.17, 0.04, 0.17], c: 0x6a7378 }); for (const a of [0.4, 2.5, 4.6]) add(W, 'cyl6', -5.35 + Math.cos(a) * 0.12, 0.215, -16.30 + Math.sin(a) * 0.12, { s: [0.012, 0.43, 0.012], c: 0x8c9091 });   // 丸椅子
+  add(W, 'box', -5.35, 0.478, -16.30, { s: [0.30, 0.015, 0.21], ry: 0.3, c: 0xffffff, r: 'tray' }); add(W, 'cyl', -5.28, 0.50, -16.27, { s: [0.025, 0.03, 0.025], c: 0xe9e6dc });   // 金属トレーと小瓶
+  DECO.build(W, F1G, 'deco_nurse');
+}
+/* 最初から割れている窓：廊下Bの南側（中庭が見える窓）の真ん中の1枚。人体模型やクモ女が割る窓・窓越しの怪異とは別の窓
+   ・枠は残し、端に不規則なガラスが残る。穴の部分にガラス面はない（外へは出られない：壁の当たり判定はそのまま）
+   ・開始時・やり直し時に音も撮れ高もなく、周回をまたいでもこのまま（クモ女・手形などが使う窓の一覧から外す） */
+const PREBROKEN = (() => {
+  const pane = glassPanes.find(g => { const S = g.userData.sec; return S && S.axis === 'z' && Math.abs(S.c + 30) < 0.01 && S.lv === 0 && S.lo > 15 && S.hi < 17.5; });
+  if (!pane) return null;
+  glassPanes.splice(glassPanes.indexOf(pane), 1); pane.visible = false;
+  const S = pane.userData.sec, w = S.hi - S.lo, h = S.h, cx = (S.lo + S.hi) / 2;
+  // 欠け方のパターン（同じ形をくり返さない）：穴の輪郭の点を、端からの残り幅で決める。seed ごとに形が変わる
+  const holeShape = seed => { let s = seed * 9301 + 49297; const rr = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+    const pts = [], n = 22;
+    for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; const ex = Math.cos(a), ey = Math.sin(a);
+      const keep = 0.03 + rr() * 0.12 + (ey < -0.5 ? 0.06 : 0) + (i % 5 === 0 ? 0.08 : 0);   // 下側はガラスが多めに残る。ところどころ大きく残る
+      const rx = w / 2 - keep, ry = h / 2 - keep * 0.8; const k = 1 / Math.max(Math.abs(ex) / rx, Math.abs(ey) / ry) * (0.9 + rr() * 0.1);
+      pts.push(new THREE.Vector2(ex * k, ey * k)); }
+    return pts; };
+  const shape = new THREE.Shape([new THREE.Vector2(-w / 2, -h / 2), new THREE.Vector2(w / 2, -h / 2), new THREE.Vector2(w / 2, h / 2), new THREE.Vector2(-w / 2, h / 2)]);
+  const hole = holeShape(3); shape.holes.push(new THREE.Path(hole));
+  const gmat = new THREE.MeshBasicMaterial({ color: 0x9fb4ba, transparent: true, opacity: 0.22, depthWrite: false, side: THREE.DoubleSide });
+  const glass = new THREE.Mesh(new THREE.ShapeGeometry(shape), gmat); glass.position.set(cx, S.y, S.c); glass.renderOrder = 2; F1G.add(glass);
+  const edge = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(hole.map(p => V(p.x, p.y, 0))), new THREE.LineBasicMaterial({ color: 0xd5e2e6, transparent: true, opacity: 0.55 })); edge.position.copy(glass.position); F1G.add(edge);
+  // 床の破片（窓際に少しだけ・固定）
+  const W = DECO.group(); let s = 7; const rr = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  for (let i = 0; i < 9; i++) { const side = i < 6 ? -1 : 1; DECO.add(W, 'tri', cx + (rr() - 0.5) * w * 0.9, 0.004 + i * 0.0004, S.c + side * (0.12 + rr() * 0.35), { s: [0.02 + rr() * 0.04, 0.015 + rr() * 0.03, 1], rx: -Math.PI / 2, ry: rr() * 6, c: 0xb8c8ce }); }
+  DECO.build(W, F1G, 'deco_shards');
+  return { pane, glass, edge, pos: V(cx, S.y, S.c) };
+})();
+if (TEST) window.__PROPS = { renderer, DECO, PREBROKEN };
 Object.assign(MINOR, {
   reset() {
     for (const c of clocks) { c.mode = 'run'; c.seenStop = c.seenRev = false; c.rev = 0; }
@@ -9795,10 +9954,10 @@ function showResult(blobs) {
   $('#evScore').textContent = '0'; $('#evCount').textContent = evidence.length ? `${evidence.length}件　← スライド →` : '';
   const list = $('#evList'); list.innerHTML = '';
   const fresh = DEMO ? new Set() : COL.record(evidence);
-  if (!DEMO) ACH.pendVid = ACH.record(total, world.runId, evidence);   // 2026-11-14 累計いいね・歴代の神回ランキング（同じ周は二度足さない。上位3位なら動画も残す）
+  if (!DEMO) { CHAT.build(total); ACH.pendVid = ACH.record(total, world.runId, evidence); }   // 2026-11-14 累計いいね・歴代の神回ランキング（同じ周は二度足さない。上位3位なら動画も残す）
   { const pi = $('#permIcons'); pi.innerHTML = ''; for (const id of PERM.owned()) if (PERM.active(id)) { const im = document.createElement('img'); im.src = PERM_IMG[id]; im.alt = im.title = TR(PERM.DEFS[id].name); pi.appendChild(im); } }   // 撮れ高コレクションに記録（初めて撮れたものにNEW）。リザルト確認用のデモでは記録しない
   const evs = evidence.slice().sort((a, b) => a.t - b.t);
-  if (!evs.length) list.innerHTML = '<div class="ev none">決定的瞬間は映っていなかった。空振りの廊下も記録です。</div>';
+  if (!evs.length) list.innerHTML = '<div class="ev none">撮れ高なし。次は仕込みをするべき？</div>';
   for (const e of evs) { const r = rankOf(e), d = document.createElement('div'); d.className = 'ev r-' + r.toLowerCase(); d.style.setProperty('--rc', RANK_COL[r]);
     d.innerHTML = `<span class="t">${fmt(e.t)}</span><span class="n">${e.label}</span><span class="p"><i class="like"></i>${e.pts}</span><span class="rk${r === 'SS' ? ' ss' : r === 'S' ? ' s' : ''}"><small>レア</small><b>${r}</b>${r === 'SS' ? '<i class="spk s1"></i><i class="spk s2"></i><i class="spk s3"></i>' : r === 'S' ? '<i class="spk s1"></i><i class="spk s2"></i>' : ''}</span>${fresh.has(COL.base(e.label)) ? '<span class="newTag">NEW</span>' : ''}`;
     d.addEventListener('click', () => seekTo(e.t)); list.appendChild(d); RANK_IO && RANK_IO.observe(d); }
@@ -9814,6 +9973,7 @@ function attachVideo(blobs, pending) {
   const v = $('#replay');
   if (resultUrls.length) { $('#noVideo').style.display = 'none'; v.style.display = ''; segIdx = 0; v.src = resultUrls[0]; v.load(); v.addEventListener('loadeddata', () => { try { if (v.paused && v.currentTime < 0.05) v.currentTime = 0.05; } catch (e) { } }, { once: true }); $('#saveBtn').disabled = false; }   // 自動では再生しない（最初のコマだけ見せる）。iPhoneでは保存した動画のURLに「#t=」を付けると再生できなくなるので付けない
   else { v.removeAttribute('src'); v.style.display = 'none'; $('#noVideo').style.display = 'flex'; $('#noVideo').textContent = pending ? TR('動画を仕上げています…') : rec.time > 0 && !rec.available ? 'この環境では映像を書き出せませんでした（撮れ高のみ）' : '持ち帰った映像はありません'; $('#saveBtn').disabled = true; }
+  RES_CHAT.load(DEMO ? null : CHAT.cur, resultUrls, pending ? 'pending' : '');   // 2026-11-14 同期チャット
   $('#shareBtn').textContent = TR(resultUrls.length || pending ? '動画と結果をシェア' : '結果をシェア'); $('#shareHint').style.display = resultUrls.length || pending ? '' : 'none';
   if (pending) { $('#shareBtn').disabled = true; $('#saveBtn').disabled = true; } else $('#shareBtn').disabled = false;
 }
@@ -9925,7 +10085,7 @@ async function makeResultImage() {
   // 内訳
   const evs = evidence.slice().sort((a, b) => a.t - b.t); const maxRows = 10, rows = evs.slice(0, maxRows); let y = 720;
   g.strokeStyle = 'rgba(255,255,255,.12)'; g.lineWidth = 2; g.beginPath(); g.moveTo(90, y - 50); g.lineTo(W - 90, y - 50); g.stroke();
-  if (!rows.length) { g.fillStyle = '#8a867f'; g.font = `30px ${sans}`; g.fillText(TR('決定的瞬間は映っていなかった'), W / 2, y + 30); }
+  if (!rows.length) { g.fillStyle = '#8a867f'; g.font = `30px ${sans}`; g.fillText(TR('撮れ高なし。次は仕込みをするべき？'), W / 2, y + 30); }
   for (const e of rows) {
     g.textAlign = 'left'; g.fillStyle = '#ffd60a'; g.font = `700 28px ${sans}`; g.fillText(fmt(e.t), 90, y);
     { const r = rankOf(e); g.textAlign = 'center'; if (r === 'SS') { const gr = g.createLinearGradient(208, 0, 256, 0); ['#ff6b8b', '#ffb35c', '#ffe66b', '#7dffa8', '#6bd8ff', '#9a8bff', '#ff7ae0'].forEach((c, i, a) => gr.addColorStop(i / (a.length - 1), c)); g.fillStyle = gr; } else g.fillStyle = RANK_COL[r]; g.font = `700 13px ${sans}`; g.fillText(LANG === 'en' ? 'RARE' : 'レア', 232, y - 25); g.font = `italic 800 30px ${sans}`; g.fillText(r, 232, y + 2); g.textAlign = 'left'; }
@@ -9974,6 +10134,7 @@ const SET = {
     }
     $('#setLang').style.display = this.paused ? 'none' : '';
     $('#setTut').style.display = this.paused ? 'none' : '';   // 2026-11-13 遊び方はスタート画面の設定からだけ（ゲーム中の設定には出さない）   // 言語はスタート画面の設定でだけ変えられる
+    $('#setReset').style.display = this.paused ? 'none' : '';   // 2026-11-14 ゲーム中の設定にはデータのリセットを出さない
     $('#setPaused').style.display = this.paused ? '' : 'none'; $('#setHome').style.display = this.paused ? '' : 'none';
     $('#setClose').textContent = TR(this.paused ? 'ゲームにもどる' : '閉じる');
     this.homeArm = 0; $('#setHome').classList.remove('warn'); $('#setHome').textContent = TR('スタート画面にもどる');
@@ -10343,6 +10504,7 @@ $('#goBtn').addEventListener('click', () => {
   HAZURE.roll();
   world.channel = ($('#chName').value || '').trim() || '心霊チャンネル';
   world.chRaw = ($('#chName').value || '').trim(); world.yomi = world.chRaw ? ($('#chYomi').value || '').trim() : '';
+  CHATLOG.reset(); world.chatM = YRANK[yrankIdx(ACH.load().total)][3]; world.chatName = chatCallName(); world.chatLang = LANG;   // 2026-11-14 チャット：撮影開始時のランク倍率と呼び名をこの動画に固定
   MANN.reset(); WD.init(); DIR.planRun(); MINOR.reset(); SELF.reset(); MD.reset(); DOORS2.reset(); TAP.reset(); F2.reset(); SP.reset(); NEKO.reset(); OFUDA.reset(); ITEM.reset(); UWA.reset(); TEN.reset(); GG.reset(); POLT.reset(); MF.reset(); STREETFIG.reset(); EXITF.reset(); STAY.reset(); RED.reset(); MG.reset();
   $('#start').classList.remove('show');
   world.state = 'intro'; world.battery = CONFIG.battery.start; world.batUsed = Math.max(0, 100 - CONFIG.battery.start); world.sgShowUsed = rnd(40, 70);   /* 逆さ女がはっきり見えるようになる時（電池残り60%〜30%のどこか） */
@@ -10529,7 +10691,7 @@ if (CHK) {
   }, 300);
 }
 if (TEST) window.__G = { colliders, collide, CLK, LIP, BALL, MIC, stairH, STAIRS, postMat, ITEM, F2, lockers, HIDE, NURSE_X, MANN, look, evidence, RACK, STAIR_LAMPS, PASUB, sgEmissive, camFwd, UISND, KB, MINOR, INV, MIDI, AUDIO_OUT, FRAME, input, STAY, occluders, ray, glassPanes, groundAt, EXITF, exitSigns, sole, runner, drainEye, prints, winFog, stainMesh, bloodDecal, fireDoor, broadcastFog, KNOB: null, render, sgHead, spFacePos, BLEED, NURSE, MICO: mic, OFUDA, SPV, speak, PACALL, award, COL, MISS, TAP, sinks, awarded, PIANO, UWA, selfCam, avatar, ITEM, escape, FL, HANDS, NEKO, stairH, SET, MIC, opt, snapEntrance, makeResultImage, shareText, CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
-loadSG().then(() => Promise.all([setupGlbHuman(woman, GHOST_B64), setupGlbHuman(avatar, PROT_B64)])).then(() => loadF2()).then(() => loadSpider()).then(() => NEKO.load()).then(() => UWA.load()).then(() => loadHands()).then(() => { $('#loading').remove(); try { ensureAudio(); if (A.ctx && A.ctx.state === 'running') titleSeKick(); } catch (e) { } });
+loadSG().then(() => Promise.all([setupGlbHuman(woman, GHOST_B64), setupGlbHuman(avatar, PROT_B64)])).then(() => loadF2()).then(() => loadSpider()).then(() => NEKO.load()).then(() => UWA.load()).then(() => loadHands()).then(() => { $('#loading').remove(); setTimeout(() => RANKPOP.check(), 700); try { ensureAudio(); if (A.ctx && A.ctx.state === 'running') titleSeKick(); } catch (e) { } });
 requestAnimationFrame(tick);
 // 効果音の大きさ（端末に保存。プレイ中・録画の両方に効く）
 { const el = $('#fxVol'); if (el) { el.value = A.fxVol; el.addEventListener('input', () => { A.fxVol = parseFloat(el.value); if (A.bus) A.bus.gain.value = A.fxVol * A.FX_BASE; try { localStorage.setItem('gekou_fxVol', A.fxVol); } catch (e) { } }); } }
@@ -10615,7 +10777,7 @@ const PERM = {
 
 /* 2026-11-14 バージョン番号（スタート画面・設定の下に表示）
    決まり：1.0.0 を正式公開とし、それまでは 0.x。新しい怪異・機能 → 2つ目の数字を上げる（0.9 → 0.10）／調整・不具合直し → 3つ目を上げる（0.9.0 → 0.9.1） */
-const VERSION = '0.11.0';
+const VERSION = '0.12.0';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -10637,10 +10799,11 @@ const GOD = {
   urls: [], seg: 0,
   build() {
     if (this.el) return; const el = document.createElement('div'); el.id = 'godView';
-    el.innerHTML = `<div class="gvBox"><div class="gvHead"><div><div class="gvT" id="gvT"></div><div class="gvSub" id="gvSub"></div></div><button id="gvClose">閉じる</button></div><video id="gvVid" playsinline controls preload="auto"></video><div id="gvNoVid"></div><div id="gvList"></div></div>`;
+    el.innerHTML = `<div class="gvBox"><div class="gvHead"><div><div class="gvT" id="gvT"></div><div class="gvSub" id="gvSub"></div></div><button id="gvClose">閉じる</button></div><video id="gvVid" playsinline controls preload="auto"></video><div id="gvNoVid"></div><div id="gvChat"></div><div id="gvList"></div></div>`;
     document.body.appendChild(el); this.el = el;
     for (const t of ['pointerdown', 'touchstart', 'click']) el.addEventListener(t, e => e.stopPropagation());
     el.querySelector('#gvClose').addEventListener('click', () => this.close());
+    this.chat = new ChatView(el.querySelector('#gvChat'), el.querySelector('#gvVid'), () => this.seg);
     el.querySelector('#gvVid').addEventListener('ended', () => { if (this.seg < this.urls.length - 1) { const v = $('#gvVid'); v.src = this.urls[++this.seg]; v.play().catch(() => { }); } });
   },
   async open(i) {
@@ -10649,7 +10812,7 @@ const GOD = {
     const v = $('#gvVid'), nv = $('#gvNoVid'); this.clear(); v.style.display = 'none'; nv.style.display = 'block';
     nv.textContent = i < 3 ? TR(b.v ? '動画を読み込んでいます…' : 'この回の動画は残っていません') : TR('収録動画は上位3位までです');
     const list = $('#gvList'); list.innerHTML = '';
-    if (!b.ev || !b.ev.length) list.innerHTML = `<div class="achNone">${TR(b.ev ? '決定的瞬間は映っていなかった' : 'この回の内訳は記録されていません')}</div>`;
+    if (!b.ev || !b.ev.length) list.innerHTML = `<div class="achNone">${TR(b.ev ? '撮れ高なし。次は仕込みをするべき？' : 'この回の内訳は記録されていません')}</div>`;
     for (const [label, pts, r, t] of (b.ev || [])) {
       const row = document.createElement('div'); row.className = 'gvRow';
       row.innerHTML = `<span class="gt">${fmt(t || 0)}</span><span class="gn"></span><span class="gp"><i class="like"></i>${pts}</span><span class="gr" style="color:${RANK_COL[r] || '#ccc'}">${r || ''}</span>`;
@@ -10660,6 +10823,7 @@ const GOD = {
       try { const blobs = await VDB.get(b.id); if (blobs && blobs.length) { this.urls = blobs.map(x => URL.createObjectURL(x)); this.seg = 0; v.src = this.urls[0]; v.style.display = ''; nv.style.display = 'none'; } else nv.textContent = TR('この回の動画は残っていません'); }
       catch (e) { nv.textContent = TR('この回の動画は残っていません'); }
     }
+    { let cd = null; if (this.urls.length) try { cd = await VDB.get(b.id + ':chat'); } catch (e) { } this.chat.load(cd || null, this.urls); }
   },
   async seek(t) {
     const v = $('#gvVid'); if (!this.urls.length) return; const target = Math.max(0, t - 1);
@@ -10676,6 +10840,10 @@ const GOD = {
    ・同じ周は二度足さない（周ごとの番号で確認）
    ・この機能より前の記録は、撮れ高コレクションの「撮れた回数×いいね」から累計いいねだけを復元する（周ごとの記録が無いので神回は復元できない）
    ========================================================= */
+// 累計いいねのランク（チャットの量にだけ効く）
+const YRANK = [['rookie', '新人幽tuber', 0, 1.00, 'Newbie Yutuber', "You're now a Newbie Yutuber!"], ['rising', '駆け出し幽tuber', 1000, 1.08, 'Rising Yutuber', "You're now a Rising Yutuber!"], ['regular', '中堅幽tuber', 5000, 1.18, 'Established Yutuber', "You're now an Established Yutuber!"], ['popular', '人気幽tuber', 20000, 1.30, 'Popular Yutuber', "You're now a Popular Yutuber!"], ['star', '大物幽tuber', 50000, 1.42, 'Superstar Yutuber', "You're now a Superstar Yutuber!"], ['legend', '伝説の幽tuber', 100000, 1.55, 'Legendary Yutuber', "You're now a Legendary Yutuber!"]];
+const yrankName = i => YRANK[i][LANG === 'en' ? 4 : 1];
+function yrankIdx(total) { let i = 0; for (let k = 0; k < YRANK.length; k++) if ((total || 0) >= YRANK[k][2]) i = k; return i; }
 const ACH = {
   KEY: 'yutuber_achieve_v1', d: null,
   load() {
@@ -10685,6 +10853,7 @@ const ACH = {
       try { const c = COL.load(); let sum = 0; for (const [, name, pts] of COL.LIST) { const it = c.items[name]; if (it && it.n) sum += it.n * pts; } d.total = sum; d.restored = sum; } catch (e) { }
       this.d = d; this.save();
     }
+    if (d.rk === undefined) { d.rk = yrankIdx(d.total); this.d = d; this.save(); }   // 2026-11-14 ランク：今の累計に合うランクを付けて、過去の昇格は知らせない
     this.d = d; return d;
   },
   save() { try { localStorage.setItem(this.KEY, JSON.stringify(this.d)); } catch (e) { } },
@@ -10693,30 +10862,368 @@ const ACH = {
     const d = this.load(); id = id || 'x' + Date.now(); if (d.ids.includes(id)) return null;
     d.ids.push(id); if (d.ids.length > 60) d.ids = d.ids.slice(-60);
     const n = Math.max(0, Math.round(likes) || 0); d.total += n;
+    { const ri = yrankIdx(d.total); if (ri > Math.max(d.rk || 0, d.rkPend ?? -1)) d.rkPend = ri; }   // 昇格はタイトルに戻った時に1回だけ知らせる（何段も上がったら最高のランクだけ）
     const ev = (evs || []).slice().sort((a, b) => a.t - b.t).map(e => [String(e.label), e.pts, rankOf(e), Math.round((e.t || 0) * 10) / 10]);
     const ent = { n, d: this.today(), id, ev, v: 0 };
     d.best.push(ent); d.best.sort((a, b) => b.n - a.n); d.best = d.best.slice(0, 10);
     // 動画は上位3位まで：圏外になった回の動画は消す
     const keep = new Set(d.best.slice(0, 3).map(b => b.id)); this.vids = this.vids || [];
     for (const b of d.best) if (b.v && !keep.has(b.id)) { b.v = 0; VDB.del(b.id); }
-    VDB.keys().then(ks => { for (const k of ks) if (!keep.has(k)) VDB.del(k); }).catch(() => { });
+    VDB.keys().then(ks => { for (const k of ks) if (!keep.has(String(k).split(':')[0])) VDB.del(k); }).catch(() => { });
     this.save(); return keep.has(id) ? ent : null;
   },
   // 上位3位に入った回の動画を、仕上がった時に保存する
   pendVid: null,
   saveVid(blobs) {
     const ent = this.pendVid; if (!ent || !blobs || !blobs.length) return; this.pendVid = null;
+    if (CHAT.cur) VDB.put(ent.id + ':chat', CHAT.cur).catch(() => { });   // 同期チャットも動画と一緒に残す
     VDB.put(ent.id, blobs).then(() => { const b = this.load().best.find(x => x.id === ent.id); if (b) { b.v = 1; this.save(); } }).catch(e => console.warn('動画を保存できませんでした', e));
   },
   box() {
     const d = this.load(), el = document.createElement('div'); el.className = 'achBox'; const L = n => Number(n).toLocaleString('ja-JP');
-    el.innerHTML = `<div class="achH">${TR('撮れ高実績')}</div><div class="achTot"><span>${TR('累計いいね数')}</span><b><i class="like"></i>${L(d.total)}</b></div><div class="achSub">${TR('歴代の神回ランキング')}</div>`
+    el.innerHTML = `<div class="achH">${TR('撮れ高実績')}</div><div class="achTot"><span>${TR('累計いいね数')}</span><b><i class="like"></i>${L(d.total)}</b></div>${(() => { const ri = yrankIdx(d.total), nx = YRANK[ri + 1]; return `<div class="achRank"><b>${yrankName(ri)}</b><span>${nx ? cui('next', nx[2] - d.total) : cui('top')}</span></div>`; })()}<div class="achSub">${TR('歴代の神回ランキング')}</div>`
       + (d.best.length ? `<ol class="achList">${d.best.map((b, i) => `<li data-i="${i}"><span class="ar">${i + 1}</span><span class="al"><i class="like"></i>${L(b.n)}</span><span class="ad">${b.d}${b.v ? '<i class="achCam">▶</i>' : ''}</span></li>`).join('')}</ol><div class="achHint">${TR('タップで、その回の内訳（上位3位は動画も）を見られます')}</div>` : `<div class="achNone">${TR('まだ記録がありません')}</div>`);
     for (const li of el.querySelectorAll('.achList li')) li.addEventListener('click', e => { e.stopPropagation(); GOD.open(+li.dataset.i); });
     return el;
   },
 };
-ACH.load();   // 起動した時に一度読む（この機能より前の記録の復元は、新しい周を足す前に済ませる）
+ACH.load();   // 起動した時に一度読む
+/* =========================================================
+   2026-11-14 リザルトの同期チャット（架空の視聴者コメント）と幽tuberランク
+   ・録画中に「映像に残った出来事」を録画時間（rec.time）で記録 → リザルトで1本ぶんのコメントを生成して保存
+   ・表示は動画の再生位置（currentTime と録画区間）に合わせる。止めれば止まり、戻せば消え、飛ばせば作り直す
+   ・同じ保存動画では同じコメント（生成済みの並びを動画と一緒に保存）。撮影ごとに違うシード
+   ・コメント量：その回の総いいね（P）の区分と、撮影開始時の累計ランク（倍率M）で決める。得点などゲームには影響しない
+   ========================================================= */
+const CHAT_DICT = {"v":3,"t":{"event.event_001.01":["待って逆さじゃない？","wait is she upside down?"],"event.event_001.02":["移動のしかた無理","why does she move like that"],"event.event_001.03":["足どうなってんの","what is going on with her legs"],"event.event_002.01":["今こっち見た？","did she just look at us?"],"event.event_002.02":["目合ったよね","we made eye contact right?"],"event.event_002.03":["気のせいってことにしよう","let's pretend we didn't see that"],"event.event_003.01":["赤いの通った","something red went past"],"event.event_003.02":["まだ出ないで","don't come out yet"],"event.event_003.03":["息止めて見てた","I was holding my breath"],"event.event_004.01":["バレてるバレてる","SHE KNOWS"],"event.event_004.02":["ここ開けないで頼む","please don't open this"],"event.event_004.03":["隠れた意味ｗ","so much for hiding lol"],"event.event_005.01":["ああああああ","AAAAAAA"],"event.event_005.02":["近い近い近い！！","TOO CLOSE TOO CLOSE"],"event.event_005.03":["スマホ落とすわこんなん","I'd drop my phone"],"event.event_006.01":["そこ靴ある","shoes right there"],"event.event_006.02":["誰か立ってない？","is someone standing there?"],"event.event_006.03":["足だけ見えるの嫌すぎ","seeing just the feet is worse"],"event.event_007.01":["人いるじゃん","there's someone there"],"event.event_007.02":["そこで何してんの","what are you doing there?"],"event.event_007.03":["この時間に生徒？","a student? at this hour?"],"event.event_008.01":["ズームするたび近くない？","she gets closer every time you zoom?"],"event.event_008.02":["拡大の問題じゃないだろ","that's not how zoom works"],"event.event_008.03":["戻して戻して","ZOOM BACK OUT"],"event.event_009.01":["上から落ちてる…","something's dripping from above..."],"event.event_009.02":["この色は無理","nope not that color"],"event.event_009.03":["水漏れであってくれ","please just be a leak"],"event.event_010.01":["ドアになんか垂れてる","something's running down the door"],"event.event_010.02":["出たいんですけど","I'd like to leave please"],"event.event_010.03":["清掃でどうにかなる量かこれ","that's beyond a cleaning job"],"event.event_011.01":["上！！！！","ABOVE YOU"],"event.event_011.02":["そこから覗くな！！","don't peek in from THERE"],"event.event_011.03":["個室の安全性ゼロ","zero privacy in this bathroom"],"event.event_012.01":["そこ溜まってきてる","it's filling up"],"event.event_012.02":["蛇口閉めてどうにかなる？","would turning the tap off even help?"],"event.event_012.03":["もう手洗えない","never washing my hands here"],"event.event_013.01":["顔の角度おかしい","why is her head sideways"],"event.event_013.02":["覗き方よｗ","what a way to say hello lol"],"event.event_013.03":["首どうなってるん","how does that neck work"],"event.event_014.01":["何読んでるんだろ","what's she reading?"],"event.event_014.02":["普通に掲示板見てるの逆に怖い","just reading the noticeboard makes it creepier"],"event.event_014.03":["隣に並ぶなよ","don't go stand next to her"],"event.event_015.01":["来た来た来た！！","SHE'S COMING"],"event.event_015.02":["読むの邪魔したから？","did we interrupt her reading?"],"event.event_015.03":["距離詰めるの早すぎ","she closed that gap FAST"],"event.event_016.01":["よくめくれるな","how do you have the nerve to lift that"],"event.event_016.02":["布団戻そ","put the blanket back"],"event.event_016.03":["確認する勇気すごい","braver than me"],"event.event_017.01":["非常口までおかしいｗ","not the exit sign too lmao"],"event.event_017.02":["逃げる方向それで合ってる？","is that still the right way out?"],"event.event_017.03":["マークにも異変あるのかよ","even the signs are haunted"],"event.event_018.01":["今いた！！！","SOMEONE WAS THERE"],"event.event_018.02":["電気ついた瞬間！","right when the lights came on!"],"event.event_018.03":["暗いままのほうがよかった","I preferred the dark"],"event.event_019.01":["赤く光った？","was that a red light?"],"event.event_019.02":["今一瞬ついたよね","it flashed for a second right?"],"event.event_019.03":["誰か放送してる？","is someone broadcasting?"],"event.event_020.01":["マイクこっち向いた","the mic turned toward us"],"event.event_020.02":["インタビュー始まった","interview time apparently"],"event.event_020.03":["こちらに振らないでください","please don't hand it over to me"],"event.event_021.01":["まだそこに映ってる","we're still in the reflection"],"event.event_021.02":["自分だけ残ってない？","why is the reflection still there?"],"event.event_021.03":["ガラスのほう動いてないんだけど","the one in the glass isn't moving"],"event.event_022.01":["鍵勝手に回った","the lock moved on its own"],"event.event_022.02":["閉じ込める気か","trying to lock us in?"],"event.event_022.03":["そこは自分で閉めさせて","let me lock my own door thanks"],"event.event_023.01":["鏡遅れてる？","the mirror's lagging?"],"event.event_023.02":["回線悪い鏡","mirror on bad wifi"],"event.event_023.03":["それ本当に反射？","is that even a reflection?"],"event.event_024.01":["排水口に目！！","AN EYE IN THE DRAIN"],"event.event_024.02":["そこ覗き返してくるのかよ","it looked back at us"],"event.event_024.03":["目合いたくない場所ランキング1位","worst place to make eye contact"],"event.event_025.01":["外なんか通った","something went past outside"],"event.event_025.02":["窓の向こう！","outside the window!"],"event.event_025.03":["今の人だよね？","that was a person right?"],"event.event_026.01":["指の跡ある","finger marks on the glass"],"event.event_026.02":["五本くっきりなの嫌","all five fingers, nope"],"event.event_026.03":["どっち側から触ったんだろ","which side touched it?"],"event.event_027.01":["うわっ！！","OH GOD"],"event.event_027.02":["画面いっぱいやめろ！","not the entire screen!"],"event.event_027.03":["スマホ離した","held my phone away for that"],"event.event_028.01":["足跡こっち来てる","footprints coming toward us"],"event.event_028.02":["本体どこだよ","where's the person though"],"event.event_028.03":["もう近づかないで","please stop getting closer"],"event.event_029.01":["チョーク落ちてる","chalk on the floor"],"event.event_029.02":["こういう小さいのよく気づくな","good eye catching that"],"event.event_029.03":["床までちゃんと撮るんだ","checking the floor too huh"],"event.event_030.01":["ほうき倒れてる","a broom on the floor"],"event.event_030.02":["誰か掃除してた？","was someone cleaning?"],"event.event_030.03":["もう何でも怪しく見える","everything looks suspicious now"],"event.event_031.01":["後ろ後ろ後ろ","BEHIND YOU"],"event.event_031.02":["自撮りに参加すな","uninvited selfie guest"],"event.event_031.03":["肩のとこ顔ある！！","THERE'S A FACE BY YOUR SHOULDER"],"event.event_032.01":["鏡の中のドア見て","look at the door in the mirror"],"event.event_032.02":["そっちだけ閉まった？","did only that one close?"],"event.event_032.03":["現実側どうなってるの","what's the real door doing?"],"event.event_033.01":["顔でかっっ","WHY IS IT SO BIG"],"event.event_033.02":["距離感壊れる","my sense of scale is gone"],"event.event_033.03":["画面から離れたわ","backed away from my screen"],"event.event_034.01":["今ドア開いたよね","the door just opened right?"],"event.event_034.02":["隙間広がってる","that gap is getting wider"],"event.event_034.03":["誰も触ってないよね？","nobody touched it right?"],"event.event_035.01":["目真っ黒じゃん","her eyes are completely black"],"event.event_035.02":["振り向かせちゃった","we got her to turn around"],"event.event_035.03":["目合わせたくない","don't want eye contact with that"],"event.event_036.01":["振り向いたらこれ無理","shouldn't have turned around"],"event.event_036.02":["背後取られてるじゃん","it was right behind us"],"event.event_036.03":["心臓止まるかと思った","my heart actually stopped"],"event.event_037.01":["机すべった！","THE DESK SLID"],"event.event_037.02":["床傾いてるとかじゃないよな","please tell me the floor's slanted"],"event.event_037.03":["誰も押してないんだけど","nobody pushed it"],"event.event_038.01":["今ガタッてした","that desk just rattled"],"event.event_038.02":["机だけでこんな怖いのか","how is a desk this scary"],"event.event_038.03":["そこで音立てるなって","don't make noises right there"],"event.event_039.01":["浮いた！？","IT FLOATED?"],"event.event_039.02":["重力どこ行った","gravity left the chat"],"event.event_039.03":["着地すんなｗ","stuck the landing lol"],"event.event_040.01":["机こっち向いた？","did the desk turn toward us?"],"event.event_040.02":["席替え始まった","new seating plan just dropped"],"event.event_040.03":["椅子までセットなの草","the chair came too lol"],"event.event_041.01":["鏡にいた！！","SOMEONE IN THE MIRROR"],"event.event_041.02":["一瞬後ろに映ったよね","behind us for a split second"],"event.event_041.03":["もう明るくしないで","please keep the lights off"],"event.event_042.01":["角のとこ顔ある","face around the corner"],"event.event_042.02":["曲がりたくねえ","not taking that turn"],"event.event_042.03":["そこで待つなよ","don't wait for us there"],"event.event_043.01":["街灯の下に誰かいる","someone under the streetlight"],"event.event_043.02":["あの人ずっと立ってない？","have they been standing there the whole time?"],"event.event_043.03":["近づかなくていいからね","we don't need a closer look"],"event.event_044.01":["鏡の後ろにいる","someone behind us in the mirror"],"event.event_044.02":["そこに生徒映ってる","there's a schoolgirl in it"],"event.event_044.03":["鏡見るのやめたい","done with mirrors now"],"event.event_045.01":["シーツの染みやばい","that stain on the sheet..."],"event.event_045.02":["ここで寝たくない","not sleeping there"],"event.event_045.03":["替えのシーツないんですか","any clean sheets available?"],"event.event_046.01":["階段の上！","TOP OF THE STAIRS"],"event.event_046.02":["上から覗いてる","peeking down at us"],"event.event_046.03":["上がるのやめよう","let's not go upstairs"],"event.event_047.01":["クマかよｗｗｗ","it's a bear lmao"],"event.event_047.02":["ちょっと安心した","okay a little relief"],"event.event_047.03":["君はかわいいな","you're cute at least"],"event.event_048.01":["トイレ出たらこれかよ","after the bathroom too?!"],"event.event_048.02":["安心する暇くれ","give us a second to breathe"],"event.event_048.03":["待ち伏せやめて","no ambushes please"],"event.event_049.01":["振り向かなきゃよかった","wish we hadn't turned around"],"event.event_049.02":["近すぎ！！","WAY too close"],"event.event_049.03":["声出た","I screamed"],"event.event_050.01":["椅子回った？","did the chair just spin?"],"event.event_050.02":["今まで誰か座ってたみたいで嫌","like someone just got up, hate that"],"event.event_050.03":["そこ座る予定の人います？","is this seat taken?"],"event.event_051.01":["落ちた！？","SOMETHING FELL"],"event.event_051.02":["今窓の外！！","outside the window just now!"],"event.event_051.03":["見ちゃいけないもの見た","feel like we weren't meant to see that"],"event.event_052.01":["鳥かあああ","JUST BIRDS OH GOD"],"event.event_052.02":["一斉に飛ぶなびびる","don't all fly off at once"],"event.event_052.03":["カラスにも何か見えた？","did the crows see something too?"],"event.event_053.01":["一冊ずつ落ちてる","one book at a time"],"event.event_053.02":["返却のしかた雑すぎ","terrible return policy"],"event.event_053.03":["本棚から離れよう","let's step away from the shelves"],"event.event_054.01":["勝手に読んでる","something's reading it"],"event.event_054.02":["ページ動いたよね","the page moved right?"],"event.event_054.03":["読書の邪魔しちゃった？","did we interrupt story time?"],"event.event_055.01":["椅子動いた","the chair moved"],"event.event_055.02":["座れってこと？","is that an invitation to sit?"],"event.event_055.03":["その席は遠慮します","I'll pass on that seat"],"event.event_056.01":["誰が弾いてんの","who's playing?"],"event.event_056.02":["演奏だけ聞くときれいなのに","it sounds lovely until you think about it"],"event.event_056.03":["無人なのが一番怖い","the empty room is the scary part"],"event.event_057.01":["まばたきした！！","HE BLINKED"],"event.event_057.02":["肖像画もこっち見てる？","is the portrait watching us too?"],"event.event_057.03":["目乾くんだな","even paintings need to blink huh"],"event.event_058.01":["そこ2階だよね？","we're on the second floor right?"],"event.event_058.02":["外歩く高さじゃない","that's not walking height"],"event.event_058.03":["足場ないんですけど","there's nothing to stand on"],"event.event_059.01":["あっ割れた","there goes the vase"],"event.event_059.02":["誰も触ってないのに","nobody even touched it"],"event.event_059.03":["びっくりしたああ","that scared me so bad"],"event.event_060.01":["今移動した！？","it just moved over there?!"],"event.event_060.02":["そっちにも巣あるのか","there's another web there?"],"event.event_060.03":["瞬間移動は聞いてない","teleporting wasn't in the deal"],"event.event_061.01":["天井に顔！！","FACE ON THE CEILING"],"event.event_061.02":["見上げたくなかった","wish I hadn't looked up"],"event.event_061.03":["目合ってるって","it's looking right at us"],"event.event_062.01":["降りてきたああ","IT'S COMING DOWN"],"event.event_062.02":["その糸切れない？","can we cut that thread?"],"event.event_062.03":["来なくていい来なくていい","nope stay up there"],"event.event_063.01":["無理無理無理","NO NO NO"],"event.event_063.02":["離れてえええ","GET OFF"],"event.event_063.03":["画面見るのやめた","can't look anymore"],"event.event_064.01":["手形増えてる","more handprints"],"event.event_064.02":["窓触ってるの誰","who's touching the window?"],"event.event_064.03":["もう拭けば済む感じじゃない","that's not coming off with a wipe"],"event.event_065.01":["文字出てきた！","letters appearing!"],"event.event_065.02":["こっちが助けてほしい","WE need help too"],"event.event_065.03":["黒板勝手に書いてる","the board is writing by itself"],"event.event_066.01":["開いたあああ","IT OPENED"],"event.event_066.02":["10回も叩くからｗ","you knocked TEN times lol"],"event.event_066.03":["入る？本当に入る？","going in? seriously?"],"event.event_067.01":["天井から手出てる","hand from the ceiling"],"event.event_067.02":["頭の上やめて","not above our head please"],"event.event_067.03":["届きそうな高さなの嫌","hate that it's within reach"],"event.event_068.01":["壁に手ある！","A HAND IN THE WALL"],"event.event_068.02":["壁際も安全じゃないのか","walls aren't safe either?"],"event.event_068.03":["そこから生えるな","don't grow out of there"],"event.event_069.01":["猫！！","CAT!"],"event.event_069.02":["しっぽ二本ある？","two tails?"],"event.event_069.03":["君だけは味方でいて","please be on our side"],"event.event_070.01":["靴だけあるの怖い","just the shoes, creepy"],"event.event_070.02":["履いてる人どこ","where's the person wearing them?"],"event.event_070.03":["そこに脱いだの誰","who left those there?"],"event.event_071.01":["靴歩いてるｗｗ","the shoes are walking lmao"],"event.event_071.02":["しかもついてきてる","and they're following us"],"event.event_071.03":["中身いないよね！？","there's nobody in them right?!"],"event.event_072.01":["天井やばい","the ceiling oh no"],"event.event_072.02":["広がってる広がってる","it's spreading"],"event.event_072.03":["上見なきゃよかった","wish we hadn't looked up"],"event.event_073.01":["名前呼ばれた？","did it call your name?"],"event.event_073.02":["なんで知ってんの","how does it know?"],"event.event_073.03":["個人情報どこからｗ","who leaked the personal info lol"],"event.event_074.01":["効いたあああ","IT WORKED"],"event.event_074.02":["お札つよ！！","that talisman is OP"],"event.event_074.03":["ナイス！！","NICE!"],"event.event_075.01":["奥に誰か立ってる","someone at the back"],"event.event_075.02":["その背中こわい","hate that they're facing away"],"event.event_075.03":["声かけないほうがよくない？","maybe don't call out to them"],"event.event_076.01":["入口！！顔！！","FACE AT THE DOOR"],"event.event_076.02":["覗く角度それ！？","why that angle?!"],"event.event_076.03":["帰り道にいるのやめて","don't block the way back"],"event.event_077.01":["ここで弾くのｗ","playing piano HERE? lol"],"event.event_077.02":["急に演奏会","surprise concert"],"event.event_077.03":["肝据わりすぎだろ","nerves of steel"],"event.event_078.01":["月の光だ","Clair de lune!"],"event.event_078.02":["普通に聴いちゃう","actually just listening now"],"event.event_078.03":["場所さえ違えば最高なんだけど","lovely music, terrible venue"],"event.event_079.01":["この状況でレクイエム","a requiem in THIS situation"],"event.event_079.02":["幽霊に捧げるなｗ","dedicating it to the ghosts lol"],"event.event_079.03":["演奏で対抗してるの強い","fighting back with music"],"event.event_080.01":["猫ふんじゃったｗｗ","The Flea Waltz lmao"],"event.event_080.02":["ここでそれ弾くの草","that song choice though"],"event.event_080.03":["選曲で怖さ消えた","suddenly less scary"],"event.event_081.01":["きらきら星ｗ","Twinkle Twinkle lol"],"event.event_081.02":["急に平和になった","suddenly wholesome"],"event.event_081.03":["ここ音楽教室だったわ","right, this IS a music room"],"event.event_082.01":["窓閉まってるよね？","the window's shut right?"],"event.event_082.02":["カーテンだけ動いてる","only the curtain is moving"],"event.event_082.03":["風どこから来た","where's that breeze coming from"],"event.event_083.01":["うわびっくりした","OH GOD"],"event.event_083.02":["コート掛けかよ！！","just the coat rack!!"],"event.event_083.03":["音で寿命縮んだ","that noise took years off my life"],"event.event_084.01":["首回ったｗ","its head turned lol"],"event.event_084.02":["こっち見るなって","don't look at us"],"event.event_084.03":["関節それで合ってる？","is that joint supposed to do that?"],"event.event_085.01":["模型逃げたｗｗｗ","the model ran away lmaooo"],"event.event_085.02":["追うのこっちなの！？","wait WE'RE chasing HIM?"],"event.event_085.03":["待て待て待てｗ","WAIT COME BACK lol"],"event.event_086.01":["バラバラｗｗｗ","IT FELL APART LMAO"],"event.event_086.02":["致命傷で済んだな","minor damage 💀"],"event.event_086.03":["そっちが壊れるんかい","wasn't expecting YOU to break"],"event.event_087.01":["臓器落ちてるｗ","organs on the floor lol"],"event.event_087.02":["忘れ物のレベルじゃない","that's one way to lose your belongings"],"event.event_087.03":["落とし主わかりやすすぎ","well we know who dropped those"],"event.event_088.01":["そこいたんかいｗ","THERE you are lol"],"event.event_088.02":["隠れるサイズじゃないだろ","you're too big to hide there"],"event.event_088.03":["見つけたｗ","found you lol"],"event.event_089.01":["また隠れてるｗ","hiding again lol"],"event.event_089.02":["かくれんぼ続いてた","we're still playing hide-and-seek?"],"event.event_089.03":["もう出ておいでｗ","come on out already"],"event.event_090.01":["見つけたああｗ","FOUND YOU lmao"],"event.event_090.02":["長いかくれんぼだった","that was a long game of hide-and-seek"],"event.event_090.03":["最後まで付き合うの優しい","nice of you to play along till the end"],"event.event_091.01":["時計逆回りしてる","the clock's going backwards"],"event.event_091.02":["時間戻ってない？","are we rewinding time?"],"event.event_091.03":["下校時間が遠のく","school's never ending at this rate"],"event.event_092.01":["ボール来た","here comes the ball"],"event.event_092.02":["誰が転がしたの","who rolled that?"],"event.event_092.03":["蹴り返さなくていいから","no need to kick it back"],"event.event_093.01":["下駄箱やば","those shoe lockers..."],"event.event_093.02":["靴取りに来ただけなのに","just came to change shoes"],"event.event_093.03":["ここで履き替えたくない","not leaving my shoes here"],"event.event_094.01":["メトロノーム動いた","metronome started"],"event.event_094.02":["テンポ取らなくていいｗ","we don't need a beat right now lol"],"event.event_094.03":["誰も触ってないよね","nobody touched it right?"],"event.event_095.01":["誰も乗ってないよね？","nobody's standing on it right?"],"event.event_095.02":["見えない誰か体重測ってる？","invisible weigh-in?"],"event.event_095.03":["その数字知りたくない","don't want to know that number"],"event.event_096.01":["順番に開いてる","opening one after another"],"event.event_096.02":["連鎖するのやめて","stop the chain reaction"],"event.event_096.03":["次どこ開くんだよ","which one's next?"],"event.event_097.01":["下！足ある！","FEET UNDER THE DOOR"],"event.event_097.02":["誰か入ってるじゃん","someone's in there"],"event.event_097.03":["その個室開けないで","don't open that stall"],"event.event_098.01":["目だらけ！！","EYES EVERYWHERE"],"event.event_098.02":["どこ見ても目合う","eye contact in every direction"],"event.event_098.03":["視聴者そっちにもいるのかよ","we've got viewers on the walls too"],"event.event_099.01":["記念撮影すなｗｗｗ","not a group photo lmaooo"],"event.event_099.02":["なかよしとは","you call that friendship?"],"event.event_099.03":["距離感バグってるｗ","personal space has left the chat"],"event.event_100.01":["撮ってる場合かああ","WHY ARE YOU STILL FILMING"],"event.event_100.02":["カメラ離さないの強い","committed to the camera"],"event.event_100.03":["逃げて逃げて！","RUN RUN!"],"event.event_101.01":["後ろ映ってる！！","IT'S IN THE BACKGROUND"],"event.event_101.02":["自撮りの背景が終わってる","that selfie background is cursed"],"event.event_101.03":["インカメにする余裕ｗ","time for a selfie apparently lol"],"event.event_102.01":["逃げながら自撮りｗ","running selfie lmao"],"event.event_102.02":["前見て前！！","LOOK AHEAD"],"event.event_102.03":["配信者の鑑かよ","the dedication to content"],"event.event_103.01":["近い近いｗ","TOO CLOSE lol"],"event.event_103.02":["そこまで寄らなくていい","we don't need that close-up"],"event.event_103.03":["画質より命！","your life over picture quality!"],"event.event_104.01":["出られた！！","WE'RE OUT"],"event.event_104.02":["外だあああ","OUTSIDE FINALLY"],"event.event_104.03":["そのまま帰ろう","let's just go home"],"event.event_105.01":["逃げ切ったああ","GOT AWAY"],"event.event_105.02":["生きて出たのすごい","can't believe you made it out"],"event.event_105.03":["最後まで撮ってるｗ","filming to the very end lol"],"event.event_106.01":["生きて帰るの大事","getting home alive matters"],"event.event_106.02":["無事ならヨシ","alive is good enough"],"event.event_106.03":["おかえり！！","welcome back!"],"context.start.01":["きた","here we go"],"context.start.02":["おじゃまします","hey everyone"],"context.start.03":["ここ入るの？","we're going in there?"],"context.start.04":["もう雰囲気こわい","already creepy"],"context.start.05":["音ありで見るの怖い","scared to watch with sound on"],"context.start.06":["よろしくお願いします","let's do this"],"context.start.07":["帰れる場所覚えといてね","remember the way out"],"context.start.08":["見届けるわ","I'm watching this through"],"context.quiet_unease.01":["静かすぎる","too quiet"],"context.quiet_unease.02":["何もないのに怖い","nothing's happening and I'm scared"],"context.quiet_unease.03":["廊下長いな…","that hallway just keeps going..."],"context.quiet_unease.04":["こういう時間が一番嫌","this is the worst part"],"context.quiet_unease.05":["誰も出ないでほしい気持ちもある","part of me hopes nobody shows up"],"context.quiet_unease.06":["一人で見なきゃよかった","shouldn't have watched alone"],"context.quiet_unease.07":["何か起きそうで起きない","feels like something's about to happen"],"context.quiet_unease.08":["ずっと身構えてる","been bracing myself the whole time"],"context.quiet_chat.01":["この学校どのくらい使ってないんだろ","how long has this school been empty?"],"context.quiet_chat.02":["学校って夜だと別の場所だな","schools are a different place at night"],"context.quiet_chat.03":["掃除当番ここは嫌だ","would hate cleaning duty here"],"context.quiet_chat.04":["昼間に来たかった","should've come in daylight"],"context.quiet_chat.05":["明日学校行くの嫌になってきた","making me dread school tomorrow"],"context.quiet_chat.06":["ここ卒業した人いる？","anyone here graduate from this place?"],"context.quiet_chat.07":["イヤホン片方外した","took one earbud out"],"context.quiet_chat.08":["トイレ行けなくなるやつ","not going to the bathroom after this"],"context.bored_mild.01":["校内見学になってきた","turning into a school tour"],"context.bored_mild.02":["そろそろ何か撮れそう？","think we'll catch something soon?"],"context.bored_mild.03":["廊下の紹介動画？","hallway showcase?"],"context.bored_mild.04":["幽霊も休憩中か","ghosts on break too?"],"context.bored_mild.05":["待機してます","still here waiting"],"context.bored_mild.06":["平和だな","pretty peaceful"],"context.bored_mild.07":["今のところ学校案内","school tour so far"],"context.bored_mild.08":["今日はお休みですか","is everyone off today?"],"context.bored_critical.01":["そろそろ展開ほしい","could use something happening soon"],"context.bored_critical.02":["ずっと歩いてるなｗ","so much walking lol"],"context.bored_critical.03":["撮れ高どこ","where's the footage"],"context.bored_critical.04":["廊下はもう覚えたｗ","I've memorized this hallway lol"],"context.bored_critical.05":["これ何を見ればいいんだ","what am I supposed to be looking at?"],"context.bored_critical.06":["もう少し見どころほしいな","could use a highlight right now"],"context.support_after_bored.01":["何もないのが一番平和だろｗ","nothing happening is the best outcome lol"],"context.support_after_bored.02":["いや自分はもう怖い","nah I'm already scared"],"context.support_after_bored.03":["急かすなってｗ","don't rush them lol"],"context.support_after_bored.04":["歩けるだけすごいわ","just walking in there is impressive"],"context.support_after_bored.05":["出たら出たで叫ぶくせにｗ","you'll scream when something shows up lol"],"context.support_after_bored.06":["ゆっくりでいいよ","take your time"],"context.suspense.01":["ちょっと待って","hold on"],"context.suspense.02":["今の何？","what was that?"],"context.suspense.03":["一回止まろう","let's stop a second"],"context.suspense.04":["嫌な予感する","bad feeling about this"],"context.suspense.05":["まだ近づかないで","don't get closer yet"],"context.suspense.06":["なんかおかしくない？","something feels off"],"context.suspense.07":["気のせいであってくれ","please let it be nothing"],"context.suspense.08":["構えちゃう","bracing myself"],"context.scared.01":["ああああ","AAAAAA"],"context.scared.02":["むり","nope"],"context.scared.03":["こっわ","so creepy"],"context.scared.04":["うわっ","OH GOD"],"context.scared.05":["ひっ","eep"],"context.scared.06":["やだやだやだ","no no no no"],"context.scared.07":["声出た","I screamed"],"context.scared.08":["心臓に悪い","bad for my heart"],"context.scared.09":["画面から離れた","backed away from my screen"],"context.scared.10":["ちょっと待てって","WAIT A SECOND"],"context.scared.11":["無理無理","nope nope"],"context.scared.12":["鳥肌立った","actual goosebumps"],"context.laugh.01":["ｗ","lol"],"context.laugh.02":["ｗｗｗ","lmao"],"context.laugh.03":["wwwww","LMAOOO"],"context.laugh.04":["草","💀"],"context.laugh.05":["大草原","I'm dead lmao"],"context.laugh.06":["笑った","that got me"],"context.laugh.07":["なんでだよｗ","why though lol"],"context.laugh.08":["無理ｗｗｗ","I can't lmaooo"],"context.laugh.09":["声出して笑った","actually laughed out loud"],"context.laugh.10":["これは草","that's hilarious"],"context.laugh.11":["笑わせに来てる","gotta be doing this for laughs"],"context.laugh.12":["腹痛いｗ","my sides lol"],"context.surprise.01":["え？","huh?"],"context.surprise.02":["！？","!?"],"context.surprise.03":["は？","what?"],"context.surprise.04":["おいおいおい","whoa whoa whoa"],"context.surprise.05":["ちょ","uh"],"context.surprise.06":["まって","wait"],"context.surprise.07":["今見た？","did you see that?"],"context.surprise.08":["なに今の","what was THAT"],"context.surprise.09":["ええええ","WHAAAT"],"context.surprise.10":["うそだろ","no way"],"context.chase_support.01":["逃げろおお","RUUUN"],"context.chase_support.02":["止まるな！","don't stop!"],"context.chase_support.03":["前見て！","eyes forward!"],"context.chase_support.04":["帰ろう！！","LET'S LEAVE"],"context.chase_support.05":["撮れたからもういい！","you got the shot, enough!"],"context.chase_support.06":["落ち着いて！","stay calm!"],"context.chase_support.07":["そのまま走れ！","keep running!"],"context.chase_support.08":["生きて帰って！","make it home!"],"context.relief.01":["息止めてた","was holding my breath"],"context.relief.02":["心臓まだうるさい","heart's still pounding"],"context.relief.03":["ちょっと休ませて","give me a second"],"context.relief.04":["今のやばかった","that was awful"],"context.relief.05":["手に汗かいた","sweaty palms"],"context.relief.06":["まだ油断できない","not letting my guard down yet"],"context.relief.07":["一回深呼吸しよ","take a deep breath"],"context.relief.08":["見てるだけで疲れるｗ","exhausted just watching lol"],"context.piano_support.01":["聴き入ってしまう","getting lost in the music"],"context.piano_support.02":["ここだけ演奏配信","piano stream all of a sudden"],"context.piano_support.03":["集中してるな","really focused"],"context.piano_support.04":["ちゃんと弾いてる","actually playing it"],"context.piano_support.05":["選曲の温度差ｗ","that change of mood lol"],"context.piano_support.06":["ここで弾ける度胸がすごい","the nerve to play here"],"context.piano_support.07":["最後まで聴きたい","want to hear the whole thing"],"context.piano_support.08":["コメント打つ手止まった","stopped typing to listen"],"context.applause.01":["888888","👏👏👏👏"],"context.applause.02":["👏👏👏","👏👏👏"],"context.applause.03":["おおお","oooooh"],"context.applause.04":["拍手！","round of applause!"],"context.applause.05":["最後まで弾いたｗ","played it all the way through lol"],"context.applause.06":["ナイス演奏","great performance"],"context.camera_dark.01":["暗くて見えない","can't see a thing"],"context.camera_dark.02":["明かりほしい","need some light"],"context.camera_dark.03":["目こらして見てる","squinting at this"],"context.camera_dark.04":["何かいても分からん","couldn't tell if something was there"],"context.camera_dark.05":["闇が深い","pitch black"],"context.camera_dark.06":["画面に顔近づけるの怖い","scared to lean closer to the screen"],"context.camera_floor.01":["床の映像になってるｗ","floor cam lol"],"context.camera_floor.02":["もう少し上見たい","could we look up a little?"],"context.camera_floor.03":["床はよく見えた","great view of the floor"],"context.camera_floor.04":["視線下がってるｗ","looking down again lol"],"context.camera_floor.05":["足元も怖いけどね","the floor can be scary too though"],"context.camera_shake.01":["落ち着いてｗ","easy there lol"],"context.camera_shake.02":["ちょっと酔うｗ","getting a little dizzy lol"],"context.camera_shake.03":["何が映ってるか追えん","can't keep track of the picture"],"context.camera_shake.04":["カメラもパニック","camera's panicking too"],"context.camera_shake.05":["一回ゆっくり向いて","turn a little slower"],"context.zoom.01":["寄るんかい","we're zooming IN?"],"context.zoom.02":["何か見つけた？","spot something?"],"context.zoom.03":["そこ気になるの分かる","yeah I'd want to check that too"],"context.zoom.04":["よく確認するな","really checking carefully"],"context.zoom.05":["ズームする勇気","brave to zoom in"],"context.selfie_calm.01":["ここで自撮りｗ","selfie time HERE lol"],"context.selfie_calm.02":["記念撮影？","souvenir photo?"],"context.selfie_calm.03":["顔見てちょっと安心した","seeing your face is kinda reassuring"],"context.selfie_calm.04":["余裕あるなｗ","pretty relaxed huh lol"],"context.selfie_calm.05":["背景が怖すぎる自撮り","worst selfie backdrop ever"],"context.view_desk.01":["この机懐かしい","those desks take me back"],"context.view_desk.02":["机の下見るの嫌だな","don't want to look underneath"],"context.view_desk.03":["学校の机ってすぐ分かる","instantly recognizable school desk"],"context.view_desk.04":["そこに座る勇気はない","wouldn't sit there"],"context.view_bag.01":["鞄置きっぱなしだ","someone left their bag"],"context.view_bag.02":["誰の忘れ物だろ","wonder who forgot that"],"context.view_bag.03":["持ち主どこ行ったんだろ","where did its owner go?"],"context.view_bag.04":["置いてあるだけで怖い","just sitting there and it's creepy"],"context.view_books.01":["本いっぱいある","so many books"],"context.view_books.02":["ここで読書は落ち着かん","not a relaxing reading spot"],"context.view_books.03":["まだ本残ってるんだ","the books are still here"],"context.view_books.04":["背表紙つい見ちゃう","keep trying to read the spines"],"context.view_piano.01":["ピアノある","there's a piano"],"context.view_piano.02":["触るの怖いな","scared to touch it"],"context.view_piano.03":["ここで音出したくない","wouldn't want to make noise here"],"context.view_piano.04":["鍵盤見ると弾きたくなるの分かる","I get wanting to try the keys"],"context.view_bed.01":["ここでは寝れない","couldn't sleep here"],"context.view_bed.02":["布団の形こわい","that blanket shape is creepy"],"context.view_bed.03":["保健室って昼は安心なのに","the nurse's office feels safe in daylight"],"context.view_bed.04":["近づくだけで緊張する","getting close makes me nervous"],"context.view_portrait.01":["肖像画あるの嫌だな","hate the portraits in here"],"context.view_portrait.02":["目が合う気がする","feels like we're making eye contact"],"context.view_portrait.03":["その顔ずっと見てられない","can't stare at that face too long"],"context.view_portrait.04":["音楽室のこれ苦手だった","always hated these in music rooms"],"context.view_mirror.01":["鏡見るの勇気いる","brave to look in the mirror"],"context.view_mirror.02":["自分しか映りませんように","please only show our reflection"],"context.view_mirror.03":["つい後ろ確認しちゃう","makes me check behind myself"],"context.view_mirror.04":["鏡だけは信用できない","can't trust mirrors"],"context.view_broken_window.01":["窓もう割れてる","window's already broken"],"context.view_broken_window.02":["ここ風入りそう","must get drafty here"],"context.view_broken_window.03":["ガラス気をつけて","watch the glass"],"context.view_broken_window.04":["近づくの危ないな","careful getting close"],"context.view_broadcast_gear.01":["機材まだ残ってるんだ","the equipment's still here"],"context.view_broadcast_gear.02":["こっちから放送できそう","looks like you could broadcast from here"],"context.view_broadcast_gear.03":["ボタン触るの怖い","wouldn't touch those buttons"],"context.view_broadcast_gear.04":["放送室ってこうなってるのか","so that's what the broadcast room looks like"],"context.view_cleaning.01":["掃除道具残ってる","cleaning supplies still here"],"context.view_cleaning.02":["ここ掃除するの大変そう","cleaning this place would take forever"],"context.view_cleaning.03":["誰か掃除してたのかな","was someone cleaning here?"],"context.view_cleaning.04":["道具だけ妙に日常的","the supplies look so normal somehow"],"context.view_locker.01":["ロッカーの隙間こわい","that gap in the locker is creepy"],"context.view_locker.02":["開けるの？","gonna open it?"],"context.view_locker.03":["こういう縦長の影苦手","hate those tall narrow shadows"],"context.view_locker.04":["そこばっかり見ちゃう","can't stop looking at it"],"context.view_stairs.01":["階段の先見えないの嫌","hate not seeing past the stairs"],"context.view_stairs.02":["上がるんだ…","we're going up then..."],"context.view_stairs.03":["段差気をつけて","watch your step"],"context.view_stairs.04":["踊り場ってなんで怖いんだろ","why are stair landings so creepy?"],"context.view_clock.01":["時計残ってるんだ","the clock's still there"],"context.view_clock.02":["時計つい見ちゃう","keep checking the clock"],"context.view_clock.03":["教室の時計懐かしい","classroom clocks take me back"],"context.view_clock.04":["あの位置にあるよね","that's where they always put it"],"context.recorded_sound.01":["今の音なに","what was that sound?"],"context.recorded_sound.02":["聞こえた？","did you hear that?"],"context.recorded_sound.03":["音でびっくりした","that noise got me"],"context.recorded_sound.04":["イヤホンやめたい","taking my headphones off"],"context.recorded_sound.05":["もう一回聞きたくない","don't want to hear that again"],"context.item_pickup.01":["拾った！","got it!"],"context.item_pickup.02":["よく見つけたな","good eye"],"context.item_pickup.03":["見逃してたわ","I missed that"],"context.item_pickup.04":["ちゃんと見てるな","paying attention huh"],"context.battery_low.01":["電池大丈夫？","how's the battery?"],"context.battery_low.02":["そろそろ帰ったほうが","might be time to head back"],"context.battery_low.03":["切れる前に戻ろう","get back before it dies"],"context.battery_low.04":["充電気になる","worried about the charge"],"context.ending_return.01":["おかえり！","welcome back!"],"context.ending_return.02":["無事でよかった","glad you're safe"],"context.ending_return.03":["おつかれさま","nice work"],"context.ending_return.04":["生還ナイス","nice escape"],"context.ending_return.05":["見てるこっちも疲れたｗ","exhausted just watching lol"],"context.ending_return.06":["また見たい","would watch again"],"context.ending_capture.01":["うわああ終わった","AAAA that's it"],"context.ending_capture.02":["映像は残ったのか…","at least the footage survived..."],"context.ending_capture.03":["誰がこれ回収したんだよ","who picked this phone up?"],"context.ending_capture.04":["最後こわすぎ","that ending was terrifying"],"context.ending_capture.05":["おつかれ…","well... gg"],"context.ending_capture.06":["スマホ丈夫だな","tough phone"],"context.ending_battery.01":["ここで電池切れか","battery died right there"],"context.ending_battery.02":["充電大事だな","charging matters"],"context.ending_battery.03":["続き気になる","need to know what happens next"],"context.ending_battery.04":["肝心なところでｗ","what a time to run out lol"],"short-name.hello.01":["こんばんは〜","hey!"],"short-name.hello.02":["こんばんは","good evening"],"short-name.hello.03":["こん","hi"],"short-name.hello.04":["こん〜","heyy"],"short-name.hello.05":["初見です","first time here"],"short-name.hello.06":["おじゃまします","hey everyone"],"short-name.hello.07":["きた","here we go"],"short-name.hello.08":["きちゃ","let's gooo"],"short-name.hello.09":["待ってた","been waiting"],"short-name.hello.10":["見にきた","here to watch"],"short-name.hello.11":["ども","hey there"],"short-name.hello.12":["こんちゃ","heya"],"short-name.hello.13":["やほ","yo"],"short-name.hello.14":["今北","just got here"],"short-name.hello.15":["見てるよ","I'm watching"],"short-name.approval.01":["いいね","nice"],"short-name.approval.02":["いいぞ","good stuff"],"short-name.approval.03":["ナイス","NICE"],"short-name.approval.04":["ないす","nice one"],"short-name.approval.05":["ええやん","looking good"],"short-name.approval.06":["よき","love it"],"short-name.approval.07":["おお","ohh"],"short-name.approval.08":["おー","ooo"],"short-name.approval.09":["やるじゃん","well played"],"short-name.approval.10":["助かる","appreciate it"],"short-name.approval.11":["これはいい","this is good"],"short-name.approval.12":["つよい","strong"],"short-name.approval.13":["すご","wow"],"short-name.approval.14":["有能","solid"],"short-name.approval.15":["👏","👏"],"short-name.small_surprise.01":["あ","oh"],"short-name.small_surprise.02":["あっ","oh!"],"short-name.small_surprise.03":["え","eh"],"short-name.small_surprise.04":["え？","huh?"],"short-name.small_surprise.05":["ん？","hm?"],"short-name.small_surprise.06":["お？","oh?"],"short-name.small_surprise.07":["は？","what?"],"short-name.small_surprise.08":["んん？","hmm?"],"short-name.small_surprise.09":["あれ","wait"],"short-name.small_surprise.10":["おい","hey"],"short-name.small_surprise.11":["ちょ","uh"],"short-name.small_surprise.12":["ま？","fr?"],"short-name.small_surprise.13":["まじ？","seriously?"],"short-name.small_surprise.14":["ファッ！？","HUH?!"],"short-name.small_surprise.15":["はえ？","wait what"],"short-name.fear_short.01":["まずい","oh no"],"short-name.fear_short.02":["やば","yikes"],"short-name.fear_short.03":["こわ","scary"],"short-name.fear_short.04":["ひえ","eek"],"short-name.fear_short.05":["ひぇ","eep"],"short-name.fear_short.06":["むり","nope"],"short-name.fear_short.07":["やめて","stop"],"short-name.fear_short.08":["あかん","not good"],"short-name.fear_short.09":["まずいですよ","this is bad"],"short-name.fear_short.10":["これはまずい","this is really bad"],"short-name.fear_short.11":["やばいやばい","oh no oh no"],"short-name.fear_short.12":["ヒエッ","YIKES"],"short-name.fear_short.13":["ﾋｴｯ","EEEK"],"short-name.fear_short.14":["ひえ〜","oh god"],"short-name.fear_short.15":["こっわ","so creepy"],"short-name.peril_slang.01":["おわった","it's over"],"short-name.peril_slang.02":["終わった","we're done"],"short-name.peril_slang.03":["オワオワリ","we're cooked"],"short-name.peril_slang.04":["あっ…","oh..."],"short-name.peril_slang.05":["＼(^o^)／","welp 💀"],"short-name.peril_slang.06":["詰んだ","we're so done"],"short-name.peril_slang.07":["あかんて","no no no"],"short-name.peril_slang.08":["アカン","NOPE"],"short-name.peril_slang.09":["ｵﾜﾀ","it's joever"],"short-name.peril_slang.10":["終わりや","this is it"],"short-name.peril_slang.11":["これはあかん","not good at all"],"short-name.peril_slang.12":["もうだめだ","can't do this"],"short-name.peril_slang.13":["たすけて","help"],"short-name.peril_slang.14":["南無","praying rn"],"short-name.peril_slang.15":["ﾋｪ…","eep..."],"short-name.escape_short.01":["逃げて","run please"],"short-name.escape_short.02":["逃げろ","RUN"],"short-name.escape_short.03":["にげて","get out"],"short-name.escape_short.04":["にげろおお","RUUUN"],"short-name.escape_short.05":["走れ","go go"],"short-name.escape_short.06":["はしれ！","RUN!"],"short-name.escape_short.07":["帰れ帰れ","go back go back"],"short-name.escape_short.08":["止まるな","don't stop"],"short-name.escape_short.09":["前！","LOOK AHEAD"],"short-name.escape_short.10":["いけいけ","go go go"],"short-name.escape_short.11":["急げ","hurry"],"short-name.escape_short.12":["逃げてええ","RUNNN"],"short-name.escape_short.13":["ダッシュ！","SPRINT"],"short-name.escape_short.14":["振り向くな","don't look back"],"short-name.escape_short.15":["生きろ","stay alive"],"short-name.laugh_short.01":["w","lol"],"short-name.laugh_short.02":["ww","loll"],"short-name.laugh_short.03":["www","lmao"],"short-name.laugh_short.04":["wwww","lmaoo"],"short-name.laugh_short.05":["wwwww","lmaooo"],"short-name.laugh_short.06":["wwwwwwww","LMAOOOO"],"short-name.laugh_short.07":["ｗ","haha"],"short-name.laugh_short.08":["ｗｗ","hahaha"],"short-name.laugh_short.09":["ｗｗｗ","LOL"],"short-name.laugh_short.10":["ｗｗｗｗｗ","LOOOOL"],"short-name.laugh_short.11":["草","💀"],"short-name.laugh_short.12":["草ぁ","💀💀"],"short-name.laugh_short.13":["大草原","I'm dead lol"],"short-name.laugh_short.14":["ワロタ","that's funny"],"short-name.laugh_short.15":["わろた","lolll"],"short-name.laugh_short.16":["草不可避","can't not laugh"],"short-name.laugh_short.17":["なんでやねん","why tho"],"short-name.laugh_short.18":["おもろ","hilarious"],"short-name.laugh_short.19":["笑う","I'm laughing"],"short-name.laugh_short.20":["それは草","that's so funny"],"short-name.skill_short.01":["うっま","cleannn"],"short-name.skill_short.02":["うま","clean"],"short-name.skill_short.03":["うまい","so good"],"short-name.skill_short.04":["うめえ","nice skills"],"short-name.skill_short.05":["うますぎ","too good"],"short-name.skill_short.06":["プロか？","pro?"],"short-name.skill_short.07":["天才","genius"],"short-name.skill_short.08":["天才かよ","actual genius"],"short-name.skill_short.09":["つっよ","OP"],"short-name.skill_short.10":["つよ","strong"],"short-name.skill_short.11":["さすが","as expected"],"short-name.skill_short.12":["やるやん","well played"],"short-name.skill_short.13":["お見事","beautiful"],"short-name.skill_short.14":["ナイスゥ","NICEEE"],"short-name.skill_short.15":["👏👏","👏👏"],"short-name.quiet_short.01":["ほう","ohh"],"short-name.quiet_short.02":["ふむ","hmm"],"short-name.quiet_short.03":["なるほど","I see"],"short-name.quiet_short.04":["しーん","..."],"short-name.quiet_short.05":["平和","peaceful"],"short-name.quiet_short.06":["まだかな","anything yet?"],"short-name.quiet_short.07":["待機","waiting"],"short-name.quiet_short.08":["見守り中","just watching"],"short-name.quiet_short.09":["何もないね","nothing so far"],"short-name.quiet_short.10":["静かだ","quiet"],"short-name.quiet_short.11":["お散歩","taking a walk"],"short-name.quiet_short.12":["校内ツアー","school tour"],"short-name.bored_slang.01":["虚無","nothingness"],"short-name.bored_slang.02":["虚無タイム","dead air"],"short-name.bored_slang.03":["無の時間","absolutely nothing"],"short-name.bored_slang.04":["撮れ高待ち","waiting for a clip"],"short-name.bored_slang.05":["展開待ち","waiting for something"],"short-name.bored_slang.06":["学校紹介たすかる","thanks for the school tour"],"short-name.bored_slang.07":["散歩枠？","walking stream?"],"short-name.bored_slang.08":["幽霊さん？","hello ghosts?"],"short-name.bored_slang.09":["待ちぼうけ","still waiting"],"short-name.bored_slang.10":["今日は平和回か","peaceful episode today?"],"short-name.relief_short.01":["ふう","phew"],"short-name.relief_short.02":["ほっ","whew"],"short-name.relief_short.03":["心臓いたい","my heart hurts"],"short-name.relief_short.04":["こわかった","that was scary"],"short-name.relief_short.05":["息してなかった","forgot to breathe"],"short-name.relief_short.06":["あぶな","close one"],"short-name.relief_short.07":["耐えた","held on"],"short-name.relief_short.08":["よかった","thank goodness"],"short-name.relief_short.09":["おつ","ggs"],"short-name.relief_short.10":["おつかれ","nice work"],"short-name.relief_short.11":["GG","GG"],"short-name.relief_short.12":["gg","gg"],"short-name.relief_short.13":["ないす生還","nice escape"],"short-name.relief_short.14":["おかえり","welcome back"],"short-name.name_cheer.01":["{name}がんばれ！","you got this, {name}!"],"short-name.name_cheer.02":["{name}いけー！","go {name}!"],"short-name.name_cheer.03":["{name}ファイト！","let's go, {name}!"],"short-name.name_cheer.04":["{name}落ち着いて！","stay calm, {name}!"],"short-name.name_cheer.05":["{name}ならいける","{name} can do this"],"short-name.name_cheer.06":["がんばれ{name}！","keep going, {name}!"],"short-name.name_cheer.07":["{name}生きろ！","stay alive, {name}!"],"short-name.name_cheer.08":["{name}踏ん張れ！","hang in there, {name}!"],"short-name.name_escape.01":["{name}逃げて！","run, {name}!"],"short-name.name_escape.02":["{name}逃げろ！","{name} RUN!"],"short-name.name_escape.03":["{name}走れ！","keep running, {name}!"],"short-name.name_escape.04":["{name}前見て！","eyes forward, {name}!"],"short-name.name_escape.05":["{name}止まるな！","don't stop, {name}!"],"short-name.name_escape.06":["{name}帰ろう！","let's go home, {name}!"],"short-name.name_escape.07":["逃げて{name}！","GET OUT, {name}!"],"short-name.name_escape.08":["{name}撮ってる場合か！","{name}, why are you still filming?!"],"short-name.name_laugh.01":["{name}www","{name} lmaooo"],"short-name.name_laugh.02":["{name}ｗｗｗ","{name} LOL"],"short-name.name_laugh.03":["{name}草","{name} 💀"],"short-name.name_laugh.04":["{name}なにしてんｗ","{name} what are you doing lol"],"short-name.name_laugh.05":["{name}さん！？ｗ","{name}?! lmao"],"short-name.name_laugh.06":["{name}自由すぎるｗ","{name} does whatever they want lol"],"short-name.name_laugh.07":["{name}笑わせないでｗ","{name} stop making me laugh"],"short-name.name_laugh.08":["おい{name}ｗ","oi {name} lol"],"short-name.name_skill.01":["{name}うっま","{name} that was CLEAN"],"short-name.name_skill.02":["{name}うま！","{name} nice skills!"],"short-name.name_skill.03":["{name}天才か？","{name} actual genius?"],"short-name.name_skill.04":["{name}ナイス！","nice one, {name}!"],"short-name.name_skill.05":["さすが{name}","that's our {name}"],"short-name.name_skill.06":["{name}強すぎ","{name} too strong"],"short-name.name_skill.07":["{name}やるじゃん！","well played, {name}!"],"short-name.name_skill.08":["{name}お見事！","beautifully done, {name}!"],"short-name.name_worry.01":["{name}大丈夫？","{name}, you okay?"],"short-name.name_worry.02":["{name}無理しないで","don't push it, {name}"],"short-name.name_worry.03":["{name}そこ行くの？","{name}, you're going there?"],"short-name.name_worry.04":["{name}一回止まろ","hold on a sec, {name}"],"short-name.name_worry.05":["{name}気をつけて","careful, {name}"],"short-name.name_worry.06":["{name}もう帰らん？","{name}, can we go home now?"],"short-name.name_worry.07":["{name}深呼吸して","take a breath, {name}"],"short-name.name_worry.08":["{name}こっちまで怖い","{name}, you're scaring me too"],"short-name.name_hello.01":["{name}こんばんは〜","hey {name}!"],"short-name.name_hello.02":["{name}見にきた！","here to watch you, {name}!"],"short-name.name_hello.03":["{name}こん〜","heyy {name}"],"short-name.name_hello.04":["{name}やほ","yo {name}"],"short-name.name_hello.05":["{name}待ってた","been waiting, {name}"],"short-name.name_hello.06":["こんばんは{name}さん","good evening, {name}!"],"short-name.name_return.01":["{name}おかえり！","welcome back, {name}!"],"short-name.name_return.02":["{name}おつかれ！","nice work, {name}!"],"short-name.name_return.03":["{name}よく帰ってきた！","you made it back, {name}!"],"short-name.name_return.04":["{name}無事でよかった","glad you're safe, {name}"],"short-name.name_return.05":["{name}ナイス生還","nice escape, {name}!"],"short-name.name_return.06":["おかえり{name}！","{name}! welcome back!"],"event.x_clsLocker.01":["ロッカー倒れた！！","the locker fell over!!"],"event.x_clsLocker.02":["音でかすぎ","that was SO loud"],"event.x_clsLocker.03":["誰も触ってないよね？","nobody touched it right?"],"event.x_soccer.01":["蹴ったｗ","kicked it lol"],"event.x_soccer.02":["サッカーしてる場合かｗ","is this really the time for soccer lol"],"event.x_soccer.03":["ナイスシュート","nice shot"]},"ev":{"暗がりを滑る逆さ女":["event.event_001.01","event.event_001.02","event.event_001.03"],"こっちを見た？":["event.event_002.01","event.event_002.02","event.event_002.03"],"ロッカーの前を横切る赤い布":["event.event_003.01","event.event_003.02","event.event_003.03"],"ロッカーに隠れたのがバレる":["event.event_004.01","event.event_004.02","event.event_004.03"],"逆さ女に襲われた瞬間":["event.event_005.01","event.event_005.02","event.event_005.03"],"戸口から覗く上履き":["event.event_006.01","event.event_006.02","event.event_006.03"],"教室に立つ女子高生":["event.event_007.01","event.event_007.02","event.event_007.03"],"ズームで迫り来る女子高生の霊":["event.event_008.01","event.event_008.02","event.event_008.03"],"床に落ちる血の滴と広がる波紋":["event.event_009.01","event.event_009.02","event.event_009.03"],"トイレの扉の内側に垂れる血の筋":["event.event_010.01","event.event_010.02","event.event_010.03"],"トイレの個室の上から覗く逆さ顔":["event.event_011.01","event.event_011.02","event.event_011.03"],"洗面器に溜まっていく血溜まり":["event.event_012.01","event.event_012.02","event.event_012.03"],"戸口から真横に覗く顔":["event.event_013.01","event.event_013.02","event.event_013.03"],"掲示板を読む女":["event.event_014.01","event.event_014.02","event.event_014.03"],"掲示板を読む女に襲われる":["event.event_015.01","event.event_015.02","event.event_015.03"],"めくった布団の中":["event.event_016.01","event.event_016.02","event.event_016.03"],"逆さまに走る非常口":["event.event_017.01","event.event_017.02","event.event_017.03"],"復電の一瞬に立つ女":["event.event_018.01","event.event_018.02","event.event_018.03"],"一度だけ点いた赤ランプ":["event.event_019.01","event.event_019.02","event.event_019.03"],"こちらを向くマイク":["event.event_020.01","event.event_020.02","event.event_020.03"],"ガラスに残ったカメラを構えたままの自分":["event.event_021.01","event.event_021.02","event.event_021.03"],"勝手に回るトイレの内鍵":["event.event_022.01","event.event_022.02","event.event_022.03"],"鏡の中の自分だけが遅れて動く":["event.event_023.01","event.event_023.02","event.event_023.03"],"排水口の暗がりの片目":["event.event_024.01","event.event_024.02","event.event_024.03"],"窓の外の人影":["event.event_025.01","event.event_025.02","event.event_025.03"],"小窓に残る五本の指跡":["event.event_026.01","event.event_026.02","event.event_026.03"],"レンズ前に割り込む顔":["event.event_027.01","event.event_027.02","event.event_027.03"],"近づいてくる濡れた足跡":["event.event_028.01","event.event_028.02","event.event_028.03"],"床に落ちていたチョーク":["event.event_029.01","event.event_029.02","event.event_029.03"],"倒れていたほうき":["event.event_030.01","event.event_030.02","event.event_030.03"],"インカメラの肩越しの顔":["event.event_031.01","event.event_031.02","event.event_031.03"],"鏡の中で勝手に閉まる戸":["event.event_032.01","event.event_032.02","event.event_032.03"],"振り返った目の前の巨大な顔":["event.event_033.01","event.event_033.02","event.event_033.03"],"ひとりでに数センチ開く引き戸":["event.event_034.01","event.event_034.02","event.event_034.03"],"振り返った女子生徒の黒い目":["event.event_035.01","event.event_035.02","event.event_035.03"],"振り返ったレンズの前の顔":["event.event_036.01","event.event_036.02","event.event_036.03"],"机がひとりでに滑った":["event.event_037.01","event.event_037.02","event.event_037.03"],"机がガタッと揺れた":["event.event_038.01","event.event_038.02","event.event_038.03"],"机が浮いて落ちた":["event.event_039.01","event.event_039.02","event.event_039.03"],"机と椅子が向きを変えた":["event.event_040.01","event.event_040.02","event.event_040.03"],"明るくなった一瞬、鏡の中の背後に立つ女":["event.event_041.01","event.event_041.02","event.event_041.03"],"角の先に立つ顔":["event.event_042.01","event.event_042.02","event.event_042.03"],"街灯の下に立つ人影":["event.event_043.01","event.event_043.02","event.event_043.03"],"鏡の中だけに映る背後の女子高生":["event.event_044.01","event.event_044.02","event.event_044.03"],"シーツに残る古い血の染み":["event.event_045.01","event.event_045.02","event.event_045.03"],"階段の上の角から覗く顔":["event.event_046.01","event.event_046.02","event.event_046.03"],"布団の中のクマ":["event.event_047.01","event.event_047.02","event.event_047.03"],"個室のあとに振り向いた目の前の顔":["event.event_048.01","event.event_048.02","event.event_048.03"],"振り向いた目の前の顔":["event.event_049.01","event.event_049.02","event.event_049.03"],"誰もいない椅子の座面が回った":["event.event_050.01","event.event_050.02","event.event_050.03"],"窓の外から落ちる人影":["event.event_051.01","event.event_051.02","event.event_051.03"],"窓辺から一斉に飛び立つカラス":["event.event_052.01","event.event_052.02","event.event_052.03"],"棚から一冊ずつ落ちる本":["event.event_053.01","event.event_053.02","event.event_053.03"],"ひとりでにめくれる本のページ":["event.event_054.01","event.event_054.02","event.event_054.03"],"通路の椅子がひとりでに動いた":["event.event_055.01","event.event_055.02","event.event_055.03"],"誰もいない部屋で鳴るピアノ":["event.event_056.01","event.event_056.02","event.event_056.03"],"肖像画のベートーベンがまばたきした":["event.event_057.01","event.event_057.02","event.event_057.03"],"2階の窓の外を滑っていく女子高生":["event.event_058.01","event.event_058.02","event.event_058.03"],"机から落ちて割れた一輪挿し":["event.event_059.01","event.event_059.02","event.event_059.03"],"巣に触れたクモ女が別の巣へ移った瞬間":["event.event_060.01","event.event_060.02","event.event_060.03"],"天井から逆さに見下ろすクモ女の顔":["event.event_061.01","event.event_061.02","event.event_061.03"],"糸で降りてくるクモ女":["event.event_062.01","event.event_062.02","event.event_062.03"],"クモ女に襲われる":["event.event_063.01","event.event_063.02","event.event_063.03"],"窓に増えていく赤い手形":["event.event_064.01","event.event_064.02","event.event_064.03"],"黒板に走る「タスケテ」":["event.event_065.01","event.event_065.02","event.event_065.03"],"10回目のノックで開いた個室":["event.event_066.01","event.event_066.02","event.event_066.03"],"天井から垂れる灰色の手":["event.event_067.01","event.event_067.02","event.event_067.03"],"壁から生えた灰色の手":["event.event_068.01","event.event_068.02","event.event_068.03"],"街灯の猫又":["event.event_069.01","event.event_069.02","event.event_069.03"],"誰も履いていない上履き":["event.event_070.01","event.event_070.02","event.event_070.03"],"インカメに映った、歩く上履き":["event.event_071.01","event.event_071.02","event.event_071.03"],"天井に広がる大量の血の染み":["event.event_072.01","event.event_072.02","event.event_072.03"],"校内放送で呼ばれた自分の名前":["event.event_073.01","event.event_073.02","event.event_073.03"],"悪霊退散":["event.event_074.01","event.event_074.02","event.event_074.03"],"保健室の奥に立つ背中":["event.event_075.01","event.event_075.02","event.event_075.03"],"保健室の入口から真横に覗く顔":["event.event_076.01","event.event_076.02","event.event_076.03"],"ピアノを弾く":["event.event_077.01","event.event_077.02","event.event_077.03"],"月の光を演奏する":["event.event_078.01","event.event_078.02","event.event_078.03"],"怪異に捧げるレクイエム":["event.event_079.01","event.event_079.02","event.event_079.03"],"猫ふんじゃったを弾く":["event.event_080.01","event.event_080.02","event.event_080.03"],"きらきら星を弾く":["event.event_081.01","event.event_081.02","event.event_081.03"],"閉めきった窓で揺れるカーテン":["event.event_082.01","event.event_082.02","event.event_082.03"],"突然倒れたコート掛け":["event.event_083.01","event.event_083.02","event.event_083.03"],"首が回る人体模型":["event.event_084.01","event.event_084.02","event.event_084.03"],"逃げた人体模型を追え":["event.event_085.01","event.event_085.02","event.event_085.03"],"致命傷で済んだ人体模型":["event.event_086.01","event.event_086.02","event.event_086.03"],"落ちた臓器":["event.event_087.01","event.event_087.02","event.event_087.03"],"人体模型とかくれんぼ1":["event.event_088.01","event.event_088.02","event.event_088.03"],"人体模型とかくれんぼ2":["event.event_089.01","event.event_089.02","event.event_089.03"],"人体模型とかくれんぼFINAL":["event.event_090.01","event.event_090.02","event.event_090.03"],"逆回転し続ける時計の針":["event.event_091.01","event.event_091.02","event.event_091.03"],"ひとりでに転がってくるボール":["event.event_092.01","event.event_092.02","event.event_092.03"],"血まみれの下駄箱":["event.event_093.01","event.event_093.02","event.event_093.03"],"ひとりでに動き出すメトロノーム":["event.event_094.01","event.event_094.02","event.event_094.03"],"誰も乗っていない体重計の針":["event.event_095.01","event.event_095.02","event.event_095.03"],"順番に開いていくロッカーの扉":["event.event_096.01","event.event_096.02","event.event_096.03"],"個室の扉の下に見える足の影":["event.event_097.01","event.event_097.02","event.event_097.03"],"周りの壁に一斉に開く目":["event.event_098.01","event.event_098.02","event.event_098.03"],"なかよしスリーショット":["event.event_099.01","event.event_099.02","event.event_099.03"],"追われながらカメラを回す":["event.event_100.01","event.event_100.02","event.event_100.03"],"インカメラに追ってくる姿":["event.event_101.01","event.event_101.02","event.event_101.03"],"インカメラで逃走中":["event.event_102.01","event.event_102.02","event.event_102.03"],"怪異を超接写":["event.event_103.01","event.event_103.02","event.event_103.03"],"非常口からの脱出":["event.event_104.01","event.event_104.02","event.event_104.03"],"追われながら生還":["event.event_105.01","event.event_105.02","event.event_105.03"],"いのちだいじに":["event.event_106.01","event.event_106.02","event.event_106.03"],"教室の隅で倒れたロッカー":["event.x_clsLocker.01","event.x_clsLocker.02","event.x_clsLocker.03"],"サッカーしようぜ！":["event.x_soccer.01","event.x_soccer.02","event.x_soccer.03"]},"c":{"start":["context.start.01","context.start.02","context.start.03","context.start.04","context.start.05","context.start.06","context.start.07","context.start.08"],"quiet_unease":["context.quiet_unease.01","context.quiet_unease.02","context.quiet_unease.03","context.quiet_unease.04","context.quiet_unease.05","context.quiet_unease.06","context.quiet_unease.07","context.quiet_unease.08"],"quiet_chat":["context.quiet_chat.01","context.quiet_chat.02","context.quiet_chat.03","context.quiet_chat.04","context.quiet_chat.05","context.quiet_chat.06","context.quiet_chat.07","context.quiet_chat.08"],"bored_mild":["context.bored_mild.01","context.bored_mild.02","context.bored_mild.03","context.bored_mild.04","context.bored_mild.05","context.bored_mild.06","context.bored_mild.07","context.bored_mild.08"],"bored_critical":["context.bored_critical.01","context.bored_critical.02","context.bored_critical.03","context.bored_critical.04","context.bored_critical.05","context.bored_critical.06"],"support_after_bored":["context.support_after_bored.01","context.support_after_bored.02","context.support_after_bored.03","context.support_after_bored.04","context.support_after_bored.05","context.support_after_bored.06"],"suspense":["context.suspense.01","context.suspense.02","context.suspense.03","context.suspense.04","context.suspense.05","context.suspense.06","context.suspense.07","context.suspense.08"],"scared":["context.scared.01","context.scared.02","context.scared.03","context.scared.04","context.scared.05","context.scared.06","context.scared.07","context.scared.08","context.scared.09","context.scared.10","context.scared.11","context.scared.12"],"laugh":["context.laugh.01","context.laugh.02","context.laugh.03","context.laugh.04","context.laugh.05","context.laugh.06","context.laugh.07","context.laugh.08","context.laugh.09","context.laugh.10","context.laugh.11","context.laugh.12"],"surprise":["context.surprise.01","context.surprise.02","context.surprise.03","context.surprise.04","context.surprise.05","context.surprise.06","context.surprise.07","context.surprise.08","context.surprise.09","context.surprise.10"],"chase_support":["context.chase_support.01","context.chase_support.02","context.chase_support.03","context.chase_support.04","context.chase_support.05","context.chase_support.06","context.chase_support.07","context.chase_support.08"],"relief":["context.relief.01","context.relief.02","context.relief.03","context.relief.04","context.relief.05","context.relief.06","context.relief.07","context.relief.08"],"piano_support":["context.piano_support.01","context.piano_support.02","context.piano_support.03","context.piano_support.04","context.piano_support.05","context.piano_support.06","context.piano_support.07","context.piano_support.08"],"applause":["context.applause.01","context.applause.02","context.applause.03","context.applause.04","context.applause.05","context.applause.06"],"camera_dark":["context.camera_dark.01","context.camera_dark.02","context.camera_dark.03","context.camera_dark.04","context.camera_dark.05","context.camera_dark.06"],"camera_floor":["context.camera_floor.01","context.camera_floor.02","context.camera_floor.03","context.camera_floor.04","context.camera_floor.05"],"camera_shake":["context.camera_shake.01","context.camera_shake.02","context.camera_shake.03","context.camera_shake.04","context.camera_shake.05"],"zoom":["context.zoom.01","context.zoom.02","context.zoom.03","context.zoom.04","context.zoom.05"],"selfie_calm":["context.selfie_calm.01","context.selfie_calm.02","context.selfie_calm.03","context.selfie_calm.04","context.selfie_calm.05"],"view_desk":["context.view_desk.01","context.view_desk.02","context.view_desk.03","context.view_desk.04"],"view_bag":["context.view_bag.01","context.view_bag.02","context.view_bag.03","context.view_bag.04"],"view_books":["context.view_books.01","context.view_books.02","context.view_books.03","context.view_books.04"],"view_piano":["context.view_piano.01","context.view_piano.02","context.view_piano.03","context.view_piano.04"],"view_bed":["context.view_bed.01","context.view_bed.02","context.view_bed.03","context.view_bed.04"],"view_portrait":["context.view_portrait.01","context.view_portrait.02","context.view_portrait.03","context.view_portrait.04"],"view_mirror":["context.view_mirror.01","context.view_mirror.02","context.view_mirror.03","context.view_mirror.04"],"view_broken_window":["context.view_broken_window.01","context.view_broken_window.02","context.view_broken_window.03","context.view_broken_window.04"],"view_broadcast_gear":["context.view_broadcast_gear.01","context.view_broadcast_gear.02","context.view_broadcast_gear.03","context.view_broadcast_gear.04"],"view_cleaning":["context.view_cleaning.01","context.view_cleaning.02","context.view_cleaning.03","context.view_cleaning.04"],"view_locker":["context.view_locker.01","context.view_locker.02","context.view_locker.03","context.view_locker.04"],"view_stairs":["context.view_stairs.01","context.view_stairs.02","context.view_stairs.03","context.view_stairs.04"],"view_clock":["context.view_clock.01","context.view_clock.02","context.view_clock.03","context.view_clock.04"],"recorded_sound":["context.recorded_sound.01","context.recorded_sound.02","context.recorded_sound.03","context.recorded_sound.04","context.recorded_sound.05"],"item_pickup":["context.item_pickup.01","context.item_pickup.02","context.item_pickup.03","context.item_pickup.04"],"battery_low":["context.battery_low.01","context.battery_low.02","context.battery_low.03","context.battery_low.04"],"ending_return":["context.ending_return.01","context.ending_return.02","context.ending_return.03","context.ending_return.04","context.ending_return.05","context.ending_return.06"],"ending_capture":["context.ending_capture.01","context.ending_capture.02","context.ending_capture.03","context.ending_capture.04","context.ending_capture.05","context.ending_capture.06"],"ending_battery":["context.ending_battery.01","context.ending_battery.02","context.ending_battery.03","context.ending_battery.04"],"hello":["short-name.hello.01","short-name.hello.02","short-name.hello.03","short-name.hello.04","short-name.hello.05","short-name.hello.06","short-name.hello.07","short-name.hello.08","short-name.hello.09","short-name.hello.10","short-name.hello.11","short-name.hello.12","short-name.hello.13","short-name.hello.14","short-name.hello.15"],"approval":["short-name.approval.01","short-name.approval.02","short-name.approval.03","short-name.approval.04","short-name.approval.05","short-name.approval.06","short-name.approval.07","short-name.approval.08","short-name.approval.09","short-name.approval.10","short-name.approval.11","short-name.approval.12","short-name.approval.13","short-name.approval.14","short-name.approval.15"],"small_surprise":["short-name.small_surprise.01","short-name.small_surprise.02","short-name.small_surprise.03","short-name.small_surprise.04","short-name.small_surprise.05","short-name.small_surprise.06","short-name.small_surprise.07","short-name.small_surprise.08","short-name.small_surprise.09","short-name.small_surprise.10","short-name.small_surprise.11","short-name.small_surprise.12","short-name.small_surprise.13","short-name.small_surprise.14","short-name.small_surprise.15"],"fear_short":["short-name.fear_short.01","short-name.fear_short.02","short-name.fear_short.03","short-name.fear_short.04","short-name.fear_short.05","short-name.fear_short.06","short-name.fear_short.07","short-name.fear_short.08","short-name.fear_short.09","short-name.fear_short.10","short-name.fear_short.11","short-name.fear_short.12","short-name.fear_short.13","short-name.fear_short.14","short-name.fear_short.15"],"peril_slang":["short-name.peril_slang.01","short-name.peril_slang.02","short-name.peril_slang.03","short-name.peril_slang.04","short-name.peril_slang.05","short-name.peril_slang.06","short-name.peril_slang.07","short-name.peril_slang.08","short-name.peril_slang.09","short-name.peril_slang.10","short-name.peril_slang.11","short-name.peril_slang.12","short-name.peril_slang.13","short-name.peril_slang.14","short-name.peril_slang.15"],"escape_short":["short-name.escape_short.01","short-name.escape_short.02","short-name.escape_short.03","short-name.escape_short.04","short-name.escape_short.05","short-name.escape_short.06","short-name.escape_short.07","short-name.escape_short.08","short-name.escape_short.09","short-name.escape_short.10","short-name.escape_short.11","short-name.escape_short.12","short-name.escape_short.13","short-name.escape_short.14","short-name.escape_short.15"],"laugh_short":["short-name.laugh_short.01","short-name.laugh_short.02","short-name.laugh_short.03","short-name.laugh_short.04","short-name.laugh_short.05","short-name.laugh_short.06","short-name.laugh_short.07","short-name.laugh_short.08","short-name.laugh_short.09","short-name.laugh_short.10","short-name.laugh_short.11","short-name.laugh_short.12","short-name.laugh_short.13","short-name.laugh_short.14","short-name.laugh_short.15","short-name.laugh_short.16","short-name.laugh_short.17","short-name.laugh_short.18","short-name.laugh_short.19","short-name.laugh_short.20"],"skill_short":["short-name.skill_short.01","short-name.skill_short.02","short-name.skill_short.03","short-name.skill_short.04","short-name.skill_short.05","short-name.skill_short.06","short-name.skill_short.07","short-name.skill_short.08","short-name.skill_short.09","short-name.skill_short.10","short-name.skill_short.11","short-name.skill_short.12","short-name.skill_short.13","short-name.skill_short.14","short-name.skill_short.15"],"quiet_short":["short-name.quiet_short.01","short-name.quiet_short.02","short-name.quiet_short.03","short-name.quiet_short.04","short-name.quiet_short.05","short-name.quiet_short.06","short-name.quiet_short.07","short-name.quiet_short.08","short-name.quiet_short.09","short-name.quiet_short.10","short-name.quiet_short.11","short-name.quiet_short.12"],"bored_slang":["short-name.bored_slang.01","short-name.bored_slang.02","short-name.bored_slang.03","short-name.bored_slang.04","short-name.bored_slang.05","short-name.bored_slang.06","short-name.bored_slang.07","short-name.bored_slang.08","short-name.bored_slang.09","short-name.bored_slang.10"],"relief_short":["short-name.relief_short.01","short-name.relief_short.02","short-name.relief_short.03","short-name.relief_short.04","short-name.relief_short.05","short-name.relief_short.06","short-name.relief_short.07","short-name.relief_short.08","short-name.relief_short.09","short-name.relief_short.10","short-name.relief_short.11","short-name.relief_short.12","short-name.relief_short.13","short-name.relief_short.14"],"name_cheer":["short-name.name_cheer.01","short-name.name_cheer.02","short-name.name_cheer.03","short-name.name_cheer.04","short-name.name_cheer.05","short-name.name_cheer.06","short-name.name_cheer.07","short-name.name_cheer.08"],"name_escape":["short-name.name_escape.01","short-name.name_escape.02","short-name.name_escape.03","short-name.name_escape.04","short-name.name_escape.05","short-name.name_escape.06","short-name.name_escape.07","short-name.name_escape.08"],"name_laugh":["short-name.name_laugh.01","short-name.name_laugh.02","short-name.name_laugh.03","short-name.name_laugh.04","short-name.name_laugh.05","short-name.name_laugh.06","short-name.name_laugh.07","short-name.name_laugh.08"],"name_skill":["short-name.name_skill.01","short-name.name_skill.02","short-name.name_skill.03","short-name.name_skill.04","short-name.name_skill.05","short-name.name_skill.06","short-name.name_skill.07","short-name.name_skill.08"],"name_worry":["short-name.name_worry.01","short-name.name_worry.02","short-name.name_worry.03","short-name.name_worry.04","short-name.name_worry.05","short-name.name_worry.06","short-name.name_worry.07","short-name.name_worry.08"],"name_hello":["short-name.name_hello.01","short-name.name_hello.02","short-name.name_hello.03","short-name.name_hello.04","short-name.name_hello.05","short-name.name_hello.06"],"name_return":["short-name.name_return.01","short-name.name_return.02","short-name.name_return.03","short-name.name_return.04","short-name.name_return.05","short-name.name_return.06"]}};   // 候補ID → [日本語, 英語]。抽選はIDで行い、選んだ日英の文をそのまま動画と一緒に保存する
+const CHAT_UI = {
+  title: ['チャット', 'Chat'], note: ['映像に合わせた架空のコメント', 'Simulated chat synced to the video'], before: ['再生するとコメントが流れます', 'Play the video to see chat.'],
+  novid: ['録画された映像がありません', 'No recorded video.'], nosync: ['この動画には同期コメントがありません', "Synced chat isn't available for this video."], legacy: ['この保存チャットは日本語のみです', 'This saved chat is only available in Japanese.'],
+  latest: ['最新へ', 'Jump to latest'], pending: ['動画を仕上げています…', 'Finishing the video…'], nick: ['コメントでの呼び名', 'Name used in chat'], nickHint: ['空欄の場合はチャンネル名を使います', 'Leave blank to use your channel name.'],
+  lifetime: ['累計 {count} いいね', '{count} lifetime likes'], next: ['次のランクまで あと{count}いいね', '{count} likes to the next rank'], top: ['最高ランク到達', 'Highest rank reached'],
+  congrats: ['おめでとうございます！', 'Congratulations!'], explain: ['これからの動画はコメントが増えやすくなります', 'Your future videos can attract more chat reactions.'], ok: ['やった！', 'Nice!'],
+};
+const cui = (k, count) => { const v = CHAT_UI[k][LANG === 'en' ? 1 : 0]; return count === undefined ? v : v.replace('{count}', Number(count).toLocaleString(LANG === 'en' ? 'en-US' : 'ja-JP')); };
+const CHAT_CFG = {
+  ver: 1,
+  tiers: [[1500, 12, 34, 15], [1000, 10, 26, 12], [800, 6, 18, 9], [600, 3, 12, 7], [0, 1, 6, 5]],   // [P以上, SSの基準件数B, 120秒あたりの背景コメント, 話者数]
+  coef: { SS: 1, S: 0.7, A: 0.45, B: 0.3, C: 0.2, D: 0.15 },
+  cap120: 220, win10: 24, minGap: 0.25, maxCrit: 2,
+  namesEn: ['nightowl', 'mochi', 'sleepybean', 'teabreak', 'windowseat', 'lowbattery', 'lurker', 'toast', 'moonlit', 'justwatching', 'lateagain', 'nopeclub', 'paperclip', 'blanketfort', 'midnightsnack', 'oneearbud', 'quietcorner', 'coldtea', 'raincheck', 'softstatic', 'nightshift', 'sparekey', 'hallpass', 'cozyghost'],
+  names: ['夜ふかし', 'もち', 'ねぎ', '帰宅部', 'しろ', '麦茶', 'ねむい人', 'こたつ', 'まめ', 'ROMから来た', 'ぽん', '夜食', 'すみっこ', 'うどん', 'ふせん', 'あめ', '寝落ち寸前', '明日一限', '充電3％', '窓際', '体育館裏', 'きなこ', 'ざらめ', 'ねこ舌', '無糖', 'やきそば', '湯のみ', 'ながぐつ', '通りすがり', '深夜組', '布団の中', 'みかん', '寝不足', '冷めたお茶', '塩むすび', 'イヤホン片耳', '夜の散歩'],
+  colors: ['#ff8a80', '#ffb74d', '#ffd54f', '#aed581', '#4dd0e1', '#64b5f6', '#9575cd', '#f06292', '#a1887f', '#90a4ae', '#81c784', '#ce93d8', '#ffab91', '#80cbc4', '#e6ee9c'],
+};
+// コメントでの呼び名：任意の呼び名 → チャンネル名 → 「主」。制御文字・改行を除き、見た目16文字まで
+function chatCallName() {
+  const clean = s => String(s || '').replace(/[\u0000-\u001f\u007f\u2028\u2029]/g, '').replace(/\s+/g, ' ').trim();
+  let n = ''; try { n = clean(localStorage.getItem('yt_callName')); } catch (e) { }
+  if (!n) n = clean(world.chRaw); if (!n) return '';   // 空なら、表示の時に「主」／streamer を使う
+  const a = Array.from(n); return a.length > 16 ? a.slice(0, 15).join('') + '…' : n;
+}
+function chatHash(s) { let h = 2166136261; for (const c of String(s)) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function chatRng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+/* ---------- 録画中の記録（映像に残ったものだけ。時刻は録画時間） ---------- */
+const CHATLOG = {
+  ev: [], segs: [], st: {}, tagHit: {}, tagDone: {}, end: null,
+  reset() { this.ev = []; this.segs = []; this.st = { zone: null, chase: false, piano: false, selfie: false, dark: false, darkT: 0, zoom: 1, bat: false, near: false }; this.tagHit = {}; this.tagDone = {}; this.end = null; },
+  add(k, o) { if (!rec.active) return; if (this.ev.length > 900) return; this.ev.push(Object.assign({ t: Math.round(rec.time * 100) / 100, k }, o || {})); },
+  segStart() { this.segs.push([rec.time, rec.time]); this.add('seg'); },
+  segStop() { const s = this.segs[this.segs.length - 1]; if (s) s[1] = rec.time; this.add('stop'); },
+  finish() { const s = this.segs[this.segs.length - 1]; if (s && rec.active) s[1] = rec.time; this.end = { R: rec.time, ec: !!(typeof ENDCARD !== 'undefined' && ENDCARD.will()), lost: world.state === 'over' }; },
+  // 低頻度（0.4秒ごと）の確認：追跡・演奏・インカメ・暗さ・ズーム・電池・場所と、見えた物
+  tick() {
+    if (!rec.active || (world.state !== 'play' && world.state !== 'piano')) return;
+    const S = this.st;
+    const spCh = typeof SP !== 'undefined' && (SP.st === 'chase' || SP.st === 'drop' || SP.st === 'latch');
+    const mCh = world.mannRun && typeof MANN !== 'undefined' && ['spot', 'windup', 'dash', 'skid', 'hunt', 'stun', 'turn'].includes(MANN.st);
+    const chase = CH.state === 'chase' || spCh || mCh;
+    if (chase !== S.chase) { S.chase = chase; this.add('chase', { on: chase }); S.near = false; }
+    if (chase && !S.near) { let d = 99; if (CH.state === 'chase' && WD.pos) d = Math.min(d, Math.hypot(WD.pos.x - player.x, WD.pos.z - player.z)); if (spCh && SP.pos) d = Math.min(d, Math.hypot(SP.pos.x - player.x, SP.pos.z - player.z)); if (mCh) d = Math.min(d, Math.hypot(MANN.root.position.x - player.x, MANN.root.position.z - player.z)); if (d < 3.2) { S.near = true; this.add('near'); } }
+    const piano = world.state === 'piano'; if (piano !== S.piano) { S.piano = piano; this.add('piano', { on: piano }); }
+    if (!!world.selfie !== S.selfie) { S.selfie = !!world.selfie; this.add('selfie', { on: S.selfie }); }
+    if (world.dark) { S.darkT += 0.4; if (S.darkT >= 3 && !S.dark) { S.dark = true; this.add('dark'); } } else { S.darkT = 0; S.dark = false; }
+    const z = zoomTarget || 1; if (z > 1.4 && S.zoom <= 1.4) this.add('zoom'); S.zoom = z;
+    if (!S.bat && world.battery < 15) { S.bat = true; this.add('bat'); }
+    const zn = playerZone(); if (zn !== S.zone) { if (S.zone !== null) this.add('zone', { z: zn }); S.zone = zn; }
+    if (world.selfie || piano) return;   // インカメ中は前のカメラの「見えた物」を使わない
+    for (const [tag, fn] of CHATTAG) {
+      if (this.tagDone[tag]) continue; let ok = false; try { ok = fn(); } catch (e) { }
+      if (ok) { this.tagHit[tag] = (this.tagHit[tag] || 0) + 1; if (this.tagHit[tag] >= 2) { this.tagDone[tag] = true; this.add('tag', { tag }); } } else this.tagHit[tag] = 0;   // 0.8秒続けて見えたら
+    }
+  },
+};
+// 見えた物の確認（近くの1つだけを調べる。距離と遮蔽は既存の seen() を使う）
+const CHATTAG = [
+  ['desk', () => { const r = rooms[playerZone()]; if (!r || !r.desks || !r.desks.length) return false; let b = null, bd = 6; for (const d of r.desks) { const k = Math.hypot(d.x - player.x, d.z - player.z); if (k < bd) { bd = k; b = d; } } return !!b && bd > 0.8 && seen(V(b.x, (b.y || 0) + 0.72, b.z), { maxD: 6 }); }],
+  ['locker', () => { let b = null, bd = 5; for (const lk of lockers) { if ((lk.lv || 0) !== player.lv) continue; const k = Math.hypot(lk.center.x - player.x, lk.center.z - player.z); if (k < bd) { bd = k; b = lk; } } return !!b && bd > 1.0 && seen(b.center, { maxD: 5 }); }],
+  ['clock', () => clocks.some(c => Math.abs(c.pos.y - player.y - 2.4) < 1.2 && Math.hypot(c.pos.x - player.x, c.pos.z - player.z) < 7 && seen(c.pos, { maxD: 7 }))],
+  ['bed', () => !!(F2.beds && F2.beds.some(b => player.lv === 0 && Math.hypot(b.top.x - player.x, b.top.z - player.z) < 6 && seen(b.top, { maxD: 6 })))],
+  ['piano', () => { if (!F2.piano || player.lv !== 1) return false; const p = F2.piano.getWorldPosition(V()); p.y += 0.9; return Math.hypot(p.x - player.x, p.z - player.z) < 7 && seen(p, { maxD: 7 }); }],
+  ['gear', () => { const p = V(27.8, 0.85, -32.2); return player.lv === 0 && Math.hypot(p.x - player.x, p.z - player.z) < 5 && seen(p, { maxD: 5 }); }],   // 放送室の机の機材
+  ['bwin', () => { const p = V(16.25, 1.5, -30); return player.lv === 0 && Math.hypot(p.x - player.x, p.z - player.z) < 6 && seen(p, { maxD: 6 }); }],   // 最初から割れている窓（「今割れた」とは言わない）
+  ['stairs', () => STAIRS.some(s => { const p = V(s.ox - 2.0, player.y + 0.6, s.oz); return Math.hypot(p.x - player.x, p.z - player.z) < 5 && seen(p, { maxD: 5 }); })],
+];
+
+/* ---------- 1本ぶんのコメントを作る（同じ入力なら同じ結果） ---------- */
+const CHATGEN = {
+  LAUGH: new Set(['mannTurn', 'mannRun', 'mannBurst', 'mannOrgan', 'mannHide1', 'mannHide2', 'mannHide3', 'nakayoshi', 'f2teddy', 'uwaWalk', 'nekoPiano', 'twinkle', 'soccer', 'selfieRun']),
+  SKILL: new Set(['pianoPlay', 'clairPlay', 'requiem', 'akuryo']),
+  END: new Set(['fireExit', 'chaseOut', 'alive']),
+  PERIL: new Set(['capture', 'spLatch', 'lockerFace', 'boardLunge', 'spDescend', 'close', 'chaseRec', 'chaseSelfie', 'fireFace', 'turnFace', 'tTurnFace', 'f2turnFace', 'mirrorGiant', 'selfieShoulder', 'stallTop']),
+  CALM: new Set(['chalk', 'broom', 'ball', 'scaleNeedle', 'clockRev', 'curtain', 'micLamp', 'micTurn', 'shoeBlood', 'uwaSeen', 'smudge']),
+  POOL: {
+    fear: { s: ['small_surprise', 'fear_short', 'scared', 'surprise'], n: ['name_worry'] },
+    peril: { s: ['peril_slang', 'escape_short', 'fear_short', 'scared'], n: ['name_escape', 'name_cheer'] },
+    laugh: { s: ['laugh_short', 'laugh_short', 'laugh'], n: ['name_laugh'] },
+    skill: { s: ['skill_short', 'approval', 'applause'], n: ['name_skill'] },
+    calm: { s: ['small_surprise', 'approval'], n: ['name_worry'] },
+  },
+  NOT_YET: ['耐えた', 'GG', 'gg', 'ないす生還', 'おかえり'],   // 帰還・決着が見えるまで使わない
+  mood(key) { return this.LAUGH.has(key) ? 'laugh' : this.SKILL.has(key) ? 'skill' : this.PERIL.has(key) ? 'peril' : this.CALM.has(key) ? 'calm' : 'fear'; },
+  make(o) {
+    const R = chatRng(o.seed), rnd2 = (a, b) => a + (b - a) * R(), pickR = a => a[Math.floor(R() * a.length)];
+    const ev = o.log || [], end = o.end || { R: 0, ec: false, lost: false }, len = Math.max(1, end.R), M = o.M || 1, nJa = o.name || '主', nEn = o.name || 'streamer', T = CHAT_DICT.t;
+    const ti = CHAT_CFG.tiers.findIndex(t => o.P >= t[0]), tier = CHAT_CFG.tiers[ti < 0 ? 4 : ti], cls = 4 - (ti < 0 ? 4 : ti);
+    const B = tier[1], N = Math.min(18, Math.round(1 + (B - 1) * M));
+    const out = [];   // [t, kind('g'=見せ場, 'b'=背景), text, prio, group]
+    const used = new Set(), recent = [];
+    const isShort = s => Array.from(s).length <= 6;
+    const mk = id => ({ id, ja: T[id][0].split('{name}').join(nJa), en: T[id][1].split('{name}').join(nEn) });   // {name}だけを一度置き換える（入力をテンプレートとして扱わない）
+    const line = (cat, opt = {}) => {
+      let L = (CHAT_DICT.c[cat] || []).filter(id => T[id]); if (!opt.end) L = L.filter(id => !this.NOT_YET.includes(T[id][0]));
+      if (/さん$|様$/.test(nJa)) L = L.filter(id => !T[id][0].includes('{name}さん'));
+      const ok = L.filter(id => { const j = T[id][0]; return isShort(j) ? !recent.slice(-3).includes(j) : !used.has(j); }); if (!ok.length) return null;
+      const id = pickR(ok), j = T[id][0]; used.add(j); recent.push(j); return mk(id);
+    };
+    const specLines = label => { const k = String(label || '').replace(/（\d+秒）$/, ''); return (CHAT_DICT.ev[k] || []).filter(id => T[id] && !used.has(T[id][0])); };
+    const useSpec = id => { used.add(T[id][0]); return mk(id); };
+    const maxR = end.R + (end.ec ? 3.2 : -0.15);
+    // 見せ場への反応群
+    const groups = [];
+    const aws = ev.filter(e => e.k === 'aw' || e.k === 'awc').map(e => ({ t: e.t, key: e.key, label: e.label, rank: rankOf({ key: e.key, pts: e.pts || 0 }) }));
+    const RK = ['D', 'C', 'B', 'A', 'S', 'SS'];
+    for (const a of aws) { const g = groups.find(x => Math.abs(x.t - a.t) < 1.5 && !this.END.has(a.key) && !this.END.has(x.key)); if (g) { if (RK.indexOf(a.rank) > RK.indexOf(g.rank)) Object.assign(g, { rank: a.rank, key: a.key, label: a.label, alt: g.label }); else g.alt = g.alt || a.label; } else groups.push(Object.assign({}, a)); }
+    for (const g of groups) {
+      let t0 = g.t, endG = this.END.has(g.key);
+      if (endG) { if (!end.ec || end.lost) continue; t0 = end.R + 0.3; }   // 帰還の反応は結果カードが見えてから
+      const raw = N * (CHAT_CFG.coef[g.rank] || 0.15);
+      let n = g.rank === 'SS' ? Math.max(1, Math.round(raw)) : raw >= 1 ? Math.round(raw) : (R() < 0.3 + raw ? 1 : 0);
+      if (!n) continue; n = Math.min(18, n); g.n = n;
+      const mood = endG ? 'skill' : this.mood(g.key), P = this.POOL[mood];
+      let spec = specLines(g.label); if (g.alt) spec = spec.concat(specLines(g.alt)); spec = spec.sort(() => R() - 0.5).slice(0, 2);
+      const span = n <= 3 ? 2.4 : n <= 10 ? 3 + (n - 4) / 6 * 2 : 5 + (n - 10) / 8 * 2;
+      for (let i = 0; i < n; i++) {
+        let t, txt = null;
+        if (i === 0) { t = t0 + rnd2(0.35, 1.2); txt = n === 1 && spec.length && R() < 0.45 ? useSpec(spec.shift()) : line(pickR(P.s), { end: endG }); }
+        else if (i === 1 && spec.length) { t = t0 + rnd2(0.9, 2.6); txt = useSpec(spec.shift()); }
+        else { t = t0 + 0.6 + (i / n) * span + rnd2(-0.2, 0.3); const r = R(); txt = r < 0.14 ? line(pickR(P.n), { end: endG }) : r < 0.38 && spec.length ? useSpec(spec.shift()) : line(pickR(P.s), { end: endG }); }
+        if (!txt) txt = line(pickR(P.s), { end: endG }); if (txt) out.push([t, 'g', txt, 10, g.t]);
+      }
+      if (mood === 'skill' && /piano|Play|requiem|twinkle/i.test(g.key) && n >= 2) { const x = line('applause'); if (x) out.push([t0 + rnd2(1.2, 2.4), 'g', x, 9, g.t]); }
+    }
+    // 結末（結果カードが映っている間だけ）
+    if (end.ec) {
+      const n = Math.max(1, Math.min(6, Math.round(N * 0.45)));
+      for (let i = 0; i < n; i++) { const t = end.R + 0.5 + i * (2.4 / n) + rnd2(0, 0.25); const cat = end.lost ? pickR(['ending_capture', 'ending_capture', 'peril_slang']) : pickR(['ending_return', 'ending_return', 'name_return', 'relief_short']); const x = line(cat, { end: !end.lost }); if (x) out.push([t, 'g', x, 9, end.R]); }
+    }
+    // 追跡中（映っている・聞こえる間）と、収まった後
+    const spans = (k) => { const r = []; let on = null; for (const e of ev) if (e.k === k) { if (e.on && on === null) on = e.t; else if (!e.on && on !== null) { r.push([on, e.t]); on = null; } } if (on !== null) r.push([on, end.R]); return r; };
+    const chaseS = spans('chase'), pianoS = spans('piano'), nearT = ev.filter(e => e.k === 'near').map(e => e.t);
+    const perTen = [1, 2, 3, 4, 5][cls] * M;
+    for (const [a, b] of chaseS) {
+      for (let t = a + rnd2(0.6, 1.4); t < b - 0.3; t += 10 / perTen * rnd2(0.75, 1.25)) {
+        const near = nearT.some(x => x >= a - 0.5 && x <= t + 0.5), r = R();
+        const cat = r < 0.45 ? 'escape_short' : r < 0.68 ? 'chase_support' : r < 0.82 ? 'name_escape' : near ? 'peril_slang' : 'fear_short';
+        const x = line(cat); if (x) out.push([t, 'g', x, 8, a]);
+      }
+      if (b < end.R - 2.5 && !(end.lost && b > end.R - 4)) { const x = line(R() < 0.5 ? 'relief' : 'relief_short'); if (x) out.push([b + rnd2(1.4, 3.2), 'b', x, 6]); }
+    }
+    for (const [a, b] of pianoS) for (let t = a + rnd2(2, 3.5); t < b - 0.5; t += rnd2(4, 6.5) / Math.min(1.6, M)) { const x = line(R() < 0.75 ? 'piano_support' : 'skill_short'); if (x) out.push([t, 'g', x, 7, a]); }
+    // 背景（挨拶・見えた物・静かな時間など）
+    const bg = [];
+    const firstSeg = ev.find(e => e.k === 'seg'); if (firstSeg && end.R > 1.5) { const r = R(); bg.push([firstSeg.t + rnd2(0.6, 1.8), r < 0.55 ? 'hello' : r < 0.8 ? 'name_hello' : 'start', 20]); if (cls >= 2) bg.push([firstSeg.t + rnd2(2.2, 4.5), R() < 0.6 ? 'hello' : 'start', 12]); }
+    const tagCat = { desk: 'view_desk', locker: 'view_locker', clock: 'view_clock', bed: 'view_bed', piano: 'view_piano', stairs: 'view_stairs', gear: 'view_broadcast_gear', bwin: 'view_broken_window', clean: 'view_cleaning', bag: 'view_bag', books: 'view_books' };
+    for (const e of ev) {
+      if (e.k === 'tag' && tagCat[e.tag] && R() < 0.7) bg.push([e.t + rnd2(0.5, 1.6), tagCat[e.tag], 6]);
+      else if (e.k === 'zoom' && R() < 0.45) bg.push([e.t + rnd2(0.6, 1.5), 'zoom', 4]);
+      else if (e.k === 'selfie' && e.on && !chaseS.some(([a, b]) => e.t >= a - 1 && e.t <= b + 1) && R() < 0.7) bg.push([e.t + rnd2(0.6, 1.6), 'selfie_calm', 5]);
+      else if (e.k === 'dark') bg.push([e.t + rnd2(0.2, 1.0), 'camera_dark', 5]);
+      else if (e.k === 'bat') bg.push([e.t + rnd2(0.8, 2), 'battery_low', 6]);
+      else if (e.k === 'pick') bg.push([e.t + rnd2(0.4, 1.2), R() < 0.6 ? 'item_pickup' : 'approval', 7]);
+    }
+    // 静かな時間：何も起きていない連続探索だけ（加点・追跡・演奏・場所や見えた物の変化・録画の切れ目で数え直し）
+    const act = ev.filter(e => !['near', 'dark', 'bat'].includes(e.k)).map(e => e.t);
+    for (const [a, b] of chaseS.concat(pianoS)) for (let t = a; t < b; t += 2) act.push(t);
+    act.push(end.R); act.sort((x, y) => x - y);
+    let crit = 0, lastCrit = -99;
+    for (let i = 0; i < act.length - 1; i++) {
+      const a = act[i], gap = act[i + 1] - a; if (gap < 8) continue;
+      bg.push([a + rnd2(8, 10), 'quiet_unease', 3]);
+      if (gap >= 12) bg.push([a + rnd2(12, 15), R() < 0.5 ? 'quiet_chat' : 'quiet_short', 3]);
+      if (gap >= 20) bg.push([a + rnd2(20, 23), R() < 0.55 ? 'bored_mild' : 'bored_slang', 2]);
+      if (gap >= 35 && crit < CHAT_CFG.maxCrit && a + 35 - lastCrit > 30) { const t = a + rnd2(35, 39); bg.push([t, 'bored_critical', 2, true]); crit++; lastCrit = t; }
+      for (let t = a + 26; t < a + gap - 2; t += rnd2(9, 14)) bg.push([t, pickR(['quiet_chat', 'quiet_short', 'bored_slang', 'quiet_unease']), 1]);
+    }
+    // 背景の数＝区分の基準×ランク倍率×録画の長さ。見せ場の直前直後には入れない
+    const budget = Math.max(1, Math.round(tier[2] * M * len / 120));
+    const busy = out.map(x => x[4]).filter(x => x !== undefined);
+    const free = t => !busy.some(g => t > g - 2 && t < g + 5);
+    bg.sort((x, y) => y[2] - x[2] || x[0] - y[0]);
+    const chosen = [];
+    for (const c of bg) { if (chosen.length >= budget) break; if (c[0] > maxR || c[0] < 0.3) continue; if (c[2] < 20 && !free(c[0])) continue; if (chosen.some(x => Math.abs(x[0] - c[0]) < 2.2)) continue; chosen.push(c); }
+    for (const c of chosen.sort((x, y) => x[0] - y[0])) {
+      const x = line(c[1]); if (!x) continue; out.push([c[0], 'b', x, c[2]]);
+      if (c[3] && R() < 0.55) { const y = line('support_after_bored'); if (y) out.push([c[0] + rnd2(1.5, 3), 'b', y, c[2], undefined, out.length - 1]); }   // 不満のあとに別の人がかばう（親が出ている時だけ）
+    }
+    // 並べて上限をかける：最短0.25秒、10秒あたり24件、全体は120秒換算220件。超えたら背景→重複短文の順で間引く
+    let L = out.filter(x => x[0] >= 0.3 && x[0] <= maxR).sort((x, y) => x[0] - y[0]);
+    const cap = Math.round(CHAT_CFG.cap120 * Math.max(len, 30) / 120);
+    const thin = () => { let i = L.findIndex(x => x[1] === 'b' && x[3] < 20); if (i < 0) i = L.findIndex((x, j) => isShort(x[2].ja) && L.slice(0, j).some(y => y[2].ja === x[2].ja)); if (i < 0) i = L.length - 1; L.splice(i, 1); };
+    while (L.length > cap) thin();
+    for (let i = 0; i < L.length; i++) { const w = L.filter(x => x[0] >= L[i][0] && x[0] < L[i][0] + 10); if (w.length > CHAT_CFG.win10) { const j = L.indexOf(w.find(x => x[1] === 'b' && x[3] < 20) || w.find((x, k) => k > 0 && isShort(x[2].ja)) || w[w.length - 1]); L.splice(j, 1); i = Math.max(-1, i - 2); } }
+    for (let i = 1; i < L.length; i++) if (L[i][0] < L[i - 1][0] + CHAT_CFG.minGap) L[i][0] = L[i - 1][0] + CHAT_CFG.minGap;
+    L = L.filter(x => x[0] <= maxR);
+    // 話者：区分とランクで人数を決め、同じ人の連投は避ける（見せ場の連投は、できるだけ全員違う名前）
+    const U = Math.max(4, Math.min(20, Math.round(tier[3] * Math.sqrt(M))));
+    const users = Array.from({ length: U }, (_, i) => i);
+    let prev = -1, gUsed = new Map();
+    const items = L.map(x => {
+      const g = x[4]; let pool = users.map((_, i) => i).filter(i => i !== prev);
+      if (g !== undefined) { const s = gUsed.get(g) || new Set(); const p2 = pool.filter(i => !s.has(i)); if (p2.length) pool = p2; }
+      const u = pool[Math.floor(R() * pool.length)]; prev = u; if (g !== undefined) { if (!gUsed.has(g)) gUsed.set(g, new Set()); gUsed.get(g).add(u); }
+      return [Math.round(x[0] * 100) / 100, u, x[2].id, x[2].ja, x[2].en];
+    });
+    return items;
+  },
+};
+
+/* ---------- 撮影1本ぶんのチャット（保存・読み込み） ---------- */
+const CHAT = {
+  cur: null,
+  build(P) {
+    if (!CHATLOG.end) CHATLOG.finish();
+    const d = { v: 3, dict: CHAT_DICT.v, seed: chatHash(world.runId || String(Date.now())), P, M: world.chatM || 1, name: world.chatName ?? chatCallName(), lang: world.chatLang || LANG, segs: CHATLOG.segs.map(s => [Math.round(s[0] * 100) / 100, Math.round(s[1] * 100) / 100]), end: CHATLOG.end };
+    try { d.items = CHATGEN.make({ seed: d.seed, log: CHATLOG.ev, end: d.end, P, M: d.M, name: d.name }); d.users = null; } catch (e) { console.warn('チャットを作れませんでした', e); d.items = []; }
+    // 話者の名前と色（生成と同じシードで並べ直す）
+    d.users = CHAT.usersOf(d.seed, d.lang);   // 話者の名前と色はこの動画で固定（英語で始めた撮影は英語の名前）
+    this.cur = d; return d;
+  },
+  usersOf(seed, lang) {   // 話者は別の決まったシードで作る
+    const R = chatRng(seed ^ 0x9e3779b9), nm = (lang === 'en' ? CHAT_CFG.namesEn : CHAT_CFG.names).slice().sort(() => R() - 0.5), cols = CHAT_CFG.colors.slice().sort(() => R() - 0.5);
+    return nm.map((n, i) => [n, cols[i % cols.length]]);
+  },
+};
+
+/* ---------- 表示（動画の再生位置に同期） ---------- */
+const CHATVIEW_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9.2" r="3.6"/><path d="M5.6 19.2c.6-3.4 3.2-5.4 6.4-5.4s5.8 2 6.4 5.4z"/></svg>';
+function chatDur(url) {   // MediaRecorderのwebmは長さが不明なことがあるので、末尾へ飛ばして確かめる
+  return new Promise(res => {
+    const e = document.createElement('video'); e.preload = 'metadata'; e.muted = true; let done = false; const fin = v => { if (done) return; done = true; res(isFinite(v) && v > 0 ? v : 0); try { e.removeAttribute('src'); e.load(); } catch (_) { } };
+    e.onloadedmetadata = () => { if (isFinite(e.duration) && e.duration > 0) fin(e.duration); else { e.ondurationchange = () => { if (isFinite(e.duration) && e.duration > 0) fin(e.duration); }; try { e.currentTime = 1e9; } catch (_) { fin(0); } } };
+    e.onerror = () => fin(0); setTimeout(() => fin(isFinite(e.duration) ? e.duration : 0), 4000); e.src = url;
+  });
+}
+class ChatView {
+  constructor(host, video, segOf) {
+    this.video = video; this.segOf = segOf;
+    const el = document.createElement('div'); el.className = 'chatBox';
+    el.innerHTML = '<div class="chatHead"><b></b><span></span></div><div class="chatList" role="log" aria-live="off"></div><div class="chatMsg"></div><button class="chatNew" type="button"></button>';
+    el.querySelector('.chatHead b').textContent = cui('title'); el.querySelector('.chatHead span').textContent = cui('note'); el.querySelector('.chatNew').textContent = cui('latest');
+    host.appendChild(el); this.el = el; this.list = el.querySelector('.chatList'); this.msg = el.querySelector('.chatMsg'); this.btn = el.querySelector('.chatNew');
+    this.data = null; this.starts = []; this.shown = 0; this.lastG = 0; this.follow = true; this.raf = 0; this.anim = 0;
+    this.reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    for (const t of ['pointerdown', 'touchstart', 'touchmove', 'wheel']) el.addEventListener(t, e => e.stopPropagation(), { passive: true });
+    this.list.addEventListener('scroll', () => { if (this.autoScroll) return; const atEnd = this.list.scrollTop + this.list.clientHeight >= this.list.scrollHeight - 24; this.follow = atEnd; this.btn.classList.toggle('show', !atEnd); });
+    this.btn.addEventListener('click', e => { e.stopPropagation(); this.follow = true; this.btn.classList.remove('show'); this.toEnd(); });
+    const kick = () => this.sync(); for (const t of ['play', 'playing', 'pause', 'seeked', 'seeking', 'timeupdate', 'loadedmetadata', 'emptied', 'ratechange']) video.addEventListener(t, kick);
+    video.addEventListener('play', () => this.loop()); video.addEventListener('playing', () => this.loop());
+  }
+  // data: 生成済みのチャット（null＝同期情報なし）、urls: 区間ごとの動画
+  async load(data, urls, state) {
+    this.data = data; this.urls = urls || []; this.reset();
+    if (state === 'pending') return this.say(cui('pending'));
+    if (!this.urls.length) return this.say(cui('novid'));
+    if (!data || !data.items) return this.say(cui('nosync'));
+    this.legacy = LANG === 'en' && data.items.length && data.items[0].length < 5;   // 英語が入っていない古い保存チャット
+    this.el.querySelector('.chatHead span').textContent = this.legacy ? cui('legacy') : cui('note');
+    const ds = []; for (const u of this.urls) ds.push(await chatDur(u)); if (this.data !== data) return;
+    this.map = this.mapper(data, ds); this.starts = []; let acc = 0; for (let i = 0; i < this.urls.length; i++) { this.starts.push(acc); acc += ds[i] || this.segLenR(data, i); }
+    this.items = data.items.map(x => [this.map(x[0]), x[1], x.length >= 5 ? (LANG === 'en' ? x[4] : x[3]) : x[2]]).sort((a, b) => a[0] - b[0]);
+    this.say(this.items.length ? cui('before') : ''); this.sync();
+  }
+  segLenR(d, i) { const s = d.segs[i]; return s ? s[1] - s[0] : 0; }
+  // 録画時間（R）→ 動画全体の時刻（G）。保存した区間の実際の長さで合わせる（ゲーム時間をそのまま使わない）
+  mapper(d, ds) {
+    const segs = d.segs.length ? d.segs : [[0, d.end ? d.end.R : 0]], ec = d.end && d.end.ec, recTot = segs.reduce((a, s) => a + (s[1] - s[0]), 0);
+    const cum = []; let c = 0; for (const s of segs) { cum.push(c); c += s[1] - s[0]; }   // 区間の頭の録画時間（rec.time は録画中だけ進むので連続）
+    if (ds.length === 1) {
+      const D = ds[0], k = D && recTot > 0.5 ? clamp((D - (ec ? ENDCARD.dur : 0)) / recTot, 0.5, 3) : 1;
+      return R => R <= recTot ? R * k : recTot * k + (R - recTot);
+    }
+    if (ds.length === segs.length + (ec ? 1 : 0)) {
+      const acc = []; let a = 0; for (let i = 0; i < ds.length; i++) { acc.push(a); a += ds[i] || (i < segs.length ? segs[i][1] - segs[i][0] : 3.5); }
+      return R => { if (R > recTot) return acc[segs.length] !== undefined ? acc[segs.length] + (R - recTot) : R; let i = 0; while (i < segs.length - 1 && R >= cum[i + 1]) i++; const L = segs[i][1] - segs[i][0], k = ds[i] && L > 0.3 ? clamp(ds[i] / L, 0.5, 3) : 1; return acc[i] + (R - cum[i]) * k; };
+    }
+    return R => R;
+  }
+  G() { const i = this.segOf(); return (this.starts[i] || 0) + (this.video.currentTime || 0); }
+  say(t) { this.msg.textContent = t; this.msg.style.display = t ? '' : 'none'; }
+  reset() { this.list.textContent = ''; this.shown = 0; this.lastG = 0; this.items = []; this.follow = true; this.btn.classList.remove('show'); cancelAnimationFrame(this.raf); this.raf = 0; }
+  loop() { if (this.raf) return; const f = () => { this.raf = 0; this.sync(); if (!this.video.paused && !this.video.ended && this.el.isConnected) this.raf = requestAnimationFrame(f); }; this.raf = requestAnimationFrame(f); }
+  row(it, anim) {
+    const u = (this.data.users || [])[it[1]] || ['viewer', '#9aa'];
+    const d = document.createElement('div'); d.className = 'cm' + (anim && !this.reduce ? ' new' : ''); d.style.setProperty('--c', u[1]);
+    const av = document.createElement('i'); av.className = 'av'; av.innerHTML = CHATVIEW_SVG;
+    const tx = document.createElement('div'); tx.className = 'tx'; const nm = document.createElement('b'); nm.textContent = u[0]; tx.appendChild(nm); tx.appendChild(document.createTextNode(it[2]));   // 本文は文字として入れる（HTMLにしない）
+    d.appendChild(av); d.appendChild(tx); return d;
+  }
+  sync() {
+    if (!this.items || !this.items.length) return;
+    const g = this.G(), it = this.items; let n = 0; while (n < it.length && it[n][0] <= g) n++;
+    if (n > 0 && this.msg.style.display !== 'none') this.say('');
+    if (g < this.lastG - 0.25 || n - this.shown > 6 || n < this.shown) {   // 巻き戻し・大きく先送り：その時刻までのログから作り直す（飛ばした分は一気に流さない）
+      this.list.textContent = ''; for (const x of it.slice(Math.max(0, n - 14), n)) this.list.appendChild(this.row(x, false)); this.shown = n; this.toEnd(true);
+      if (!n && this.video.paused) this.say(cui('before'));
+    } else if (n > this.shown) {
+      for (const x of it.slice(this.shown, n)) this.list.appendChild(this.row(x, true)); this.shown = n;
+      while (this.list.childElementCount > 80) this.list.firstElementChild.remove();   // 長く再生しても行が増え続けないように
+      if (this.follow) this.toEnd();
+    }
+    this.lastG = g;
+  }
+  toEnd(now) {
+    const L = this.list, to = L.scrollHeight - L.clientHeight; if (!this.follow && !now) return;
+    if (now || this.reduce) { this.autoScroll = true; L.scrollTop = to; requestAnimationFrame(() => { this.autoScroll = false; }); return; }
+    const from = L.scrollTop, t0 = performance.now(); this.autoScroll = true; cancelAnimationFrame(this.anim);
+    const st = n => { const k = Math.min(1, (n - t0) / 150), e = 1 - Math.pow(1 - k, 3); L.scrollTop = from + (L.scrollHeight - L.clientHeight - from) * e; if (k < 1) this.anim = requestAnimationFrame(st); else { this.autoScroll = false; } };
+    this.anim = requestAnimationFrame(st);
+  }
+}
+const RES_CHAT = new ChatView($('#resChatHost'), $('#replay'), () => segIdx);
+setInterval(() => CHATLOG.tick(), 400);
+
+/* ---------- ランク昇格のお知らせ（タイトルに戻った時に1回） ---------- */
+const RANKPOP = {
+  check() {
+    const d = ACH.load(); if (d.rkPend === undefined || d.rkPend <= (d.rk || 0)) return;
+    if (!$('#start').classList.contains('show') || $('#resetAsk').classList.contains('show') || $('#tut').classList.contains('show') || (typeof SET !== 'undefined' && SET.open)) { setTimeout(() => this.check(), 800); return; }
+    const r = YRANK[d.rkPend], el = $('#rankPop'), en = LANG === 'en';   // 保留はランクIDで持ち、いまの言語で出す
+    $('#rpT').innerHTML = ''; $('#rpT').append(cui('congrats'), document.createElement('br'), en ? r[5] : `${r[1]}になりました！`);
+    $('#rpFrom').textContent = `${yrankName(d.rk || 0)} → ${yrankName(d.rkPend)}`; $('#rpTot').textContent = cui('lifetime', d.total);
+    $('#rpNote').textContent = cui('explain'); $('#rpOk').textContent = cui('ok');
+    el.classList.add('show');
+  },
+  close() { const d = ACH.load(); if (d.rkPend !== undefined) { d.rk = Math.max(d.rk || 0, d.rkPend); delete d.rkPend; ACH.save(); } $('#rankPop').classList.remove('show'); RANKTAG(); },
+};
+$('#rpOk').addEventListener('click', e => { e.stopPropagation(); RANKPOP.close(); });
+for (const t of ['pointerdown', 'touchstart']) $('#rankPop').addEventListener(t, e => e.stopPropagation(), { passive: true });
+function RANKTAG() { const el = $('#rankTag'); if (!el) return; const d = ACH.load(); el.textContent = yrankName(Math.min(d.rk || 0, yrankIdx(d.total))); }
+RANKTAG();
+// コメントでの呼び名（任意）：空欄ならチャンネル名
+{ const c = $('#callName'); if (c) { c.placeholder = cui('nick'); $('#callSum').textContent = cui('nick') + ' ›'; $('#callHint').textContent = cui('nickHint'); try { c.value = localStorage.getItem('yt_callName') || ''; } catch (e) { } c.addEventListener('input', () => { try { localStorage.setItem('yt_callName', c.value); } catch (e) { } }); } }
+
+//（この機能より前の記録の復元は、新しい周を足す前に済ませる）
 
 /* =========================================================
    2026-11-14 赤いマント：捕まっても1周に1度だけ、何もなかったことにする
@@ -10778,7 +11285,7 @@ $('#resetAsk').addEventListener('click', e => e.stopPropagation());
 $('#setReset').addEventListener('click', e => { e.stopPropagation(); RESET.ask(); });
 $('#resetNo').addEventListener('click', e => { e.stopPropagation(); RESET.no(); });
 $('#resetYes').addEventListener('click', e => { e.stopPropagation(); RESET.yes(); });
-if (TEST && window.__G) Object.assign(window.__G, { ACH, PERM, REVIVE, RESET, COL, escape, caught, DIR, SP, OFUDA, LUM, TRACE, HAZURE, seen, SFX_CREDITS, AW_TABLE, RANK_FIX, rankOf, EVENTS: () => EV });
+if (TEST && window.__G) Object.assign(window.__G, { award, CHATLOG, CHAT, CHATGEN, RES_CHAT, RANKPOP, yrankIdx, GOD, VDB, ACH, PERM, REVIVE, RESET, COL, escape, caught, DIR, SP, OFUDA, LUM, TRACE, HAZURE, seen, SFX_CREDITS, AW_TABLE, RANK_FIX, rankOf, EVENTS: () => EV });
 /* 2026-11-14 PC：ウィンドウ／全画面（全画面はボタンを押した時と、旧校舎に入る時に切り替える。Escで戻したらウィンドウに） */
 const SCREEN = {
   isFull() { return !!(document.fullscreenElement || document.webkitFullscreenElement); },
