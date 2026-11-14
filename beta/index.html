@@ -3196,7 +3196,7 @@ function wdScream(delay = SCREAM_JAW, gain = 1, len = 1.4) {
   if (!hasSfx(id)) { SND.scream(); return; }
   const t0 = A.ctx.currentTime + delay; A.screamAt = t0; setTimeout(() => PAD.hit(1), delay * 1000);   // 2026-11-14 逆さ女の叫び：強く震える
   const r = playSfx(id, { ear: 0, gain, delay, offset: screamOnset(A.buf[id]) });   // ゲーム音（A.master）→ 録画にも入る
-  if (!r) return;
+  if (!r) return; A.psyCur = r;
   // 細切れにする：出だしはしっかり聞かせ、そのあと「鳴る／途切れる」を不規則にくり返す（映像が飛ぶように）
   const G = r.g.gain, full = G.value; A.screamGaps = [];
   G.setValueAtTime(full, t0);
@@ -3223,11 +3223,19 @@ function elScreamLayer(t0, gain = 1, noGaps) {
   const total = 5.4; L.gain.setValueAtTime(gain, t0);
   if (!noGaps) for (const [a, b] of (A.screamGaps || [])) { if (a < t0) continue; L.gain.setValueAtTime(gain, a); L.gain.linearRampToValueAtTime(0, a + 0.004); L.gain.setValueAtTime(0, b); L.gain.linearRampToValueAtTime(gain, b + 0.004); }
   L.gain.setValueAtTime(gain, t0 + total - 0.5); L.gain.linearRampToValueAtTime(0, t0 + total);
-  const layer = (id, at, rate, g) => { const r = playSfx(id, { dest: L, gain: g, rate, delay: Math.max(0, at - now) }); if (r) r.s.stop(t0 + total + 0.05); };
+  const srcs = [], layer = (id, at, rate, g) => { const r = playSfx(id, { dest: L, gain: g, rate, delay: Math.max(0, at - now) }); if (r) { r.s.stop(t0 + total + 0.05); srcs.push(r.s); } };
+  A.elCur = { L, srcs, end: t0 + total };
   layer('el_scream1', t0, 1.0, 1.0); layer('el_scream1', t0 + 0.03, 1.06, 0.38); layer('el_scream1', t0 + 0.05, 0.94, 0.3);   // 本体・半音上・半音下
   if (hasSfx('el_scream2')) for (const [at, rt] of [[0.9, 1.0], [3.05, 0.97]]) { layer('el_scream2', t0 + at, rt, 0.85); layer('el_scream2', t0 + at + 0.04, rt * 1.12, 0.32); }
   A.elScreamAt = t0;
   setTimeout(() => { try { L.disconnect(); out.disconnect(); } catch (e) { } }, (t0 - now + total + 0.5) * 1000);
+}
+/* 2026-11-14 女が消えたら叫びも止める（重ねた叫び声は約5.4秒あるので、驚かしが先に終わると叫びだけ残っていた） */
+function screamCut(fade = 0.2) {
+  if (!A.ctx) return; const now = A.ctx.currentTime;
+  const E = A.elCur; if (E && now < E.end) { try { const G = E.L.gain; G.cancelScheduledValues(now); G.setValueAtTime(G.value, now); G.linearRampToValueAtTime(0, now + fade); for (const s of E.srcs) s.stop(now + fade + 0.05); } catch (e) { } A.elCur = null; }
+  const P = A.psyCur; if (P) { try { const G = P.g.gain; G.cancelScheduledValues(now); G.setValueAtTime(G.value, now); G.linearRampToValueAtTime(0, now + fade); P.s.stop(now + fade + 0.05); } catch (e) { } A.psyCur = null; }
+  if (A.screamGaps) A.screamGaps = [];
 }
 // いま叫びが途切れている瞬間か（映像のノイズを音の欠けに合わせる）
 function screamGap() { if (!A.ctx || !A.screamGaps) return false; const n = A.ctx.currentTime; return A.screamGaps.some(([a, b]) => n >= a && n < b); }
@@ -4245,6 +4253,7 @@ const WD = {
   goTo(p) { const n = nearestNode(p.x, p.z, undefined, p.y || 0); this.path = navPath(nearestNode(this.pos.x, this.pos.z, undefined, this.pos.y), n).slice(1).map(k => k); this.extra = p.clone(); },
   borrow() { scareZoom1(); this.borrowed = true; this.glance = null; SG.ovYaw = SG.ovPitch = 0; SG.ovStretch = 0; return SG; },
   release(far = true) {
+    if (this.borrowed && !world.capture && !CAP.on) screamCut();   // 2026-11-14 驚かしが終わって女が消えたら、叫びも止める
     this.borrowed = false; sgSetOpacity(0); SG.root.rotation.x = 0; SG.root.rotation.z = 0; SG.ovRoll = 0; SG.root.position.y = 0; SG.ovYaw = SG.ovPitch = 0; sgPlay('Walk');
     if (far) { const cands = Object.keys(NAV).filter(k => !['E1', 'E0', 'Aa'].includes(k) && distTo(NAV[k][0], NAV[k][1]) > 12 && !clearLine(V(NAV[k][0], (NAV[k][3] || 0) + 1.5, NAV[k][1]))); this.node = cands.length ? pick(cands) : 'B4'; this.pos.copy(nodePos(this.node)); }
     this.path = []; this.extra = null; this.wait = rnd(2, 5); this.noDetectUntil = world.t + 12;
@@ -11300,11 +11309,14 @@ const LID = {
     scene.traverse(o => { if (o.isMesh && o.name === 'Pivot_Seat') seats.push(o); }); if (seats.length < stalls.length) return false;
     for (const st of stalls) {
       const seat = seats.reduce((a, b) => Math.abs(a.getWorldPosition(V()).z - st.zc) < Math.abs(b.getWorldPosition(V()).z - st.zc) ? a : b);
-      const bb = new THREE.Box3().setFromObject(seat), sx = bb.max.x - bb.min.x, sz = bb.max.z - bb.min.z;
-      const hinge = new THREE.Group(); hinge.position.set(bb.max.x - 0.02, bb.max.y + 0.012, (bb.min.z + bb.max.z) / 2); scene.add(hinge);
-      const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.024, 28), M.porcelain); lid.scale.set(sx * 0.98, 1, sz * 0.98); lid.position.set(-sx * 0.49 + 0.01, 0, 0); lid.castShadow = true; hinge.add(lid);
+      const bb = new THREE.Box3().setFromObject(seat), sz = bb.max.z - bb.min.z;
+      // 2026-11-14 便座の後ろ側はタンクの下にもぐっているので、蝶番はタンクの前面（洗浄レバーの位置）より少し手前に置く
+      let tankX = bb.max.x - 0.14; { const lv = []; scene.traverse(o => { if (o.isMesh && o.name === 'Flush_lever' && Math.abs(o.getWorldPosition(V()).z - st.zc) < 0.4) lv.push(o); }); if (lv.length) tankX = new THREE.Box3().setFromObject(lv[0]).min.x; }
+      const hx = tankX - 0.035, len = Math.max(0.25, hx - bb.min.x - 0.012), wid = sz * 0.94;
+      const hinge = new THREE.Group(); hinge.position.set(hx, bb.max.y + 0.012, (bb.min.z + bb.max.z) / 2); scene.add(hinge);
+      const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.022, 28), M.porcelain); lid.scale.set(len, 1, wid); lid.position.set(-len / 2, 0, 0); lid.castShadow = true; hinge.add(lid);
       occluders.push(lid);
-      const c = V((bb.min.x + bb.max.x) / 2 - 0.02, bb.max.y - 0.16, (bb.min.z + bb.max.z) / 2);
+      const sx = len, c = V(hx - len / 2, bb.max.y - 0.16, (bb.min.z + bb.max.z) / 2);
       this.list.push({ st, hinge, lid, c, r: Math.min(sx, sz) * 0.3, open: false, a: 0 });
     }
     this.reset(); return true;
@@ -11314,7 +11326,7 @@ const LID = {
     for (const L of this.list) { L.open = chance(0.5); L.a = L.open ? 1 : 0; this.pose(L); L.used = false; }
     if (this.list.length && chance(0.5)) { const L = pick(this.list); L.open = false; L.a = 0; this.pose(L); this.armed = L; this.kind = pickW([['blood', 0.4], ['eye', 0.4], ['trap', 0.2]]); }
   },
-  pose(L) { L.hinge.rotation.z = -1.66 * L.a; },
+  pose(L) { L.hinge.rotation.z = -1.6 * L.a; },   // 開けるとほぼ垂直に立ち、タンクの前に寄りかかる
   of(st) { return this.list.find(L => L.st === st); },
   toggle(L) {
     L.open = !L.open; const lp = L.c.clone().setY(L.c.y + 0.2);
@@ -13215,7 +13227,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.14.1';
+const VERSION = '0.14.2';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
