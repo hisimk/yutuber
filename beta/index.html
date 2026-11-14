@@ -9091,7 +9091,7 @@ const VO = {
   play(id, dest, at, { gain = 1, rate = 1 } = {}) { if (!this.ok(id)) return 0; const now = A.ctx.currentTime; const r = playSfx('vo_' + id, { dest, gain, rate, delay: Math.max(0, (at ?? now) - now) }); if (!r) return 0; (this.live = this.live || []).push(r); r.s.onended = () => { this.live = (this.live || []).filter(x => x !== r); }; return A.buf['vo_' + id].duration / rate; },
   stopAll() { if (!A.ctx) return; const t = A.ctx.currentTime; for (const r of (this.live || [])) { try { r.g.gain.cancelScheduledValues(t); r.g.gain.setTargetAtTime(0, t, 0.03); r.s.stop(t + 0.15); } catch (e) { } } this.live = []; },
 };
-setInterval(() => { if (VO.live && VO.live.length && !['play', 'paused', 'piano'].includes(world.state)) VO.stopAll(); }, 300);   // 帰還・ゲームオーバー・スタート画面に戻ったら、前の周の声を止める
+setInterval(() => { if (VO.live && VO.live.length && !['play', 'paused', 'piano'].includes(world.state) && !document.getElementById('vtest')) VO.stopAll(); }, 300);   // 帰還・ゲームオーバー・スタート画面に戻ったら、前の周の声を止める
 const PACALL = {
   // かな → 声の合成の音（子音＋母音）。ひらがな・カタカナはそのまま読み、漢字や英字は読めないので、それらしい音でごまかす
   ROW: { 'あいうえお': '', 'かきくけこ': 'k', 'がぎぐげご': 'g', 'さしすせそ': 's', 'ざじずぜぞ': 'z', 'たちつてと': 't', 'だぢづでど': 'd', 'なにぬねの': 'n', 'はひふへほ': 'h', 'ばびぶべぼ': 'b', 'ぱぴぷぺぽ': 'p', 'まみむめも': 'm', 'やゆよ': 'y', 'らりるれろ': 'r', 'わを': 'w' },
@@ -13879,6 +13879,86 @@ $('#resetAsk').addEventListener('click', e => e.stopPropagation());
 $('#setReset').addEventListener('click', e => { e.stopPropagation(); RESET.ask(); });
 $('#resetNo').addEventListener('click', e => { e.stopPropagation(); RESET.no(); });
 $('#resetYes').addEventListener('click', e => { e.stopPropagation(); RESET.yes(); });
+
+/* =========================================================
+   2026-11-14 声の聞き比べ（試し版・確認モードだけ：URLの後ろに ?vtest）
+   ・録音した声をゲームと同じ鳴らし方（校内スピーカー・天井のクモ女・耳元・壁越し）で、1つずつ聞ける
+   ・名前を変えて、校内放送の呼び出しを通しで聞ける
+   ========================================================= */
+const VTEST = {
+  on: (BETA || TEST) && /[?&]vtest/.test(location.search),
+  build() {
+    if (!this.on) return;
+    const st = document.createElement('style');
+    st.textContent = '#vtest{position:fixed;inset:0;z-index:99999;background:rgba(8,8,10,.94);color:#e8e3da;font:14px/1.5 system-ui,sans-serif;overflow:auto;-webkit-overflow-scrolling:touch;padding:14px 14px calc(env(safe-area-inset-bottom) + 24px)}#vtest h3{margin:16px 0 6px;font-size:15px;color:#ffd34d}#vtest .row{display:flex;flex-wrap:wrap;gap:6px}#vtest button{padding:9px 11px;border-radius:9px;border:1px solid #555;background:#1b1b1f;color:#fff;font:600 13px system-ui}#vtest button.pri{background:#c0392b;border-color:#c0392b}#vtest input{width:100%;box-sizing:border-box;padding:9px;border-radius:8px;border:1px solid #555;background:#111;color:#fff;font-size:15px;margin:4px 0}#vtest small{color:#9a958c}#vtest .seg button.on{background:#ffd34d;color:#111}#vtX{position:sticky;top:0;float:right}#vtMsg{color:#8fd;min-height:1.4em;margin-top:6px}';
+    document.head.appendChild(st);
+    const d = document.createElement('div'); d.id = 'vtest';
+    const names = ['ゆうちゅーばー', 'たなか', 'さとうはなこ', 'カトウ', 'しんれいちゃんねる', '心霊チャンネル', 'yutuber'];
+    const sp = Object.entries(SPV.VO_ID);
+    d.innerHTML = `<button id="vtX">閉じる ✕</button><b style="font-size:17px">声の聞き比べ（試し版）</b><br><small>イヤホン推奨。最初に1回どれかを押すと音が出るようになります。日本語版の声です。</small>
+      <h3>校内放送の呼び出し（名前を変えて）</h3>
+      <input id="vtName" value="${(world.chRaw || '').replace(/"/g, '') || 'ゆうちゅーばー'}" placeholder="読む名前（ひらがな・カタカナ）">
+      <div class="row">${names.map(n => `<button data-n="${n}">${n}</button>`).join('')}</div>
+      <small>漢字・英字の名前は、本番と同じく「しんれいちゃんねる」と読みます（よみがなが無い時）。</small>
+      <div class="row" style="margin-top:6px"><button class="pri" data-a="paFull">呼び出しを通しで（チャイムから）</button><button data-a="paName">名前＋さん だけ</button><button data-a="gekou">下校の放送</button></div>
+      <div class="row" style="margin-top:6px"><button data-v="pa_san1">さん。</button><button data-v="pa_san2">さん…。</button><button data-v="pa_imasugu">いますぐ、</button><button data-v="pa_gekou">げこうのじかんです。</button></div>
+      <h3>クモ女のささやき（天井から）</h3>
+      <div class="row seg" id="vtDist"><button data-d="1.5" class="on">すぐ上（1.5m）</button><button data-d="5">5m</button><button data-d="10">10m</button><button data-d="wall">壁越し（6m）</button></div>
+      <div class="row" style="margin-top:6px">${sp.map(([w, id]) => `<button data-sp="${id}">${w}</button>`).join('')}<button data-a="spName">名前を呼び捨て（合成）</button><button data-a="spRand">ランダムに5回</button></div>
+      <h3>耳元の笑い</h3>
+      <div class="row"><button data-ear="ear_fufu" data-side="-0.75">ふふっ（左耳）</button><button data-ear="ear_fufu" data-side="0.75">ふふっ（右耳）</button><button data-ear="ear_fufu2" data-side="-0.75">ふふ…ふ（左耳）</button><button data-ear="ear_fufu2" data-side="0.75">ふふ…ふ（右耳）</button></div>
+      <h3>遠くの笑い（壁越し）</h3>
+      <div class="row"><button data-far="7">近め（7m）</button><button data-far="12">中くらい（12m）</button><button data-far="18">遠め（18m）</button></div>
+      <h3>比べる：前の音</h3>
+      <div class="row"><button data-a="oldLaughClose">前の耳元の笑い</button><button data-a="oldLaughFar">前の遠くの笑い</button><button data-a="oldSp">前のクモ女（合成）</button><button data-a="oldPa">前の呼び出し（全部合成）</button></div>
+      <div id="vtMsg"></div>`;
+    document.body.appendChild(d);
+    const stop = e => e.stopPropagation(); for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'touchmove', 'click', 'keydown']) d.addEventListener(ev, stop);
+    d.querySelector('#vtX').onclick = () => d.remove();
+    d.querySelectorAll('[data-n]').forEach(b => b.onclick = () => { d.querySelector('#vtName').value = b.dataset.n; });
+    d.querySelectorAll('#vtDist button').forEach(b => b.onclick = () => { d.querySelectorAll('#vtDist button').forEach(x => x.classList.toggle('on', x === b)); this.dist = b.dataset.d; });
+    this.dist = '1.5';
+    d.addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.id === 'vtX' || b.dataset.n || b.dataset.d) return; this.run(b); });
+  },
+  msg(t) { const m = $('#vtMsg'); if (m) m.textContent = t; },
+  ready() { return new Promise(ok => { ensureAudio(); const t0 = performance.now(); const w = () => { if (A.ctx && A.ctx.state === 'running' && hasSfx('vo_pa_san1')) ok(true); else if (performance.now() - t0 > 6000) ok(false); else setTimeout(w, 100); }; w(); }); },
+  nameOf() { const raw = ($('#vtName').value || '').trim(), kana = /^[ぁ-ゟ゠-ヿー\s]+$/; return { say: raw && kana.test(raw) ? raw : 'しんれいちゃんねる', raw: raw || 'しんれいちゃんねる' }; },
+  at(dist, up = 0) { updateListener(); const f = camFwd(); f.y = 0; f.normalize(); return camera.position.clone().addScaledVector(f, dist).add(V(0, up, 0)); },
+  async run(b) {
+    if (!(await this.ready())) { this.msg('音が準備できませんでした。もう一度押してください'); return; }
+    const ctx = A.ctx, now = ctx.currentTime, a = b.dataset.a, K = 1 / 1.2;
+    if (b.dataset.v) { VO.play(b.dataset.v, A.pa, now + 0.02, { gain: 1.1 }); this.msg('校内スピーカーの音質で：' + b.textContent); return; }
+    if (b.dataset.sp) {
+      const wall = this.dist === 'wall', dd = wall ? 6 : parseFloat(this.dist), pos = this.at(dd, 1.3);
+      const pn = panAt(pos, 0.9, 1.6, undefined, 0), lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = wall ? 1100 : 9000; const g = ctx.createGain(); g.gain.value = wall ? 0.4 : 1; lp.connect(g); g.connect(pn);
+      VO.play(b.dataset.sp, lp, now + 0.05, { gain: 1.2, rate: rnd(0.93, 1.04) }); freeLater(5, pn, lp, g); this.msg(`クモ女：${b.textContent}（${wall ? '壁越し6m' : dd + 'm'}）`); return;
+    }
+    if (b.dataset.ear) { VO.play(b.dataset.ear, earDest(parseFloat(b.dataset.side), 4), now + 0.02, { gain: 0.9 }); this.msg('耳元：' + b.textContent); return; }
+    if (b.dataset.far) { const dd = parseFloat(b.dataset.far), pos = this.at(dd, 0.3); const pn = panAt(pos, 1.5, 0.8, A.muffle, 0), lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = dd < 8 ? 2200 : 900; lp.connect(pn); VO.play('far_laugh', lp, now + 0.02, { gain: 0.8 }); freeLater(5, lp, pn); this.msg('遠くの笑い：' + b.textContent); return; }
+    const nm = this.nameOf();
+    if (a === 'paName') { PACALL.nameCall(nm.say, K); this.msg(`「${nm.say}さん。${nm.say}さん…。」`); }
+    else if (a === 'paFull') {
+      if (!playSfx('pa_chime', { dest: A.pa, gain: 1 })) SND.chime && SND.chime(); this.msg('チャイム…');
+      setTimeout(() => { const d1 = PACALL.nameCall(nm.say, K); this.msg(`「${nm.say}さん。${nm.say}さん…。」`);
+        setTimeout(() => { const d2 = PACALL.clip('pa_imasugu', A.ctx.currentTime + 0.02); this.msg('「いますぐ、」');
+          setTimeout(() => { const d3 = PACALL.say('ほけんしつまで', { f0: 190, fall: 0.45, k: 1.6 * K, gain: 0.95 }); this.msg('「ほけんしつまで」（合成）');
+            setTimeout(() => { PACALL.noise(1.0); PACALL.cutVoice(); this.msg('ノイズで途切れる'); }, d3 * 720); }, (d2 + 0.03) * 1000); }, (d1 + 0.03) * 1000); }, 4100);
+    }
+    else if (a === 'gekou') { world.channel = nm.raw; const d = SND.pingpong(true); setTimeout(() => { speak(A.pa, chanWord(), { f0: 215, gain: 0.7, breath: 0.15 }); setTimeout(() => VO.play('pa_gekou', A.pa, undefined, { gain: 0.9 }) || speak(A.pa, WORDS.gekou, { f0: 215, gain: 0.7, breath: 0.15 }), 1600); }, d * 1000); this.msg('ピンポンパンポン → チャンネル名（合成）→「げこうのじかんです。」'); }
+    else if (a === 'spName' || a === 'spRand' || a === 'oldSp') {
+      const wall = this.dist === 'wall', dd = wall ? 6 : parseFloat(this.dist), pos = this.at(dd, 1.3);
+      const pn = panAt(pos, 0.9, 1.6, undefined, 0), lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = wall ? 1100 : 9000; lp.connect(pn); freeLater(30, pn, lp);
+      if (a === 'spName') { world.chRaw = nm.raw; world.yomi = nm.say; SPV.speakFrags(lp, SPV.plan(SPV.name()), now + 0.05); this.msg('クモ女が名前を呼び捨て（合成）'); }
+      else if (a === 'oldSp') { SPV.speakFrags(lp, SPV.plan(pick(SPV.WORDS)), now + 0.05); this.msg('前のクモ女の声（合成）'); }
+      else { world.chRaw = nm.raw; world.yomi = nm.say; let t = now + 0.05; for (let i = 0; i < 5; i++) t += SPV.utter(lp, t) + rnd(0.8, 1.6); this.msg('クモ女：ランダムに5回（本番と同じ選び方）'); }
+    }
+    else if (a === 'oldLaughClose') { playSfx('laugh_close', { ear: pick([-0.75, 0.75]), gain: 0.7 }); this.msg('前の耳元の笑い'); }
+    else if (a === 'oldLaughFar') { const pos = this.at(12, 0.3); playSfx('laugh_far', { pos, ref: 1.5, roll: 0.8, lowpass: 900, gain: 0.7, dur: 3.5 }); this.msg('前の遠くの笑い（12m）'); }
+    else if (a === 'oldPa') { PACALL.say(`${nm.say}さん。${nm.say}さん。`, { f0: 235, fall: 0.94, k: K }); this.msg('前の呼び出し（全部合成）'); }
+  },
+};
+setTimeout(() => VTEST.build(), 800);
+
 if (TEST && window.__G) Object.assign(window.__G, { VO, PACALL, SPV, EV, seen, A, CH, HEART, CVOICE, wdScream, WARP, WD, ITEM, F2, PAD, QUALITY, opt, MP4FIX, rec, resultBlobs: () => resultBlobs, LOGOANIM, CHIP, VTITLE, NOISE, SNAKE, ACC, ACC_ICON, ACC_VIEW, award, CHATLOG, CHAT, CHATGEN, RES_CHAT, RANKPOP, yrankIdx, GOD, VDB, ACH, PERM, REVIVE, RESET, COL, escape, caught, DIR, SP, OFUDA, LUM, TRACE, HAZURE, seen, SFX_CREDITS, AW_TABLE, RANK_FIX, rankOf, MICLV, MIC, rec, opt, VED, RES_CHAT_: () => RES_CHAT, _attach: b => attachVideo(b), GODV: GOD, _blobs: () => resultBlobs, EVENTS: () => EV });
 /* 2026-11-14 PC：ウィンドウ／全画面（全画面はボタンを押した時と、旧校舎に入る時に切り替える。Escで戻したらウィンドウに） */
 const SCREEN = {
