@@ -11177,7 +11177,7 @@ class ChatView {
     const u = (this.data.users || [])[it[1]] || ['viewer', '#9aa'];
     const d = document.createElement('div'); d.className = 'cm' + (anim && !this.reduce ? ' new' : ''); d.style.setProperty('--c', u[1]);
     const av = document.createElement('i'); av.className = 'av'; av.innerHTML = CHATVIEW_SVG;
-    const tx = document.createElement('div'); tx.className = 'tx'; const nm = document.createElement('b'); nm.textContent = u[0]; tx.appendChild(nm); tx.appendChild(document.createTextNode(it[2]));   // 本文は文字として入れる（HTMLにしない）
+    const tx = document.createElement('div'); tx.className = 'tx'; tx.appendChild(document.createTextNode(it[2]));   // 2026-11-14 名前は出さない（アイコンの色で話者を見分ける）   // 本文は文字として入れる（HTMLにしない）
     d.appendChild(av); d.appendChild(tx); return d;
   }
   sync() {
