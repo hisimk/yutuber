@@ -12768,7 +12768,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.13.0';
+const VERSION = '0.13.1';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -13954,7 +13954,7 @@ const VTEST = {
     const d = document.createElement('div'); d.id = 'vtest';
     const names = ['ゆうちゅーばー', 'たなか', 'さとうはなこ', 'カトウ', 'しんれいちゃんねる', '心霊チャンネル', 'yutuber'];
     const sp = Object.entries(SPV.VO_ID);
-    d.innerHTML = `<button id="vtX">閉じる ✕</button><b style="font-size:17px">声の聞き比べ（試し版）</b><br><small>イヤホン推奨。最初に1回どれかを押すと音が出るようになります。名前・クモ女は、かな1音ずつの録音をつないでいます。</small>
+    d.innerHTML = `<button id="vtX">閉じる ✕</button><b style="font-size:17px">声の聞き比べ（試し版 ver ${VERSION}・かなの録音版）</b><br><small>イヤホン推奨。最初に1回どれかを押すと音が出るようになります。名前・クモ女は、かな1音ずつの録音をつないでいます。</small>
       <h3>校内放送の呼び出し（名前を変えて）</h3>
       <input id="vtName" value="${(world.chRaw || '').replace(/"/g, '') || 'ゆうちゅーばー'}" placeholder="読む名前（ひらがな・カタカナ）">
       <div class="row">${names.map(n => `<button data-n="${n}">${n}</button>`).join('')}</div>
