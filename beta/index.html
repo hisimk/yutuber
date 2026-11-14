@@ -11131,7 +11131,7 @@ class ChatView {
     this.video = video; this.segOf = segOf;
     const el = document.createElement('div'); el.className = 'chatBox';
     el.innerHTML = '<div class="chatHead"><b></b><span></span></div><div class="chatList" role="log" aria-live="off"></div><div class="chatMsg"></div><button class="chatNew" type="button"></button>';
-    el.querySelector('.chatHead b').textContent = cui('title'); el.querySelector('.chatHead span').textContent = cui('note'); el.querySelector('.chatNew').textContent = cui('latest');
+    el.querySelector('.chatHead b').textContent = cui('title');   // 2026-11-14 補足の文は出さない el.querySelector('.chatNew').textContent = cui('latest');
     host.appendChild(el); this.el = el; this.list = el.querySelector('.chatList'); this.msg = el.querySelector('.chatMsg'); this.btn = el.querySelector('.chatNew');
     this.data = null; this.starts = []; this.shown = 0; this.lastG = 0; this.follow = true; this.raf = 0; this.anim = 0;
     this.reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -11148,7 +11148,7 @@ class ChatView {
     if (!this.urls.length) return this.say(cui('novid'));
     if (!data || !data.items) return this.say(cui('nosync'));
     this.legacy = LANG === 'en' && data.items.length && data.items[0].length < 5;   // 英語が入っていない古い保存チャット
-    this.el.querySelector('.chatHead span').textContent = this.legacy ? cui('legacy') : cui('note');
+    this.el.querySelector('.chatHead span').textContent = this.legacy ? cui('legacy') : '';
     const ds = []; for (const u of this.urls) ds.push(await chatDur(u)); if (this.data !== data) return;
     this.map = this.mapper(data, ds); this.starts = []; let acc = 0; for (let i = 0; i < this.urls.length; i++) { this.starts.push(acc); acc += ds[i] || this.segLenR(data, i); }
     this.items = data.items.map(x => [this.map(x[0]), x[1], x.length >= 5 ? (LANG === 'en' ? x[4] : x[3]) : x[2]]).sort((a, b) => a[0] - b[0]);
