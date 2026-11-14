@@ -49,7 +49,7 @@
   #cap.mid #capFill{background:#ffd60a}#cap.mid{color:#ffd60a}
   #cap.low #capFill{background:#ff3b30}#cap.low{color:#ff3b30}
   #hud.off #cap{display:none}
-  #fixCap{position:absolute;left:50%;top:calc(var(--sat) + 78px);transform:translateX(-50%);font:700 11px system-ui;color:#e9e4da;background:rgba(0,0,0,.35);padding:2px 8px;border-radius:6px;white-space:nowrap}#fixCap.rec{color:#ff6b6b}#hud.off #fixCap{display:none}
+  #fixCap{position:absolute;left:50%;top:calc(var(--sat) + 90px);transform:translateX(-50%);font:700 11px system-ui;color:#e9e4da;background:rgba(0,0,0,.35);padding:2px 8px;border-radius:6px;white-space:nowrap}#fixCap.rec{color:#ff6b6b}body.fixOn #toast{top:calc(var(--sat) + 116px)}   /* 2026-11-14 マイクのメーターや通知と重ならないように */#hud.off #fixCap{display:none}
   #hud.fixMode #topL,#hud.fixMode #invBtn,#hud.fixMode #battery,#hud.fixMode #camBtn,#hud.fixMode #zoomRow,#hud.fixMode #recBtn,#hud.fixMode #recKey,#hud.fixMode #cap,#hud.fixMode #fixCap,#hud.fixMode #rec,#hud.fixMode #micLvl,#hud.fixMode #actBtn,#hud.fixMode #exitBtn{display:none!important}
   #fixUI:empty{display:none}#fixUI{position:absolute;inset:0;pointer-events:none}
   #fixUI .fxT{position:absolute;left:0;right:0;top:calc(var(--sat) + 16px);text-align:center;font:700 15px system-ui;color:#fff;text-shadow:0 1px 3px #000}#fixUI .fxT small{display:block;font-size:11.5px;font-weight:500;color:#e0dbd2;margin-top:3px}
@@ -11698,7 +11698,7 @@ const FIXCAM = {
     this.ui();
   },
   showInset() { return this.placed && this.recOn && rec.active && world.state === 'play' && !world.selfie && !this.framing; },   // スマホでも録画中なら2カメ
-  ui() { let el = $('#fixCap'); if (!el) { const c = $('#cap'); if (!c) return; el = document.createElement('div'); el.id = 'fixCap'; c.after(el); } el.style.display = this.placed ? '' : 'none'; const s2 = Math.ceil(this.cap); el.textContent = `📹 ${TR('定点')} 0:${String(s2).padStart(2, '0')}${this.recOn ? ' ●' : ''}`; el.classList.toggle('rec', this.recOn); },
+  ui() { let el = $('#fixCap'); if (!el) { const c = $('#cap'); if (!c) return; el = document.createElement('div'); el.id = 'fixCap'; c.after(el); } el.style.display = this.placed ? '' : 'none'; document.body.classList.toggle('fixOn', !!this.placed); const s2 = Math.ceil(this.cap); el.textContent = `📹 ${TR('定点')} 0:${String(s2).padStart(2, '0')}${this.recOn ? ' ●' : ''}`; el.classList.toggle('rec', this.recOn); },
 };
 /* リングライト：鏡やインカメラに映る主人公の手元（両手の間）に付ける */
 const RING = {
@@ -13204,7 +13204,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.13.15';
+const VERSION = '0.13.16';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
