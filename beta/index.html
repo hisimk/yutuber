@@ -182,6 +182,7 @@
   .seg button{background:none;border:none;color:#cfcac0;font-size:13px;padding:7px 11px}
   .seg button.on{background:#e9e4da;color:#111;font-weight:700}
   #scrSeg{flex:none}#scrSeg button{white-space:nowrap;padding:7px 9px}
+  #qualSeg{flex:none}#qualSeg button{white-space:nowrap;padding:7px 12px}
   .opt .optTop{display:flex;justify-content:space-between;align-items:center;gap:10px}
   .rng{width:100%;accent-color:#e9e4da;margin:2px 0 0}
   .sel{width:100%;font-size:14px;padding:8px 9px;border-radius:8px;border:1px solid #333;background:#0b0b0c;color:#fff}
@@ -216,6 +217,10 @@
   #keyList{display:grid;grid-template-columns:1fr auto;gap:5px 10px;align-items:center;font-size:13px;padding:4px}
   #keyList button{min-width:74px;padding:6px 8px;border-radius:7px;border:1px solid #444;background:#151517;color:#fff;font:600 13px system-ui}
   #keyList button.wait{border-color:#ffd60a;color:#ffd60a}
+  #setPad{display:none;flex-direction:column;gap:6px}html.pcFrame #setPad,html.padOn #setPad{display:flex}
+  #setPad .setSub small,#setPad .setSub2 small{display:block;font-size:11px;color:#6f6b64;margin-top:2px}#setPad .setSub2{font-size:13px;color:#cfcac0;margin:6px 4px 0}
+  #padList{display:grid;grid-template-columns:1fr auto;gap:5px 10px;align-items:center;font-size:13px;padding:4px}
+  #padList button{min-width:74px;padding:6px 8px;border-radius:7px;border:1px solid #444;background:#151517;color:#fff;font:600 13px system-ui}#padList button.wait{border-color:#ffd60a;color:#ffd60a}
   #tut{position:fixed;inset:0;z-index:45;display:none;touch-action:none}
   #tut.show{display:block}
   #tut.dim{background:rgba(0,0,0,.78)}
@@ -694,6 +699,7 @@
       <div class="opt col" id="setMicRow"><div class="optTop" id="setMic"><div>実況マイク<small>録画中の自分の声も動画に入ります</small></div><div class="sw"></div></div><div id="micMeter"><div id="micMeterFill"></div></div><div id="micNote"></div></div>
       <div class="opt col" id="setVolRow"><div class="optTop"><div>音量<small>スピーカーから出る大きさ（録画の音は変わりません）</small></div><div class="val" id="volVal">100%</div></div><input class="rng" id="volRange" type="range" min="0" max="100" step="5" value="100"></div>
       <div class="opt col" id="setSensRow"><div class="optTop"><div>視点を動かす速さ<small>なぞった時・ドラッグした時の回りやすさ</small></div><div class="val" id="sensVal">×1.0</div></div><input class="rng" id="sensRange" type="range" min="0.4" max="2" step="0.1" value="1"></div>
+      <div class="opt" id="setQualRow"><div>画質<small>重い時は「軽い」に（少し粗くなり、影が減ります）</small></div><div class="seg" id="qualSeg"><button data-q="std">標準</button><button data-q="lite">軽い</button></div></div>
       <div class="opt" id="setBright"><div>明るさ<small>入口の景色を見ながら合わせます</small></div><div class="val"><span id="brightVal">0</span> ›</div></div>
       <div id="setPC">
         <div class="opt" id="setScreenRow"><div>画面の表示<small>ウィンドウのまま遊ぶか、全画面で遊ぶか</small></div><div class="seg" id="scrSeg"><button data-scr="win">ウィンドウ</button><button data-scr="full">全画面</button></div></div>
@@ -702,6 +708,11 @@
         <div class="opt col" id="setMidiRow"><div class="optTop" id="setMidi"><div>電子ピアノ（MIDI）<small>USBでつないだ電子ピアノで音楽室のピアノを弾けます</small></div><div class="sw"></div></div><select class="sel" id="midiSel"><option value="">つないだ機器すべて</option></select><div id="midiNote"></div></div>
       </div>
       <div id="setKeys"><div class="setSub">キー操作（PC）<small>ボタンを押してから、割り当てたいキーを押す</small></div><div id="keyList"></div><button class="setLink" id="keyReset">キー操作を初期設定にもどす</button></div>
+      <div id="setPad"><div class="setSub">コントローラー<small id="padName">つながっていません（PS・Xbox・Switchプロコンに対応）</small></div>
+        <div class="opt col" id="padSensRow"><div class="optTop"><div>スティックの感度<small>右スティックで見回す速さ</small></div><div class="val" id="padSensVal">×1.0</div></div><input class="rng" id="padSens" type="range" min="0.4" max="2" step="0.1" value="1"></div>
+        <div class="opt" id="padInvRow"><div>上下反転<small>右スティックの上下を逆にする</small></div><div class="sw"></div></div>
+        <div class="opt" id="padVibRow"><div>振動<small>追われている時・襲われた時に震える（対応しているブラウザだけ）</small></div><div class="sw"></div></div>
+        <div class="setSub2">ボタンの割り当て<small>押してから、割り当てたいボタンを押す</small></div><div id="padList"></div><button class="setLink" id="padReset">ボタンを初期設定にもどす</button></div>
       <div class="opt" id="setLang"><div>言語 / Language</div><div class="seg" id="langSeg"><button data-lang="ja">日本語</button><button data-lang="en">English</button></div></div>
       <button class="setLink" id="setTut">遊び方を見る</button>
       <button class="setLink" id="setCol">心霊アーカイブ</button>
@@ -912,14 +923,14 @@ const postMat = new THREE.ShaderMaterial({
     tColor: { value: rt.texture }, tDepth: { value: rt.depthTexture },
     res: { value: new THREE.Vector2(4, 4) },
     focus: { value: 3 }, dof: { value: 0.3 }, soft: { value: 0 }, time: { value: 0 },
-    exposure: { value: 1 }, bright: { value: 1 }, vig: { value: 0 }, redK: { value: 0 }, caEdge: { value: 0.142 }, caMid: { value: 0.018 }, caFlat: { value: 2.7 }, bleed: { value: 4.2 }, pix: { value: 4.5 }, blurK: { value: 0 }, grainK: { value: 0.15 }, sat: { value: 0.82 },   /* 画質の基本設定 */ tint: { value: new THREE.Vector3(1, 1, 1) }, vhs: { value: 0 }, grain: { value: 1 }, black: { value: 1 }, tear: { value: 0 }, stat: { value: 0 },
+    taps: { value: 12 }, exposure: { value: 1 }, bright: { value: 1 }, vig: { value: 0 }, redK: { value: 0 }, caEdge: { value: 0.142 }, caMid: { value: 0.018 }, caFlat: { value: 2.7 }, bleed: { value: 4.2 }, pix: { value: 4.5 }, blurK: { value: 0 }, grainK: { value: 0.15 }, sat: { value: 0.82 },   /* 画質の基本設定 */ tint: { value: new THREE.Vector3(1, 1, 1) }, vhs: { value: 0 }, grain: { value: 1 }, black: { value: 1 }, tear: { value: 0 }, stat: { value: 0 },
     near: { value: camera.near }, far: { value: camera.far },
   },
   vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.0,1.0); }`,
   fragmentShader: `
     varying vec2 vUv;
     uniform sampler2D tColor; uniform sampler2D tDepth;
-    uniform vec2 res; uniform vec3 tint; uniform float vig; uniform float redK; uniform float caEdge, caMid, caFlat, bleed, pix, blurK, grainK, sat; uniform float bright; uniform float focus, dof, soft, time, exposure, vhs, grain, black, near, far, tear, stat;
+    uniform vec2 res; uniform vec3 tint; uniform float vig; uniform float redK; uniform float caEdge, caMid, caFlat, bleed, pix, blurK, grainK, sat; uniform float bright; uniform float taps; uniform float focus, dof, soft, time, exposure, vhs, grain, black, near, far, tear, stat;
     float lin(float z){ float n=z*2.0-1.0; return 2.0*near*far/(far+near-n*(far-near)); }
     float hash(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453); }
     void main(){
@@ -939,7 +950,8 @@ const postMat = new THREE.ShaderMaterial({
       float coc=clamp(abs(d-focus)/(d+0.25)*dof, 0.0, 1.0)*7.0 + soft*3.2 + blurK*2.5;
       vec3 acc=texture2D(tColor, uv).rgb; float ws=1.0;
       for(int i=0;i<12;i++){
-        float a=float(i)*2.39996; float r=sqrt((float(i)+0.5)/12.0);
+        if(float(i)>=taps) break;   // 2026-11-14 画質「軽い」はぼかしの回数を減らす
+        float a=float(i)*2.39996; float r=sqrt((float(i)+0.5)/taps);
         vec2 o=vec2(cos(a),sin(a))*r*coc/res;
         acc+=texture2D(tColor, uv+o).rgb; ws+=1.0;
       }
@@ -989,8 +1001,10 @@ const vpW = () => FRAME.on ? FRAME.W : innerWidth, vpH = () => FRAME.on ? FRAME.
 const toFrame = (x, y) => FRAME.on ? [(x - FRAME.x) / FRAME.k, (y - FRAME.y) / FRAME.k] : [x, y];
 function frameRect(el) { const r = el.getBoundingClientRect(); if (!FRAME.on) return r; const [l, t] = toFrame(r.left, r.top), k = FRAME.k; return { left: l, top: t, width: r.width / k, height: r.height / k, right: l + r.width / k, bottom: t + r.height / k }; }
 
-let W = 4, H = 4;
+let W = 4, H = 4, recSizeLock = false;   /* 2026-11-14 録画中は描画の大きさを固定 */
 function resize() {
+  if (recSizeLock) { resize.pending = true; return; }   /* 2026-11-14 録画中は大きさを変えない（終わってからまとめて合わせる） */
+  resize.pending = false;
   const vw = vpW(), vh = vpH();
   W = Math.max(2, Math.round(vw * CONFIG.renderScale / 2) * 2);
   H = Math.max(2, Math.round(vh * CONFIG.renderScale / 2) * 2);
@@ -1221,6 +1235,9 @@ function plane(w, h, mat, x, y, z, ry = 0, rx = 0, o = {}) {
 /* ---------- 言語（日本語／English）：画面の文言は T() で英語に置き換える。英語の表が無い文言は日本語のまま ---------- */
 let LANG = 'ja'; try { const l = localStorage.getItem('yt_lang'); if (l === 'en' || l === 'ja') LANG = l; } catch (e) { }
 const EN = {
+  'コントローラーをつなぎました': 'Controller connected', 'ボタンを押す…': 'Press a button…', '先にコントローラーをつないで、どれかボタンを押してください': 'Connect a controller and press any button first', 'つながっていません（PS・Xbox・Switchプロコンに対応）': 'Not connected (PS, Xbox, Switch Pro supported)', '録画の開始・停止': 'Start/stop recording', '調べる・開ける・隠れる': 'Examine / open / hide', 'インカメラ切り替え': 'Selfie camera', 'ズームを下げる': 'Zoom out', 'ズームを上げる': 'Zoom in', '持ち物': 'Items', '設定（一時停止）': 'Settings (pause)', '閉じる・戻る': 'Close / back',
+  '画質': 'Quality', '標準': 'Standard', '軽い': 'Light', '重い時は「軽い」に（少し粗くなり、影が減ります）': 'Use Light if the game is slow (a bit rougher, fewer shadows)', '画面の細かさは、この回の録画が終わってから変わります': 'Resolution will change after this run’s recording ends',
+  '動画をMP4に変換しています。少し待ってから、もう一度押してください': 'Converting the video to MP4. Please wait a moment and press again', '変換できました。もう一度押してください': 'Converted. Please press again',
   // スタート・設定
   '夜の旧校舎で、決定的瞬間を撮って帰る': 'Film the decisive moment in the old school at night — and make it out',
   'チャンネル名': 'Channel name', 'なまえ': 'Name', 'タイトルを編集': 'Edit title', '無題の動画': 'Untitled video', 'とめどなき実況': "Nonstop Commentary", '大きな声での実況': "Loud Commentary", '悲鳴一閃': "Instant Scream", '遅れてくる恐怖': "Delayed Terror", '絶叫逃走中': "Screaming While Fleeing", '息つく暇もない': "No Time to Breathe", '隠れてるんですけど': "I'm Supposed to Be Hiding", '見つかるって！': "They'll Find You!", '静かに実況中': "Quiet Commentary", '急に小声': "Sudden Whisper", '急に無口': "Suddenly Speechless", '実況再開': "Commentary Resumed", 'メモリーカード': 'Memory card', '録画できる時間が15秒増える。': 'Adds 15 seconds of recording time.', 'いかついサングラス': 'Tough sunglasses', 'かけると威圧感が上がる。怪異に効果はない。': 'Makes you look intimidating. No effect on ghosts.',
@@ -3067,7 +3084,7 @@ function wdScream(delay = SCREAM_JAW, gain = 1, len = 1.4) {
   if (!A.ctx) return;
   const id = hasSfx('psycho_scream') ? 'psycho_scream' : 'capture_scream';
   if (!hasSfx(id)) { SND.scream(); return; }
-  const t0 = A.ctx.currentTime + delay; A.screamAt = t0;
+  const t0 = A.ctx.currentTime + delay; A.screamAt = t0; setTimeout(() => PAD.hit(1), delay * 1000);   // 2026-11-14 逆さ女の叫び：強く震える
   const r = playSfx(id, { ear: 0, gain, delay, offset: screamOnset(A.buf[id]) });   // ゲーム音（A.master）→ 録画にも入る
   if (!r) return;
   // 細切れにする：出だしはしっかり聞かせ、そのあと「鳴る／途切れる」を不規則にくり返す（映像が飛ぶように）
@@ -3135,7 +3152,7 @@ function raspUpdate(dt) {
 }
 
 // ジャンプスケアの効果音（提供素材）。叫びと同じくゲーム音として鳴らす → 録画にも入る
-function jumpSting(id, gain = 1, dur) { return playSfx(id, { ear: 0, gain, dur }); }
+function jumpSting(id, gain = 1, dur) { PAD.hit(0.7); return playSfx(id, { ear: 0, gain, dur }); }   // 2026-11-14 驚かしでコントローラーを震わせる
 
 /* =========================================================
    追跡BGM（30%以降に見つかって逃げている間）と、画面の縁の赤い脈動
@@ -3261,7 +3278,7 @@ addEventListener('mousemove', e => {
 setInterval(() => {
   if (!FRAME.on) return; const ok = MLOCK.ok(), on = MLOCK.on();
   if (on && !ok) document.exitPointerLock();
-  $('#lockHint').classList.toggle('show', ok && !on && !$('#hud').classList.contains('off'));
+  $('#lockHint').classList.toggle('show', ok && !on && !PAD.using && !$('#hud').classList.contains('off'));
 }, 100);
 touchEl.addEventListener('pointerdown', e => {
   if (FRAME.on && e.pointerType === 'mouse' && touchEl.requestPointerLock) {
@@ -3391,6 +3408,95 @@ function toast(msg, ms = 2600) { const el = $('#toast'); el.textContent = msg; e
 let actFn = null, actLabel = '', actKey = false;
 function offerAction(label, fn, opt) { actLabel = label; actFn = fn; actKey = !!(opt && opt.key); }   // key: 鍵を使う操作（ボタンを黄色に）
 hudTap($('#actBtn'), () => { if (actFn) actFn(); });
+/* =========================================================
+   2026-11-14 コントローラー（PS・Xbox・Switchプロコン）。ブラウザの Gamepad API。つないだら自動で使える
+   ・左スティック：歩く／右スティック：見回す／R2(RT)：録画／○(A)：調べる・開ける・隠れる／△(Y)：インカメラ
+   ・L1・R1(LB・RB)：ズーム／□(X)：持ち物／OPTIONS(メニュー)：設定（一時停止）／×(B)：閉じる
+   ・振動：追われている間は鼓動に合わせて小さく、襲われた瞬間・逆さ女の叫びは強く（できない環境では何もしない）
+   ・コントローラーを使っている間は、画面のキー表示と遊び方をボタン表示に切り替える（PSとXboxで表記を変える）
+   ========================================================= */
+const PAD = {
+  using: false, idx: -1, brand: 'xb', id: '', prev: [], lx: 0, ly: 0, rx: 0, ry: 0, wait: null, beatT: 0, strongUntil: 0,
+  cfg: { sens: 1, inv: false, vib: true, map: null },
+  ACTS: ['rec', 'act', 'selfie', 'zoomDown', 'zoomUp', 'inv', 'menu', 'back'],
+  NAME: { rec: '録画の開始・停止', act: '調べる・開ける・隠れる', selfie: 'インカメラ切り替え', zoomDown: 'ズームを下げる', zoomUp: 'ズームを上げる', inv: '持ち物', menu: '設定（一時停止）', back: '閉じる・戻る' },
+  GLYPH: {
+    ps: ['×', '○', '□', '△', 'L1', 'R1', 'L2', 'R2', 'SHARE', 'OPTIONS', 'L3', 'R3', '↑', '↓', '←', '→', 'PS'],
+    xb: ['A', 'B', 'X', 'Y', 'LB', 'RB', 'LT', 'RT', 'ビュー', 'メニュー', 'LS', 'RS', '↑', '↓', '←', '→', 'Xbox'],
+    sw: ['B', 'A', 'Y', 'X', 'L', 'R', 'ZL', 'ZR', '−', '＋', 'Lスティック', 'Rスティック', '↑', '↓', '←', '→', 'HOME'],
+  },
+  DEF: {   // つないだ機種ごとの初期の割り当て（ボタンの番号。Switchは右がA・下がB）
+    ps: { rec: 7, act: 1, selfie: 3, zoomDown: 4, zoomUp: 5, inv: 2, menu: 9, back: 0 },
+    xb: { rec: 7, act: 0, selfie: 3, zoomDown: 4, zoomUp: 5, inv: 2, menu: 9, back: 1 },
+    sw: { rec: 7, act: 1, selfie: 2, zoomDown: 4, zoomUp: 5, inv: 3, menu: 9, back: 0 },
+  },
+  load() { try { const v = JSON.parse(localStorage.getItem('yt_pad') || '{}'); if (typeof v.sens === 'number') this.cfg.sens = clamp(v.sens, 0.4, 2); this.cfg.inv = !!v.inv; if (v.vib === false) this.cfg.vib = false; if (v.map && typeof v.map === 'object') this.cfg.map = v.map; } catch (e) { } },
+  save() { try { localStorage.setItem('yt_pad', JSON.stringify(this.cfg)); } catch (e) { } },
+  map() { return Object.assign({}, this.DEF[this.brand] || this.DEF.xb, this.cfg.map || {}); },
+  brandOf(id) { return /054c|playstation|dualsense|dualshock|wireless controller/i.test(id) ? 'ps' : /057e|nintendo|pro controller|joy-con/i.test(id) ? 'sw' : 'xb'; },
+  glyph(i) { return (this.GLYPH[this.brand] || this.GLYPH.xb)[i] ?? `B${i}`; },
+  of(a) { const i = this.map()[a]; return i === undefined ? '—' : this.glyph(i); },
+  // キーかボタンか：いま使っている方の表示
+  hint(a) { if (!this.using) return KB.of(a); const m = { z1: 'zoomDown', z3: 'zoomUp' }; return this.of(m[a] || a); },
+  get() { const gs = navigator.getGamepads ? navigator.getGamepads() : []; if (this.idx >= 0 && gs[this.idx] && gs[this.idx].connected) return gs[this.idx]; for (const g of gs) if (g && g.connected && g.buttons.length >= 10) { this.pick(g); return g; } return null; },
+  pick(g) { this.idx = g.index; this.id = g.id; this.brand = this.brandOf(g.id); this.prev = []; document.documentElement.classList.add('padOn'); this.label(); },
+  label() { const el = $('#padName'); if (el) el.textContent = this.idx >= 0 ? `${{ ps: 'PlayStation', xb: 'Xbox', sw: 'Switch' }[this.brand]}：${this.id.replace(/\s*\(.*?\)\s*/g, ' ').trim().slice(0, 40)}` : TR('つながっていません（PS・Xbox・Switchプロコンに対応）'); },
+  setUsing(on) { if (this.using === on) return; this.using = on; document.documentElement.classList.toggle('padUse', on); hintsRefresh(); },
+  dz(v, d = 0.16) { const a = Math.abs(v); return a < d ? 0 : Math.sign(v) * Math.pow((a - d) / (1 - d), 1.5); },
+  poll(dt) {
+    const g = this.get(); if (!g) { this.lx = this.ly = this.rx = this.ry = 0; return; }
+    const ax = g.axes, B = g.buttons.map(b => b && (b.pressed || b.value > 0.5));
+    this.lx = this.dz(ax[0] || 0); this.ly = this.dz(ax[1] || 0); this.rx = this.dz(ax[2] || 0, 0.14); this.ry = this.dz(ax[3] || 0, 0.14);
+    const moved = this.lx || this.ly || this.rx || this.ry, any = B.some(Boolean);
+    if (moved || any) this.setUsing(true);
+    if (this.wait) { const i = B.findIndex((b, k) => b && !this.prev[k]); if (i >= 0 && i < 16) this.bind(this.wait, i); this.prev = B; return; }
+    const M = this.map();
+    for (const a of this.ACTS) { const i = M[a]; if (B[i] && !this.prev[i]) this.press(a); }
+    this.prev = B;
+    // 見回す（右スティック）。ゲーム中だけ
+    if (world.state === 'play' && (this.rx || this.ry)) {
+      const k = this.cfg.sens / Math.max(0.8, Math.sqrt(zoom));
+      look.yaw -= this.rx * 2.6 * k * dt; look.pitch = clamp(look.pitch - (this.cfg.inv ? -1 : 1) * this.ry * 1.8 * k * dt, -1.54, 1.54);
+    }
+    this.vibTick(dt);
+  },
+  press(a) {
+    const play = world.state === 'play';
+    if (a === 'menu') { if (INV.open) INV.hide(); else if (SET.open) SET.hide(); else if (play || world.state === 'title') SET.show(); return; }
+    if (a === 'back') { if (INV.open) { if ($('#invScore').classList.contains('show')) $('#invScore').classList.remove('show'); else INV.hide(); } else if (SET.open) SET.hide(); return; }
+    if (a === 'inv') { if (INV.open) INV.hide(); else if (play) INV.show(); return; }
+    if (!play) return;
+    if (a === 'rec') toggleRec();
+    else if (a === 'act') { if (actFn && $('#actBtn').classList.contains('show')) actFn(); }
+    else if (a === 'selfie') SELF.set(!world.selfie);
+    else if (a === 'zoomUp' || a === 'zoomDown') { const st = CONFIG.zoomStops; let i = st.indexOf(zoomTarget); if (i < 0) i = 0; i = clamp(i + (a === 'zoomUp' ? 1 : -1), 0, st.length - 1); setZoom(st[i]); }
+  },
+  // 振動
+  rumble(strong, weak, ms, hard) {
+    if (!this.cfg.vib || !this.using) return; const g = this.get(), va = g && g.vibrationActuator; if (!va || !va.playEffect) return;
+    const now = performance.now(); if (!hard && now < this.strongUntil) return; if (hard) this.strongUntil = now + ms;
+    try { va.playEffect(va.type === 'vibration' ? 'vibration' : 'dual-rumble', { startDelay: 0, duration: ms, strongMagnitude: clamp(strong, 0, 1), weakMagnitude: clamp(weak, 0, 1) }).catch(() => { }); } catch (e) { }
+  },
+  hit(k = 1) { this.rumble(0.95 * k, 0.9 * k, 520 * Math.max(0.5, k), true); },   // 襲われた瞬間・叫び
+  vibTick(dt) {   // 追われている間：鼓動（ドクン、ドクン）
+    if (world.state !== 'play' || world.capture) { this.beatT = 0; return; }
+    const chased = (CH.state === 'chase' || CH.state === 'search' || CH.state === 'hunt') || (typeof SP !== 'undefined' && SP.st === 'chase') || (world.mannRun && ['spot', 'windup', 'dash', 'skid', 'hunt', 'stun', 'turn'].includes(MANN.st));
+    if (!chased) { this.beatT = 0; return; }
+    const was = this.beatT; this.beatT += dt; const per = 0.72;
+    if (was === 0 || Math.floor(was / per) !== Math.floor(this.beatT / per)) { this.rumble(0.32, 0.12, 80); setTimeout(() => this.rumble(0.18, 0.08, 60), 190); }
+  },
+  // ボタンの組み換え
+  bind(a, i) { const M = this.map(), other = this.ACTS.find(x => x !== a && M[x] === i); const nm = Object.assign({}, M); if (other) nm[other] = M[a]; nm[a] = i; this.cfg.map = nm; this.save(); this.wait = null; PADUI.draw(); },
+};
+PAD.load();
+addEventListener('gamepadconnected', e => { PAD.pick(e.gamepad); toast(TR('コントローラーをつなぎました'), 2200); });
+addEventListener('gamepaddisconnected', e => { if (e.gamepad.index === PAD.idx) { PAD.idx = -1; PAD.label(); PAD.setUsing(false); document.documentElement.classList.remove('padOn'); } });
+// キーボード・マウスを使ったら、表示をキーに戻す
+addEventListener('keydown', () => PAD.setUsing(false), true);
+addEventListener('mousemove', e => { if (Math.abs(e.movementX) + Math.abs(e.movementY) > 2) PAD.setUsing(false); }, true);
+// 画面のキー表示を、いま使っている方（キー／ボタン）に合わせて書き換える
+function hintsRefresh() { const ab = $('#actBtn'); if (ab && FRAME.on) ab.dataset.k = PAD.using ? PAD.of('act') : 'クリック / ' + KB.of('act'); if (typeof TUT !== 'undefined' && TUT.redraw) TUT.redraw(); }
+
 
 /* ---------- 録画（1本のセッションを一時停止・再開） ---------- */
 const rec = { active: false, time: 0, recorder: null, chunks: [], mime: '', mode: 'pause', segs: [], available: false, mic: null, micGain: null };
@@ -3429,7 +3535,63 @@ const SIDE = {
   of(blobs) { if (!blobs || !blobs.length) return null; const s = blobs.map(b => this.map.get(b)); if (s.some(x => !x)) return null; return { game: s.map(x => x.game), mic: s.every(x => x.mic) ? s.map(x => x.mic) : null }; },   // 区間ごとの {game:[], mic:[]|null}
 };
 setInterval(() => SIDE.watch(), 500);
-function recSetup() { rec.available = !!(window.MediaRecorder && canvas.captureStream); if (!rec.available) return; rec.mime = MIMES.find(m => { try { return MediaRecorder.isTypeSupported(m); } catch (e) { return false; } }) || ''; }
+/* 2026-11-14 録画をMP4（H.264＋AAC）にそろえる
+   ・Firefoxなど MP4 で録れない環境の WebM、一時停止できない端末で数本に分かれた動画を、1本の MP4 に作り直す
+   ・端末の動画の部品（WebCodecs）で作り直し、箱詰めは小さな部品（mediabunny）を使う。必要になった時だけ読み込む（AACの部品はさらにその時だけ）
+   ・作り直せない環境では元のまま（拡張子は .webm）。結果は動画ごとに覚えておく */
+const MP4FIX = {
+  memo: new WeakMap(), lib: null,
+  dir() { return BETA ? '../mp4conv/' : './mp4conv/'; },
+  need(blobs) { return !!blobs && blobs.length > 0 && (blobs.length > 1 || blobs.some(b => !/mp4/i.test(b.type || '') || /vp0?[89]|av01|opus|vorbis/i.test(b.type || ''))); },   // MP4でも中身がVP9・Opusなどなら作り直す（iPhone・QuickTimeで再生できないため）
+  async load() {
+    if (this.lib) return this.lib;
+    if (!window.VideoEncoder || !window.AudioEncoder || !window.VideoDecoder || !window.AudioDecoder) throw new Error('この環境は動画の作り直しに未対応');
+    const M = await import(this.dir() + 'conv.js');
+    if (!(await M.canEncodeVideo('avc', { width: 640, height: 1280 }))) throw new Error('H.264で書き出せない');
+    if (!(await M.canEncodeAudio('aac'))) { const X = await import(this.dir() + 'aac.js'); X.registerAacEncoder(); if (!(await M.canEncodeAudio('aac'))) throw new Error('AACで書き出せない'); }
+    return (this.lib = M);
+  },
+  // 状態：undefined＝作り直し不要／'busy'＝作り直し中／{ok, blobs}＝結果
+  state(blobs) { if (!this.need(blobs)) return undefined; const m = this.memo.get(blobs[0]); if (!m) { this.get(blobs); return 'busy'; } return m.res || 'busy'; },
+  get(blobs) {
+    const k = blobs[0]; const m0 = this.memo.get(k); if (m0) return m0.p;
+    const m = {}; m.p = this.run(blobs).then(b => (m.res = { ok: true, blobs: [b] }), e => { console.warn('MP4にできませんでした', e); return (m.res = { ok: false, blobs, why: String(e && e.message || e) }); });
+    this.memo.set(k, m); return m.p;
+  },
+  async run(blobs) {
+    const M = await this.load();
+    const out = new M.Output({ format: new M.Mp4OutputFormat({ fastStart: 'in-memory' }), target: new M.BufferTarget() });
+    let vs = null, as = null, off = 0;
+    for (const blob of blobs) {
+      const inp = new M.Input({ source: new M.BlobSource(blob), formats: M.ALL_FORMATS });
+      const vt = await inp.getPrimaryVideoTrack(), at = await inp.getPrimaryAudioTrack(); if (!vt) continue;
+      if (!vs) {
+        vs = new M.VideoSampleSource({ codec: 'avc', bitrate: 3_000_000, keyFrameInterval: 2, sizeChangeBehavior: 'contain' }); out.addVideoTrack(vs, { frameRate: 30 });
+        if (at) { as = new M.AudioSampleSource({ codec: 'aac', bitrate: 128_000 }); out.addAudioTrack(as); }
+        await out.start();
+      }
+      let end = 0;
+      const pump = async (sink, src) => { for await (const x of sink.samples()) { const t = Math.max(0, x.timestamp); end = Math.max(end, t + (x.duration || 0)); x.setTimestamp(off + t); await src.add(x); x.close(); } };
+      await Promise.all([pump(new M.VideoSampleSink(vt), vs), at && as ? pump(new M.AudioSampleSink(at), as) : null]);
+      off += end;   // 次の区間は、この区間の終わりからつなぐ
+    }
+    if (!vs) throw new Error('映像がない');
+    await out.finalize();
+    return new Blob([out.target.buffer], { type: 'video/mp4' });
+  },
+};
+// 保存・シェアに渡す動画ファイル（MP4にそろえた方を優先）。作り直し中は null を返して案内を出す
+function vidFilesOf(blobs, msg) {
+  if (!blobs || !blobs.length) return [];
+  const st = MP4FIX.state(blobs);
+  if (st === 'busy') {
+    if (msg) { msg.textContent = TR('動画をMP4に変換しています。少し待ってから、もう一度押してください'); MP4FIX.get(blobs).then(() => { if (msg.textContent === TR('動画をMP4に変換しています。少し待ってから、もう一度押してください')) msg.textContent = TR('変換できました。もう一度押してください'); }); }
+    return null;
+  }
+  const use = st && st.ok ? st.blobs : blobs, mp4 = /mp4/i.test(use[0].type || ''), ext = mp4 ? 'mp4' : 'webm', fst = fileStamp(), many = use.length > 1;
+  return use.map((b, i) => new File([b], `yutuber_${fst}${many ? '_' + (i + 1) : ''}.${ext}`, { type: mp4 ? 'video/mp4' : 'video/webm' }));
+}
+function recSetup() { rec.available = !!(window.MediaRecorder && canvas.captureStream); if (!rec.available) return; rec.mime = MIMES.find(m => { try { return MediaRecorder.isTypeSupported(m); } catch (e) { return false; } }) || ''; if (TEST && /[?&]webm/.test(location.search)) rec.mime = 'video/webm;codecs=vp8,opus'; if (TEST && /[?&]segs/.test(location.search)) rec.mode = 'segments'; }   // 確認用：?webm でWebM録画、?segs で分割録画
 function makeRecorder() {
   const vt = canvas.captureStream(30).getVideoTracks(); const at = A.rec ? A.rec.stream.getAudioTracks() : [];
   const r = new MediaRecorder(new MediaStream([...vt, ...at]), rec.mime ? { mimeType: rec.mime, videoBitsPerSecond: 3_000_000 } : { videoBitsPerSecond: 3_000_000 });
@@ -3438,6 +3600,7 @@ function makeRecorder() {
 function startRec() {
   if (world.state !== 'play' || world.dark || rec.time >= CONFIG.recMaxSec - 0.05) return;
   rec.active = true; CHATLOG.segStart();   // チャット用：録画の区間の頭
+  if (rec.available) recSizeLock = true;   /* 2026-11-14 この回の録画が終わるまで描画の大きさを固定 */
   if (rec.available) {
     try {
       if (rec.mode === 'pause') { if (!rec.recorder) { rec.recorder = makeRecorder(); rec.recorder.start(500); } else if (rec.recorder.state === 'paused') rec.recorder.resume(); }
@@ -3532,7 +3695,8 @@ function finalizeRec() {
 }
 function finalizeRec0() {
   return new Promise(res0 => {
-    const res = b => SIDE.fin(b).then(res0, () => res0(b));   // 2026-11-14 別録りの音も仕上げてから
+    const unlock = () => { recSizeLock = false; if (resize.pending) resize(); };   /* 2026-11-14 録画を閉じたら大きさの固定を解く */
+    const res = b => { unlock(); return SIDE.fin(b).then(res0, () => res0(b)); };   // 2026-11-14 別録りの音も仕上げてから
     const done = () => { if (rec.mode === 'segments') { res(rec.segs.slice()); return; } res(rec.chunks.length ? [new Blob(rec.chunks, { type: rec.recorder?.mimeType || rec.mime })] : []); };
     const r = rec.recorder;
     if (!rec.available || !r || r.state === 'inactive') { setTimeout(done, 300); return; }
@@ -4177,7 +4341,7 @@ const CAP = {
     if (this.on || world.state !== 'play') return; scareZoom1();
     if (ITEM.charm('woman')) { if (!OFUDA.on) ITEM.banishWoman(); return; }   // おまもり／封印のお札が一度だけ身代わりに
     if (world.selfie) SELF.set(false);
-    this.on = true; this.t = 0; this.seenS = 0; world.capture = 0.0001; CH.state = 'off'; $('#hud').classList.add('off'); $('#actBtn').classList.remove('show');
+    this.on = true; this.t = 0; this.seenS = 0; world.capture = 0.0001; PAD.hit(1); CH.state = 'off'; $('#hud').classList.add('off'); $('#actBtn').classList.remove('show');
     if (DIR.active) DIR.end(DIR.active);
     if (HIDE.lk) { const lk = HIDE.lk; lk.hinge.rotation.y = 1.5; HIDE.lk = null; player.hidden = false; lockerInside.visible = false; if (A.out) A.out.frequency.setTargetAtTime(22000, A.ctx.currentTime, 0.05); }
     // 女のいる方向（真後ろに近いほど、大きく振り向かされる）
@@ -6793,7 +6957,7 @@ F2.updMusic = function (dt) {
 /* 11. 教室の枯れ花 */
 F2.updVase = function (dt) {
   const S = this.st; const v = this.vase; if (!v || S.vase === 'done') return;
-  const d = this.vaseDesk; const p = V(d.x + 0.12, d.y + 0.85, d.z - 0.05);
+  const d = this.vaseDesk; if (!d) return; const p = V(d.x + 0.12, d.y + 0.85, d.z - 0.05);
   if (S.vase === 'wait') {
     if (playerZone() !== this.plan.vaseRoom || camera.position.distanceTo(p) > 2.4 || !onScreen(p, 0.9) || !clearLine(p, [v])) return;
     S.vase = 'wobble'; S.vt = 0; SND.kata && SND.kata(p, 0.25);
@@ -9493,7 +9657,7 @@ const MANN = {
     if (world.selfie) SELF.set(false);
     if (DIR.active) DIR.end(DIR.active);
     if (HIDE.lk) { const lk = HIDE.lk; lk.hinge.rotation.y = 1.5; HIDE.lk = null; player.hidden = false; lockerInside.visible = false; }
-    world.capture = 0.0001; $('#hud').classList.add('off'); $('#actBtn').classList.remove('show');
+    world.capture = 0.0001; PAD.hit(1); $('#hud').classList.add('off'); $('#actBtn').classList.remove('show');
     this.cap = { t: 0, next: 0, d: 0.6 }; this.st = 'cap'; this.play(null); this.rattleStart(0.9);
     look.yaw = Math.atan2(-(this.pos.x - player.x), -(this.pos.z - player.z)); look.pitch = 0;   // 人体模型の方へ振り向かされる
     SND.hit(); wdScream(0, 1, 2.4); jumpSting('jump_b', 1, 4); world.vhs = 0.7;
@@ -10740,14 +10904,14 @@ function updateInteractions() {
   }
   if (!HIDE.lk) ITEM.offerPick();
   const b = $('#actBtn'); if (world.tutAct) return;   // 遊び方の説明でお手本を出している間はそのまま
-  b.classList.toggle('show', !!actFn && !world.dark); b.classList.toggle('key', !!actFn && actKey); if (b.textContent !== actLabel) b.textContent = actLabel; if (FRAME.on) { const kl = 'クリック / ' + KB.of('act'); if (b.dataset.k !== kl) b.dataset.k = kl; }
+  b.classList.toggle('show', !!actFn && !world.dark); b.classList.toggle('key', !!actFn && actKey); if (b.textContent !== actLabel) b.textContent = actLabel; if (FRAME.on) { const kl = PAD.using ? PAD.of('act') : 'クリック / ' + KB.of('act'); if (b.dataset.k !== kl) b.dataset.k = kl; }
 }
 function toggleWater(sk) { TAP.toggle(sk); }
 
 let lastT = performance.now(), prevZoom = 1, shakeT = 0, devTick = 0;
 function tick(now) {
   requestAnimationFrame(tick);
-  const rawDt = Math.min(0.5, Math.max(0, (now - lastT) / 1000)); let dt = Math.min(TEST && window.__dtMax || 0.05, rawDt); lastT = now;
+  const rawDt = Math.min(0.5, Math.max(0, (now - lastT) / 1000)); PAD.poll(Math.min(0.05, rawDt)); /* 2026-11-14 コントローラー（一時停止中も読む） */ let dt = Math.min(TEST && window.__dtMax || 0.05, rawDt); lastT = now;
   if (world.state === 'piano') { PIANO.tick(rawDt); return; }   // ピアノを弾いている間は時間が止まる
   if (world.state !== 'play') { if (world.state === 'title') { idleCam(now); render(); } return; }
   world.t += dt; if (world.tutLive) world.t -= dt;   // 遊び方の説明で動かしている間は、時間を進めない
@@ -10768,6 +10932,7 @@ function tick(now) {
   }
   // 移動
   let mx = input.sx, my = input.sy;
+  if (PAD.lx || PAD.ly) { mx = PAD.lx; my = PAD.ly; }   // 2026-11-14 コントローラーの左スティック
   if (KB.down('up')) my = -1; if (KB.down('down')) my = 1; if (KB.down('left')) mx = -1; if (KB.down('right')) mx = 1;
   if (world.outro > 0 || world.capture || player.hidden || REVIVE.on) { mx = 0; my = 0; }
   const fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw), rx = Math.cos(player.yaw), rz = -Math.sin(player.yaw);
@@ -11055,6 +11220,7 @@ function showResult(blobs) {
 function attachVideo(blobs, pending) {
   resultBlobs = blobs.filter(b => b && b.size > 0);
   if (resultBlobs.length) ACH.saveVid(resultBlobs);
+  if (!pending && MP4FIX.need(resultBlobs)) MP4FIX.get(resultBlobs);   /* 2026-11-14 シェアを押す前に、裏でMP4へ作り直しておく */
   resultUrls.forEach(u => URL.revokeObjectURL(u)); resultUrls = resultBlobs.map(b => URL.createObjectURL(b));
   const v = $('#replay');
   if (resultUrls.length) { $('#noVideo').style.display = 'none'; v.style.display = ''; segIdx = 0; v.src = resultUrls[0]; v.load(); v.addEventListener('loadeddata', () => { try { if (v.paused && v.currentTime < 0.05) v.currentTime = 0.05; } catch (e) { } }, { once: true }); $('#saveBtn').disabled = false; }   // 自動では再生しない（最初のコマだけ見せる）。iPhoneでは保存した動画のURLに「#t=」を付けると再生できなくなるので付けない
@@ -11121,11 +11287,7 @@ function shareText(T) {
 }
 // 2026-11-13 シェアは3つ：動画と結果画像をまとめて（基本）／動画だけ（TikTok・インスタ向け）／結果画像だけ
 function fileStamp() { const st = new Date(); return `${st.getMonth() + 1}${String(st.getDate()).padStart(2, '0')}_${String(st.getHours()).padStart(2, '0')}${String(st.getMinutes()).padStart(2, '0')}`; }
-function videoFiles() {
-  if (!resultBlobs.length) return [];
-  const ext = (resultBlobs[0].type || rec.mime).includes('mp4') ? 'mp4' : 'webm', st = fileStamp(), many = resultBlobs.length > 1;
-  return resultBlobs.map((b, i) => new File([b], `yutuber_${st}${many ? '_' + (i + 1) : ''}.${ext}`, { type: b.type || `video/${ext}` }));
-}
+function videoFiles(msg) { return vidFilesOf(resultBlobs, msg); }   // 2026-11-14 MP4にそろえた方を渡す（変換中は null）
 async function imageFile() { const blob = resultImg || await makeResultImage(); resultImg = blob; return new File([blob], `yutuber_result_${fileStamp()}.png`, { type: 'image/png' }); }
 function copyPost(msg, T) { const post = shareText(T); try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(post).then(() => { if (msg && !msg.textContent) msg.textContent = TR('投稿文（#幽tuber）をコピーしました。アプリで消えていたら貼り付けてください'); }).catch(() => { }); } catch (e) { } return post; }
 // まとめて渡せない環境では、渡せる組み合わせに順に落とす（動画と画像 → 動画だけ → ダウンロード）
@@ -11142,13 +11304,13 @@ async function shareSet(sets, msg, post) {
 }
 async function shareOriginal() {   // これまでの共有（元の動画＋結果画像）
   const msg = $('#saveMsg'); msg.textContent = ''; const post = copyPost(msg);
-  const vids = videoFiles(); let img = null; try { img = await imageFile(); } catch (e) { }
+  const vids = videoFiles(msg); if (vids === null) return; let img = null; try { img = await imageFile(); } catch (e) { }
   const both = img ? [img, ...vids] : vids;   // 2026-11-13 Xでは渡した順と逆に並ぶため、画像を先に渡す（投稿画面では動画が先になる）
   await shareSet([both, vids, img ? [img] : []].filter(f => f.length), msg, post);
 }
 $('#shareBtn').addEventListener('click', () => { if (resultBlobs.length && resultUrls.length) VED.ask(); else shareOriginal(); });   // 2026-11-14 動画があれば「動画を編集しますか？」
 $('#saveBtn').addEventListener('click', async () => {
-  const vids = videoFiles(); if (!vids.length) return; const msg = $('#saveMsg'); msg.textContent = '';
+  const msg = $('#saveMsg'); msg.textContent = ''; const vids = videoFiles(msg); if (!vids || !vids.length) return;
   await shareSet([vids], msg, copyPost(msg));
 });
 /* ---------- 結果を画像で保存（いいね数と内訳。SNS用の縦長 1080×1350） ---------- */
@@ -11218,17 +11380,31 @@ $('#overVideo').addEventListener('click', () => { $('#over').classList.remove('s
 
 /* ---------- 開始 ---------- */
 const opt = { gyro: !FRAME.on, mic: true };
-opt.bright = 0; opt.vol = 1; opt.sens = 1; opt.sink = ''; opt.midi = false; opt.midiIn = ''; opt.screen = 'win';
+opt.bright = 0; opt.vol = 1; opt.sens = 1; opt.sink = ''; opt.midi = false; opt.midiIn = ''; opt.screen = 'win'; opt.quality = 'std';
 try {
   const sv = JSON.parse(localStorage.getItem('yt_settings') || '{}');
   // 2026-11-13 ジャイロと実況マイクは最初からオン（PCにジャイロはないのでオフ）。この版より前に保存した設定も一度だけ新しい初期値にそろえる
   if (sv.v === 2) { opt.gyro = !!sv.gyro; opt.mic = !!sv.mic; } else { opt.gyro = !FRAME.on; opt.mic = true; } if (typeof sv.bright === 'number') opt.bright = sv.bright;
   if (typeof sv.vol === 'number') opt.vol = clamp(sv.vol, 0, 1); if (typeof sv.sens === 'number') opt.sens = clamp(sv.sens, 0.4, 2);
-  if (typeof sv.sink === 'string') opt.sink = sv.sink; if (sv.midi) opt.midi = true; if (typeof sv.midiIn === 'string') opt.midiIn = sv.midiIn; if (sv.screen === 'full') opt.screen = 'full';
+  if (typeof sv.sink === 'string') opt.sink = sv.sink; if (sv.midi) opt.midi = true; if (typeof sv.midiIn === 'string') opt.midiIn = sv.midiIn; if (sv.screen === 'full') opt.screen = 'full'; if (sv.quality === 'lite') opt.quality = 'lite';
 } catch (e) { }
-function saveOpts() { try { localStorage.setItem('yt_settings', JSON.stringify({ v: 2, gyro: opt.gyro, mic: opt.mic, bright: opt.bright, vol: opt.vol, sens: opt.sens, sink: opt.sink, midi: opt.midi, midiIn: opt.midiIn, screen: opt.screen })); } catch (e) { } }
+function saveOpts() { try { localStorage.setItem('yt_settings', JSON.stringify({ v: 2, gyro: opt.gyro, mic: opt.mic, bright: opt.bright, vol: opt.vol, sens: opt.sens, sink: opt.sink, midi: opt.midi, midiIn: opt.midiIn, screen: opt.screen, quality: opt.quality })); } catch (e) { } }
 const brightK = v => Math.pow(1.09, v);   // 明るさ：-5〜+5 の段階 → 画面の中間の明るさの持ち上げ量
 postMat.uniforms.bright.value = brightK(opt.bright);
+/* 2026-11-14 画質：標準／軽い（重いPC向け）。軽い＝描画の解像度を下げ、影を切り、ぼかしの回数を減らす。
+   録画中の回は大きさを変えない（動画が壊れないように）ので、解像度はその回の録画が終わってから変わる */
+const QUALITY = {
+  std: { scale: 1.1, shadow: true, taps: 12 }, lite: { scale: 0.72, shadow: false, taps: 4 },
+  apply() {
+    const q = this[opt.quality] || this.std;
+    CONFIG.renderScale = q.scale; postMat.uniforms.taps.value = q.taps;
+    if (renderer.shadowMap.enabled !== q.shadow) { renderer.shadowMap.enabled = q.shadow; scene.traverse(o => { const m = o.material; if (!m) return; for (const x of Array.isArray(m) ? m : [m]) x.needsUpdate = true; }); }
+    resize();
+    for (const b of document.querySelectorAll('#qualSeg button')) b.classList.toggle('on', b.dataset.q === opt.quality);
+  },
+};
+QUALITY.apply();
+for (const b of document.querySelectorAll('#qualSeg button')) b.addEventListener('click', e => { e.stopPropagation(); if (opt.quality === b.dataset.q) return; opt.quality = b.dataset.q; saveOpts(); QUALITY.apply(); if (recSizeLock) toast(TR('画面の細かさは、この回の録画が終わってから変わります'), 2600); });
 
 /* ---------- 設定画面（左上の歯車／スタート画面の歯車）。ゲーム中に開くと一時停止 ---------- */
 const SET = {
@@ -11249,9 +11425,10 @@ const SET = {
     this.homeArm = 0; $('#setHome').classList.remove('warn'); $('#setHome').textContent = TR('スタート画面にもどる');
     this.sync(); $('#settings').classList.remove('bright'); $('#settings').classList.add('show'); this.meter();
     if (FRAME.on) { AUDIO_OUT.list(); MIDI.list(); KEYUI.draw(); }
+    PAD.wait = null; PADUI.draw();   // 2026-11-14 コントローラー
   },
   hide() {
-    if (!this.open) return; this.open = false; cancelAnimationFrame(this.raf);
+    if (!this.open) return; this.open = false; cancelAnimationFrame(this.raf); PAD.wait = null;
     $('#settings').classList.remove('show', 'bright');
     if (this.paused) {
       this.paused = false; world.state = 'play';
@@ -11266,6 +11443,7 @@ const SET = {
     $('#volRange').value = Math.round(opt.vol * 100); $('#volVal').textContent = Math.round(opt.vol * 100) + '%';
     $('#sensRange').value = opt.sens; $('#sensVal').textContent = '×' + opt.sens.toFixed(1);
     $('#setMidiRow').classList.toggle('on', !!opt.midi);
+    for (const b of document.querySelectorAll('#qualSeg button')) b.classList.toggle('on', b.dataset.q === opt.quality);
     if (FRAME.on) $('#setGyro').style.display = 'none';   // PCにはジャイロがない
     for (const b of document.querySelectorAll('#langSeg button')) b.classList.toggle('on', b.dataset.lang === LANG);
   },
@@ -11641,6 +11819,7 @@ const TUT = {
   // [目印（要素のid・範囲・なし）, 目印の文字, 見出し, 説明, アイコン]
   steps() {
     const pc = FRAME.on, W = vpW(), H = vpH(), k = (...a) => a.map(x => `<kbd>${KB.of(x)}</kbd>`).join(''), Z = CONFIG.stickZone;
+    if (PAD.using) { const P = a => PAD.of(a); return this.padSteps(W, H, P); }   // 2026-11-14 コントローラーで遊んでいる時
     return [
       [null, '', 'ようこそ、幽tuberへ', '夜の旧校舎で心霊現象を撮影して、無事に帰ってくるゲームです。画面の見方を説明します。'],
       pc ? [null, '', '歩く', `${KB.of('up')}${KB.of('left')}${KB.of('down')}${KB.of('right')} キーで前後左右に歩きます。`, k('up') + '<br>' + k('left', 'down', 'right')]
@@ -11665,7 +11844,7 @@ const TUT = {
     const draw = () => {
       const [tg, tag, ti, tx, ico, demo] = S[i];
       { const ab = $('#actBtn'), on = demo === 'act'; world.tutAct = on;   // 開ける・調べる：ボタンのお手本を出し、扉を開ける動画を小窓で流す
-        if (on) { ab.textContent = TR('引き戸を開ける'); ab.classList.add('show'); ab.classList.remove('key'); if (FRAME.on) ab.dataset.k = 'クリック / ' + KB.of('act'); }
+        if (on) { ab.textContent = TR('引き戸を開ける'); ab.classList.add('show'); ab.classList.remove('key'); if (FRAME.on) ab.dataset.k = PAD.using ? PAD.of('act') : 'クリック / ' + KB.of('act'); }
         else if (ab._tutWas !== undefined) { ab.classList.remove('show'); ab.textContent = ''; }
         ab._tutWas = on ? 1 : undefined;
         const g = $('#tGif'); if (on && !g.src) g.src = TUT_GIF; g.classList.toggle('on', on); $('#tBox').classList.toggle('act', on); }
@@ -11701,6 +11880,21 @@ const TUT = {
     if (!el._stop) { el._stop = 1; for (const ev of ['pointerdown', 'pointermove', 'pointerup', 'touchstart', 'touchmove']) el.addEventListener(ev, e => e.stopPropagation(), { passive: true }); }
     el.classList.add('show'); draw();
   },
+  padSteps(W, H, P) {   // 2026-11-14 コントローラー用の説明（ボタンの表記はつないだ機種に合わせる）
+    return [
+      [null, '', 'ようこそ、幽tuberへ', '夜の旧校舎で心霊現象を撮影して、無事に帰ってくるゲームです。画面の見方を説明します。'],
+      [null, '', '歩く', '左スティックで前後左右に歩きます。'],
+      [{ x: 8, y: 90, w: W - 16, h: H * 0.56 - 90, full: 1 }, '右スティックで見回す', '見回す', '右スティックで向きが変わります。速さと上下反転は設定で変えられます。'],
+      ['actBtn', '', '開ける・調べる', `扉や引き戸、ロッカーなどに近づくと、右に丸いボタンが出ます。${P('act')} ボタンで、開けたり調べたり、隠れたりできます。`, '', 'act'],
+      ['recBtn', '', '録画はここ！', `${P('rec')} で録画が始まり、もう一度押すと止まります。撮れ高は録画中にしか入りません。`],
+      ['cap', '', '録画の残容量', '録画できるのは全部で2分。録画中に減っていき、0になるともう撮れません。ここぞという時に回そう！'],
+      ['battery', '', 'スマホの電池', '時間とともに減り、録画中は早く減ります。電池が切れると明かりも消えて、真っ暗な中で怪異が近づいてきます。'],
+      ['zoomRow', '', 'ズーム', `${P('zoomDown')}・${P('zoomUp')} で1倍・2倍・3倍を切り替えます。遠くの怪異は大きく撮ろう。`],
+      ['camBtn', '', 'インカメラ', `${P('selfie')} で自分を映すカメラに切り替えます。背後に何かが映ることも……。`],
+      ['topL', '', '設定と持ち物', `${P('menu')} で設定（一時停止）、${P('inv')} で持ち物、${P('back')} で閉じます。ボタンは設定で組み換えられます。`],
+      [null, '', '逃げて、帰る', '怪異に追われたら距離をとるか隠れよう。捕まるとゲームオーバー。撮り終えたら玄関から外へ出れば帰還できます。'],
+    ];
+  },
   need() { if (TEST && !/[#&?]tut/.test(location.href)) return false; try { return !localStorage.getItem('yt_tut'); } catch (e) { return false; } },
 };
 $('#setTut').addEventListener('click', e => {
@@ -11729,6 +11923,24 @@ const KEYUI = {
   },
 };
 $('#keyReset').addEventListener('click', e => { e.stopPropagation(); KB.map = Object.assign({}, KB.DEF); KB.save(); KEYUI.draw(); });
+/* 2026-11-14 コントローラーの設定（感度・上下反転・振動・ボタンの組み換え） */
+const PADUI = {
+  draw() {
+    PAD.label(); const L = $('#padList'); if (!L) return; L.innerHTML = '';
+    $('#padSens').value = PAD.cfg.sens; $('#padSensVal').textContent = '×' + PAD.cfg.sens.toFixed(1);
+    $('#padInvRow').classList.toggle('on', PAD.cfg.inv); $('#padVibRow').classList.toggle('on', PAD.cfg.vib);
+    for (const a of PAD.ACTS) {
+      const n = document.createElement('div'); n.textContent = TR(PAD.NAME[a]); const b = document.createElement('button'); b.dataset.a = a;
+      b.textContent = PAD.wait === a ? TR('ボタンを押す…') : PAD.of(a); b.classList.toggle('wait', PAD.wait === a);
+      b.addEventListener('click', ev => { ev.stopPropagation(); if (PAD.idx < 0) { toast(TR('先にコントローラーをつないで、どれかボタンを押してください'), 2600); return; } PAD.wait = PAD.wait === a ? null : a; this.draw(); });
+      L.append(n, b);
+    }
+  },
+};
+$('#padSens').addEventListener('input', e => { e.stopPropagation(); PAD.cfg.sens = clamp(parseFloat(e.target.value) || 1, 0.4, 2); $('#padSensVal').textContent = '×' + PAD.cfg.sens.toFixed(1); PAD.save(); });
+$('#padInvRow').addEventListener('click', e => { e.stopPropagation(); PAD.cfg.inv = !PAD.cfg.inv; PAD.save(); PADUI.draw(); });
+$('#padVibRow').addEventListener('click', e => { e.stopPropagation(); PAD.cfg.vib = !PAD.cfg.vib; PAD.save(); PADUI.draw(); if (PAD.cfg.vib) PAD.rumble(0.5, 0.4, 160, true); });
+$('#padReset').addEventListener('click', e => { e.stopPropagation(); PAD.cfg.map = null; PAD.wait = null; PAD.save(); PADUI.draw(); });
 /* 2026-11-13 持ち物（設定の下のボタン）。開いている間は一時停止 */
 const INV = {
   open: false, wasRec: false, masterV: 0.9,
@@ -11938,7 +12150,7 @@ function beginPlay() {
   postMat.uniforms.black.value = 1; postMat.uniforms.grain.value = 1;
   if (DEV) $('#dev').classList.add('show'), $('#devInfo').style.display = 'block';
   if (TUT.need()) setTimeout(() => { if (world.state === 'play') TUT.show(); }, 400);   // 2026-11-13 はじめての人には、画面を指しながら遊び方を説明（その間は止める）
-  else setTimeout(() => toast(FRAME.on ? `${KB.of('up')}${KB.of('left')}${KB.of('down')}${KB.of('right')}で歩く／クリックしてマウスで見回す` : '左下を押して歩く／右側をなぞって見回す', 3200), 600);
+  else setTimeout(() => toast(PAD.using ? '左スティックで歩く／右スティックで見回す' : FRAME.on ? `${KB.of('up')}${KB.of('left')}${KB.of('down')}${KB.of('right')}で歩く／クリックしてマウスで見回す` : '左下を押して歩く／右側をなぞって見回す', 3200), 600);
   if (DEMO === 'result') demoResult();
 }
 const DEMO = (location.search.match(/[?&]demo=(\w+)/) || [])[1] || '';
@@ -12125,7 +12337,7 @@ function showCredits() {
   const sites = ['Freesound', 'BigSoundBank', 'Wikimedia Commons', 'Google Fonts', 'three.js'];
   for (const n of sites) { const d = document.createElement('div'); d.className = 'site'; d.textContent = n; L.appendChild(d); }
   const need = document.createElement('div'); need.className = 'need';
-  need.innerHTML = (LANG === 'en' ? 'Attribution (CC BY):<br>' : '表記が必要な素材（CC BY）：<br>') + 'Scream — FreqMan (CC BY 4.0)<br>Piano samples — Salamander Grand Piano / Alexander Holm (CC BY 3.0)';
+  need.innerHTML = (LANG === 'en' ? 'Attribution (CC BY):<br>' : '表記が必要な素材（CC BY）：<br>') + 'Scream — FreqMan (CC BY 4.0)<br>Piano samples — Salamander Grand Piano / Alexander Holm (CC BY 3.0)<br>MP4 conversion — Mediabunny (MPL-2.0) / FFmpeg libavcodec AAC (LGPL)';
   L.appendChild(need);
   for (const c of (false ? SFX_CREDITS : [])) {
     const d = document.createElement('div'); d.className = 'c';
@@ -12278,7 +12490,7 @@ const GOD = {
     }
     this.el.classList.add('show');
     if (i < 3 && b.v) {
-      try { const blobs = await VDB.get(b.id); if (blobs && blobs.length) { this.blobs = blobs; this.urls = blobs.map(x => URL.createObjectURL(x)); this.seg = 0; v.src = this.urls[0]; $('#gvRow').classList.remove('none'); $('#gvShareRow').classList.remove('none'); nv.style.display = 'none'; } else nv.textContent = TR('この回の動画は残っていません'); }
+      try { const blobs = await VDB.get(b.id); if (blobs && blobs.length) { this.blobs = blobs; if (MP4FIX.need(blobs)) MP4FIX.get(blobs); this.urls = blobs.map(x => URL.createObjectURL(x)); this.seg = 0; v.src = this.urls[0]; $('#gvRow').classList.remove('none'); $('#gvShareRow').classList.remove('none'); nv.style.display = 'none'; } else nv.textContent = TR('この回の動画は残っていません'); }
       catch (e) { nv.textContent = TR('この回の動画は残っていません'); }
     }
     this.side = null; if (this.urls.length) try { const g = await VDB.get(b.id + ':game'), m = await VDB.get(b.id + ':mic'); if (g && g.length === this.blobs.length) this.side = { game: g, mic: m && m.length === g.length ? m : null }; } catch (e) { }   // 2026-11-14 個別の音量用
@@ -12296,8 +12508,8 @@ const GOD = {
   },
   async shareOrig() {
     const b = ACH.load().best[this.i], msg = $('#gvMsg'); msg.textContent = ''; if (!this.blobs || !this.blobs.length) return; const post = copyPost(msg, b ? b.n : 0);
-    const ext = (this.blobs[0].type || '').includes('mp4') ? 'mp4' : 'webm', many = this.blobs.length > 1, st = fileStamp();
-    await shareSet([this.blobs.map((x, k) => new File([x], `yutuber_${st}${many ? '_' + (k + 1) : ''}.${ext}`, { type: x.type || `video/${ext}` }))], msg, post);
+    const files = vidFilesOf(this.blobs, msg); if (!files || !files.length) return;   // 2026-11-14 MP4にそろえた方
+    await shareSet([files], msg, post);
   },
   clear() { const v = $('#gvVid'); if (v) { v.pause(); v.removeAttribute('src'); v.load(); } this.urls.forEach(u => URL.revokeObjectURL(u)); this.urls = []; },
   close() { this.clear(); if (this.el) this.el.classList.remove('show'); },
@@ -13247,7 +13459,8 @@ const VED = {
       try { mr.requestData && mr.requestData(); } catch (e) { } mr.stop(); await Promise.race([stopped, new Promise(ok => setTimeout(ok, 3000))]);
       if (this.cancel) { fin(false); el.classList.remove('exp'); return; }
       const type = (mr.mimeType || mime || 'video/webm'), blob = new Blob(chunks, { type }); if (!blob.size) throw new Error('empty');
-      const ext = type.includes('mp4') ? 'mp4' : 'webm'; this.file = new File([blob], `yutuber_edit_${fileStamp()}.${ext}`, { type: type.split(';')[0] }); this.exType = type;
+      let fb = blob; if (MP4FIX.need([blob])) { $('#veExP').textContent = LANG === 'en' ? 'MP4…' : 'MP4に変換中'; const r = await MP4FIX.get([blob]); if (r.ok) fb = r.blobs[0]; if (this.cancel) { fin(false); el.classList.remove('exp'); return; } }   // 2026-11-14 WebMで書き出せた時はMP4に作り直す
+      const fty = fb.type || type, ext = /mp4/i.test(fty) ? 'mp4' : 'webm'; this.file = new File([fb], `yutuber_edit_${fileStamp()}.${ext}`, { type: ext === 'mp4' ? 'video/mp4' : 'video/webm' }); this.exType = fty;
       fin(true); this.done();
     } catch (e) {
       console.warn('編集動画を作れませんでした', e); try { mr && mr.state !== 'inactive' && mr.stop(); } catch (er) { } fin(false);
@@ -13402,7 +13615,7 @@ $('#resetAsk').addEventListener('click', e => e.stopPropagation());
 $('#setReset').addEventListener('click', e => { e.stopPropagation(); RESET.ask(); });
 $('#resetNo').addEventListener('click', e => { e.stopPropagation(); RESET.no(); });
 $('#resetYes').addEventListener('click', e => { e.stopPropagation(); RESET.yes(); });
-if (TEST && window.__G) Object.assign(window.__G, { LOGOANIM, CHIP, VTITLE, NOISE, SNAKE, ACC, ACC_ICON, ACC_VIEW, award, CHATLOG, CHAT, CHATGEN, RES_CHAT, RANKPOP, yrankIdx, GOD, VDB, ACH, PERM, REVIVE, RESET, COL, escape, caught, DIR, SP, OFUDA, LUM, TRACE, HAZURE, seen, SFX_CREDITS, AW_TABLE, RANK_FIX, rankOf, MICLV, MIC, rec, opt, VED, RES_CHAT_: () => RES_CHAT, _attach: b => attachVideo(b), GODV: GOD, _blobs: () => resultBlobs, EVENTS: () => EV });
+if (TEST && window.__G) Object.assign(window.__G, { PAD, QUALITY, opt, MP4FIX, rec, resultBlobs: () => resultBlobs, LOGOANIM, CHIP, VTITLE, NOISE, SNAKE, ACC, ACC_ICON, ACC_VIEW, award, CHATLOG, CHAT, CHATGEN, RES_CHAT, RANKPOP, yrankIdx, GOD, VDB, ACH, PERM, REVIVE, RESET, COL, escape, caught, DIR, SP, OFUDA, LUM, TRACE, HAZURE, seen, SFX_CREDITS, AW_TABLE, RANK_FIX, rankOf, MICLV, MIC, rec, opt, VED, RES_CHAT_: () => RES_CHAT, _attach: b => attachVideo(b), GODV: GOD, _blobs: () => resultBlobs, EVENTS: () => EV });
 /* 2026-11-14 PC：ウィンドウ／全画面（全画面はボタンを押した時と、旧校舎に入る時に切り替える。Escで戻したらウィンドウに） */
 const SCREEN = {
   isFull() { return !!(document.fullscreenElement || document.webkitFullscreenElement); },
