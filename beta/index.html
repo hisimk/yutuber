@@ -13630,7 +13630,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.14.24';
+const VERSION = '0.14.25';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -13833,6 +13833,9 @@ const NICK = {
   mora(s) { const a = []; for (const c of s) { if (/[ゃゅょぁぃぅぇぉゎャュョァィゥェォヮ]/.test(c) && a.length) a[a.length - 1] += c; else a.push(c); } return a; },
   of(raw, yomi) {
     raw = String(raw || '').normalize('NFKC').trim(); yomi = String(yomi || '').normalize('NFKC').trim();
+    // 2026-11-15 敬称（くん・ちゃん・さん・様・君・chan など）は外してから考える（げんきくん → げんき）
+    const HON = /[ 　]*(くん|クン|ちゃん|チャン|さん|サン|さま|サマ|様|君|殿|どの|ちゃま|chan|kun|san|sama)$/i, cut = t => { return t.replace(HON, '').trim(); };
+    raw = cut(raw); yomi = cut(yomi);
     const KANA = /^[ぁ-ゖァ-ヺー ]+$/, KATA = /^[ァ-ヺー]+$/, KAN = '[㐀-鿿々〆ヶ]';
     const ng = /ch|チャンネル|ちゃんねる|channel|tv|実況|じっきょう|ゲーム|げーむ|game|公式|こうしき|配信|はいしん/i;
     if (!raw || ng.test(raw) || ng.test(yomi)) return null;
@@ -13869,7 +13872,7 @@ const NICK = {
 };
 function chatCallName() {
   const clean = s => String(s || '').replace(/[\u0000-\u001f\u007f\u2028\u2029]/g, '').replace(/\s+/g, ' ').trim();
-  let n = clean(world.chRaw);   // 2026-11-14 呼び名＝名前（別の呼び名の欄はやめた） if (!n) return '';   // 空なら、表示の時に「主」／streamer を使う
+  let n = clean(world.chRaw);   /* 2026-11-14 呼び名＝名前（別の呼び名の欄はやめた） */ if (!n) return '';   // 空なら、表示の時に「主」／streamer を使う
   const a = Array.from(n); return a.length > 16 ? a.slice(0, 15).join('') + '…' : n;
 }
 function chatHash(s) { let h = 2166136261; for (const c of String(s)) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
@@ -14109,7 +14112,7 @@ const CHATGEN = {
     const mk = id => ({ id, ja: T[id][0].split('{name}').join(nJa), en: T[id][1].split('{name}').join(nEn) });   // {name}だけを一度置き換える（入力をテンプレートとして扱わない）
     const line = (cat, opt = {}) => {
       let L = (CHAT_DICT.c[cat] || []).filter(id => T[id]); if (!opt.end) L = L.filter(id => !this.NOT_YET.includes(T[id][0]));
-      if (/さん$|様$/.test(nJa)) L = L.filter(id => !T[id][0].includes('{name}さん'));
+      if (/(さん|サン|様|さま|くん|クン|君|ちゃん|チャン|ちゃま|殿|どの|chan|kun|san|sama)$/i.test(nJa)) L = L.filter(id => !T[id][0].includes('{name}さん'));   /* 2026-11-15 くん・ちゃん等の後に「さん」を重ねない */
       if (!o.name) L = L.filter(id => !T[id][0].includes('{name}'));   // 2026-11-14 呼び名が無い時は、名前なしの候補だけ
       if (opt.t !== undefined && !catOK(cat, opt.t)) return null;
       L = L.filter(id => (!CALM.has(id) || (opt.t !== undefined && calmAt(opt.t, 20, 8))) && (!HALL.has(id) || (opt.t !== undefined && HALLZ.has(zoneAt(opt.t)) && HALLZ.has(zoneAt(opt.t - 4)))) && (!AWL.has(id) || (opt.t !== undefined && awT.some(x => x < opt.t - 0.5))));
@@ -14201,6 +14204,8 @@ const CHATGEN = {
     if (o.nick && firstSeg && end.R > 1.5) { const n = o.nick, J = [`こん${n}〜`, `こん${n}`, `こん${n}～！`, `こん${n}〜〜`, `こん${n}ー`, `こん${n}！`], E = [`hi ${n}!`, `hey ${n}`, `hi ${n}~`, `hey ${n}!!`, `hii ${n}`, `hi ${n}`];
       for (let i = J.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [J[i], J[j]] = [J[j], J[i]]; [E[i], E[j]] = [E[j], E[i]]; }
       const k = 2 + Math.floor(R() * 3); let t = firstSeg.t + rnd2(0.9, 1.7); for (let i = 0; i < k; i++) { out.push([t, 'g', { id: 'nick_hello', ja: J[i], en: E[i] }, 19, firstSeg.t]); t += rnd2(0.35, 0.9); } }
+    // 2026-11-15 呼び名が作れない時は、「こん◯◯〜」はやめて、入力された名前のままであいさつ（1〜2件）
+    else if (o.name && firstSeg && end.R > 1.5) { const k = 1 + Math.floor(R() * 2); let t = firstSeg.t + rnd2(1.0, 1.8); for (let i = 0; i < k; i++) { const x = line('name_hello'); if (x) out.push([t, 'g', x, 19, firstSeg.t]); t += rnd2(0.5, 1.2); } }
     if (firstSeg && end.R > 1.5) { const r = R(); bg.push([firstSeg.t + rnd2(0.6, 1.8), r < 0.55 ? 'hello' : r < 0.8 ? 'name_hello' : 'start', 20]); if (cls >= 2) bg.push([firstSeg.t + rnd2(2.2, 4.5), R() < 0.6 ? 'hello' : 'start', 12]); }
     const tagCat = { desk: 'view_desk', locker: 'view_locker', clock: 'view_clock', bed: 'view_bed', piano: 'view_piano', stairs: 'view_stairs', gear: 'view_broadcast_gear', bwin: 'view_broken_window', clean: 'view_cleaning', bag: 'view_bag', books: 'view_books' };
     for (const e of ev) {
