@@ -715,7 +715,7 @@
   <div id="fxPanel"><div class="fxHead">色収差の調整（録画にも反映）</div><div id="fxRows"></div><div class="fxBtns"><button id="fxReset">初期値に戻す</button><button id="fxClose" class="pri">閉じる</button></div></div>
   <div id="toast"></div>
   <button class="btn" id="exitBtn">帰還する</button>
-  <button class="btn" id="actBtn"></button><div id="lockHint">クリックで視点操作（マウスで見回す）</div>
+  <button class="btn" id="actBtn"></button><div id="lockHint">画面をクリックで視点操作（Escでカーソルを出す）</div>
   <div id="zoomRow">
     <button class="zb btn on" data-z="1">1×</button>
     <button class="zb btn" data-z="2">2</button>
@@ -1295,6 +1295,7 @@ function plane(w, h, mat, x, y, z, ry = 0, rx = 0, o = {}) {
 /* ---------- 言語（日本語／English）：画面の文言は T() で英語に置き換える。英語の表が無い文言は日本語のまま ---------- */
 let LANG = 'ja'; try { const l = localStorage.getItem('yt_lang'); if (l === 'en' || l === 'ja') LANG = l; } catch (e) { }
 const EN = {
+  '画面をクリックで視点操作（Escでカーソルを出す）': 'Click the screen to look around (Esc shows the cursor)',
   'どういうお笑い？': 'What kind of comedy is this?',
   '便器の中の血溜まり': 'A pool of blood in the toilet bowl', '便器の中からのぞく目': 'An eye peering up from the toilet', 'フタを開けたら閉じ込められた': 'Locked in after opening the lid', 'フタを開ける': 'Open the lid', 'フタを閉める': 'Close the lid', '開かない…': 'It won’t open…',
   '振り向いた掲示板の女': 'The girl at the notice board turns around',
@@ -3472,13 +3473,14 @@ addEventListener('mousemove', e => {
 setInterval(() => {
   if (!FRAME.on) return; const ok = MLOCK.ok(), on = MLOCK.on();
   if (on && !ok) document.exitPointerLock();
-  $('#lockHint').classList.remove('show');   // 2026-11-14 クリック不要になったので案内は出さない
+  $('#lockHint').classList.toggle('show', ok && !on && !world.capture && world.outro === 0);   // 2026-11-15 プレイ中にカーソルが出ている時は「クリックで視点操作」
 }, 100);
 /* 2026-11-14 PC：クリックしなくても、マウスを動かすだけで見回せる（ドラッグでも見回せる）。
    カーソルを画面の左右の端に寄せている間は、その向きへ回り続ける。設定・持ち物などの画面の上では見回さない */
 const PCLOOK = {
   edge: 0,
   free(e) {
+    this.edge = 0; return false;   // 2026-11-15 カーソルが画面の外に出て回り続けてしまうので、クリックでカーソルを固定する方式に戻した
     if (!FRAME.on || MLOCK.on() || !MLOCK.ok() || PAD.using && Math.abs(e.movementX) + Math.abs(e.movementY) < 3) { this.edge = 0; return false; }
     const t = e.target; if (t && t.closest && t.closest('button, input, select, #settings, #inv, #tut, .screen, #itemPop, #veWrap, #godView')) { this.edge = 0; return false; }
     const [x] = toFrame(e.clientX, e.clientY), W = vpW(), m = W * 0.08;
@@ -3497,6 +3499,7 @@ addEventListener('mousemove', e => {
 });
 document.addEventListener('mouseleave', () => { PCLOOK.edge = 0; }); addEventListener('blur', () => { PCLOOK.edge = 0; });
 touchEl.addEventListener('pointerdown', e => {
+  if (FRAME.on && e.pointerType === 'mouse' && MLOCK.ok() && !MLOCK.on()) { e.preventDefault(); MLOCK.req(); return; }   // 2026-11-15 PC：画面をクリックするとカーソルが消えて、マウスで見回せる（Escでカーソルが出る）
   e.preventDefault(); touchEl.setPointerCapture?.(e.pointerId);
   const [x, y] = toFrame(e.clientX, e.clientY);
   if (stickId === null && !(FRAME.on && e.pointerType === 'mouse') && x < vpW() * CONFIG.stickZone.maxX && y > vpH() * CONFIG.stickZone.minY) {   // 2026-11-14 PC（マウス）では出さない
@@ -12525,7 +12528,7 @@ const TUT = {
       [null, '', 'ようこそ、幽tuberへ', '夜の旧校舎で心霊現象を撮影して、無事に帰ってくるゲームです。画面の見方を説明します。'],
       pc ? [null, '', '歩く', `${KB.of('up')}${KB.of('left')}${KB.of('down')}${KB.of('right')} キーで前後左右に歩きます。`, k('up') + '<br>' + k('left', 'down', 'right')]
          : [{ x: 0, y: H * Z.minY, w: W * Z.maxX, h: H * (1 - Z.minY) }, '移動スティック', '歩く', 'この範囲を押したまま、行きたい方へ指をずらすと歩けます。'],
-      pc ? [{ x: 8, y: 90, w: W - 16, h: H * 0.56 - 90, full: 1 }, 'マウスで見回す', '見回す', 'マウスを動かすだけで向きが変わります（クリックは不要。ドラッグでも見回せます）。カーソルを画面の左右の端に寄せている間は、その向きへ回り続けます。\n矢印キーでも見回せます。']
+      pc ? [{ x: 8, y: 90, w: W - 16, h: H * 0.56 - 90, full: 1 }, 'マウスで見回す', '見回す', '画面をクリックするとカーソルが消えて、マウスを動かした向きを見回せます。カーソルを出したい時はEscキー。\n矢印キーでも見回せます。']
          : [{ x: W * Z.maxX, y: 90, w: W * (1 - Z.maxX) - 6, h: H * 0.56 - 90, full: 1 }, '視点の操作', '見回す', 'この範囲をなぞると向きが変わります（左下以外ならどこでも）。スマホを傾けても見回せます。'],
       ['actBtn', '', '開ける・調べる', pc ? `扉や引き戸、ロッカーなどに近づくと、右に丸いボタンが出ます。クリックすると、開けたり調べたりできます。\n${K('act')}でもできます。ロッカーの前で ${K('act')}を押すと隠れられます。` : '扉や引き戸、ロッカーなどに近づくと、右に丸いボタンが出ます。押すと開けたり調べたりできます。', '', 'act'],
       ['recBtn', '', '録画はここ！', 'ここを押すと録画が始まり、もう一度押すと止まります。撮れ高は録画中にしか入りません。' + (pc ? `\n${K('rec')}でも録画できます。` : '')],
@@ -13266,7 +13269,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.14.8';
+const VERSION = '0.14.9';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -14694,7 +14697,7 @@ function renderHowto() {
     'イヤホン推奨',
   ] : [
     'さまざまな<em>心霊現象をカメラに収めて</em>ください。',
-    '<em>W・A・S・Dキーで移動</em>。<em>マウスを動かすだけ</em>で視点操作（ドラッグ・矢印キーでも可。画面の左右の端で回り続ける）。',
+    '<em>W・A・S・Dキーで移動</em>。<em>画面をクリックすると、マウスで視点操作</em>（Escでカーソルが出る。矢印キーでも可）。',
     '<em>Rキー</em>または<em>赤いボタンで録画開始／停止</em>。録画時間は<em>通算120秒</em>（画面上の「残容量」で残りが分かります）',
     '<em>Eキー</em>で戸を開ける・隠れる、<em>1〜3キー</em>でズーム、<em>Fキー</em>でインカメラ、<em>Iキー</em>で持ち物、<em>Escキー</em>で設定（キーは設定で組み換えられます）。',
     '電池は録画中に早く減ります。<em>玄関まで自分の足で戻り帰還</em>することもできます。',
@@ -14707,7 +14710,7 @@ function renderHowto() {
     'Headphones recommended',
   ] : [
     'Catch all kinds of <em>paranormal phenomena on camera</em>.',
-    '<em>Move with W/A/S/D</em>. <em>Just move the mouse</em> to look around (dragging and arrow keys work too; hold the cursor at the screen edge to keep turning).',
+    '<em>Move with W/A/S/D</em>. <em>Click the screen, then move the mouse</em> to look around (Esc shows the cursor; arrow keys work too).',
     '<em>R key</em> or the <em>red button starts/stops recording</em>. You have <em>120 seconds in total</em> (see “Storage” at the top).',
     '<em>E key</em> to open doors, hide, and interact. <em>1–4 keys</em> to change zoom.',
     'The battery drains faster while recording. You can also <em>walk back to the entrance to escape</em>.',
