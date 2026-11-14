@@ -12872,7 +12872,8 @@ try { if (navigator.storage && navigator.storage.persist) navigator.storage.pers
    ========================================================= */
 const NOTICE = {
   KEY: 'yt_notice1', ASK: 'yt_permAsk1',
-  seen() { if (TEST && !/[?&]notice/.test(location.search)) return true; try { return !!localStorage.getItem(this.KEY); } catch (e) { return true; } },   // 確認モードでは ?notice の時だけ出す
+  FIRST: /[?&]first\b/.test(location.search),   // 2026-11-15 ?first：何度でも「初めて遊ぶ時」の流れ（注意書き→マイク・ジャイロの説明）を見られる
+  seen() { if (this.FIRST) return false; if (TEST && !/[?&]notice/.test(location.search)) return true; try { return !!localStorage.getItem(this.KEY); } catch (e) { return true; } },   // 確認モードでは ?notice の時だけ出す
   mobile() { return !FRAME.on; },
   el() { let el = $('#notice'); if (!el) { el = document.createElement('div'); el.id = 'notice'; document.body.appendChild(el); for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'touchmove', 'click', 'keydown']) el.addEventListener(ev, e => e.stopPropagation()); } return el; },
   lines() {
@@ -12895,7 +12896,7 @@ const NOTICE = {
     $('#nOk').onclick = () => { try { localStorage.setItem(this.KEY, '1'); } catch (e) { } try { ensureAudio(); PACALL.unlock(); } catch (e) { } el.classList.remove('show'); next(); };   // ここで音の準備（スマホは押した瞬間でないと音が出せない）
   },
   // 「旧校舎に入る」を初めて押した時：マイク・ジャイロの説明（選んだものだけ許可を求める）
-  needAsk() { if (TEST && !/[?&]notice/.test(location.search)) return false; try { return !localStorage.getItem(this.ASK); } catch (e) { return false; } },
+  needAsk() { if (this.FIRST) return true; if (TEST && !/[?&]notice/.test(location.search)) return false; try { return !localStorage.getItem(this.ASK); } catch (e) { return false; } },
   ask(go) {
     const el = this.el(), en = LANG === 'en', mob = this.mobile();
     const done = (mic, gy) => { opt.mic = !!mic; if (mob) opt.gyro = !!gy; else opt.gyro = false; saveOpts(); try { SET.sync(); } catch (e) { } try { localStorage.setItem(this.ASK, '1'); } catch (e) { } el.classList.remove('show'); go(); };
@@ -13261,7 +13262,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.14.6';
+const VERSION = '0.14.7';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
