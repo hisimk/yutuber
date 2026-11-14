@@ -219,7 +219,9 @@
   #tut{position:fixed;inset:0;z-index:45;display:none;touch-action:none}
   #tut.show{display:block}
   #tut.dim{background:rgba(0,0,0,.78)}
-  #tSkipTop{position:absolute;right:12px;top:calc(var(--sat) + 96px);z-index:2;padding:8px 12px;border-radius:999px;border:1px solid #6a665f;background:rgba(20,20,22,.9);color:#e9e4da;font:600 13px system-ui}
+  #tSkipTop{position:absolute;right:10px;top:9px;z-index:2;padding:6px 11px;border-radius:999px;border:1px solid #55524c;background:#1e1e21;color:#d6d1c8;font:600 12px system-ui;cursor:pointer}   /* 2026-11-14 箱の右上に固定 */
+  .tBox .tStep{min-height:30px;line-height:30px;margin-top:-6px;text-align:left;padding-right:120px}
+  .tBox.act{text-align:left}.tBox.act #tGif{float:left;width:88px;max-width:none;margin:4px 12px 6px 0}.tBox.act .tBtns{clear:both;padding-top:4px}.tBox.act h3{margin-top:4px}
   #tStick{position:absolute;width:116px;height:116px;margin:-58px 0 0 -58px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:rgba(255,255,255,.08);display:none;pointer-events:none}
   #tStick.on{display:block}
   #tStick b{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(255,255,255,.55);animation:tStk 2.4s ease-in-out infinite}
@@ -381,6 +383,13 @@
   #gvChat{flex:1;min-width:0;height:100%}#godView #gvChat .chatBox{height:100%;margin-top:0}#gvChat .chatBox .cm{font-size:12px;gap:5px}#gvChat .chatHead{flex-wrap:wrap;row-gap:0;padding:5px 8px 4px}#gvChat .chatHead span{font-size:9.5px}#gvChat .chatList{padding:3px 6px 6px}
   #gvShareRow{flex:none}#gvShareRow.none{display:none}#gvShare{width:100%;min-height:46px;border:none;border-radius:12px;background:#e0362f;color:#fff;font:700 15px system-ui,-apple-system,"Hiragino Sans",sans-serif;cursor:pointer}#gvMsg{font-size:11.5px;color:#b4afa6;margin-top:6px;line-height:1.5}#gvMsg:empty{display:none}
   #gvList{min-height:120px}
+  /* 2026-11-14 動画は約6割、チャット欄は約4割。長いコメントは2行まで */
+  #replayRow{height:auto;align-items:stretch}#replayWrap{flex:0 0 60%;width:60%;max-width:60%;height:auto;aspect-ratio:430/932}
+  #resChatHost,#gvChat{position:relative;flex:1 1 40%;min-width:0}#resChatHost .chatBox,#godView #gvChat .chatBox{position:absolute;inset:0;height:auto}
+  #gvRow{height:auto;max-height:calc(58 * var(--vh));align-items:stretch}#gvWrap{flex:0 0 60%;width:60%;max-width:60%;height:auto;aspect-ratio:430/932;max-height:calc(58 * var(--vh))}
+  #resChatHost .chatBox .tx,#gvChat .chatBox .tx{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
+  #resChatHost .chatBox .av,#gvChat .chatBox .av{width:17px;height:17px}#resChatHost .chatBox .av svg,#gvChat .chatBox .av svg{width:12px;height:12px}
+  #missed small{font-size:12px;color:#9a958c;font-weight:600;margin-left:1px}
   #godView .chatBox{height:170px}
   /* 2026-11-14 記録の自動保存のお知らせ（初回だけ） */
   #saveNote{position:fixed;inset:0;z-index:61;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:16px;box-sizing:border-box}#saveNote.show{display:flex}
@@ -706,7 +715,7 @@
   </div>
   <div id="invScore"><img id="invScoreImg" alt=""><div id="invScoreTap">タップで閉じる</div></div>
 </div>
-<div id="tut"><button id="tSkipTop">遊び方をとばす ✕</button><div id="tHole"><b id="tTag"></b></div><div id="tStick"><b></b><i></i></div><div id="tSwipe"><i></i></div><div class="tBox" id="tBox"><div class="tStep" id="tStep"></div><div class="tIco" id="tIco"></div><img id="tGif" alt=""><h3 id="tTitle"></h3><p id="tText"></p><div class="tBtns"><button class="tSkip" id="tBack">もどる</button><button class="go" id="tNext">次へ</button></div></div></div>
+<div id="tut"><div id="tHole"><b id="tTag"></b></div><div id="tStick"><b></b><i></i></div><div id="tSwipe"><i></i></div><div class="tBox" id="tBox"><button id="tSkipTop">遊び方をとばす ✕</button><div class="tStep" id="tStep"></div><div class="tIco" id="tIco"></div><img id="tGif" alt=""><h3 id="tTitle"></h3><p id="tText"></p><div class="tBtns"><button class="tSkip" id="tBack">もどる</button><button class="go" id="tNext">次へ</button></div></div></div>
 <div id="intro"><canvas id="introCv"></canvas><div class="skip">タップでスキップ</div></div>
 <div class="screen" id="result">
   <div id="resTop"><div id="permIcons"></div><div id="resHeadL"><h2 id="resTitle">帰還</h2><div class="meta" id="resMeta"></div></div><div id="resR"><button id="retakeBtn">再撮影</button></div></div>
@@ -3721,7 +3730,7 @@ function doorStallTick(who, dt) {
 }
 // 逆さ女がはっきり見え、追ってくるようになったか（電池残り60%〜30%の間のどこかから）
 function womanOn() {
-  const on = world.chime30 || (world.batUsed || 0) >= (world.sgShowUsed ?? 70);
+  const on = world.chime30 || (world.batUsed || 0) >= (world.sgShowUsed ?? 30);
   if (on && WD.showUsed === undefined) { WD.showUsed = world.batUsed || 0; if (TEST || DEV) console.log('WOMAN on', (world.battery || 0).toFixed(1)); }
   return on;
 }
@@ -6510,7 +6519,7 @@ SP.canDrop = function () {
 SP.update = function (dt) {
   if (this.st === 'sealed') return;   // 封印のお札で消えていく途中
   // 出現の判定（録画で得た累計得点。初めて規定値に届いた瞬間の電池で一度だけ決める）
-  if (!this.decided) { const tot = evidence.reduce((a, e) => a + e.pts, 0); if (tot >= SPIDER_SCORE) { this.decided = true; this.flag = world.battery > 30 || f2force('spider'); if (TEST || DEV) console.log('SPIDER flag', this.flag, tot, world.battery.toFixed(1)); } }
+  if (!this.decided) { const tot = evidence.reduce((a, e) => a + e.pts, 0); if (tot > SPIDER_SCORE && (world.batUsed || 0) >= 50) { this.decided = true; this.flag = true;   /* 2026-11-14 電池を50%以上使い、得点が300を超えている時 */ if (TEST || DEV) console.log('SPIDER flag', this.flag, tot, world.battery.toFixed(1)); } }
   else if (!this.flag && f2force('spider')) this.flag = true;
   if (!this.decided && f2force('spider')) { this.decided = true; this.flag = true; }
   for (const w of this.webs) if (w.jig > 0) { w.jig -= dt; const k = Math.max(0, w.jig) / 0.6; w.o.rotation.x = Math.sin(world.t * 38) * 0.05 * k; w.o.rotation.z = Math.cos(world.t * 31) * 0.04 * k; }
@@ -10095,7 +10104,7 @@ function showResult(blobs) {
   if (false) { const mc = $('#musicCred'); if (mc) { mc.style.display = 'block'; mc.textContent = 'BGM' + (F2.clairHeard ? '・' : '：') + MUSIC_CREDIT.replace(/^音楽室のピアノ：/, F2.clairHeard ? '音楽室のピアノ：' : ''); } }
   const total = evidence.reduce((a, e) => a + e.pts, 0);
   if (!resEarly) setResMeta(`電池残り ${Math.max(0, Math.round(world.battery))}%` + (world.dark ? '（暗闇から生還）' : ''));
-  { const m = MISS.total(), u = MISS.notYet(), y = n => `<b>${n}</b>`; $('#missed').innerHTML = LANG === 'en' ? `Missed shots ${y(m)}　Not yet happened ${y(u)}` : `のがした撮れ高 ${y(m)}回　未発生の撮れ高 ${y(u)}種`; }
+  { const m = MISS.total(), N = COL.LIST.length, o = N - MISS.notYet(), y = n => `<b>${n}</b>`; $('#missed').innerHTML = LANG === 'en' ? `Missed shots ${y(m)}　Happened ${y(o)}<small>/${N}</small>` : `のがした撮れ高 ${y(m)}回　発生した撮れ高 ${y(o)}<small>/${N}種</small>`; }   // 2026-11-14 未発生ではなく、起きた種類（撮れた＋のがした）
   $('#resCount').innerHTML = LANG === 'en' ? `Captures this run <b>${evidence.length}</b>` : `今回の撮れ高 <b>${evidence.length}</b>回`;   // 2026-11-13 今回の撮れ高の数
   $('#evScore').textContent = '0'; $('#evCount').textContent = evidence.length ? `${evidence.length}件　← スライド →` : '';
   const list = $('#evList'); list.innerHTML = '';
@@ -10466,11 +10475,11 @@ const TUT = {
   steps() {
     const pc = FRAME.on, W = vpW(), H = vpH(), k = (...a) => a.map(x => `<kbd>${KB.of(x)}</kbd>`).join(''), Z = CONFIG.stickZone;
     return [
-      [null, '', 'ようこそ、幽tuberへ', '夜の旧校舎で心霊現象を撮影して、無事に帰ってくるゲームです。画面の見方を説明します。', '📷'],
+      [null, '', 'ようこそ、幽tuberへ', '夜の旧校舎で心霊現象を撮影して、無事に帰ってくるゲームです。画面の見方を説明します。'],
       pc ? [null, '', '歩く', `${KB.of('up')}${KB.of('left')}${KB.of('down')}${KB.of('right')} キーで前後左右に歩きます。`, k('up') + '<br>' + k('left', 'down', 'right')]
          : [{ x: 0, y: H * Z.minY, w: W * Z.maxX, h: H * (1 - Z.minY) }, '移動スティック', '歩く', 'この範囲を押したまま、行きたい方へ指をずらすと歩けます。'],
-      pc ? [{ x: 8, y: 90, w: W - 16, h: H * 0.56 - 90 }, 'マウスで見回す', '見回す', '画面をクリックすると、あとはマウスを動かすだけで向きが変わります（ドラッグは不要）。カーソルを出したい時は Esc キー。矢印キーでも見回せます。', '🖱️']
-         : [{ x: W * Z.maxX, y: 90, w: W * (1 - Z.maxX) - 6, h: H * 0.56 - 90 }, '視点の操作', '見回す', 'この範囲をなぞると向きが変わります（左下以外ならどこでも）。スマホを傾けても見回せます。'],
+      pc ? [{ x: 8, y: 90, w: W - 16, h: H * 0.56 - 90, full: 1 }, 'マウスで見回す', '見回す', '画面をクリックすると、あとはマウスを動かすだけで向きが変わります（ドラッグは不要）。カーソルを出したい時は Esc キー。矢印キーでも見回せます。']
+         : [{ x: W * Z.maxX, y: 90, w: W * (1 - Z.maxX) - 6, h: H * 0.56 - 90, full: 1 }, '視点の操作', '見回す', 'この範囲をなぞると向きが変わります（左下以外ならどこでも）。スマホを傾けても見回せます。'],
       ['actBtn', '', '開ける・調べる', pc ? `扉や引き戸、ロッカーなどに近づくと、右に丸いボタンが出ます。クリックするか ${KB.of('act')} キーで、開けたり調べたりできます。` : '扉や引き戸、ロッカーなどに近づくと、右に丸いボタンが出ます。押すと開けたり調べたりできます。', '', 'act'],
       ['recBtn', '', '録画はここ！', (pc ? `${KB.of('rec')} キーでも録画できます。` : '') + 'ここを押すと録画が始まり、もう一度押すと止まります。撮れ高は録画中にしか入りません。'],
       ['cap', '', '録画の残容量', '録画できるのは全部で2分。録画中に減っていき、0になるともう撮れません。ここぞという時に回そう！'],
@@ -10478,7 +10487,7 @@ const TUT = {
       ['zoomRow', '', 'ズーム', (pc ? `${KB.of('z1')}〜${KB.of('z3')} キーでも切り替えられます。` : '') + '遠くの怪異は2倍・3倍で大きく撮ろう。'],
       ['camBtn', '', 'インカメラ', (pc ? `${KB.of('selfie')} キーでも切り替えられます。` : '') + '自分を映すカメラに切り替えます。背後に何かが映ることも……。'],
       ['topL', '', '設定と持ち物', '上の歯車が設定、その下のカバンが持ち物です。開いている間はゲームが止まります。' + (pc ? `持ち物は ${KB.of('inv')} キー、調べる・開けるは ${KB.of('act')} キー。キーは設定で組み換えられます。` : '')],
-      [null, '', '逃げて、帰る', '怪異に追われたらロッカーなどに隠れよう。捕まるとゲームオーバー。撮り終えたら、玄関から外へ出れば帰還です。', '🏃'],
+      [null, '', '逃げて、帰る', '怪異に追われたら距離をとるか隠れよう。捕まるとゲームオーバー。撮り終えたら玄関から外へ出れば帰還できます。'],
     ];
   },
   show(done) {
@@ -10492,12 +10501,12 @@ const TUT = {
         if (on) { ab.textContent = TR('引き戸を開ける'); ab.classList.add('show'); ab.classList.remove('key'); if (FRAME.on) ab.dataset.k = 'クリック / ' + KB.of('act'); }
         else if (ab._tutWas !== undefined) { ab.classList.remove('show'); ab.textContent = ''; }
         ab._tutWas = on ? 1 : undefined;
-        const g = $('#tGif'); if (on && !g.src) g.src = TUT_GIF; g.classList.toggle('on', on); }
+        const g = $('#tGif'); if (on && !g.src) g.src = TUT_GIF; g.classList.toggle('on', on); $('#tBox').classList.toggle('act', on); }
       let r = null;
       if (typeof tg === 'string') { const e = $('#' + tg); if (e && e.getBoundingClientRect().width) { const q = frameRect(e); r = { x: q.left - 8, y: q.top - 8, w: q.width + 16, h: q.height + 16 }; if (tg === 'topL') { const v = frameRect($('#invBtn')); r.h = v.bottom - q.top + 16; r.w = Math.max(r.w, v.width + 16); } } }
       else if (tg) r = tg;
       hole.classList.toggle('on', !!r); el.classList.toggle('dim', !r);
-      if (r) Object.assign(hole.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' });
+      if (r) Object.assign(hole.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: (r.full ? vpH() - r.y - 8 : r.h) + 'px' });   // 2026-11-14 見回す範囲は画面の下まで
       $('#tTag').textContent = tag ? TR(tag) : '';
       $('#tStep').textContent = `${TR('遊び方')}  ${i + 1} / ${S.length}`; $('#tIco').innerHTML = ico || ''; $('#tTitle').textContent = TR(ti); $('#tText').textContent = TR(tx);
       $('#tNext').textContent = TR(i === S.length - 1 ? 'はじめる' : '次へ'); $('#tBack').textContent = TR('もどる'); $('#tBack').style.visibility = i === 0 ? 'hidden' : 'visible';
@@ -10516,7 +10525,6 @@ const TUT = {
       box.style.bottom = lo ? 'auto' : (H - r.y + 14) + 'px';
       if (r && !lo && H - r.y + 14 > H - 260) { box.style.bottom = 'auto'; box.style.top = '70px'; }
       { const q = frameRect(box); if (q.top < 8) { box.style.bottom = 'auto'; box.style.top = '8px'; } }   // 2026-11-14 背の高い説明（小窓つき）が画面の上にはみ出さないように
-      { const k = $('#tSkipTop'), bt = parseFloat(box.style.top); const up = frameRect(box).top < 170 || (box.style.top !== 'auto' && bt < 170); k.style.top = up ? 'auto' : ''; k.style.bottom = up ? 'calc(var(--sab) + 150px)' : ''; }   // 説明の箱が上に来た時は、とばすボタンを下へ
     };
     const end = () => { el.classList.remove('show', 'pass'); world.tutLive = false; removeEventListener('pointerdown', touch, true); removeEventListener('keydown', touch, true); $('#tStick').classList.remove('on'); $('#tSwipe').classList.remove('on'); { const ab = $('#actBtn'); if (world.tutAct) { ab.classList.remove('show'); ab.textContent = ''; } world.tutAct = false; ab._tutWas = undefined; $('#tGif').classList.remove('on'); } $('#tNext').onclick = $('#tBack').onclick = $('#tSkipTop').onclick = null; removeEventListener('keydown', kd, true); try { localStorage.setItem('yt_tut', '1'); } catch (e) { } if (prev === 'play' && world.state === 'paused' && !SET.open) { world.state = 'play'; lastT = performance.now(); } done && done(); };
     const kd = e => { if (e.code === 'Backspace' || e.code === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); if (i > 0) { i--; draw(); } } else if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); e.stopImmediatePropagation(); i < S.length - 1 ? (i++, draw()) : end(); } };
@@ -10706,7 +10714,7 @@ $('#goBtn').addEventListener('click', () => {
   CHATLOG.reset(); world.chatRk = yrankIdx(ACH.load().total); world.chatM = YRANK[world.chatRk][3]; world.chatName = chatCallName(); world.chatLang = LANG;   // 2026-11-14 チャット：撮影開始時のランク倍率と呼び名をこの動画に固定
   MANN.reset(); WD.init(); DIR.planRun(); MINOR.reset(); SELF.reset(); MD.reset(); DOORS2.reset(); TAP.reset(); F2.reset(); SP.reset(); NEKO.reset(); OFUDA.reset(); ITEM.reset(); UWA.reset(); TEN.reset(); GG.reset(); POLT.reset(); MF.reset(); STREETFIG.reset(); EXITF.reset(); STAY.reset(); RED.reset(); MG.reset();
   $('#start').classList.remove('show');
-  world.state = 'intro'; world.battery = CONFIG.battery.start; world.batUsed = Math.max(0, 100 - CONFIG.battery.start); world.sgShowUsed = rnd(40, 70);   /* 逆さ女がはっきり見えるようになる時（電池残り60%〜30%のどこか） */
+  world.state = 'intro'; world.battery = CONFIG.battery.start; world.batUsed = Math.max(0, 100 - CONFIG.battery.start); world.sgShowUsed = rnd(20, 30);   /* 2026-11-14 逆さ女が出るようになる時（電池を20〜30%使ったどこか） */
   player.yaw = look.yaw = 0; player.pitch = look.pitch = 0;
   INTRO.run(beginPlay);
 });
