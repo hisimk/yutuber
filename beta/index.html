@@ -374,6 +374,13 @@
   .chatBox .tx{min-width:0;overflow-wrap:anywhere}.chatBox .tx b{color:var(--c);font-weight:700;margin-right:7px;font-size:12px}
   .chatMsg{position:absolute;left:0;right:0;top:30px;bottom:0;display:flex;align-items:center;justify-content:center;color:#77736c;font-size:12.5px;pointer-events:none;padding:10px;text-align:center}
   .chatNew{position:absolute;right:8px;bottom:8px;display:none;padding:5px 11px;border-radius:999px;border:1px solid #555;background:rgba(20,20,22,.92);color:#fff;font:600 12px system-ui}.chatNew.show{display:block}
+  /* 2026-11-14 神回ランキングの動画：リザルトと同じく動画は左、チャットは右 */
+  #gvRow{display:flex;gap:8px;height:clamp(220px, calc(48 * var(--vh) - 40px), 540px);flex:none}#gvRow.none{display:none}
+  #gvWrap{aspect-ratio:430/932;max-width:62%;height:100%;background:#000;border-radius:10px;overflow:hidden;position:relative;flex:none}
+  #godView #gvVid{width:100%;height:100%;border-radius:0;object-fit:contain}
+  #gvChat{flex:1;min-width:0;height:100%}#godView #gvChat .chatBox{height:100%;margin-top:0}#gvChat .chatBox .cm{font-size:12px;gap:5px}#gvChat .chatHead{flex-wrap:wrap;row-gap:0;padding:5px 8px 4px}#gvChat .chatHead span{font-size:9.5px}#gvChat .chatList{padding:3px 6px 6px}
+  #gvShareRow{flex:none}#gvShareRow.none{display:none}#gvShare{width:100%;min-height:46px;border:none;border-radius:12px;background:#e0362f;color:#fff;font:700 15px system-ui,-apple-system,"Hiragino Sans",sans-serif;cursor:pointer}#gvMsg{font-size:11.5px;color:#b4afa6;margin-top:6px;line-height:1.5}#gvMsg:empty{display:none}
+  #gvList{min-height:120px}
   #godView .chatBox{height:170px}
   /* 2026-11-14 記録の自動保存のお知らせ（初回だけ） */
   #saveNote{position:fixed;inset:0;z-index:61;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:16px;box-sizing:border-box}#saveNote.show{display:flex}
@@ -436,8 +443,18 @@
   .rpBox{width:min(320px,86%);padding:22px 18px 18px;border-radius:16px;background:#141416;border:1px solid #3a3834;text-align:center;color:#e9e4da}
   #rpT{font-family:"Shippori Mincho",serif;font-size:19px;line-height:1.6;color:#ffd60a;letter-spacing:.04em}#rpFrom{font-size:12px;color:#8a867f;margin-top:6px}
   #rpTot{font-size:15px;font-weight:700;margin-top:12px}.rpNote{font-size:12.5px;color:#cfcac0;margin-top:4px}#rpOk{margin-top:16px;width:100%;padding:12px;border-radius:12px;border:none;background:#e9e4da;color:#111;font:700 15px system-ui}
-  #rankTag{font-size:11px;color:#ffd60a;letter-spacing:.08em;margin:-2px 0 2px;text-align:center}
+  .rankLine{width:100%;max-width:340px;display:flex;align-items:baseline;gap:8px;margin:0 0 7px;padding:0 6px;box-sizing:border-box}.rankLine span{font-size:11px;color:#8a867f;letter-spacing:.1em}#rankTag{font-size:16px;font-weight:800;color:#ffd60a;letter-spacing:.04em}
+  .nmL{display:flex;align-items:baseline;gap:6px;white-space:nowrap}.opt .nmL small{display:inline;font-size:10.5px;color:#8a867f;margin:0}#chName{width:140px}
   #callOpt{font-size:12px;color:#8a867f;margin:2px 0 0}#callOpt summary{cursor:pointer;list-style:none;text-align:center}#callOpt summary::-webkit-details-marker{display:none}#callOpt input{width:100%;margin-top:6px;box-sizing:border-box}#callOpt small{display:block;margin-top:3px;text-align:center}
+  /* 2026-11-14 心霊アーカイブの並び：ランク → 累計いいね → 撮れ高実績（神回ランキング・撮れ高コレクション） */
+  .achBox{background:none;border:none;padding:0;margin:0}
+  .achTop{border-radius:14px;padding:12px 14px 12px;background:linear-gradient(160deg,#1d1810,#121214 60%);border:1px solid rgba(255,211,77,.35)}
+  .achRk{display:flex;align-items:baseline;gap:8px}.achRk span{font-size:11px;color:#9a958c;letter-spacing:.1em}.achRk b{font-size:17px;font-weight:800;color:#ffd60a;letter-spacing:.03em}
+  .achTotH{font-size:15px;font-weight:800;color:#ffd34d;margin-top:12px;letter-spacing:.04em}
+  .achTop .achTot{flex-direction:column;align-items:flex-start;gap:4px;margin:4px 0 0}.achTop .achTot span{font-size:12px;color:#cfcac0}
+  .achH{font-size:17px;font-weight:800;color:#fff;letter-spacing:.08em;margin:18px 2px 10px;padding-bottom:6px;border-bottom:1px solid rgba(255,211,77,.35)}
+  .achSub{border-top:none;padding-top:0;margin:0 2px 6px}
+  .colSec{margin:14px 2px 0}.colSecH{font-size:15px;font-weight:800;color:#ffd34d;letter-spacing:.06em}.colSec .colProg{margin-top:6px}
   .achRank{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:#cfcac0;margin:2px 0 8px}.achRank b{color:#ffd60a;font-size:13px}
   #noVideo{position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:#777;font-size:13px;text-align:center;padding:20px}
   #evWrap{width:100%;max-width:360px;margin-top:10px}
@@ -631,14 +648,13 @@
   <button class="btn gearBtn" id="startGear" aria-label="設定"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>設定</span></button>
   <h1 class="title logoTitle"><img id="titleLogo" alt="幽tuber 撮レ高狙エ"></h1>
   <div class="sub">夜の旧校舎で、決定的瞬間を撮って帰る</div>
+  <div class="rankLine"><span>ランク</span><b id="rankTag"></b></div>
   <div class="opts">
-    <div class="opt"><div>なまえ</div><input id="chName" maxlength="20" placeholder="心霊チャンネル"></div>
+    <div class="opt"><div class="nmL">名前<small>※コメントでの呼び名</small></div><input id="chName" maxlength="20" placeholder="心霊チャンネル"></div>
     <div class="opt" id="yomiRow"><div>よみがな</div><input id="chYomi" maxlength="20" placeholder="ひらがなで入力"></div>
   </div>
-  <div id="rankTag"></div>
-  <details id="callOpt"><summary id="callSum">コメントでの呼び名 ›</summary><input id="callName" maxlength="32"><small id="callHint"></small></details>
   <button class="go" id="goBtn">旧校舎に入る</button>
-  <button class="colBtn" id="colBtn">撮れ高コレクション</button>
+  <button class="colBtn" id="colBtn">心霊アーカイブ</button>
   <button class="credBtn" data-cred>使用素材・クレジット</button>
   <div class="verTag"></div>
   <div class="homeHint" id="homeHint">ホーム画面に追加して遊ぶと、記録が消えにくくなります</div>
@@ -667,7 +683,7 @@
       <div id="setKeys"><div class="setSub">キー操作（PC）<small>ボタンを押してから、割り当てたいキーを押す</small></div><div id="keyList"></div><button class="setLink" id="keyReset">キー操作を初期設定にもどす</button></div>
       <div class="opt" id="setLang"><div>言語 / Language</div><div class="seg" id="langSeg"><button data-lang="ja">日本語</button><button data-lang="en">English</button></div></div>
       <button class="setLink" id="setTut">遊び方を見る</button>
-      <button class="setLink" id="setCol">撮れ高コレクション</button>
+      <button class="setLink" id="setCol">心霊アーカイブ</button>
       <button class="setLink" id="setReset">データをリセット</button>
       <div class="verTag" id="verSet"></div>
       <button class="setLink" id="setHome">スタート画面にもどる</button>
@@ -1174,7 +1190,7 @@ let LANG = 'ja'; try { const l = localStorage.getItem('yt_lang'); if (l === 'en'
 const EN = {
   // スタート・設定
   '夜の旧校舎で、決定的瞬間を撮って帰る': 'Film the decisive moment in the old school at night — and make it out',
-  'チャンネル名': 'Channel name', 'なまえ': 'Name', '心霊チャンネル': 'Ghost Channel', '旧校舎に入る': 'Enter the old school', '使用素材・クレジット': 'Assets & credits',
+  'チャンネル名': 'Channel name', 'なまえ': 'Name', '名前': 'Name', '※コメントでの呼び名': '*Shown in chat', 'ランク': 'Rank', '心霊アーカイブ': 'Ghost Archive', 'これまでの撮影回数': 'Total shoots', '心霊チャンネル': 'Ghost Channel', '旧校舎に入る': 'Enter the old school', '使用素材・クレジット': 'Assets & credits',
   '・画面の左下を押すと移動スティック。右側をなぞると見回す': '• Press the lower left to move. Swipe the right side to look around',
   '・倍率ボタン（.5／1／2／3）で画角を切り替え': '• Use the zoom buttons (.5 / 1 / 2 / 3) to change the view',
   '・赤いボタンで録画開始／停止。持ち帰れるのは通算120秒（画面上の「残容量」で残りが分かります）': '• The red button starts/stops recording. You can bring back 120 seconds in total (see “Storage” at the top)',
@@ -2543,7 +2559,7 @@ function makeIR(sec) {
   return b;
 }
 function noiseBuf(sec) { const ctx = A.ctx, len = (ctx.sampleRate * sec) | 0, b = ctx.createBuffer(1, len, ctx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1; return b; }
-function setP(p, v) { if (p.positionX) { p.positionX.value = v.x; p.positionY.value = v.y; p.positionZ.value = v.z; } else p.setPosition(v.x, v.y, v.z); }
+function setP(p, v) { if (!Number.isFinite(v.x + v.y + v.z)) return;   /* 2026-11-14 NaNが入ると音が壊れて大きな雑音・無音になる */ if (p.positionX) { p.positionX.value = v.x; p.positionY.value = v.y; p.positionZ.value = v.z; } else p.setPosition(v.x, v.y, v.z); }
 // 距離による減衰はゆるめ（スマホのスピーカーでも遠くの音が届くように）。方向と壁越しのこもりで距離感を出す
 // 使い終わった音の配線を外す（外さないと、iPhoneでは鳴り終わった音も処理され続け、長く遊ぶと音が割れて止まる）
 function freeLater(sec, ...nodes) { setTimeout(() => { for (const n of nodes) { if (n && n !== A.bus && n !== A.master && n !== A.verb && n !== A.muffle) try { n.disconnect(); } catch (e) { } } }, Math.max(0, sec) * 1000); }
@@ -2733,17 +2749,20 @@ function startAmbience() {
     rs.connect(lp1); lp1.connect(lp2); lp2.connect(rg); rg.connect(amb.vent); rs.start();
   }
   amb.hum = ctx.createGain(); amb.hum.gain.value = AMB_HUM; amb.hum.connect(A.bus);
+  /* 2026-11-14 ずっと鳴り続ける小さな音（蛍光灯の唸り・風）は、重いHRTFではなく軽い左右振り分けに。
+     HRTFは音源ごとに常時たたみ込み計算をするので、スマホでは追跡中など音が多い時に処理が追いつかず音が割れる原因になる */
+  const epPan = (pos, ref, roll, dest) => { const k = ctx.createGain(); k.gain.value = 1.7; k.connect(dest); const p = panAt(pos, ref, roll, k, 0); p.panningModel = 'equalpower'; return p; };
   for (const t of tubes) {
     const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 100 + rnd(-0.5, 0.5);
     const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 400; f.Q.value = 2;
     const g = ctx.createGain(); g.gain.value = t.state === 'half' ? 0.02 : 0.035;
-    o.connect(f); f.connect(g); g.connect(panAt(t.pos, 0.6, 1.6, amb.hum, 0)); o.start(); t.hum = g;
+    o.connect(f); f.connect(g); g.connect(epPan(t.pos, 0.6, 1.6, amb.hum)); o.start(); t.hum = g;
   }
   const ws = ctx.createBufferSource(); ws.buffer = A.noise; ws.loop = true; ws.playbackRate.value = 0.6;
   const wb = ctx.createBiquadFilter(); wb.type = 'bandpass'; wb.frequency.value = 420; wb.Q.value = 0.6;
   amb.wind = ctx.createGain(); amb.wind.gain.value = 0.007;
   const lfo = ctx.createOscillator(); lfo.frequency.value = 0.09; const lg = ctx.createGain(); lg.gain.value = 0.005; lfo.connect(lg); lg.connect(amb.wind.gain); lfo.start();
-  ws.connect(wb); wb.connect(amb.wind); amb.wind.connect(panAt(V(0, 1.6, 9), 2.0, 0.45, undefined, 0)); amb.wind.connect(panAt(V(24, 1.6, -18), 2.0, 0.6, undefined, 0)); ws.start();
+  ws.connect(wb); wb.connect(amb.wind); amb.wind.connect(epPan(V(0, 1.6, 9), 2.0, 0.45, A.bus)); amb.wind.connect(epPan(V(24, 1.6, -18), 2.0, 0.6, A.bus)); ws.start();
   // 玄関の外：秋の虫（鈴虫の「リーン」、コオロギの「コロコロ…」、松虫の「チンチロリン」）。間をあけて鳴き、うっすら聞こえる程度
   amb.bugs = ctx.createGain(); amb.bugs.gain.value = 0;
   const bf = ctx.createBiquadFilter(); bf.type = 'lowpass'; bf.frequency.value = 6000; amb.bugs.connect(bf); bf.connect(A.bus);
@@ -2803,6 +2822,7 @@ function updateSuzumushi(dt) {
 function updateListener() {
   if (!A.ctx) return; const l = A.ctx.listener, p = camera.position;
   const f = V(0, 0, -1).applyQuaternion(camera.quaternion), u = V(0, 1, 0).applyQuaternion(camera.quaternion);
+  if (!Number.isFinite(p.x + p.y + p.z + f.x + f.y + f.z + u.x + u.y + u.z)) return;   // 2026-11-14 NaNの聞き手は全部の音を壊すので入れない
   if (l.positionX) { l.positionX.value = p.x; l.positionY.value = p.y; l.positionZ.value = p.z; l.forwardX.value = f.x; l.forwardY.value = f.y; l.forwardZ.value = f.z; l.upX.value = u.x; l.upY.value = u.y; l.upZ.value = u.z; }
   else { l.setPosition(p.x, p.y, p.z); l.setOrientation(f.x, f.y, f.z, u.x, u.y, u.z); }
 }
@@ -3413,7 +3433,7 @@ const ENDCARD = {
     g.textAlign = 'center'; g.fillStyle = '#9a958c'; g.font = `${26 * u}px ${sans}`; g.fillText(LANG === 'en' ? 'L I K E S' : 'い い ね', cx, y + 56 * u); y += 140 * u;
     d.top.forEach((e, i) => {
       const a = Math.min(1, Math.max(0, (t - 1.1 - i * 0.25) / 0.3)); if (!a) return; g.globalAlpha = fade * out * a;
-      const r = rankOf(e); g.fillStyle = RANK_COL[r] || '#fff'; g.font = `italic 800 ${30 * u}px ${sans}`; g.textAlign = 'left'; g.fillText(r, cx - 380 * u, y);
+      const r = e._r || rankOf(e); g.fillStyle = RANK_COL[r] || '#fff'; g.font = `italic 800 ${30 * u}px ${sans}`; g.textAlign = 'left'; g.fillText(r, cx - 380 * u, y);
       g.fillStyle = '#e9e4da'; g.font = `${32 * u}px ${sans}`; let lb = TR(e.label); while (g.measureText(lb).width > 560 * u && lb.length > 4) lb = lb.slice(0, -2) + '…'; g.fillText(lb, cx - 320 * u, y);
       g.textAlign = 'right'; g.font = `700 ${32 * u}px ${sans}`; g.fillText(String(e.pts), cx + 380 * u, y); y += 60 * u;
     });
@@ -5166,6 +5186,7 @@ const SELF = {
     if (on && (player.hidden || HIDE.lk || CAP.on || world.dark || world.state !== 'play')) return;
     if (!!on !== !!world.selfie) try { CHATLOG.bhEvent('selfie', !!on); } catch (e) { }
     world.selfie = !!on; this.ui(); setZoom(1); this.lastYaw = player.yaw; this.turnAcc = 0;
+    if (on) this.pose();   // 2026-11-14 切り替えたフレームの判定（追ってくる姿が映ったか）を、前回の古いインカメラ位置で行わない
     postMat.uniforms.black.value = Math.max(postMat.uniforms.black.value, 0.7); SND.glitch(0.06);
     if (!on && this.ph !== 'off') this.vanish(true);
     if (on && this.allowed() && chance(0.14)) this.appear(0.25);   // 切り替えた瞬間、もう居る
@@ -5204,11 +5225,19 @@ const SELF = {
     sgSetOpacity(0); sgEmissive(0x2a1010); SG.ovRoll = 0; SG.ovYaw = 0; if (WD.borrowed) WD.release(true); this.ph = 'off';
     if (!quiet) { this.cool = world.t + 40; }
   },
+  /* 2026-11-14 主人公（インカメラにだけ映る）のシェーダーは、初めてインカメラにした瞬間に作られ、画面と音が長く止まっていた
+     （追跡中だと「ザザッ」という大きな音の乱れに）。プレイが始まったら一度だけ、本番と同じ描き先・ライトで前もって作っておく */
+  warm() {
+    if (!avatar.ready || world.state !== 'play') return; this.warmed = true;
+    const v = avatar.root.visible, prt = renderer.getRenderTarget();
+    try { avatar.root.visible = true; this.pose(); renderer.setRenderTarget(rt); renderer.compile(avatar.root, selfCam, scene); renderer.render(scene, selfCam); /* 影の計算用も作るため一度だけ実際に描く（次の本番の描画で上書きされる） */ for (const t of LIP.tex) renderer.initTexture(t); } catch (e) { console.warn('インカメラの準備', e); }
+    avatar.root.visible = v; renderer.setRenderTarget(prt);
+  },
   update(dt) {
     // スマホのライトは本体の背面＝顔より前にある。インカメラ中は光源を顔の前へ出し、自分の顔やあごを内側から照らさない
     if (world.selfie) flash.position.set(0.0, -0.08, -0.34); else flash.position.set(0.04, -0.06, 0.02);
     screenGlow.intensity = world.selfie ? 0 : 0.3;   // 手元の画面の光：インカメラ中は顔のすぐ前で白飛びさせるので切る（代わりに減衰なしの柔らかい光）
-    if (!world.selfie) { selfLight.intensity = 0; return; }
+    if (!world.selfie) { selfLight.intensity = 0; if (!this.warmed) this.warm(); return; }
     if (player.hidden || HIDE.lk || CAP.on || world.dark) { this.set(false); return; }
     selfLight.intensity = 0.55;
     // 自撮りのまま振り返った量
@@ -8055,7 +8084,7 @@ const COL = {
   build() {
     if (this.el) return;
     const el = document.createElement('div'); el.id = 'colScreen';
-    el.innerHTML = `<div class="colBox"><div class="colHead"><div><div class="colTitle">撮れ高コレクション</div><div class="colProg"><span id="colCnt"></span><span class="colBar"><i id="colFill"></i></span></div></div><button class="btn" id="colClose">閉じる</button></div><div class="colNote" id="colNote"></div><div id="colList"></div></div>`;
+    el.innerHTML = `<div class="colBox"><div class="colHead"><div><div class="colTitle">${TR('心霊アーカイブ')}</div></div><button class="btn" id="colClose">閉じる</button></div><div class="colNote" id="colNote"></div><div id="colList"></div></div>`;
     document.body.appendChild(el); this.el = el;
     el.querySelector('#colClose').addEventListener('click', e => { e.stopPropagation(); this.close(); });
     for (const t of ['pointerdown', 'touchstart', 'click']) el.addEventListener(t, e => e.stopPropagation());
@@ -8066,12 +8095,12 @@ const COL = {
     const rows = this.LIST.map(([key, name, pts]) => ({ key, name, pts, r: rankOf({ key, pts }), it: d.items[name] }));
     rows.sort((a, b) => order[a.r] - order[b.r] || b.pts - a.pts);
     const got = rows.filter(x => x.it && x.it.n).length;
-    $('#colCnt').innerHTML = `<b>${got}</b> / ${rows.length} 種類`; $('#colFill').style.width = (got / rows.length * 100).toFixed(1) + '%';
     $('#colNote').textContent = `${TR('これまでの撮影回数')} ${d.runs || 0}${TR('回')}`;
     const ALL = /[?&]colall\b/.test(location.search);   // 確認用：?colall で、まだ撮れていないものも名前を全部見せる
     if (ALL) $('#colNote').textContent += '　（確認用：すべての名前を表示中）';
     const list = $('#colList'); list.innerHTML = '';
-    list.appendChild(ACH.box()); const sec = document.createElement('div'); sec.className = 'colSec'; sec.textContent = TR('撮れ高リスト'); list.appendChild(sec);
+    list.appendChild(ACH.box()); const sec = document.createElement('div'); sec.className = 'colSec';
+    sec.innerHTML = `<div class="colSecH">${TR('撮れ高コレクション')}</div><div class="colProg"><span>${LANG === 'en' ? `<b>${got}</b> / ${rows.length}` : `<b>${got}</b> / ${rows.length} 種類`}</span><span class="colBar"><i style="width:${(got / rows.length * 100).toFixed(1)}%"></i></span></div>`; list.appendChild(sec);   // 2026-11-14 一覧の見出し（黄色・中くらい）と集めた数
     for (const x of rows) {
       const c = document.createElement('div'); const has = x.it && x.it.n, show = has || ALL;
       c.className = 'colItem r-' + x.r.toLowerCase() + (show ? '' : ' unk'); c.style.setProperty('--rc', RANK_COL[x.r]);
@@ -9552,9 +9581,12 @@ const PREBROKEN = (() => {
     return pts; };
   const shape = new THREE.Shape([new THREE.Vector2(-w / 2, -h / 2), new THREE.Vector2(w / 2, -h / 2), new THREE.Vector2(w / 2, h / 2), new THREE.Vector2(-w / 2, h / 2)]);
   const hole = holeShape(3); shape.holes.push(new THREE.Path(hole));
-  const gmat = new THREE.MeshBasicMaterial({ color: 0x9fb4ba, transparent: true, opacity: 0.22, depthWrite: false, side: THREE.DoubleSide });
+  // 2026-11-14 残ったガラスは他の窓（M.glass）と同じ色・ほぼ同じ濃さに。明るく濃いと、暗い廊下で遠くから白く光って見えた
+  const gmat = new THREE.MeshBasicMaterial({ color: 0x6f8890, transparent: true, opacity: 0.13, depthWrite: false, side: THREE.DoubleSide });
   const glass = new THREE.Mesh(new THREE.ShapeGeometry(shape), gmat); glass.position.set(cx, S.y, S.c); glass.renderOrder = 2; F1G.add(glass);
-  const edge = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(hole.map(p => V(p.x, p.y, 0))), new THREE.LineBasicMaterial({ color: 0xd5e2e6, transparent: true, opacity: 0.55 })); edge.position.copy(glass.position); F1G.add(edge);
+  const edge = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(hole.map(p => V(p.x, p.y, 0))), new THREE.LineBasicMaterial({ color: 0xa9babf, transparent: true, opacity: 0.3, depthWrite: false })); edge.position.copy(glass.position); edge.renderOrder = 2; F1G.add(edge);
+  // 2026-11-14 割れ口の線は遠くても1ピクセルの太さのまま残り、照明も受けないので、遠目には白い枠が光って見えた。近くでだけうっすら見せ、離れると消す
+  edge.onBeforeRender = (r, sc, cam) => { const d = cam.position.distanceTo(edge.position); edge.material.opacity = 0.3 * Math.min(1, Math.max(0, (6 - d) / 3.5)); };
   // 床の破片（窓際に少しだけ・固定）
   const W = DECO.group(); let s = 7; const rr = () => (s = (s * 9301 + 49297) % 233280) / 233280;
   for (let i = 0; i < 9; i++) { const side = i < 6 ? -1 : 1; DECO.add(W, 'tri', cx + (rr() - 0.5) * w * 0.9, 0.004 + i * 0.0004, S.c + side * (0.12 + rr() * 0.35), { s: [0.02 + rr() * 0.04, 0.015 + rr() * 0.03, 1], rx: -Math.PI / 2, ry: rr() * 6, c: 0xb8c8ce }); }
@@ -10142,8 +10174,8 @@ function seekTo(t) {
 function durOf(url) { return new Promise(r => { const e = document.createElement('video'); e.preload = 'metadata'; e.onloadedmetadata = () => r(isFinite(e.duration) ? e.duration : 0); e.onerror = () => r(0); e.src = url; }); }
 // 2026-11-14 月の光は表記不要の音源に差し替えたので、結果画面と共有文への表記はなし
 const MUSIC_CREDIT = '';
-function shareText() {
-  const total = evidence.reduce((a, e) => a + e.pts, 0);
+function shareText(T) {
+  const total = T ?? evidence.reduce((a, e) => a + e.pts, 0);   // 2026-11-14 神回ランキングから共有する時は、その回のいいね
   const here = /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host) && !BETA ? location.origin + location.pathname : 'https://hisimk.github.io/yutuber/';   // 試し版から共有しても本番のURL
   return (LANG === 'en' ? `Footage from the old school — ${total} likes` : `旧校舎で撮れた映像　いいね${total}`) + `\n#幽tuber\n${here}` + (F2.clairHeard && MUSIC_CREDIT ? `\n\n${MUSIC_CREDIT}` : '');
 }
@@ -10155,7 +10187,7 @@ function videoFiles() {
   return resultBlobs.map((b, i) => new File([b], `yutuber_${st}${many ? '_' + (i + 1) : ''}.${ext}`, { type: b.type || `video/${ext}` }));
 }
 async function imageFile() { const blob = resultImg || await makeResultImage(); resultImg = blob; return new File([blob], `yutuber_result_${fileStamp()}.png`, { type: 'image/png' }); }
-function copyPost(msg) { const post = shareText(); try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(post).then(() => { if (msg && !msg.textContent) msg.textContent = TR('投稿文（#幽tuber）をコピーしました。アプリで消えていたら貼り付けてください'); }).catch(() => { }); } catch (e) { } return post; }
+function copyPost(msg, T) { const post = shareText(T); try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(post).then(() => { if (msg && !msg.textContent) msg.textContent = TR('投稿文（#幽tuber）をコピーしました。アプリで消えていたら貼り付けてください'); }).catch(() => { }); } catch (e) { } return post; }
 // まとめて渡せない環境では、渡せる組み合わせに順に落とす（動画と画像 → 動画だけ → ダウンロード）
 async function shareSet(sets, msg, post) {
   try { if (window.claude && typeof window.claude.use === 'function') { const dl = await window.claude.use('downloads'); if (dl) { for (const f of sets[0]) await dl.save({ filename: f.name, data: f }); msg.textContent = TR('保存しました'); return; } } }
@@ -10966,17 +10998,18 @@ const GOD = {
   urls: [], seg: 0,
   build() {
     if (this.el) return; const el = document.createElement('div'); el.id = 'godView';
-    el.innerHTML = `<div class="gvBox"><div class="gvHead"><div><div class="gvT" id="gvT"></div><div class="gvSub" id="gvSub"></div></div><button id="gvClose">閉じる</button></div><video id="gvVid" playsinline controls preload="auto"></video><div id="gvNoVid"></div><div id="gvChat"></div><div id="gvList"></div></div>`;
+    el.innerHTML = `<div class="gvBox"><div class="gvHead"><div><div class="gvT" id="gvT"></div><div class="gvSub" id="gvSub"></div></div><button id="gvClose">閉じる</button></div><div id="gvNoVid"></div><div id="gvRow"><div id="gvWrap"><video id="gvVid" playsinline controls preload="auto"></video></div><div id="gvChat"></div></div><div id="gvShareRow"><button id="gvShare" type="button">${TR('動画と結果をシェア')}</button><div id="gvMsg"></div></div><div id="gvList"></div></div>`;
     document.body.appendChild(el); this.el = el;
     for (const t of ['pointerdown', 'touchstart', 'click']) el.addEventListener(t, e => e.stopPropagation());
     el.querySelector('#gvClose').addEventListener('click', () => this.close());
+    el.querySelector('#gvShare').addEventListener('click', e => { e.stopPropagation(); if (this.urls.length) VED.ask(this.shareSrc()); });
     this.chat = new ChatView(el.querySelector('#gvChat'), el.querySelector('#gvVid'), () => this.seg);
     el.querySelector('#gvVid').addEventListener('ended', () => { if (this.seg < this.urls.length - 1) { const v = $('#gvVid'); v.src = this.urls[++this.seg]; v.play().catch(() => { }); } });
   },
   async open(i) {
     this.build(); const b = ACH.load().best[i]; if (!b) return; const L = n => Number(n).toLocaleString('ja-JP');
     $('#gvT').innerHTML = `<b>${i + 1}${TR('位')}</b>${TR('歴代の神回')}`; $('#gvSub').innerHTML = `<i class="like"></i>${L(b.n)}　${b.d}`;
-    const v = $('#gvVid'), nv = $('#gvNoVid'); this.clear(); v.style.display = 'none'; nv.style.display = 'block';
+    const v = $('#gvVid'), nv = $('#gvNoVid'); this.clear(); this.i = i; this.cd = null; this.blobs = null; $('#gvRow').classList.add('none'); $('#gvShareRow').classList.add('none'); $('#gvMsg').textContent = ''; nv.style.display = 'block';
     nv.textContent = i < 3 ? TR(b.v ? '動画を読み込んでいます…' : 'この回の動画は残っていません') : TR('収録動画は上位3位までです');
     const list = $('#gvList'); list.innerHTML = '';
     if (!b.ev || !b.ev.length) list.innerHTML = `<div class="achNone">${TR(b.ev ? '撮れ高なし。次は仕込みをするべき？' : 'この回の内訳は記録されていません')}</div>`;
@@ -10987,14 +11020,25 @@ const GOD = {
     }
     this.el.classList.add('show');
     if (i < 3 && b.v) {
-      try { const blobs = await VDB.get(b.id); if (blobs && blobs.length) { this.urls = blobs.map(x => URL.createObjectURL(x)); this.seg = 0; v.src = this.urls[0]; v.style.display = ''; nv.style.display = 'none'; } else nv.textContent = TR('この回の動画は残っていません'); }
+      try { const blobs = await VDB.get(b.id); if (blobs && blobs.length) { this.blobs = blobs; this.urls = blobs.map(x => URL.createObjectURL(x)); this.seg = 0; v.src = this.urls[0]; $('#gvRow').classList.remove('none'); $('#gvShareRow').classList.remove('none'); nv.style.display = 'none'; } else nv.textContent = TR('この回の動画は残っていません'); }
       catch (e) { nv.textContent = TR('この回の動画は残っていません'); }
     }
-    { let cd = null; if (this.urls.length) try { cd = await VDB.get(b.id + ':chat'); } catch (e) { } this.chat.load(cd || null, this.urls); }
+    { let cd = null; if (this.urls.length) try { cd = await VDB.get(b.id + ':chat'); } catch (e) { } this.cd = cd || null; this.chat.load(cd || null, this.urls); }
   },
   async seek(t) {
     const v = $('#gvVid'); if (!this.urls.length) return; const target = Math.max(0, t - 1);
     let acc = 0; for (let i = 0; i < this.urls.length; i++) { const d = await durOf(this.urls[i]); if (target < acc + d || i === this.urls.length - 1) { if (this.seg !== i) { this.seg = i; v.src = this.urls[i]; } v.currentTime = Math.max(0, target - acc); v.play().catch(() => { }); return; } acc += d; }
+  },
+  // 2026-11-14 この回の動画をシェア（リザルトと同じく、先に「動画を編集しますか？」）
+  shareSrc() {
+    const b = ACH.load().best[this.i], cd = this.cd, ev = (b && b.ev) || [];
+    return { urls: this.urls, player: $('#gvVid'), view: this.chat, cd, ec: false, marks: ev.map(([label, pts, r, t]) => ({ t: t || 0, label })), total: b ? b.n : 0,
+      card: { lost: !!(cd && cd.end && cd.end.lost), total: b ? b.n : 0, top: ev.slice().sort((p, q) => q[1] - p[1]).slice(0, 3).map(([label, pts, r]) => ({ label, pts, _r: r || 'D' })) }, orig: () => this.shareOrig() };
+  },
+  async shareOrig() {
+    const b = ACH.load().best[this.i], msg = $('#gvMsg'); msg.textContent = ''; if (!this.blobs || !this.blobs.length) return; const post = copyPost(msg, b ? b.n : 0);
+    const ext = (this.blobs[0].type || '').includes('mp4') ? 'mp4' : 'webm', many = this.blobs.length > 1, st = fileStamp();
+    await shareSet([this.blobs.map((x, k) => new File([x], `yutuber_${st}${many ? '_' + (k + 1) : ''}.${ext}`, { type: x.type || `video/${ext}` }))], msg, post);
   },
   clear() { const v = $('#gvVid'); if (v) { v.pause(); v.removeAttribute('src'); v.load(); } this.urls.forEach(u => URL.revokeObjectURL(u)); this.urls = []; },
   close() { this.clear(); if (this.el) this.el.classList.remove('show'); },
@@ -11048,7 +11092,8 @@ const ACH = {
   },
   box() {
     const d = this.load(), el = document.createElement('div'); el.className = 'achBox'; const L = n => Number(n).toLocaleString('ja-JP');
-    el.innerHTML = `<div class="achH">${TR('撮れ高実績')}</div><div class="achTot"><span>${TR('累計いいね数')}</span><b><i class="like"></i>${L(d.total)}</b></div>${(() => { const ri = yrankIdx(d.total), nx = YRANK[ri + 1]; return `<div class="achRank"><b>${yrankName(ri)}</b><span>${nx ? cui('next', nx[2] - d.total) : cui('top')}</span></div>`; })()}<div class="achSub">${TR('歴代の神回ランキング')}</div>`
+    const ri = yrankIdx(d.total), nx = YRANK[ri + 1];   // 2026-11-14 ランク → 累計いいね → 撮れ高実績（神回ランキング）の順
+    el.innerHTML = `<div class="achTop"><div class="achRk"><span>${TR('ランク')}</span><b>${yrankName(ri)}</b></div><div class="achTotH">${TR('累計いいね数')}</div><div class="achTot"><b><i class="like"></i>${L(d.total)}</b><span>${nx ? cui('next', nx[2] - d.total) : cui('top')}</span></div></div><div class="achH">${TR('撮れ高実績')}</div><div class="achSub">${TR('歴代の神回ランキング')}</div>`
       + (d.best.length ? `<ol class="achList">${d.best.map((b, i) => `<li data-i="${i}"><span class="ar">${i + 1}</span><span class="al"><i class="like"></i>${L(b.n)}</span><span class="ad">${b.d}${b.v ? '<i class="achCam">▶</i>' : ''}</span></li>`).join('')}</ol><div class="achHint">${TR('タップで、その回の内訳（上位3位は動画も）を見られます')}</div>` : `<div class="achNone">${TR('まだ記録がありません')}</div>`);
     for (const li of el.querySelectorAll('.achList li')) li.addEventListener('click', e => { e.stopPropagation(); GOD.open(+li.dataset.i); });
     return el;
@@ -11085,8 +11130,7 @@ const CHAT_CFG = {
 // コメントでの呼び名：任意の呼び名 → チャンネル名 → 「主」。制御文字・改行を除き、見た目16文字まで
 function chatCallName() {
   const clean = s => String(s || '').replace(/[\u0000-\u001f\u007f\u2028\u2029]/g, '').replace(/\s+/g, ' ').trim();
-  let n = ''; try { n = clean(localStorage.getItem('yt_callName')); } catch (e) { }
-  if (!n) n = clean(world.chRaw); if (!n) return '';   // 空なら、表示の時に「主」／streamer を使う
+  let n = clean(world.chRaw);   // 2026-11-14 呼び名＝名前（別の呼び名の欄はやめた） if (!n) return '';   // 空なら、表示の時に「主」／streamer を使う
   const a = Array.from(n); return a.length > 16 ? a.slice(0, 15).join('') + '…' : n;
 }
 function chatHash(s) { let h = 2166136261; for (const c of String(s)) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
@@ -11581,28 +11625,35 @@ const VED = {
   on: false, vids: [], srcs: [], ds: [], starts: [], gEnd: 0, cur: 0, a: 0, b: 0, ph: 0, playing: false, cardT: -1, busy: false,
   set: null, hidden: new Set(), items: [], marks: [], W: 0, H: 0, lay: null, layKey: '', file: null,
   // ---- 共有前の確認
-  ask() {
+  ask(src) {
+    this.askSrc = src || null;
     const el = $('#shAsk'); $('#shAskT').textContent = vt('askT'); $('#shAskS').textContent = vt('askS'); $('#shAskYes').textContent = vt('yes'); $('#shAskNo').textContent = vt('no'); $('#shAskX').setAttribute('aria-label', vt('close'));
     el.classList.add('show');
   },
   askClose() { $('#shAsk').classList.remove('show'); },
   // ---- 編集画面を開く
-  async open() {
-    if (!resultUrls.length) return;
-    const v0 = $('#replay'); try { v0.pause(); } catch (e) { }
+  resSrc() {   // リザルトの動画
+    const tot = evidence.reduce((p, e) => p + e.pts, 0);
+    return { urls: resultUrls, player: $('#replay'), view: RES_CHAT, cd: CHAT.cur, ec: !!(CHATLOG.end && CHATLOG.end.ec), total: tot, orig: () => shareOriginal(),
+      marks: CHATLOG.ev.filter(e => (e.k === 'aw' || e.k === 'awc') && !CHATGEN.END.has(e.key)).map(e => ({ t: e.t, label: e.label })),
+      card: { lost: world.state === 'over', total: tot, top: evidence.slice().sort((p, q) => q.pts - p.pts).slice(0, 3) } };
+  },
+  async open(src) {
+    src = src || this.resSrc(); if (!src.urls.length) return; this.src = src; const VW = src.view, U = src.urls.slice();
+    const v0 = src.player; try { v0.pause(); } catch (e) { }
     this.on = true; this.busy = false; this.file = null; const el = $('#vedit'); el.classList.add('show'); el.classList.remove('ready'); this.ui();
     $('#veMsg').textContent = vt('load');
     if (RBGM.g && A.ctx) RBGM.g.gain.setTargetAtTime(0, A.ctx.currentTime, 0.2);
     try { if (A.ctx && A.ctx.state !== 'running') await A.ctx.resume(); } catch (e) { }
     // 区間ごとの長さ（チャットの同期と同じ測り方）
-    let ds = RES_CHAT.ds && RES_CHAT.ds.length === resultUrls.length && RES_CHAT.ds.every(x => x > 0) ? RES_CHAT.ds.slice() : await Promise.all(resultUrls.map(u => chatDur(u)));
+    let ds = VW.ds && VW.ds.length === U.length && VW.ds.every(x => x > 0) ? VW.ds.slice() : await Promise.all(U.map(u => chatDur(u)));
     if (!this.on) return;
-    this.vids = resultUrls.map(u => { const v = document.createElement('video'); v.src = u; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'auto'; v.addEventListener('ended', () => this.segEnd(v)); return v; });
+    this.vids = U.map(u => { const v = document.createElement('video'); v.src = u; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'auto'; v.addEventListener('ended', () => this.segEnd(v)); return v; });
     await Promise.all(this.vids.map(v => new Promise(ok => { if (v.readyState >= 1) ok(); else { v.addEventListener('loadedmetadata', ok, { once: true }); v.addEventListener('error', ok, { once: true }); setTimeout(ok, 4000); } })));
     if (!this.on) return;
     ds = ds.map((d, i) => d > 0 ? d : (isFinite(this.vids[i].duration) ? this.vids[i].duration : 0));
     this.ds = ds; this.starts = []; let acc = 0; for (const d of ds) { this.starts.push(acc); acc += d; }
-    const cd = CHAT.cur, ec = cd && cd.end ? !!cd.end.ec : !!(CHATLOG.end && CHATLOG.end.ec);
+    const cd = src.cd, ec = cd && cd.end ? !!cd.end.ec : !!src.ec;
     this.total = acc; this.gEnd = Math.max(0.5, acc - (ec ? ENDCARD.dur + 0.05 : 0));   // 元の動画に入っている結果カードは範囲に含めない（二重に付けない）
     // 音：動画の音を、プレビューで鳴らす経路と、書き出しに入れる経路の両方へ
     this.srcs = [];
@@ -11614,17 +11665,16 @@ const VED = {
     this.fc = document.createElement('canvas'); this.fc.width = this.W; this.fc.height = this.H; this.fg = this.fc.getContext('2d'); this.fg.fillStyle = '#000'; this.fg.fillRect(0, 0, this.W, this.H);
     // コメント：保存済みのコメント記録を、元の動画の時刻へ（再抽選しない）。結果カードの部分には重ねない
     this.items = []; this.marks = [];
-    if (cd && cd.items && cd.items.length && RES_CHAT.map && RES_CHAT.data === cd) {
-      this.items = cd.items.map((x, i) => ({ i, g: RES_CHAT.map(x[0]), ja: x.length >= 5 ? x[3] : x[2], en: x.length >= 5 ? x[4] : x[2] })).filter(x => x.g >= 0 && x.g < this.gEnd).sort((p, q) => p.g - q.g || p.i - q.i);
+    if (cd && cd.items && cd.items.length && VW.map && VW.data === cd) {
+      this.items = cd.items.map((x, i) => ({ i, g: VW.map(x[0]), ja: x.length >= 5 ? x[3] : x[2], en: x.length >= 5 ? x[4] : x[2] })).filter(x => x.g >= 0 && x.g < this.gEnd).sort((p, q) => p.g - q.g || p.i - q.i);
       // 撮れ高の位置（録画中に入ったものだけ。時刻の分かる今回の動画だけ）
-      for (const e of CHATLOG.ev) if ((e.k === 'aw' || e.k === 'awc') && !CHATGEN.END.has(e.key)) { const g = RES_CHAT.map(e.t); if (g >= 0 && g < this.gEnd) this.marks.push({ g, label: TR(e.label) }); }
+      for (const e of src.marks) { const g = VW.map(e.t); if (g >= 0 && g < this.gEnd) this.marks.push({ g, label: TR(e.label) }); }
       this.marks.sort((p, q) => p.g - q.g);
     }
-    this.hasCm = !!(cd && cd.items && RES_CHAT.map && RES_CHAT.data === cd);
+    this.hasCm = !!(cd && cd.items && VW.map && VW.data === cd);
     this.set = { cm: this.hasCm, pos: 'top', op: 0.7, size: 'm', card: true }; this.hidden = new Set(); this.layKey = '';
     // 結果カード（今回のプレイ全体の結果。切り出しに合わせた再計算はしない）
-    const total = evidence.reduce((p, e) => p + e.pts, 0);
-    this.cardD = { lost: world.state === 'over', total, top: evidence.slice().sort((p, q) => q.pts - p.pts).slice(0, 3), imgs: {}, noise: Array.from({ length: 900 }, () => [Math.random(), Math.random(), Math.random() * 0.04]) };
+    this.cardD = { lost: src.card.lost, total: src.card.total, top: src.card.top, imgs: {}, noise: Array.from({ length: 900 }, () => [Math.random(), Math.random(), Math.random() * 0.04]) };
     loadImg(TITLE_LOGO).then(i => this.cardD.imgs.logo = i).catch(() => { }); loadImg(LIKE_PNG).then(i => this.cardD.imgs.like = i).catch(() => { });
     this.a = 0; this.b = this.gEnd; this.cur = 0; this.cardT = -1; this.playing = false;
     $('#veMsg').textContent = ''; el.classList.add('ready');
@@ -11808,13 +11858,13 @@ const VED = {
     const mk = (t, cls, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; if (cls) b.className = cls; b.onclick = e => { e.stopPropagation(); fn(); }; $('#veExBtns').appendChild(b); return b; };
     mk(vt('back'), 'sec', () => el.classList.remove('exp'));
     mk(vt('save'), can ? 'sec' : '', () => { try { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 60000); msg.textContent = vt('dl'); } catch (e) { } });
-    if (can) mk(vt('share'), '', async () => { const post = copyPost(msg); try { await navigator.share({ files: [f], title: '幽tuber', text: post }); } catch (e) { } });   // 作り終わった後は、もう一度押してもらって共有（ブラウザの決まり）
+    if (can) mk(vt('share'), '', async () => { const post = copyPost(msg, this.src.total); try { await navigator.share({ files: [f], title: '幽tuber', text: post }); } catch (e) { } });   // 作り終わった後は、もう一度押してもらって共有（ブラウザの決まり）
     else msg.textContent = vt('noShare');
   },
 };
 // ---- 操作
-$('#shAskYes').addEventListener('click', e => { e.stopPropagation(); VED.askClose(); VED.open(); });
-$('#shAskNo').addEventListener('click', e => { e.stopPropagation(); VED.askClose(); shareOriginal(); });   // 編集せずに、これまでの共有
+$('#shAskYes').addEventListener('click', e => { e.stopPropagation(); VED.askClose(); VED.open(VED.askSrc); });
+$('#shAskNo').addEventListener('click', e => { e.stopPropagation(); VED.askClose(); if (VED.askSrc) VED.askSrc.orig(); else shareOriginal(); });   // 編集せずに、これまでの共有
 $('#shAskX').addEventListener('click', e => { e.stopPropagation(); VED.askClose(); });
 $('#shAsk').addEventListener('click', e => { if (e.target.id === 'shAsk') VED.askClose(); });   // 外側を押したらリザルトへ（共有しない）
 $('#veBack').addEventListener('click', e => { e.stopPropagation(); VED.close(); });
@@ -11940,7 +11990,7 @@ $('#resetAsk').addEventListener('click', e => e.stopPropagation());
 $('#setReset').addEventListener('click', e => { e.stopPropagation(); RESET.ask(); });
 $('#resetNo').addEventListener('click', e => { e.stopPropagation(); RESET.no(); });
 $('#resetYes').addEventListener('click', e => { e.stopPropagation(); RESET.yes(); });
-if (TEST && window.__G) Object.assign(window.__G, { award, CHATLOG, CHAT, CHATGEN, RES_CHAT, RANKPOP, yrankIdx, GOD, VDB, ACH, PERM, REVIVE, RESET, COL, escape, caught, DIR, SP, OFUDA, LUM, TRACE, HAZURE, seen, SFX_CREDITS, AW_TABLE, RANK_FIX, rankOf, MICLV, MIC, rec, opt, VED, RES_CHAT_: () => RES_CHAT, _attach: b => attachVideo(b), _blobs: () => resultBlobs, EVENTS: () => EV });
+if (TEST && window.__G) Object.assign(window.__G, { award, CHATLOG, CHAT, CHATGEN, RES_CHAT, RANKPOP, yrankIdx, GOD, VDB, ACH, PERM, REVIVE, RESET, COL, escape, caught, DIR, SP, OFUDA, LUM, TRACE, HAZURE, seen, SFX_CREDITS, AW_TABLE, RANK_FIX, rankOf, MICLV, MIC, rec, opt, VED, RES_CHAT_: () => RES_CHAT, _attach: b => attachVideo(b), GODV: GOD, _blobs: () => resultBlobs, EVENTS: () => EV });
 /* 2026-11-14 PC：ウィンドウ／全画面（全画面はボタンを押した時と、旧校舎に入る時に切り替える。Escで戻したらウィンドウに） */
 const SCREEN = {
   isFull() { return !!(document.fullscreenElement || document.webkitFullscreenElement); },
