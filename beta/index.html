@@ -3970,8 +3970,12 @@ const ENDCARD = {
     g.globalAlpha = 1; g.fillStyle = '#050506'; g.fillRect(0, 0, W, H);
     g.globalAlpha = fade * out;
     for (const [x, y, a] of d.noise) { g.fillStyle = `rgba(255,255,255,${a})`; g.fillRect(x * W, ((y + t * 0.03) % 1) * H, 2 * u, 2 * u); }
-    let y = H * 0.5 - 430 * u;
-    if (d.imgs.logo) { const lw = 520 * u, lh = lw * d.imgs.logo.height / d.imgs.logo.width; g.drawImage(d.imgs.logo, cx - lw / 2, y, lw, lh); y += lh + 80 * u; } else y += 160 * u;
+    /* 2026-11-15 撮れ高の行数に合わせて、全体を上下のまん中に置く（行が多い時は上の余白も使う） */
+    const lw = 520 * u, lh = d.imgs.logo ? lw * d.imgs.logo.height / d.imgs.logo.width : 0, head = (d.imgs.logo ? lh + 80 * u : 160 * u) + 290 * u, foot = 40 * u + 60 * u, rowH = 56 * u;
+    const mt = Math.max(70 * u, H * 0.06 + 50 * u), mb = 50 * u;   // 上は編集画面の見出しの分をあける
+    const rows = this.rows(d.top || [], Math.max(2, Math.floor((H - mt - mb - head - foot) / rowH)));
+    let y = Math.max(mt, (H - (head + rows.length * rowH + foot)) / 2);
+    if (d.imgs.logo) { g.drawImage(d.imgs.logo, cx - lw / 2, y, lw, lh); y += lh + 80 * u; } else y += 160 * u;
     g.textAlign = 'center'; g.fillStyle = '#cfcac0'; g.font = `600 ${38 * u}px ${serif}`; g.fillText(TR(d.lost ? 'スマホだけ回収' : '生還'), cx, y); y += 150 * u;
     const k = Math.min(1, Math.max(0, (t - 0.3) / 1.1)), v = Math.round(d.total * (1 - Math.pow(1 - k, 3)));
     g.font = `800 ${130 * u}px ${sans}`; const tw = g.measureText(String(v)).width, iw = 120 * u, gap = 26 * u, x0 = cx - (iw + gap + tw) / 2;
@@ -3979,14 +3983,13 @@ const ENDCARD = {
     g.textAlign = 'left'; g.fillStyle = d.total >= 2000 ? '#ff9ae6' : d.total >= 1000 ? '#ffd34d' : '#fff'; if (d.total >= 500) { g.shadowColor = d.total >= 2000 ? 'rgba(255,154,230,.9)' : d.total >= 1000 ? 'rgba(255,200,60,.9)' : 'rgba(255,255,255,.9)'; g.shadowBlur = 18; } g.fillText(String(v), x0 + iw + gap, y); g.shadowBlur = 0;
     g.textAlign = 'center'; g.fillStyle = '#9a958c'; g.font = `${26 * u}px ${sans}`; g.fillText(LANG === 'en' ? 'L I K E S' : 'い い ね', cx, y + 56 * u); y += 140 * u;
     /* 2026-11-15 撮れ高はランクの高い順に。入りきらない分は、ランクごとに「D ×4　100」のようにまとめる */
-    const rows = this.rows(d.top || [], Math.max(2, Math.floor((Math.max(H * 0.5 + 430 * u, H - 150 * u) - y) / (56 * u))));
     rows.forEach((e, i) => {
       const a = Math.min(1, Math.max(0, (t - 1.1 - i * 0.18) / 0.3)); if (!a) return; g.globalAlpha = fade * out * a;
       const r = e.r; g.fillStyle = RANK_COL[r] || '#fff'; g.font = `italic 800 ${30 * u}px ${sans}`; g.textAlign = 'left'; g.fillText(r, cx - 380 * u, y);
       g.fillStyle = e.n ? '#b4afa6' : '#e9e4da'; g.font = `${e.n ? 700 : 400} ${32 * u}px ${sans}`; let lb = e.other ? (LANG === 'en' ? `others ×${e.n}` : `ほか ×${e.n}`) : e.n ? `×${e.n}` : TR(e.label); while (g.measureText(lb).width > 560 * u && lb.length > 4) lb = lb.slice(0, -2) + '…'; g.fillText(lb, cx - 320 * u, y);
-      g.fillStyle = '#e9e4da'; g.textAlign = 'right'; g.font = `700 ${32 * u}px ${sans}`; g.fillText(String(e.pts), cx + 380 * u, y); y += 56 * u;
+      g.fillStyle = '#e9e4da'; g.textAlign = 'right'; g.font = `700 ${32 * u}px ${sans}`; g.fillText(String(e.pts), cx + 380 * u, y); y += rowH;
     });
-    g.globalAlpha = fade * out; y = Math.max(y + 40 * u, H * 0.5 + 330 * u);
+    g.globalAlpha = fade * out; y += 40 * u;
     g.textAlign = 'center'; g.fillStyle = '#fff'; g.font = `700 ${40 * u}px ${sans}`; g.fillText('#幽tuber', cx, y);
     g.fillStyle = '#9a958c'; g.font = `${28 * u}px ${sans}`; g.fillText('hisimk.github.io/yutuber', cx, y + 48 * u);
     g.globalAlpha = 1;
@@ -13644,7 +13647,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.14.27';
+const VERSION = '0.14.28';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
