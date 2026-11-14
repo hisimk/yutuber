@@ -233,6 +233,9 @@
   .seg button{background:none;border:none;color:#cfcac0;font-size:13px;padding:7px 11px}
   .seg button.on{background:#e9e4da;color:#111;font-weight:700}
   #scrSeg{flex:none}#scrSeg button{white-space:nowrap;padding:7px 9px}
+  #godSeg{margin-top:9px;align-self:stretch;display:flex}#godSeg button{flex:1;white-space:nowrap;padding:7px 6px}#godUse{font-size:12px;color:#9a958c;margin-top:7px;align-self:flex-start}
+  #gvDel{width:100%;min-height:40px;margin-top:8px;border:1px solid #4a4744;border-radius:12px;background:transparent;color:#d8d2c8;font:600 13.5px system-ui,-apple-system,"Hiragino Sans",sans-serif;cursor:pointer}
+  #popInfo{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.66);padding:20px}#popInfo.show{display:flex}#popInfo .pBox{width:min(340px,100%);background:#161517;border:1px solid #3a3836;border-radius:16px;padding:20px 18px;color:#eee;font-size:14px;line-height:1.7}#popInfo h3{margin:0 0 8px;font-size:16px}#popInfo .pBtns{display:flex;gap:8px;margin-top:16px}#popInfo button{flex:1;min-height:42px;border-radius:10px;border:1px solid #444;background:#222;color:#fff;font:700 14px system-ui,-apple-system,"Hiragino Sans",sans-serif}#popInfo button.pri{background:#e0362f;border-color:#e0362f}
   #qualSeg{flex:none}#qualSeg button{white-space:nowrap;padding:7px 12px}
   .opt .optTop{display:flex;justify-content:space-between;align-items:center;gap:10px}
   .rng{width:100%;accent-color:#e9e4da;margin:2px 0 0}
@@ -804,6 +807,7 @@
       <div class="opt col" id="setVolRow"><div class="optTop"><div>音量<small>スピーカーから出る大きさ（録画の音は変わりません）</small></div><div class="val" id="volVal">100%</div></div><input class="rng" id="volRange" type="range" min="0" max="100" step="5" value="100"></div>
       <div class="opt col" id="setSensRow"><div class="optTop"><div>視点を動かす速さ<small>なぞった時・ドラッグした時の回りやすさ</small></div><div class="val" id="sensVal">×1.0</div></div><input class="rng" id="sensRange" type="range" min="0.4" max="2" step="0.1" value="1"></div>
       <div class="opt" id="setQualRow"><div>画質<small>重い時は「軽い」に（少し粗くなり、影が減ります）</small></div><div class="seg" id="qualSeg"><button data-q="std">標準</button><button data-q="lite">軽い</button></div></div>
+      <div class="opt col" id="setGodRow"><div class="optTop"><div>神回の動画を端末に残す<small>動画はこの端末の中だけに保存され、外部には送られません。1本あたり最大で約50MBです。</small></div></div><div class="seg" id="godSeg"><button data-g="3">上位3位まで</button><button data-g="1">1位だけ</button><button data-g="0">残さない</button></div><div id="godUse"></div></div>
       <div class="opt" id="setBright"><div>明るさ<small>入口の景色を見ながら合わせます</small></div><div class="val"><span id="brightVal">0</span> ›</div></div>
       <div id="setPC">
         <div class="opt" id="setScreenRow"><div>画面の表示<small>ウィンドウのまま遊ぶか、全画面で遊ぶか</small></div><div class="seg" id="scrSeg"><button data-scr="win">ウィンドウ</button><button data-scr="full">全画面</button></div></div>
@@ -1341,7 +1345,7 @@ function plane(w, h, mat, x, y, z, ry = 0, rx = 0, o = {}) {
 /* ---------- 言語（日本語／English）：画面の文言は T() で英語に置き換える。英語の表が無い文言は日本語のまま ---------- */
 let LANG = 'ja'; try { const l = localStorage.getItem('yt_lang'); if (l === 'en' || l === 'ja') LANG = l; } catch (e) { }
 const EN = {
-  '机の陰で息を殺す': 'Holding your breath behind a desk', 'ベッドの下にもぐる': 'Under the bed', 'ピアノの下にもぐる': 'Under the piano', 'ベッドの下でやり過ごす': 'Waited it out under the bed', 'ピアノの下でやり過ごす': 'Waited it out under the piano', 'やり過ごしたはずの逆さの顔': 'The upside-down face, after it left', '出る': 'Get out', '窓の下をくぐり抜ける': 'Sneaking under the windows', 'もはや筋トレ配信': 'Basically a workout stream now', 'しゃがむ': 'Crouch', '立つ': 'Stand', 'しゃがむ・立つ': 'Crouch / stand', 'しゃがむと窓の下や机の陰に隠れられます': 'Crouch to hide below windows or behind desks',
+  '机の陰で息を殺す': 'Holding your breath behind a desk', '神回の動画を端末に残す': 'Keep top-episode videos on this device', '動画はこの端末の中だけに保存され、外部には送られません。1本あたり最大で約50MBです。': 'Videos are stored only on this device and never sent anywhere. Up to about 50 MB each.', '上位3位まで': 'Top 3', '1位だけ': 'Top 1 only', '残さない': "Don't keep", '保存している動画はありません': 'No saved videos', 'この動画を消す': 'Delete this video', 'この回の動画を消しますか？': 'Delete the video for this episode?', '内訳は残ります。': 'The breakdown will stay.', 'やめる': 'Cancel', '消す': 'Delete', '動画は残さない設定です（設定で変えられます）': 'Videos are set not to be kept (you can change this in Settings)', '端末の空きが少なめです': 'Your device is low on space', '神回の動画は1本あたり最大で約50MBです。空きが足りない時は、動画を保存せずに内訳だけ残します。「1位だけ」か「残さない」にすると安心です。': 'Each top-episode video can be up to about 50 MB. If space runs short, only the breakdown is kept. "Top 1 only" or "Don\'t keep" is safer.', 'このまま': 'Keep as is', '1位だけにする': 'Switch to Top 1 only', '動画を保存できませんでした': "Couldn't save the video", '端末の空きが足りないため、この回の動画は保存していません（内訳とランキングは残っています）。設定の「神回の動画を端末に残す」で本数を減らすと、空きが増えます。': 'There wasn\'t enough space, so this episode\'s video wasn\'t saved (the breakdown and ranking are kept). Keeping fewer videos in Settings frees up space.', 'ベッドの下にもぐる': 'Under the bed', 'ピアノの下にもぐる': 'Under the piano', 'ベッドの下でやり過ごす': 'Waited it out under the bed', 'ピアノの下でやり過ごす': 'Waited it out under the piano', 'やり過ごしたはずの逆さの顔': 'The upside-down face, after it left', '出る': 'Get out', '窓の下をくぐり抜ける': 'Sneaking under the windows', 'もはや筋トレ配信': 'Basically a workout stream now', 'しゃがむ': 'Crouch', '立つ': 'Stand', 'しゃがむ・立つ': 'Crouch / stand', 'しゃがむと窓の下や机の陰に隠れられます': 'Crouch to hide below windows or behind desks',
   '動画を切り抜き編集': 'Clip & edit', 'おすすめ': 'Recommended', '切り抜き・コメント・結果カード': 'Trim · comments · result card', 'そのまま保存': 'Save as is', 'そのままシェア': 'Share as is',
   '何をシェアする？': 'What to share?', 'X向け': 'For X', 'TikTok・インスタ向け': 'For TikTok / Instagram', '動画': 'Video', '結果画像': 'Result image', '投稿文': 'Post text', '#幽tuber とURL（コピーもします）': '#幽tuber and the link (also copied)',
   'シェアする': 'Share', '結果画像だけ保存': 'Save result image only', 'この環境ではシェアできないため、保存してから投稿してください': 'Sharing isn’t available here, so the files were saved. Please post them from your app.', '（投稿文はコピーしました）': ' (Post text copied.)',
@@ -11628,8 +11632,8 @@ const UNDER = {
   on: false, sp: null, cam: V(), yaw0: 0, t: 0, by: null, ph: '', pt: 0, back: null, trapAt: 0, seenIn: false,
   spots() {
     const L = []; try {
-      if (typeof F2 !== 'undefined' && F2.beds) for (const b of F2.beds) L.push({ name: 'ベッド', b: b.bb, lv: 0, fy: 0, h: 0.24 });
-      if (typeof F2 !== 'undefined' && F2.piano) { if (!this.pb) { F2.piano.updateMatrixWorld(true); this.pb = new THREE.Box3().setFromObject(F2.piano); } L.push({ name: 'ピアノ', b: this.pb, lv: 1, fy: LH, h: 0.32 }); }
+      if (typeof F2 !== 'undefined' && F2.beds) for (const b of F2.beds) L.push({ name: 'ベッド', b: b.bb, obj: b.b, lv: 0, fy: 0, h: 0.24 });
+      if (typeof F2 !== 'undefined' && F2.piano) { if (!this.pb) { F2.piano.updateMatrixWorld(true); this.pb = new THREE.Box3().setFromObject(F2.piano); } L.push({ name: 'ピアノ', b: this.pb, obj: F2.piano, lv: 1, fy: LH, h: 0.32 }); }
     } catch (e) { }
     return L;
   },
@@ -11650,6 +11654,8 @@ const UNDER = {
     this.on = true; this.sp = sp; this.t = 0; this.ph = this.by === 'woman' && this.seenIn ? 'found' : ''; this.pt = 0;
     this.back = { x: player.x, z: player.z }; this.cam.set(ix, sp.fy + sp.h, iz); this.out = V(dx, 0, dz).normalize();
     player.hidden = true; look.yaw = this.yaw0; look.pitch = 0; if (gyro.got) gyro.ref = gyro.acc;
+    // 2026-11-15 下のすき間の高さ（床から、ベッド・ピアノの裏まで）。覗き込む顔の高さと向きに使う
+    this.gap = 0.6; try { const rc = new THREE.Raycaster(V(ix, sp.fy + 0.03, iz), V(0, 1, 0), 0, 1.5); const h = rc.intersectObject(sp.obj, true)[0]; if (h) this.gap = h.distance + 0.03; } catch (e) { }
     CHATLOG.add('hide'); SND.rustle && SND.rustle(V(ix, sp.fy + 0.2, iz), 0.5);
     if (TEST || DEV) console.log('UNDER enter', sp.name, this.by, this.ph);
   },
@@ -11659,11 +11665,22 @@ const UNDER = {
     this.ph = ''; this.by = null;
   },
   // 逆さ女が、上から逆さの顔を下ろして覗き込む
-  peekPos(k) { const sp = this.sp, b = sp.b; let ex = this.cam.x, ez = this.cam.z; const o = this.out; for (let i = 0; i < 40; i++) { if (this.edgeD(sp, ex, ez) > 0.12) break; ex += o.x * 0.05; ez += o.z * 0.05; }
-    return V(ex, sp.fy + lerp(1.35, 0.36, k), ez); },
+  // 2026-11-15 顔が床に埋まらないように：すき間が広ければ逆さのまま、狭ければ顔を横に倒して覗き込む（顔の中心をすき間の中ほどに）
+  peekPos(k) { const sp = this.sp; let ex = this.cam.x, ez = this.cam.z; const o = this.out; for (let i = 0; i < 40; i++) { if (this.edgeD(sp, ex, ez) > 0.12) break; ex += o.x * 0.05; ez += o.z * 0.05; }
+    const low = this.gap < 0.5 ? Math.max(0.17, this.gap * 0.5) : Math.min(0.42, this.gap * 0.55);
+    return V(ex, sp.fy + lerp(1.35, low, k), ez); },
+  roll() { return this.gap < 0.5 ? Math.PI * 0.55 : Math.PI; },
+  faceInfo() { const h = SG.bones.Head; h.updateWorldMatrix(true, false); const p = h.getWorldPosition(V()), up = V(0, 1, 0).applyQuaternion(h.getWorldQuaternion(new THREE.Quaternion())).normalize();
+    return { p, c: p.clone().addScaledVector(up, 0.11), top: p.clone().addScaledVector(up, 0.23) }; },
+  place(t) {
+    SG.root.rotation.z = this.roll(); sgPlaceHead(t, this.cam); SG.root.updateMatrixWorld(true);
+    let f = this.faceInfo(); SG.root.position.add(t.clone().sub(f.c)); SG.root.updateMatrixWorld(true);
+    f = this.faceInfo(); const lowY = Math.min(f.p.y, f.top.y, f.c.y - 0.12), floor = this.sp.fy + 0.03;
+    if (lowY < floor) { SG.root.position.y += floor - lowY; SG.root.updateMatrixWorld(true); }   // 床より下に入らない
+  },
   startPeek() {
     if (CH.state !== 'off') { CH.state = 'off'; } tensionCut(true); WD.borrow(); sgSetOpacity(1); sgPlay('Walk', 0); WD.scripted = true;
-    this.ph = 'peek'; this.pt = 0; this.mouth = false; SG.root.rotation.z = Math.PI; sgPlaceHead(this.peekPos(0), this.cam);   // 上下逆さ（頭が下）
+    this.ph = 'peek'; this.pt = 0; this.mouth = false; this.place(this.peekPos(0));   // 上下逆さ（頭が下）。すき間が狭い時は横向き
     playSfx('throat_rasp', { pos: this.peekPos(0.5), ref: 0.8, gain: 0.8 }) || (SND.breath && SND.breath(0, 0.8));
   },
   update(dt) {
@@ -11678,7 +11695,7 @@ const UNDER = {
     if (this.ph === 'found' && (CH.state === 'off' || Math.hypot(WD.pos.x - this.back.x, WD.pos.z - this.back.z) < 2.2)) this.startPeek();
     if (this.ph === 'trap' && this.t >= this.trapAt) { if (womanOn() && !WD.borrowed && !CAP.on) { this.trap = true; this.startPeek(); } else this.ph = ''; }
     if (this.ph === 'peek') {
-      this.pt += dt; const k = smooth(0, 0.55, this.pt); SG.root.rotation.z = Math.PI; sgPlaceHead(this.peekPos(k), this.cam);
+      this.pt += dt; const k = smooth(0, 0.55, this.pt); this.place(this.peekPos(k));
       if (this.pt > 0.5 && !this.stung) { this.stung = true; jumpSting('jump_a', 1, 3); world.vhs = Math.max(world.vhs || 0, 0.5); }
       if (this.pt > 0.9 && !this.mouth) { this.mouth = true; sgPlay('Scare_MouthOpen', 0.05); setTimeout(() => playSfx('laugh_close', { ear: 0.4, gain: 0.8 }), 300); }
       if (this.trap && rec.active && this.pt > 0.45 && seen(sgHead(V()), { maxD: 2.2, margin: 1.2 })) award('underPeek', 'やり過ごしたはずの逆さの顔', 70);
@@ -12486,6 +12503,7 @@ const SET = {
     $('#sensRange').value = opt.sens; $('#sensVal').textContent = '×' + opt.sens.toFixed(1);
     $('#setMidiRow').classList.toggle('on', !!opt.midi);
     for (const b of document.querySelectorAll('#qualSeg button')) b.classList.toggle('on', b.dataset.q === opt.quality);
+    try { GKEEP.ui(); } catch (e) { }
     if (FRAME.on) $('#setGyro').style.display = 'none';   // PCにはジャイロがない
     for (const b of document.querySelectorAll('#langSeg button')) b.classList.toggle('on', b.dataset.lang === LANG);
   },
@@ -13729,7 +13747,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.1';
+const VERSION = '0.15.2';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -13746,15 +13764,45 @@ const VDB = {
   keys() { return this.tx('readonly', st => st.getAllKeys()).then(k => k || []); },
   wipe() { try { if (this.db) { this.db.close(); this.db = null; } } catch (e) { } return new Promise(ok => { try { const r = indexedDB.deleteDatabase(this.NAME); r.onsuccess = r.onerror = r.onblocked = () => ok(); } catch (e) { ok(); } }); },
 };
+/* 2026-11-15 神回の動画を端末に残す本数（上位3位まで／1位だけ／残さない）と、使っている容量 */
+const GKEEP = {
+  KEY: 'yt_godKeep',
+  get() { try { const v = localStorage.getItem(this.KEY); return v === null ? 3 : [0, 1, 3].includes(+v) ? +v : 3; } catch (e) { return 3; } },
+  async set(n) { try { localStorage.setItem(this.KEY, String(n)); } catch (e) { } await ACH.pruneVids(n); this.ui(); if (n > 0) this.warnIfLow(n); },
+  async free() { try { if (!navigator.storage || !navigator.storage.estimate) return null; const e = await navigator.storage.estimate(); return e && e.quota ? e.quota - (e.usage || 0) : null; } catch (e) { return null; } },
+  async usage() {
+    let n = 0, bytes = 0; try { const ks = await VDB.keys(); for (const k of ks) { const v = await VDB.get(k); const add = x => { if (x && typeof x.size === 'number') bytes += x.size; }; if (Array.isArray(v)) v.forEach(add); else add(v); if (!String(k).includes(':') && v) n++; } } catch (e) { }
+    return { n, bytes };
+  },
+  async ui() {
+    const n = this.get(); for (const b of document.querySelectorAll('#godSeg button')) b.classList.toggle('on', +b.dataset.g === n);
+    const el = $('#godUse'); if (!el) return; const u = await this.usage(), mb = u.bytes / 1048576;
+    el.textContent = u.n ? (LANG === 'en' ? `Saved videos: ${u.n} · about ${mb < 10 ? mb.toFixed(1) : Math.round(mb)} MB` : `保存している動画：${u.n}本・約${mb < 10 ? mb.toFixed(1) : Math.round(mb)}MB`) : TR('保存している動画はありません');
+  },
+  // 空きが少ない端末には、無理をさせない（説明のポップ）
+  async warnIfLow(n) { const f = await this.free(); if (f === null) return; const need = n * 55 * 1048576 * 2; if (f < need) POPINFO.show(TR('端末の空きが少なめです'), TR('神回の動画は1本あたり最大で約50MBです。空きが足りない時は、動画を保存せずに内訳だけ残します。「1位だけ」か「残さない」にすると安心です。'), [[TR('このまま'), null], [TR('1位だけにする'), () => this.set(1), true]]); },
+  full() { POPINFO.show(TR('動画を保存できませんでした'), TR('端末の空きが足りないため、この回の動画は保存していません（内訳とランキングは残っています）。設定の「神回の動画を端末に残す」で本数を減らすと、空きが増えます。'), [[TR('閉じる'), null, true]]); },
+};
+for (const b of document.querySelectorAll('#godSeg button')) b.addEventListener('click', e => { e.stopPropagation(); const n = +b.dataset.g; if (n === GKEEP.get()) return; GKEEP.set(n); });
+/* 2026-11-15 小さな説明・確認のポップ（buttons: [[文字, 押した時, 強調]]） */
+const POPINFO = {
+  show(title, body, buttons) {
+    let el = $('#popInfo'); if (!el) { el = document.createElement('div'); el.id = 'popInfo'; document.body.appendChild(el); for (const t of ['pointerdown', 'touchstart', 'click']) el.addEventListener(t, e => e.stopPropagation()); }
+    el.innerHTML = `<div class="pBox"><h3></h3><div class="pBody"></div><div class="pBtns"></div></div>`; el.querySelector('h3').textContent = title; el.querySelector('.pBody').textContent = body;
+    for (const [t, fn, pri] of buttons || [[TR('閉じる'), null, true]]) { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; if (pri) b.className = 'pri'; b.onclick = e => { e.stopPropagation(); el.classList.remove('show'); if (fn) fn(); }; el.querySelector('.pBtns').appendChild(b); }
+    el.classList.add('show');
+  },
+};
 /* 2026-11-14 神回ランキングの1件を開く：その回の内訳（タップでその場面へ）と、上位3位は収録動画 */
 const GOD = {
   urls: [], seg: 0,
   build() {
     if (this.el) return; const el = document.createElement('div'); el.id = 'godView';
-    el.innerHTML = `<div class="gvBox"><div class="gvHead"><div><div class="gvT" id="gvT"></div><div class="gvSub" id="gvSub"></div></div><button id="gvClose">閉じる</button></div><div id="gvNoVid"></div><div id="gvRow"><div id="gvWrap"><video id="gvVid" playsinline controls preload="auto"></video></div><div id="gvChat"></div></div><div id="gvShareRow"><button id="gvShare" type="button">${TR('動画と結果をシェア')}</button><div id="gvMsg"></div></div><div id="gvList"></div></div>`;
+    el.innerHTML = `<div class="gvBox"><div class="gvHead"><div><div class="gvT" id="gvT"></div><div class="gvSub" id="gvSub"></div></div><button id="gvClose">閉じる</button></div><div id="gvNoVid"></div><div id="gvRow"><div id="gvWrap"><video id="gvVid" playsinline controls preload="auto"></video></div><div id="gvChat"></div></div><div id="gvShareRow"><button id="gvShare" type="button">${TR('動画と結果をシェア')}</button><div id="gvMsg"></div><button id="gvDel" type="button">${TR('この動画を消す')}</button></div><div id="gvList"></div></div>`;
     document.body.appendChild(el); this.el = el;
     for (const t of ['pointerdown', 'touchstart', 'click']) el.addEventListener(t, e => e.stopPropagation());
     el.querySelector('#gvClose').addEventListener('click', () => this.close());
+    el.querySelector('#gvDel').addEventListener('click', e => { e.stopPropagation(); const i = this.i; POPINFO.show(TR('この回の動画を消しますか？'), TR('内訳は残ります。'), [[TR('やめる'), null], [TR('消す'), async () => { await ACH.delVid(i); this.open(i); }, true]]); });   // 2026-11-15 1本ずつ消す
     el.querySelector('#gvShare').addEventListener('click', e => { e.stopPropagation(); if (this.urls.length) VED.ask(this.shareSrc()); });
     this.chat = new ChatView(el.querySelector('#gvChat'), el.querySelector('#gvVid'), () => this.seg);
     el.querySelector('#gvVid').addEventListener('ended', () => { if (this.seg < this.urls.length - 1) { const v = $('#gvVid'); v.src = this.urls[++this.seg]; v.play().catch(() => { }); } });
@@ -13764,7 +13812,7 @@ const GOD = {
     $('#gvT').innerHTML = `<b>${i + 1}${TR('位')}</b>${TR('歴代の神回')}`; if (i < 3 && b.v) { const row = document.createElement('div'); row.className = 'gvTtl'; row.innerHTML = '<div class="gvTt"><span></span></div><button type="button"></button>'; const sp = row.querySelector('span'), bt = row.querySelector('button'); bt.textContent = TR('タイトルを編集');   // 2026-11-14 編集は動画を開いてから
       $('#gvT').appendChild(row); VTITLE.show(sp, b.id); bt.addEventListener('click', e => { e.stopPropagation(); VTITLE.edit(b.id, () => { VTITLE.show(sp, b.id); const li = document.querySelector(`.achList li[data-i="${i}"] .atl span`); if (li) VTITLE.show(li, b.id); }); }); } $('#gvSub').innerHTML = `<i class="like"></i>${L(b.n)}　${b.d}`;
     const v = $('#gvVid'), nv = $('#gvNoVid'); this.clear(); this.i = i; this.cd = null; this.blobs = null; $('#gvRow').classList.add('none'); $('#gvShareRow').classList.add('none'); $('#gvMsg').textContent = ''; nv.style.display = 'block';
-    nv.textContent = i < 3 ? TR(b.v ? '動画を読み込んでいます…' : 'この回の動画は残っていません') : TR('収録動画は上位3位までです');
+    nv.textContent = i < 3 ? TR(b.v ? '動画を読み込んでいます…' : i >= GKEEP.get() ? '動画は残さない設定です（設定で変えられます）' : 'この回の動画は残っていません') : TR('収録動画は上位3位までです');
     const list = $('#gvList'); list.innerHTML = '';
     if (!b.ev || !b.ev.length) list.innerHTML = `<div class="achNone">${TR(b.ev ? '撮れ高なし。次は仕込みをするべき？' : 'この回の内訳は記録されていません')}</div>`;
     for (const [label, pts, r, t] of (b.ev || [])) {
@@ -13858,18 +13906,28 @@ const ACH = {
     const ent = { n, d: this.today(), id, ev, v: 0 };
     d.best.push(ent); d.best.sort((a, b) => b.n - a.n); d.best = d.best.slice(0, 10);
     // 動画は上位3位まで：圏外になった回の動画は消す
-    const keep = new Set(d.best.slice(0, 3).map(b => b.id)); this.vids = this.vids || [];
+    const keep = new Set(d.best.slice(0, GKEEP.get()).map(b => b.id)); this.vids = this.vids || [];   // 2026-11-15 設定の本数まで（残さない＝0）
     for (const b of d.best) if (b.v && !keep.has(b.id)) { b.v = 0; VDB.del(b.id); VDB.del(b.id + ':mic'); VDB.del(b.id + ':game'); }   // 2026-11-14 別録りの音も
     VDB.keys().then(ks => { for (const k of ks) if (!keep.has(String(k).split(':')[0])) VDB.del(k); }).catch(() => { });
     this.save(); return keep.has(id) ? ent : null;
   },
+  // 2026-11-15 動画を残す本数を減らした時：範囲外の動画を消す（内訳とランキングは残す）
+  pruneVids(n) { const d = this.load(), keep = new Set(d.best.slice(0, n).map(b => b.id)); const dels = [];
+    for (const b of d.best) if (b.v && !keep.has(b.id)) { b.v = 0; for (const k of ['', ':mic', ':game', ':chat']) dels.push(VDB.del(b.id + k)); }
+    this.save(); return Promise.all(dels).then(() => VDB.keys()).then(ks => Promise.all(ks.filter(k => !keep.has(String(k).split(':')[0])).map(k => VDB.del(k)))).catch(() => { }); },
+  delVid(i) { const d = this.load(), b = d.best[i]; if (!b) return Promise.resolve(); b.v = 0; this.save(); return Promise.all(['', ':mic', ':game', ':chat'].map(k => VDB.del(b.id + k))); },
   // 上位3位に入った回の動画を、仕上がった時に保存する
   pendVid: null,
-  saveVid(blobs) {
+  async saveVid(blobs) {
     const ent = this.pendVid; if (!ent || !blobs || !blobs.length) return; this.pendVid = null;
+    if (GKEEP.get() === 0) return;
+    // 2026-11-15 端末の空きが足りない時は保存しない（無理に入れない）。理由をポップで知らせる
+    { const need = blobs.reduce((a, x) => a + (x.size || 0), 0) * 2.2 + 30 * 1048576, free = await GKEEP.free(); if (free !== null && free < need) { GKEEP.full(); return; } }
     if (CHAT.cur) VDB.put(ent.id + ':chat', CHAT.cur).catch(() => { });   // 同期チャットも動画と一緒に残す
-    VDB.put(ent.id, blobs).then(() => { const b = this.load().best.find(x => x.id === ent.id); if (b) { b.v = 1; this.save(); }
-      const sd = SIDE.of(blobs); if (sd && b) { VDB.put(ent.id + ':game', sd.game).catch(() => { }); if (sd.mic) VDB.put(ent.id + ':mic', sd.mic).catch(() => { }); } })   // 2026-11-14 マイク音・ゲーム音（区間ごと）.catch(e => console.warn('動画を保存できませんでした', e));
+    return VDB.put(ent.id, blobs).then(() => { const bi = this.load().best.findIndex(x => x.id === ent.id), b = this.load().best[bi];
+      if (!b || bi >= GKEEP.get()) { for (const k of ['', ':chat']) VDB.del(ent.id + k); return; }   /* 2026-11-15 保存し終わる前に順位が下がった・設定が変わった時は残さない */
+      b.v = 1; this.save();
+      const sd = SIDE.of(blobs); if (sd && b) { VDB.put(ent.id + ':game', sd.game).catch(() => { }); if (sd.mic) VDB.put(ent.id + ':mic', sd.mic).catch(() => { }); } }, e => { if (e && /quota/i.test(String(e.name || e))) { VDB.del(ent.id); VDB.del(ent.id + ':chat'); GKEEP.full(); } throw e; })   // 2026-11-14 マイク音・ゲーム音（区間ごと）.catch(e => console.warn('動画を保存できませんでした', e));
   },
   box() {
     const d = this.load(), el = document.createElement('div'); el.className = 'achBox'; const L = n => Number(n).toLocaleString('ja-JP');
@@ -14928,7 +14986,7 @@ addEventListener('keydown', e => {
   else if ($('#saveNote').classList.contains('show')) { $('#saveNote').classList.remove('show'); e.stopPropagation(); }
 }, true);
 addEventListener('resize', () => { if (VED.on) VED.uiMarks(); });
-if (TEST && window.__G) Object.assign(window.__G, { SIDE, RKLIST, RING, AFIX, SET, A, LID, stalls, CHATGEN, PADNAV, INV, RES_CHAT, SHX, CROUCH, COVER, enemySees, F2, startRec, SFXLAZY, NICK, ENDCARD, UNDER, HIDE });   // 2026-11-14 確認用
+if (TEST && window.__G) Object.assign(window.__G, { SIDE, RKLIST, RING, AFIX, SET, A, LID, stalls, CHATGEN, PADNAV, INV, RES_CHAT, SHX, CROUCH, COVER, enemySees, F2, startRec, SFXLAZY, NICK, ENDCARD, UNDER, HIDE, GKEEP, POPINFO, VDB, GODV: GOD });   // 2026-11-14 確認用
 
 setInterval(() => CHATLOG.tick(), 400);
 setInterval(() => { try { VOICE.tick(); } catch (e) { if (TEST || DEV) console.warn('VOICE', e); } }, 33);   // 2026-11-14 声の判定（約30回/秒）
