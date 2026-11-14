@@ -69,8 +69,9 @@
   #recBtn i{display:block;width:64px;height:64px;border-radius:50%;background:#ff3b30;transform:translateZ(0) scale(1);transition:transform .18s ease,border-radius .18s ease;will-change:transform}
   #recBtn.on i{transform:translateZ(0) scale(.469);border-radius:13px}   /* 30px角・角丸6px相当 */
   #recBtn.full i{background:#666}
-  #exitBtn{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--sab) + 186px);display:none;font-size:14px;font-weight:700;padding:10px 18px;border-radius:20px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.6);color:#fff;white-space:nowrap}
-  #exitBtn.show{display:block}
+  #exitBtn{display:none!important}   /* 2026-11-14 帰還はふだんのインタラクトのボタン（黄色）で */
+  #actBtn.exit,html.pcFrame #actBtn.exit{background:#ffd60a;border-color:#fff3b0;color:#1a1400;box-shadow:0 0 18px rgba(255,214,10,.55)}
+  html.pcFrame #actBtn.exit[data-k]::after{border-color:#ffd60a;color:#ffd60a}
   #actBtn{position:absolute;right:16px;bottom:calc(var(--sab) + 44px);display:none;font-size:13px;font-weight:700;padding:12px 14px;border-radius:16px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.55);color:#fff;white-space:nowrap}
   #actBtn.show{display:block}
   /* スマホ：インタラクトは66pxの円。右端から約9vw、下端から60px。操作名は中央で折り返す */
@@ -709,7 +710,7 @@
   <div id="ltPanel"><div id="ltRows"></div></div>
   <div id="fxPanel"><div class="fxHead">色収差の調整（録画にも反映）</div><div id="fxRows"></div><div class="fxBtns"><button id="fxReset">初期値に戻す</button><button id="fxClose" class="pri">閉じる</button></div></div>
   <div id="toast"></div>
-  <button class="btn" id="exitBtn">引き戸を開けて外へ出る</button>
+  <button class="btn" id="exitBtn">帰還する</button>
   <button class="btn" id="actBtn"></button><div id="lockHint">クリックで視点操作（マウスで見回す）</div>
   <div id="zoomRow">
     <button class="zb btn on" data-z="1">1×</button>
@@ -1330,7 +1331,7 @@ const EN = {
   '廊下の奥の暗がりが、うっすら見分けられる明るさに合わせてください': 'Adjust until you can just barely make out the darkness at the end of the hall',
   '標準に戻す': 'Default', '決定': 'OK', '話すとメーターが動きます': 'The meter moves when you speak', 'マイクの許可を待っています…': 'Waiting for microphone permission…',
   // ゲーム中
-  '残容量': 'Storage', '引き戸を開けて外へ出る': 'Slide the door open and leave', 'タップでスキップ': 'Tap to skip', 'カメラ切替': 'Switch camera', '録画': 'Record', '正面': 'Center',
+  '残容量': 'Storage', '引き戸を開けて外へ出る': 'Slide the door open and leave', '帰還する': 'Return', 'タップでスキップ': 'Tap to skip', 'カメラ切替': 'Switch camera', '録画': 'Record', '正面': 'Center',
   '左下を押して歩く／右側をなぞって見回す': 'Hold lower left to walk / swipe right side to look',
   'いま向いている方向を正面にしました': 'Set the current direction as forward',
   'この環境では映像を保存できません（撮れ高の記録は続きます）': 'Video can’t be saved here (likes are still counted)',
@@ -3572,8 +3573,8 @@ let toastT = null;
 function toast(msg, ms = 2600) { const el = $('#toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), ms); }
 
 // ── その場の操作ボタン（鍵・ノック・蛇口）
-let actFn = null, actLabel = '', actKey = false;
-function offerAction(label, fn, opt) { actLabel = label; actFn = fn; actKey = !!(opt && opt.key); }   // key: 鍵を使う操作（ボタンを黄色に）
+let actFn = null, actLabel = '', actKey = false, actExit = false;
+function offerAction(label, fn, opt) { actLabel = label; actFn = fn; actKey = !!(opt && opt.key); actExit = !!(opt && opt.exit); }   // key: 鍵を使う操作（ボタンを黄色に）
 hudTap($('#actBtn'), () => { if (actFn) actFn(); });
 /* =========================================================
    2026-11-14 コントローラー（PS・Xbox・Switchプロコン）。ブラウザの Gamepad API。つないだら自動で使える
@@ -11394,8 +11395,9 @@ function updateInteractions() {
   }
   if (!HIDE.lk) ITEM.offerPick();
   if (!actFn && !HIDE.lk) FIXCAM.offer();   // 2026-11-14 置いた定点カメラを回収
+  if (player.z > 4.1 && world.leftDoor && rec.time > 0.3 && !player.hidden && !world.capture && !world.dark && world.outro === 0 && !world.exitWait) offerAction(TR('帰還する'), () => doExit(), { exit: true });   // 2026-11-14 玄関：帰還する（黄色）
   const b = $('#actBtn'); if (world.tutAct) return;   // 遊び方の説明でお手本を出している間はそのまま
-  b.classList.toggle('show', !!actFn && !world.dark); b.classList.toggle('key', !!actFn && actKey); if (b.textContent !== actLabel) b.textContent = actLabel; if (FRAME.on) { const kl = PAD.using ? PAD.of('act') : KB.of('act'); if (b.dataset.k !== kl) b.dataset.k = kl; }
+  b.classList.toggle('show', !!actFn && !world.dark); b.classList.toggle('key', !!actFn && actKey && !actExit); b.classList.toggle('exit', !!actFn && actExit); if (b.textContent !== actLabel) b.textContent = actLabel; if (FRAME.on) { const kl = PAD.using ? PAD.of('act') : KB.of('act'); if (b.dataset.k !== kl) b.dataset.k = kl; }
 }
 function toggleWater(sk) { TAP.toggle(sk); }
 
@@ -11787,10 +11789,11 @@ function escape() {
   if (A.ctx) A.master.gain.setTargetAtTime(0.0, A.ctx.currentTime, 0.5);
   finalizeRec().then(showResult);
 }
-$('#exitBtn').addEventListener('click', e => { e.stopPropagation(); if (world.outro !== 0 || world.exitWait) return; $('#exitBtn').classList.remove('show');
+function doExit() { if (world.outro !== 0 || world.exitWait) return; $('#exitBtn').classList.remove('show');
   const go = () => { world.exitWait = false; if (world.outro === 0) { world.outro = 1.0001; SND.rattle(V(0, 1.2, 6.0), 1.4); } };
   go();   // 2026-11-13 帰る直前に鳴らしていた鈴（チーン）はやめた
-});
+}
+$('#exitBtn').addEventListener('click', e => { e.stopPropagation(); doExit(); });
 
 /* ---------- 帰還後：再生・撮れ高・保存 ---------- */
 // レア度（出やすさ）：SS・S・A・B・C・D。決め打ちのもの以外は、いいね数の大きさから
@@ -13201,7 +13204,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.13.14';
+const VERSION = '0.13.15';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
