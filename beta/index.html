@@ -135,6 +135,19 @@
   #fxPanel .fxBtns{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
   #fxPanel button{height:32px;padding:0 14px;border-radius:16px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff}
   #fxPanel button.pri{background:#ffcc00;color:#000;border:none}
+  .warnLine{display:none;margin-top:6px;font-size:11px;color:#9a958c;text-align:center}.warnLine.show{display:block}
+  /* 2026-11-14 初めての注意書き・マイクとジャイロの説明・注意事項 */
+  #notice{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;background:#050506;color:#e9e4da;padding:calc(var(--sat) + 18px) 18px calc(var(--sab) + 18px);overflow:auto}
+  #notice.show{display:flex}
+  #notice .nBox{width:min(400px,100%);display:flex;flex-direction:column;gap:12px}
+  #notice h2{margin:0 0 4px;font-size:19px;color:#fff;text-align:center;letter-spacing:.04em}
+  #notice .nL{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;line-height:1.65}#notice .nL i{font-style:normal;flex:none;width:24px;text-align:center}
+  #notice .nL.warn{color:#ffd34d;font-weight:700}#notice .nS{font-size:12px;color:#9a958c;margin:-6px 0 0 34px;line-height:1.6}
+  #notice .nBtns{display:flex;flex-direction:column;gap:9px;margin-top:10px}
+  #notice button{padding:14px;border-radius:14px;border:1px solid #55524c;background:#1c1c1f;color:#fff;font:700 15px system-ui}#notice button.pri{background:#e9e4da;color:#111;border-color:#e9e4da}
+  #notice .nTg{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;background:#151517;border:1px solid #2c2b29;font-size:14px}
+  #notice .nTg .sw{flex:none}#notice .nTg.on .sw{background:#34c759}#notice .nTg.on .sw::after{left:23px}
+  #notice .nPriv{font-size:13px;line-height:1.7;color:#cfcac0;background:#111113;border:1px solid #2c2b29;border-radius:12px;padding:10px 12px}#notice .nPriv b{color:#fff;display:block;margin-bottom:4px}
   .homeHint{display:none;margin-top:8px;font-size:11px;color:#7f7b74;text-align:center;line-height:1.5}
   .credBtn{margin-top:10px;background:none;border:none;color:#9a9a9a;font-size:12px;text-decoration:underline}
   #credits{z-index:30;justify-content:flex-start;overflow-y:auto}
@@ -714,6 +727,7 @@
   <button class="colBtn" id="colBtn">心霊アーカイブ</button>
   <button class="credBtn" data-cred>使用素材・クレジット</button>
   <div class="verTag"></div>
+  <div class="warnLine" id="warnLine">⚠ 大きな音・点滅があります</div>
   <div class="homeHint" id="homeHint">ホーム画面に追加して遊ぶと、記録が消えにくくなります</div>
   <div class="howto" id="howto"></div>
 </div>
@@ -747,6 +761,7 @@
       <div class="opt" id="setLang"><div>言語 / Language</div><div class="seg" id="langSeg"><button data-lang="ja">日本語</button><button data-lang="en">English</button></div></div>
       <button class="setLink" id="setTut">遊び方を見る</button>
       <button class="setLink" id="setCol">心霊アーカイブ</button>
+      <button class="setLink" id="setNotice">注意事項・プライバシー</button>
       <button class="setLink" id="setReset">データをリセット</button>
       <div class="verTag" id="verSet"></div>
       <button class="setLink" id="setHome">スタート画面にもどる</button>
@@ -3507,7 +3522,7 @@ function enableGyro() {
   };
   try {
     if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-      DeviceOrientationEvent.requestPermission().then(r => { if (r === 'granted') start(); else { toast('センサーの許可がないため、スワイプ操作で遊べます'); disableGyro(); } })
+      DeviceOrientationEvent.requestPermission().then(r => { if (r === 'granted') start(); else { toast('センサーの許可がないため、スワイプ操作で遊べます'); disableGyro(); opt.gyro = false; saveOpts(); try { SET.sync(); } catch (e) { } } })   /* 2026-11-14 断られたらオフに */
         .catch(() => { toast('この画面ではセンサーが使えません。スワイプ操作で遊べます'); disableGyro(); });
     } else if (typeof DeviceOrientationEvent !== 'undefined') start();
     else toast('センサーがありません。スワイプ操作で遊べます');
@@ -12612,6 +12627,72 @@ try { if (navigator.storage && navigator.storage.persist) navigator.storage.pers
 { const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const home = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
   if (ios && !home) $('#homeHint').style.display = 'block'; }
+/* =========================================================
+   2026-11-14 注意書き・マイクとジャイロの説明・注意事項
+   ・初めて開いた時（端末ごとに1回）：読み込みの直後、タイトルの前に全画面で注意書き。ボタンを押した時に音の準備も済ませる
+   ・2回目からは、タイトルの下に小さく1行
+   ・「旧校舎に入る」を初めて押した時：いきなり許可の画面を出さず、先にマイク・ジャイロの説明。選んだものだけ許可を求める
+   ・設定の「注意事項・プライバシー」で、いつでも全文を見られる
+   ========================================================= */
+const NOTICE = {
+  KEY: 'yt_notice1', ASK: 'yt_permAsk1',
+  seen() { if (TEST && !/[?&]notice/.test(location.search)) return true; try { return !!localStorage.getItem(this.KEY); } catch (e) { return true; } },   // 確認モードでは ?notice の時だけ出す
+  mobile() { return !FRAME.on; },
+  el() { let el = $('#notice'); if (!el) { el = document.createElement('div'); el.id = 'notice'; document.body.appendChild(el); for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'touchmove', 'click', 'keydown']) el.addEventListener(ev, e => e.stopPropagation()); } return el; },
+  lines() {
+    const en = LANG === 'en';
+    return [
+      ['⚠', en ? 'This game contains horror content, loud sounds, jump scares and flashing images.' : 'このゲームには、ホラー表現・大きな音・急に驚かす演出・画面の点滅があります。', 'warn'],
+      ['🎧', en ? 'Headphones recommended.' : 'イヤホンでのプレイがおすすめです。'],
+      ['🎙', en ? 'You can play without a mic, but turning it on makes it more fun. Talk, scream — your voice might become a highlight!?' : 'マイクなしでも遊べますが、マイクをオンにするともっと楽しめます。<br>実況したり叫んだり、あなたの声が撮れ高になるかも！？', '', en ? '* Your voice only goes into your recording. It is never sent anywhere.' : '※ 声は録画に入るだけで、どこにも送られません。'],
+      this.mobile() ? ['📱', en ? 'Tilt your phone to look around (gyro). You can turn this on/off later in Settings.' : 'スマホを傾けると、その方向を見回せます（ジャイロ）。あとから設定でオン・オフできます。'] : null,
+    ].filter(Boolean);
+  },
+  html() { return this.lines().map(([i, t, c, sub]) => `<div class="nL${c ? ' ' + c : ''}"><i>${i}</i><div>${t}</div></div>${sub ? `<div class="nS">${sub}</div>` : ''}`).join(''); },
+  // 読み込み後：初めてなら注意書きを出してから next（タイトル）へ
+  gate(next) {
+    const wl = $('#warnLine'); if (this.seen()) { if (wl) wl.classList.add('show'); next(); return; }
+    const el = this.el(), en = LANG === 'en';
+    el.innerHTML = `<div class="nBox"><h2>${en ? 'Before you play' : 'はじめに'}</h2>${this.html()}<div class="nBtns"><button class="pri" id="nOk">${en ? 'Got it, start' : 'わかった、はじめる'}</button></div></div>`;
+    el.classList.add('show');
+    $('#nOk').onclick = () => { try { localStorage.setItem(this.KEY, '1'); } catch (e) { } try { ensureAudio(); PACALL.unlock(); } catch (e) { } el.classList.remove('show'); next(); };   // ここで音の準備（スマホは押した瞬間でないと音が出せない）
+  },
+  // 「旧校舎に入る」を初めて押した時：マイク・ジャイロの説明（選んだものだけ許可を求める）
+  needAsk() { if (TEST && !/[?&]notice/.test(location.search)) return false; try { return !localStorage.getItem(this.ASK); } catch (e) { return false; } },
+  ask(go) {
+    const el = this.el(), en = LANG === 'en', mob = this.mobile();
+    const done = (mic, gy) => { opt.mic = !!mic; if (mob) opt.gyro = !!gy; else opt.gyro = false; saveOpts(); try { SET.sync(); } catch (e) { } try { localStorage.setItem(this.ASK, '1'); } catch (e) { } el.classList.remove('show'); go(); };
+    if (!mob) {
+      el.innerHTML = `<div class="nBox"><h2>${en ? 'Use your microphone?' : 'マイクを使いますか？'}</h2><div class="nL"><i>🎙</i><div>${en ? 'Talk, scream — your voice might become a highlight!?' : '実況したり叫んだり、あなたの声が撮れ高になるかも！？'}</div></div><div class="nS">${en ? '* Your voice only goes into your recording and is never sent anywhere. You can change this later in Settings.' : '※ 声は録画に入るだけで、どこにも送られません。あとから設定でオン・オフできます。'}</div>
+        <div class="nBtns"><button class="pri" data-c="mic">${en ? 'Use mic' : 'マイクを使う'}</button><button data-c="none">${en ? 'Play without' : '使わずに遊ぶ'}</button></div></div>`;
+      el.querySelector('[data-c="mic"]').onclick = () => done(true, false); el.querySelector('[data-c="none"]').onclick = () => done(false, false);
+    } else {
+      el.innerHTML = `<div class="nBox"><h2>${en ? 'For a better experience' : 'より楽しむための設定'}</h2>
+        <div class="nL"><i>🎙</i><div>${en ? 'Mic: Talk, scream — your voice might become a highlight!?' : 'マイク：実況したり叫んだり、あなたの声が撮れ高になるかも！？'}</div></div>
+        <div class="nL"><i>📱</i><div>${en ? 'Gyro: Tilt your phone to look around.' : 'ジャイロ：スマホを傾けると、その方向を見回せます。'}</div></div>
+        <div class="nS" style="margin-left:0">${en ? '* Neither is sent anywhere. You can change them later in Settings.' : '※ どちらも、どこにも送られません。あとから設定でオン・オフできます。'}</div>
+        <div id="nPick" style="display:none;flex-direction:column;gap:8px"><div class="nTg on" data-k="mic"><span>🎙 ${en ? 'Mic' : 'マイク'}</span><div class="sw"></div></div><div class="nTg on" data-k="gyro"><span>📱 ${en ? 'Gyro' : 'ジャイロ'}</span><div class="sw"></div></div><button class="pri" id="nPickGo">${en ? 'Start with these' : 'これで始める'}</button></div>
+        <div class="nBtns" id="nMain"><button class="pri" data-c="both">${en ? 'Use both' : '両方使う'}</button><button data-c="pick">${en ? 'Choose' : '選んで使う'}</button><button data-c="none">${en ? 'Play without' : '使わずに遊ぶ'}</button></div></div>`;
+      el.querySelector('[data-c="both"]').onclick = () => done(true, true);
+      el.querySelector('[data-c="none"]').onclick = () => done(false, false);
+      el.querySelector('[data-c="pick"]').onclick = () => { $('#nPick').style.display = 'flex'; $('#nMain').style.display = 'none'; };
+      for (const t of el.querySelectorAll('.nTg')) t.onclick = () => t.classList.toggle('on');
+      $('#nPickGo').onclick = () => done(el.querySelector('[data-k="mic"]').classList.contains('on'), el.querySelector('[data-k="gyro"]').classList.contains('on'));
+    }
+    el.classList.add('show');
+  },
+  // 設定から：注意事項・プライバシー
+  info() {
+    const el = this.el(), en = LANG === 'en';
+    el.innerHTML = `<div class="nBox"><h2>${en ? 'Notes & Privacy' : '注意事項・プライバシー'}</h2>${this.html()}
+      <div class="nPriv"><b>${en ? 'Privacy' : 'プライバシー'}</b>${en ? '• Your mic audio only goes into your recording. It is never sent outside.<br>• Gyro (tilt) data is only used to look around. It is never sent outside.<br>• Your footage collection, top episodes and settings are saved only on this device. Clearing your browser data deletes them.' : '・マイクの声は録画に入るだけで、外部には送りません。<br>・ジャイロ（傾き）の情報は見回しに使うだけで、外部には送りません。<br>・撮れ高・神回ランキング・設定は、この端末の中だけに保存されます。ブラウザのデータを消すと消えます。'}</div>
+      <div class="nBtns"><button class="pri" id="nClose">${en ? 'Close' : '閉じる'}</button></div></div>`;
+    $('#nClose').onclick = () => el.classList.remove('show'); el.classList.add('show');
+  },
+};
+// 「旧校舎に入る」：初めての時だけ、先にマイク・ジャイロの説明を出す（ほかの処理より先に止める）
+$('#goBtn').addEventListener('click', e => { if (!NOTICE.needAsk()) return; e.stopImmediatePropagation(); e.preventDefault(); NOTICE.ask(() => $('#goBtn').click()); }, true);
+$('#setNotice').addEventListener('click', e => { e.stopPropagation(); NOTICE.info(); });
 $('#goBtn').addEventListener('click', () => {
   PACALL.unlock();   // 校内放送の読み上げを、iPhoneでも鳴らせるように
   if (opt.gyro) enableGyro();
@@ -12811,7 +12892,7 @@ if (CHK) {
   }, 300);
 }
 if (TEST) window.__G = { sgScareLook, sgPlay, sgSetOpacity, colliders, collide, CLK, LIP, BALL, MIC, stairH, STAIRS, postMat, ITEM, F2, lockers, HIDE, NURSE_X, MANN, look, evidence, RACK, STAIR_LAMPS, PASUB, sgEmissive, camFwd, UISND, KB, MINOR, INV, MIDI, AUDIO_OUT, FRAME, input, STAY, occluders, ray, glassPanes, groundAt, EXITF, exitSigns, sole, runner, drainEye, prints, winFog, stainMesh, bloodDecal, fireDoor, broadcastFog, KNOB: null, render, sgHead, spFacePos, BLEED, NURSE, MICO: mic, OFUDA, SPV, speak, PACALL, award, COL, MISS, TAP, sinks, awarded, PIANO, UWA, selfCam, avatar, ITEM, escape, FL, HANDS, NEKO, stairH, SET, MIC, opt, snapEntrance, makeResultImage, shareText, CVOICE, RBGM, INTRO, segBlocked, NAV_E, lkP, TEN, HP, BB, KN, BELL, HANDS, stalls, lockers, HIDE, patrolNeck, SP, evidence, LPOOL, flash, postMat, renderer, scene, THREE, F2, MUS_SLIT, occluders, camera, onScreen, clearLine, glassPanes, playerZone, groundAt, zoneOf, NAV, navPath, nearestNode, STAIRS, A, playSfx, hasSfx, bigScare, caught, SG, CH, HIDE, CAP, DIM, LIGHTS, lockers, sgPlay, sgPlaceHead, world, player, look, rec, EV, DIR, WD, evidence, setZoom, startRec, stopRec, finalizeRec, escape, CONFIG, camera, focus, woman, avatar, stalls, setStall, toes, AMB, brooms, SELF, MD, selfCam, DOORS2, TAP, GG, RASP, doorBlood, basinBlood, mirror, seen, onScreen, clearLine, laughSlice, playSfx, SND, amb, POLT, MF, rooms, tubes, STREETFIG, RED, CBGM, CHEAD, sgSetOpacity, MG, borrowWoman, releaseWoman, setOpacity, headWorld, ripples, EVp: () => EV, get zoom() { return zoom; } };
-loadSG().then(() => Promise.all([setupGlbHuman(woman, GHOST_B64), setupGlbHuman(avatar, PROT_B64)])).then(() => loadF2()).then(() => loadSpider()).then(() => NEKO.load()).then(() => UWA.load()).then(() => loadHands()).then(() => { $('#loading').remove(); LOGOANIM.play(); setTimeout(() => RANKPOP.check(), 700); try { ensureAudio(); if (A.ctx && A.ctx.state === 'running') titleSeKick(); } catch (e) { } });
+loadSG().then(() => Promise.all([setupGlbHuman(woman, GHOST_B64), setupGlbHuman(avatar, PROT_B64)])).then(() => loadF2()).then(() => loadSpider()).then(() => NEKO.load()).then(() => UWA.load()).then(() => loadHands()).then(() => { $('#loading').remove(); NOTICE.gate(() => { LOGOANIM.play(); setTimeout(() => RANKPOP.check(), 700); try { ensureAudio(); if (A.ctx && A.ctx.state === 'running') titleSeKick(); } catch (e) { } }); });   // 2026-11-14 初めての時は注意書きを先に
 requestAnimationFrame(tick);
 // 効果音の大きさ（端末に保存。プレイ中・録画の両方に効く）
 { const el = $('#fxVol'); if (el) { el.value = A.fxVol; el.addEventListener('input', () => { A.fxVol = parseFloat(el.value); if (A.bus) A.bus.gain.value = A.fxVol * A.FX_BASE; try { localStorage.setItem('gekou_fxVol', A.fxVol); } catch (e) { } }); } }
@@ -12943,7 +13024,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.13.5';
+const VERSION = '0.13.6';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
