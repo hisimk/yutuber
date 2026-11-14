@@ -2252,9 +2252,45 @@ const FURN = {
   const TXF = {
     sheet: tx(96, 128, (g, w, h) => { g.fillStyle = '#e9e4d4'; g.fillRect(0, 0, w, h); for (let k = 0; k < 6; k++) { staff(g, 6, 14 + k * 19, w - 12, 2.4, '#5a564e'); notes(g, 6, 14 + k * 19, w - 12, 2.4, 6, '#2a2724', rr); } g.fillStyle = 'rgba(120,100,60,.18)'; g.fillRect(0, h - 22, w, 22); }),
     board: tx(512, 232, (g, w, h) => { g.fillStyle = '#1f3a2c'; g.fillRect(0, 0, w, h); g.fillStyle = 'rgba(255,255,255,.05)'; for (let i = 0; i < 30; i++) g.fillRect(rr() * w, rr() * h, 60, 6);
-      g.fillStyle = 'rgba(235,235,225,.85)'; g.font = 'bold 34px sans-serif'; g.textAlign = 'center'; g.fillText('合唱コンクール', w / 2, 42); g.font = '18px sans-serif'; g.fillText('課題曲　ふるさと', w / 2, 70);
-      for (let k = 0; k < 2; k++) { staff(g, 30, 98 + k * 64, w - 60, 9, 'rgba(230,230,220,.75)'); notes(g, 30, 98 + k * 64, w - 60, 9, 9, 'rgba(235,235,225,.8)', rr); }
-      const mg = [['#c03030', 120, 104], ['#3060c0', 230, 126], ['#d0b020', 340, 112], ['#30a050', 420, 170]]; for (const [c, x, y] of mg) { g.fillStyle = c; g.beginPath(); g.arc(x, y, 9, 0, Math.PI * 2); g.fill(); g.fillStyle = 'rgba(255,255,255,.4)'; g.beginPath(); g.arc(x - 3, y - 3, 3, 0, Math.PI * 2); g.fill(); } }),
+      const ch = 'rgba(235,235,225,.85)'; g.fillStyle = ch; g.font = 'bold 34px sans-serif'; g.textAlign = 'center'; g.fillText('合唱コンクール', w / 2, 42); const tw = g.measureText('合唱コンクール').width;
+      g.font = '18px sans-serif'; g.fillText('課題曲　ふるさと', w / 2, 70);
+      { const all = g.measureText('課題曲　ふるさと').width, a = g.measureText('課題曲　').width, b = g.measureText('ふるさと').width, x0 = w / 2 - all / 2 + a; g.strokeStyle = ch; g.lineWidth = 2.2; g.lineCap = 'round';   // 2026-11-15 「ふるさと」に斜線（実際の楽譜はトルコ行進曲）
+        g.beginPath(); g.moveTo(x0 - 3, 76); g.lineTo(x0 + b + 3, 58); g.moveTo(x0 + 6, 78); g.lineTo(x0 + b + 6, 61); g.stroke(); }
+      // 色のついた丸（マグネット）は「合唱コンクール」の左右に
+      const mg = [['#c03030', w / 2 - tw / 2 - 22, 26], ['#3060c0', w / 2 - tw / 2 - 44, 44], ['#d0b020', w / 2 + tw / 2 + 24, 30], ['#30a050', w / 2 + tw / 2 + 46, 46]]; for (const [c, x, y] of mg) { g.fillStyle = c; g.beginPath(); g.arc(x, y, 9, 0, Math.PI * 2); g.fill(); g.fillStyle = 'rgba(255,255,255,.4)'; g.beginPath(); g.arc(x - 3, y - 3, 3, 0, Math.PI * 2); g.fill(); }
+      // 楽譜：トルコ行進曲（モーツァルト）の冒頭。シ ラ ソ# ラ ド レ ド シ ド ミ … から、書けるところまで
+      const gap = 9, Y = [98, 162], STEP = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 }, pos = n => STEP[n[0]] + (+n[n.length - 1] - 4) * 7 - 2;   // ミ(E4)＝下の線から数えた段
+      const rows = [
+        [['B4', 16], ['A4', 16], ['G#4', 16], ['A4', 16], '|', ['C5', 8], ['r', 8], ['D5', 16], ['C5', 16], ['B4', 16], ['C5', 16], '|', ['E5', 8], ['r', 8]],
+        [['F5', 16], ['E5', 16], ['D#5', 16], ['E5', 16], '|', ['B5', 16], ['A5', 16], ['G#5', 16], ['A5', 16], ['B5', 16], ['A5', 16], ['G#5', 16], ['A5', 16], '|', ['C6', 4]],
+      ];
+      g.strokeStyle = 'rgba(230,230,220,.75)'; g.fillStyle = ch;
+      rows.forEach((row, ri) => {
+        const y0 = Y[ri], bot = y0 + gap * 4; staff(g, 30, y0, w - 60, gap, 'rgba(230,230,220,.75)');
+        g.fillStyle = ch; g.font = 'bold 15px serif'; g.textAlign = 'center'; if (ri === 0) { g.fillText('2', 52, y0 + gap * 1.6); g.fillText('4', 52, y0 + gap * 3.6); }
+        let x = ri === 0 ? 74 : 50; const heads = [];
+        for (const it of row) {
+          if (it === '|') { g.strokeStyle = 'rgba(230,230,220,.75)'; g.lineWidth = 1; g.beginPath(); g.moveTo(x - 6, y0); g.lineTo(x - 6, bot); g.stroke(); x += 8; continue; }
+          const [n, d] = it;
+          if (n === 'r') { g.fillStyle = ch; g.beginPath(); g.arc(x - 2, y0 + gap * 1.6, 2.4, 0, Math.PI * 2); g.fill(); g.strokeStyle = ch; g.lineWidth = 1.5; g.beginPath(); g.moveTo(x - 2, y0 + gap * 1.6); g.quadraticCurveTo(x + 2, y0 + gap * 1.8, x + 4, y0 + gap * 1.3); g.lineTo(x - 1, y0 + gap * 3.2); g.stroke(); x += 24; continue; }   /* 8分休符 */
+          const sp = pos(n), y = bot - sp * gap / 2;
+          g.strokeStyle = 'rgba(230,230,220,.75)'; g.lineWidth = 1; for (let l = 10; l <= sp; l += 2) { g.beginPath(); g.moveTo(x - 8, bot - l * gap / 2); g.lineTo(x + 8, bot - l * gap / 2); g.stroke(); }   // 加線
+          if (n.includes('#')) { g.fillStyle = ch; g.font = 'bold 12px sans-serif'; g.fillText('#', x - 11, y + 4); }
+          g.fillStyle = ch; g.save(); g.translate(x, y); g.rotate(-0.35); g.beginPath(); g.ellipse(0, 0, 5.2, 3.8, 0, 0, Math.PI * 2); g.fill(); g.restore();
+          const up = sp < 4; heads.push({ x, y, up, d }); x += d === 16 ? 24 : d === 8 ? 28 : 34;
+        }
+        // 符尾と連桁（16分は4つずつ2本、8分は旗）
+        g.strokeStyle = ch; g.lineWidth = 1.4;
+        for (let i = 0; i < heads.length;) {
+          const hd = heads[i];
+          if (hd.d === 16) { const grp = heads.slice(i, i + 4).filter(q => q.d === 16), up = grp.reduce((a, q) => a + (q.up ? 1 : -1), 0) >= 0, ey = up ? Math.min(...grp.map(q => q.y)) - 24 : Math.max(...grp.map(q => q.y)) + 24;
+            for (const q of grp) { const sx = q.x + (up ? 4.6 : -4.6); g.beginPath(); g.moveTo(sx, q.y); g.lineTo(sx, ey); g.stroke(); }
+            const a = grp[0].x + (up ? 4.6 : -4.6), b = grp[grp.length - 1].x + (up ? 4.6 : -4.6); g.lineWidth = 2.6; for (const o of [0, up ? 5 : -5]) { g.beginPath(); g.moveTo(a, ey + o); g.lineTo(b, ey + o); g.stroke(); } g.lineWidth = 1.4; i += grp.length; continue; }
+          const sx = hd.x + (hd.up ? 4.6 : -4.6), ey = hd.y + (hd.up ? -24 : 24); g.beginPath(); g.moveTo(sx, hd.y); g.lineTo(sx, ey); g.stroke();
+          if (hd.d === 8) { g.beginPath(); g.moveTo(sx, ey); g.quadraticCurveTo(sx + 7, ey + (hd.up ? 7 : -7), sx + 5, ey + (hd.up ? 14 : -14)); g.stroke(); }
+          i++;
+        }
+      }); }),
     time: tx(128, 160, (g, w, h) => { g.fillStyle = '#efeadb'; g.fillRect(0, 0, w, h); g.fillStyle = '#222'; g.font = 'bold 13px sans-serif'; g.textAlign = 'center'; g.fillText('じかんわり', w / 2, 16); const D = ['月', '火', '水', '木', '金'], S = ['こくご', 'さんすう', 'りか', 'しゃかい', 'おんがく', 'たいいく', 'ずこう', 'どうとく'];
       g.strokeStyle = '#555'; for (let i = 0; i <= 5; i++) { g.beginPath(); g.moveTo(8 + i * 22.4, 24); g.lineTo(8 + i * 22.4, h - 8); g.stroke(); } for (let j = 0; j <= 6; j++) { g.beginPath(); g.moveTo(8, 24 + j * 21); g.lineTo(w - 8, 24 + j * 21); g.stroke(); }
       g.font = '9px sans-serif'; for (let i = 0; i < 5; i++) { g.fillText(D[i], 19 + i * 22.4, 37); for (let j = 1; j < 6; j++) g.fillText(S[Math.floor(rr() * S.length)].slice(0, 3), 19 + i * 22.4, 37 + j * 21); } }),
@@ -7410,7 +7446,7 @@ F2.update = function (dt) {
   if (this.st.bed && this.st.bed.blood && rec.active && seen(this.beds.find(x => x.i === this.plan.bedClosed).top, { maxD: 3.5 }) && this.beds.find(x => x.i === this.plan.bedClosed).duv > 0.9) award('f2blood', 'シーツに残る古い血の染み', 35);
   this.updTeddyScare(dt); this.updChair(dt);
   this.updStairFace(dt);
-  this.updLib(dt); this.updMusic(dt); this.updVase(dt); this.updFall(dt);
+  this.updLib(dt); this.updMusic(dt); this.updVase(dt); this.updFall(dt); MOZ.upd(dt);
 };
 
 /* 1. 階段の顔：上り階段の途中で振り返った先、上の壁の角から顔の片側だけ */
@@ -9210,6 +9246,7 @@ const PIANO = {
     { id: 'neko', notes: [3, 1, 6, 6, 3, 1, 6, 6], acc: [1, 3, 5, 6, 10, 11] },     // 猫ふんじゃった：ミ♭ レ♭ ソ♭ ソ♭ ミ♭ レ♭ ソ♭ ソ♭（シ♭などの和音もよい）
     { id: 'twinkle', notes: [0, 0, 7, 7, 9, 9, 7], acc: [0, 2, 4, 5, 7, 9, 11] },   // きらきら星：ド ド ソ ソ ラ ラ ソ
     { id: 'unmei', notes: [7, 7, 7, 3], acc: [7, 3] },   // 運命（ベートーベン）：ソ ソ ソ ミ♭
+    { id: 'turca', notes: [11, 9, 8, 9, 0, 2, 0, 11, 0, 4], acc: [] },   // 2026-11-15 トルコ行進曲（モーツァルト）：シ ラ ソ# ラ ド レ ド シ ド ミ
   ],
   // 2026-11-13 PCのキーボードで弾く：作曲ソフト（FL Studioなど）でおなじみの「2段で2オクターブ」の並び。
   // 下の段 Z〜M が低いドからシ（黒鍵は S D G H J）、上の段 Q〜I が高いドから上のド（黒鍵は 2 3 5 6 7）。キーの位置で決めるので日本語キーボードでも同じ
@@ -9385,7 +9422,7 @@ const PIANO = {
       if (rec.active) { rec.time += rawDt; if (rec.time >= CONFIG.recMaxSec) { rec.time = CONFIG.recMaxSec; stopRec('full'); } }
       if (world.battery <= 0) { world.battery = 0; this.exit(); batteryDead(); return; }
     }
-    this.place(); OFUDA.updFall(Math.min(rawDt, 0.05)); updateListener(); this.stat(); render();   // 2026-11-14 弾いている間も額縁は落ちる。聞き手は椅子の視点（額縁は右側）
+    this.place(); OFUDA.updFall(Math.min(rawDt, 0.05)); MOZ.upd(Math.min(rawDt, 0.05)); updateListener(); this.stat(); render();   // 2026-11-14 弾いている間も額縁は落ちる。聞き手は椅子の視点（額縁は右側）
   },
   // 音：本物のピアノの録音（9音を録音し、間の音は少しだけ音程をずらして鳴らす）。読めない時は合成音
   SMP: [[60, 'C4'], [63, 'Ds4'], [66, 'Fs4'], [69, 'A4'], [72, 'C5'], [75, 'Ds5'], [78, 'Fs5'], [81, 'A5'], [84, 'C6']],
@@ -9440,6 +9477,8 @@ const PIANO = {
       setTimeout(() => playSfx('meow', { pos: V(34, 0.4, -18), ref: 1.6, roll: 0.8, lowpass: 2600, gain: 0.9 }), 900);
       if (!NEKO.done) NEKO.chosen = true;
       if (rc) award('nekoPiano', '猫ふんじゃったを弾く', 100);
+    } else if (id === 'turca') {   // トルコ行進曲：モーツァルトの額縁が落ちる（アイテムはなし。落ちる所を録画で撮るとS）
+      MOZ.fall();
     } else if (id === 'unmei') {   // 運命：ガタンとベートーベンの額縁が落ちる（撮れ高にはしない）
       OFUDA.fall();
     } else if (id === 'twinkle') {
@@ -10626,6 +10665,28 @@ const SPV = {
 };
 
 /* =========================================================
+   2026-11-15 トルコ行進曲：ピアノで「シ ラ ソ# ラ ド レ ド シ ド ミ」を弾くと、モーツァルトの額縁が床に落ちる
+   アイテムはなし。落ちる所を録画で撮ると「落ちたモーツァルトの額縁」（S）
+   ========================================================= */
+const MOZ = {
+  fall() {
+    const bp = F2.portraits && F2.portraits.find(p => p.k === 'mozart'); if (!bp || this.fallen) return;
+    this.fallen = true; this.fr = bp.fr; this.fy0 = bp.fr.position.y; this.fz0 = bp.fr.position.z; this.ft = 0; this.falling = true; this.landed = false; this.pos = bp.p.clone(); this.seenT = 0;
+    SND.knock && SND.knock(this.pos, 2.0);
+  },
+  upd(dt) {
+    if (!this.falling) return; this.ft += dt;
+    const k = Math.min(1, this.ft / 0.38); this.fr.position.y = this.fy0 - (this.fy0 - LH - 0.02) * k * k;
+    if (this.ft > 0.38 && !this.landed) { this.landed = true; const fp = this.pos.clone().setY(LH + 0.15);
+      playSfx('drop_book', { pos: fp, ref: 3, roll: 0.7, gain: 1.4 }); SND.thud && SND.thud(fp, 2.2); SND.knock && SND.knock(fp, 1.8); setTimeout(() => SND.knock && SND.knock(fp, 0.9), 170); }
+    if (this.ft > 0.38) { const a = Math.min(0.32, (this.ft - 0.38) * 3); this.fr.rotation.x = -a; this.fr.position.z = this.fz0 + 0.3 * (a / 0.32); }
+    // 撮れ高：落ちていく額縁を録画で撮った
+    if (rec.active && this.ft < 0.75) { const p = this.fr.getWorldPosition(V()); p.y += 0.4; if (seen(p, { maxD: 12, margin: 1.05 })) { this.seenT += dt; if (this.seenT >= 0.12) award('mozFall', '落ちたモーツァルトの額縁', 100); } }
+    if (this.ft > 0.75) this.falling = false;
+  },
+  reset() { if (this.fr) { this.fr.position.y = this.fy0; this.fr.rotation.x = 0; this.fr.position.z = this.fz0; } this.fallen = false; this.falling = false; },
+};
+/* =========================================================
    封印のお札
    ・音楽室のピアノで「運命」の冒頭（ソ ソ ソ ミ♭）を弾くと、ガタンと音がしてベートーベンの額縁が床に落ちる
      額縁のあった壁に「封印のお札」が貼られている（落ちるところは撮れ高にしない）
@@ -10689,7 +10750,7 @@ const OFUDA = {
   },
   reset() {
     if (this.fr) { this.fr.position.y = this.fy0; this.fr.rotation.x = 0; if (this.fz0 !== undefined) this.fr.position.z = this.fz0; }
-    F2.bFallen = false; this.falling = false; if (this.on) this.end(); this.on = false; SP.spawnAt = 0;
+    F2.bFallen = false; this.falling = false; if (this.on) this.end(); this.on = false; SP.spawnAt = 0; MOZ.reset();
   },
 };
 
@@ -14288,7 +14349,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.9';
+const VERSION = '0.15.10';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -15802,6 +15863,10 @@ Object.assign(CHAT_DICT.t, {
 Object.assign(CHAT_DICT.c, { kok_enter: ['kok.enter.01', 'kok.enter.02', 'kok.enter.03'], kok_ask: ['kok.ask.01', 'kok.ask.02'], kok_still: ['kok.still.01', 'kok.still.02', 'kok.still.03', 'kok.still.04'], kok_move: ['kok.move.01', 'kok.move.02', 'kok.move.03', 'kok.move.04'], kok_yesno: ['kok.yesno.01', 'kok.yesno.02', 'kok.yesno.03'], kok_name: ['kok.name.01', 'kok.name.02', 'kok.name.03'], kok_drop: ['kok.drop.01', 'kok.drop.02', 'kok.drop.03'] });
 if (CHAT_DICT.ev) Object.assign(CHAT_DICT.ev, { '十円玉が動いた': ['kok.move.01', 'kok.move.02'], '十円玉が自分の名前をなぞった': ['kok.name.01', 'kok.name.02'], '机から落ちた十円玉': ['kok.drop.01', 'kok.drop.02'] });
 Object.assign(AW_TABLE, { kokMove: ['B', 40], kokName: ['A', 70], kokDrop: ['C', 25] });
+// 2026-11-15 トルコ行進曲：落ちたモーツァルトの額縁（S）
+AW_TABLE.mozFall = ['S', 100]; COL.LIST.push(['mozFall', '落ちたモーツァルトの額縁', 100]);
+CHIP_DESC.mozFall = ['音楽室のピアノでトルコ行進曲を弾いたら、モーツァルトの額縁が床に落ちた。', 'You played the Turkish March on the music room piano, and the Mozart portrait fell to the floor.'];
+EN['落ちたモーツァルトの額縁'] = 'The fallen Mozart portrait';
 COL.LIST.push(['kokMove', '十円玉が動いた', 40], ['kokName', '十円玉が自分の名前をなぞった', 70], ['kokDrop', '机から落ちた十円玉', 25]);
 Object.assign(CHIP_DESC, { kokMove: ['こっくりさんの十円玉が、ひとりでに紙の上をすべった。', "The coin slid across the kokkuri-san sheet on its own."], kokName: ['十円玉が、自分の呼び名を一文字ずつなぞった。', 'The coin spelled out your name, one letter at a time.'], kokDrop: ['「か・え・れ」のあと、十円玉は机から落ちた。', 'After spelling "LEAVE", the coin fell off the desk.'] });
 Object.assign(EN, { '十円玉が動いた': 'The coin moved', '十円玉が自分の名前をなぞった': 'The coin spelled your name', '机から落ちた十円玉': 'The coin that fell off the desk', 'こっくりさんを始める': 'Start kokkuri-san', 'やめる': 'Stop', 'こっくりさんをやめる': 'Stop kokkuri-san' });
@@ -16098,7 +16163,7 @@ ENDCARD.ORD.PH = -1;
 CHAT_CFG.coef.PH = 1.2;
 setInterval(() => { if (PHAN.el && world.state === 'play') PHAN.panel(); }, 1000);
 PHAN.load(); PHAN.panel();
-if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, WD, CH, SP, MANN, NAV, RED: typeof RED !== 'undefined' ? RED : null, postMat, CHAT, RES_CHAT, COL, ENDCARD, makeResultImage, KOK, SELF, avatar, selfCam, STAIRS, groundAt, escapeRun: escape, evid: () => evidence, recS: () => rec, world });
+if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, WD, CH, SP, MANN, NAV, RED: typeof RED !== 'undefined' ? RED : null, postMat, CHAT, RES_CHAT, COL, ENDCARD, makeResultImage, KOK, MOZ, PIANO, F2, SELF, avatar, selfCam, STAIRS, groundAt, escapeRun: escape, evid: () => evidence, recS: () => rec, world });
 
 /* =========================================================
    2026-11-14 データをリセット（スタート画面・設定の「撮れ高コレクション」の直下）
