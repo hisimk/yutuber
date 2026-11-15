@@ -39,7 +39,7 @@
   :root{--sat: env(safe-area-inset-top, 0px);--sab: env(safe-area-inset-bottom, 0px);}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
   html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;color:#fff;overscroll-behavior:none;touch-action:none}
-  #view{position:fixed;inset:0;width:calc(100 * var(--vw));height:calc(100 * var(--vh));height:100dvh;display:block;background:#000}
+  #view{position:fixed;inset:0;width:calc(100 * var(--vw));height:calc(100 * var(--vh));height:100dvh;display:block;background:#000;object-fit:cover}   /* 2026-11-16 録画中に画面の大きさが変わっても、引き伸ばさずに端を少し切って映す */
   #touch{position:fixed;inset:0;touch-action:none;z-index:2}
   #hud{position:fixed;inset:0;z-index:3;pointer-events:none;transition:opacity .15s}
   #hud.off{opacity:0}
@@ -6429,11 +6429,18 @@ const SELF = {
     try { avatar.root.visible = true; this.pose(); renderer.setRenderTarget(rt); renderer.compile(avatar.root, selfCam, scene); renderer.render(scene, selfCam); /* 影の計算用も作るため一度だけ実際に描く（次の本番の描画で上書きされる） */ for (const t of LIP.tex) renderer.initTexture(t); } catch (e) { console.warn('インカメラの準備', e); }
     avatar.root.visible = v; renderer.setRenderTarget(prt);
   },
+  /* 2026-11-16 インカメラで初めて映る物（オフタリサマ・腕・クモ女・人体模型・新しい棟の小物など）も、プレイが始まってから一度だけ前もって作っておく
+     （見えていない物は作られないので、いったん見える状態にしてから、インカメラと通常のカメラの両方で作る） */
+  warmAll() {
+    this.warmedAll = true; const roots = [typeof URAH !== 'undefined' && URAH.ready && URAH.root, SP.wrap, MANN.root, SG && SG.root, woman && woman.root, ...(HANDS.pool || []).map(i => i.grp), ...(HANDS.red || []).map(i => i.grp)].filter(Boolean), vis = roots.map(r => r.visible), prt = renderer.getRenderTarget();
+    try { roots.forEach(r => r.visible = true); renderer.compile(scene, selfCam); renderer.compile(scene, camera); renderer.setRenderTarget(rt); renderer.render(scene, selfCam); } catch (e) { console.warn(e); }
+    roots.forEach((r, i) => r.visible = vis[i]); renderer.setRenderTarget(prt); if (TEST || DEV) console.log('SELF warmAll', renderer.info.programs.length);
+  },
   update(dt) {
     // スマホのライトは本体の背面＝顔より前にある。インカメラ中は光源を顔の前へ出し、自分の顔やあごを内側から照らさない
     if (world.selfie) flash.position.set(0.0, -0.08, -0.34); else flash.position.set(0.04, -0.06, 0.02);
     screenGlow.intensity = world.selfie ? 0 : 0.3;   // 手元の画面の光：インカメラ中は顔のすぐ前で白飛びさせるので切る（代わりに減衰なしの柔らかい光）
-    if (!world.selfie) { selfLight.intensity = 0; if (!this.warmed) this.warm(); return; }
+    if (!world.selfie) { selfLight.intensity = 0; if (!this.warmed) this.warm(); else if (!this.warmedAll && world.state === 'play' && (typeof URAH === 'undefined' || URAH.ready || world.t > 8)) this.warmAll(); return; }
     if (player.hidden || HIDE.lk || CAP.on || world.dark) { this.set(false); return; }
     selfLight.intensity = PERM.active('light') ? 1.3 : 0.55; selfLight.distance = PERM.active('light') ? 3.6 : 2.2;   // 2026-11-14 リングライト
     // 自撮りのまま振り返った量
@@ -14945,7 +14952,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.17';
+const VERSION = '0.16.18';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
