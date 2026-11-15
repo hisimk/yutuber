@@ -9255,7 +9255,8 @@ const PIANO = {
     { id: 'neko', notes: [3, 1, 6, 6, 3, 1, 6, 6], acc: [1, 3, 5, 6, 10, 11] },     // 猫ふんじゃった：ミ♭ レ♭ ソ♭ ソ♭ ミ♭ レ♭ ソ♭ ソ♭（シ♭などの和音もよい）
     { id: 'twinkle', notes: [0, 0, 7, 7, 9, 9, 7], acc: [0, 2, 4, 5, 7, 9, 11] },   // きらきら星：ド ド ソ ソ ラ ラ ソ
     { id: 'unmei', notes: [7, 7, 7, 3], acc: [7, 3] },   // 運命（ベートーベン）：ソ ソ ソ ミ♭
-    { id: 'turca', notes: [11, 9, 8, 9, 0, 2, 0, 11, 0, 4], acc: [] },   // 2026-11-15 トルコ行進曲（モーツァルト）：シ ラ ソ# ラ ド レ ド シ ド ミ
+    { id: 'turca', notes: [11, 9, 8, 9, 0, 2, 0, 11, 0, 4], acc: [] },
+    { id: 'toccata', notes: [9, 7, 9, 7, 5, 4, 2, 1, 2], acc: [] },   // 2026-11-15 トッカータとフーガ ニ短調（バッハ）：ラ ソ ラ　ソ ファ ミ レ ド# レ   // 2026-11-15 トルコ行進曲（モーツァルト）：シ ラ ソ# ラ ド レ ド シ ド ミ
   ],
   // 2026-11-15 PCのキーボードで弾く：2段だけで完結。Qの段が白鍵（Q＝ド〜]＝上のソ）、数字の段が黒鍵（白鍵の間の上にある数字：2 3 5 6 7 9 0 ^/=）
   // 作曲ソフト（FL Studio）の上の段と同じ並び。キーの「位置」で決めるので日本語キーボード・英語キーボードどちらでも同じ場所。表示は端末の配列から読む
@@ -9509,7 +9510,9 @@ const PIANO = {
       if (!NEKO.done) NEKO.chosen = true;
       if (rc) award('nekoPiano', '猫ふんじゃったを弾く', 100);
     } else if (id === 'turca') {   // トルコ行進曲：モーツァルトの額縁が落ちる（アイテムはなし。落ちる所を録画で撮るとS）
-      MOZ.fall();
+      MOZ.fall('mozart');
+    } else if (id === 'toccata') {   // トッカータとフーガ：バッハの額縁が落ちる
+      MOZ.fall('bach');
     } else if (id === 'unmei') {   // 運命：ガタンとベートーベンの額縁が落ちる（撮れ高にはしない）
       OFUDA.fall();
     } else if (id === 'twinkle') {
@@ -10700,22 +10703,29 @@ const SPV = {
    アイテムはなし。落ちる所を録画で撮ると「落ちたモーツァルトの額縁」（S）
    ========================================================= */
 const MOZ = {
-  fall() {
-    const bp = F2.portraits && F2.portraits.find(p => p.k === 'mozart'); if (!bp || this.fallen) return;
-    this.fallen = true; this.fr = bp.fr; this.fy0 = bp.fr.position.y; this.fz0 = bp.fr.position.z; this.ft = 0; this.falling = true; this.landed = false; this.pos = bp.p.clone(); this.seenT = 0;
-    SND.knock && SND.knock(this.pos, 2.0);
+  st: {},   // k: 'mozart' / 'bach'
+  get fallen() { return !!(this.st.mozart && this.st.mozart.fallen); },
+  fall(k = 'mozart') {
+    const bp = F2.portraits && F2.portraits.find(p => p.k === k); if (!bp || (this.st[k] && this.st[k].fallen)) return;
+    const S = this.st[k] = { fallen: true, fr: bp.fr, fy0: bp.fr.position.y, fz0: bp.fr.position.z, ft: 0, falling: true, landed: false, pos: bp.p.clone(), seenT: 0 };
+    SND.knock && SND.knock(S.pos, 2.0);
   },
   upd(dt) {
-    if (!this.falling) return; this.ft += dt;
-    const k = Math.min(1, this.ft / 0.38); this.fr.position.y = this.fy0 - (this.fy0 - LH - 0.02) * k * k;
-    if (this.ft > 0.38 && !this.landed) { this.landed = true; const fp = this.pos.clone().setY(LH + 0.15);
-      playSfx('drop_book', { pos: fp, ref: 3, roll: 0.7, gain: 1.4 }); SND.thud && SND.thud(fp, 2.2); SND.knock && SND.knock(fp, 1.8); setTimeout(() => SND.knock && SND.knock(fp, 0.9), 170); }
-    if (this.ft > 0.38) { const a = Math.min(0.32, (this.ft - 0.38) * 3); this.fr.rotation.x = -a; this.fr.position.z = this.fz0 + 0.3 * (a / 0.32); }
-    // 撮れ高：落ちていく額縁を録画で撮った
-    if (rec.active && this.ft < 0.75) { const p = this.fr.getWorldPosition(V()); p.y += 0.4; if (seen(p, { maxD: 12, margin: 1.05 })) { this.seenT += dt; if (this.seenT >= 0.12) award('mozFall', '落ちたモーツァルトの額縁', 100); } }
-    if (this.ft > 0.75) this.falling = false;
+    for (const k in this.st) { const S = this.st[k]; if (!S.falling) continue; S.ft += dt;
+      const kk = Math.min(1, S.ft / 0.38); S.fr.position.y = S.fy0 - (S.fy0 - LH - 0.02) * kk * kk;
+      if (S.ft > 0.38 && !S.landed) { S.landed = true; const fp = S.pos.clone().setY(LH + 0.15);
+        playSfx('drop_book', { pos: fp, ref: 3, roll: 0.7, gain: 1.4 }); SND.thud && SND.thud(fp, 2.2); SND.knock && SND.knock(fp, 1.8); setTimeout(() => SND.knock && SND.knock(fp, 0.9), 170); }
+      if (S.ft > 0.38) { const a = Math.min(0.32, (S.ft - 0.38) * 3); S.fr.rotation.x = -a; S.fr.position.z = S.fz0 + 0.3 * (a / 0.32); }
+      // 撮れ高：落ちていくモーツァルトの額縁を録画で撮った（A）
+      if (k === 'mozart' && rec.active && S.ft < 0.75) { const p = S.fr.getWorldPosition(V()); p.y += 0.4; if (seen(p, { maxD: 12, margin: 1.05 })) { S.seenT += dt; if (S.seenT >= 0.12) award('mozFall', '落ちたモーツァルトの額縁', 50); } }
+      if (S.ft > 0.75) S.falling = false; }
+    // 2026-11-15 3人（バッハ・ベートーベン・モーツァルト）の額縁がすべて床に落ちていて、それを録画で撮る：「霊場のピアニスト」（SS）
+    if (rec.active && !awarded.has('pianist') && F2.bFallen && OFUDA.landed && this.st.mozart && this.st.mozart.landed && this.st.bach && this.st.bach.landed && player.lv === 1) {
+      const ps = (F2.portraits || []).map(p => p.fr.getWorldPosition(V()).add(V(0, 0.3, 0)));
+      if (ps.length === 3 && ps.every(p => seen(p, { maxD: 12, margin: 1.0 }))) { this.allT = (this.allT || 0) + dt; if (this.allT >= 0.3) award('pianist', '霊場のピアニスト', 300); } else this.allT = 0;
+    }
   },
-  reset() { if (this.fr) { this.fr.position.y = this.fy0; this.fr.rotation.x = 0; this.fr.position.z = this.fz0; } this.fallen = false; this.falling = false; },
+  reset() { for (const k in this.st) { const S = this.st[k]; S.fr.position.y = S.fy0; S.fr.rotation.x = 0; S.fr.position.z = S.fz0; } this.st = {}; this.allT = 0; },
 };
 /* =========================================================
    封印のお札
@@ -14380,7 +14390,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.14';
+const VERSION = '0.15.15';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -15895,7 +15905,10 @@ Object.assign(CHAT_DICT.c, { kok_enter: ['kok.enter.01', 'kok.enter.02', 'kok.en
 if (CHAT_DICT.ev) Object.assign(CHAT_DICT.ev, { '十円玉が動いた': ['kok.move.01', 'kok.move.02'], '十円玉が自分の名前をなぞった': ['kok.name.01', 'kok.name.02'], '机から落ちた十円玉': ['kok.drop.01', 'kok.drop.02'] });
 Object.assign(AW_TABLE, { kokMove: ['B', 40], kokName: ['A', 70], kokDrop: ['C', 25] });
 // 2026-11-15 トルコ行進曲：落ちたモーツァルトの額縁（S）
-AW_TABLE.mozFall = ['S', 100]; COL.LIST.push(['mozFall', '落ちたモーツァルトの額縁', 100]);
+AW_TABLE.mozFall = ['A', 50]; COL.LIST.push(['mozFall', '落ちたモーツァルトの額縁', 50]);
+AW_TABLE.pianist = ['SS', 300]; COL.LIST.push(['pianist', '霊場のピアニスト', 300]);
+CHIP_DESC.pianist = ['バッハ・ベートーベン・モーツァルト、3人の額縁がすべて床に落ちた音楽室を撮った。', 'You filmed the music room with all three portraits — Bach, Beethoven and Mozart — fallen to the floor.'];
+EN['霊場のピアニスト'] = 'Pianist of the Haunted Hall';
 CHIP_DESC.mozFall = ['音楽室のピアノでトルコ行進曲を弾いたら、モーツァルトの額縁が床に落ちた。', 'You played the Turkish March on the music room piano, and the Mozart portrait fell to the floor.'];
 EN['落ちたモーツァルトの額縁'] = 'The fallen Mozart portrait';
 COL.LIST.push(['kokMove', '十円玉が動いた', 40], ['kokName', '十円玉が自分の名前をなぞった', 70], ['kokDrop', '机から落ちた十円玉', 25]);
