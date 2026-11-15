@@ -8115,7 +8115,7 @@ SP.update = function (dt) {
     this.updFloor(dt, fp);
   } else if (this.st === 'chase' || this.st === 'ret') {
     this.updChase(dt, fp);
-    stuckWatch(this, this.pos, true, dt, () => { this.cpath = []; const q = nodePos(nearestNode(this.pos.x, this.pos.z, undefined, this.lv ? LH : 0)); this.pos.x = q.x; this.pos.z = q.z; });
+    stuckWatch(this, this.pos, !CAP.on && !doorStallBusy(this), dt, () => { this.cpath = [];   /* 2026-11-15 逆さ女に捕まっている間・閉まった戸で足止めの間は計測しない */ const q = nodePos(nearestNode(this.pos.x, this.pos.z, undefined, this.lv ? LH : 0)); this.pos.x = q.x; this.pos.z = q.z; });
   } else if (this.st === 'drop') {
     const k = clamp(this.t / 0.42, 0, 1), e = k * k * (3 - 2 * k);
     const [P1, Q1] = this.latchPose(); this.wrap.position.lerpVectors(this.P0, P1, e); this.wrap.quaternion.slerpQuaternions(this.Q0, Q1, e); this.wrap.updateMatrixWorld(true);
@@ -10158,7 +10158,7 @@ defEvent('nurse', {
 function stuckWatch(o, pos, moving, dt, recover) {
   const s = o._stuck || (o._stuck = { p: pos.clone(), t: 0 });
   if (!moving || pos.distanceTo(s.p) > 0.3) { s.p.copy(pos); s.t = 0; return; }
-  s.t += dt; if (s.t > 2.5) { s.t = 0; s.p.copy(pos); if (TEST || DEV) console.log('stuck → recover'); recover(); }
+  s.t += dt; if (s.t > 2.5) { if (recover() === false) return; s.t = 0; s.p.copy(pos); if (TEST || DEV) console.log('stuck → recover'); }   /* 2026-11-15 recover が false を返したら、戻すのを待つ（次のフレームでまた試す） */
 }
 function partBlocked(x0, z0, x1, z1, lv, y) {
   const off = []; for (const c of colliders) if (c.surfY !== undefined && y > c.surfY - 0.05 && c.on) { c.on = false; off.push(c); }
@@ -10438,7 +10438,9 @@ const MANN = {
     if (world.state !== 'play') { this.rattleStop(); return; }
     if (this.st === 'stand' || this.st === 'watch') { this.lookHead(); this.updStare(dt); }
     if (world.mannRun) {
-      if (['walk', 'hunt'].includes(this.st)) stuckWatch(this, this.pos, true, dt, () => { const n = nearestNode(this.pos.x, this.pos.z, undefined, this.pos.y), q = nodePos(n); this.pos.set(q.x, q.y || 0, q.z); this.apply(); this.path = []; this.rep = 0; if (this.st === 'walk') this.walkTo(pick(WD.dests)); });
+      /* 2026-11-15 つっかえ救済は、実際に動こうとしている時（歩き・追跡の「走る」）だけ。構え・胴体を回す・のけぞり・向きを変える間は計測しない。戻すのは画面に映っていない時だけ */
+      const mv = this.st === 'walk' || (this.st === 'hunt' && this.hph === 'run');
+      if (['walk', 'hunt'].includes(this.st) || this._stuck) stuckWatch(this, this.pos, mv, dt, () => { if (onScreen(this.head(), 1.05) && clearLine(this.head(), [this.root])) return false; const n = nearestNode(this.pos.x, this.pos.z, undefined, this.pos.y), q = nodePos(n); this.pos.set(q.x, q.y || 0, q.z); this.apply(); this.path = []; this.rep = 0; if (this.st === 'walk') this.walkTo(pick(WD.dests)); });
       return this.updEnemy(dt);
     }
     if (this.runPlan) return this.updRunEvent(dt);
@@ -14756,7 +14758,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.33';
+const VERSION = '0.15.34';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
