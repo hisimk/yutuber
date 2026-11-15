@@ -9257,10 +9257,10 @@ const PIANO = {
     { id: 'unmei', notes: [7, 7, 7, 3], acc: [7, 3] },   // 運命（ベートーベン）：ソ ソ ソ ミ♭
     { id: 'turca', notes: [11, 9, 8, 9, 0, 2, 0, 11, 0, 4], acc: [] },   // 2026-11-15 トルコ行進曲（モーツァルト）：シ ラ ソ# ラ ド レ ド シ ド ミ
   ],
-  // 2026-11-13 PCのキーボードで弾く：作曲ソフト（FL Studioなど）でおなじみの「2段で2オクターブ」の並び。
-  // 下の段 Z〜M が低いドからシ（黒鍵は S D G H J）、上の段 Q〜I が高いドから上のド（黒鍵は 2 3 5 6 7）。キーの位置で決めるので日本語キーボードでも同じ
-  KEYMAP: { KeyZ: 60, KeyS: 61, KeyX: 62, KeyD: 63, KeyC: 64, KeyV: 65, KeyG: 66, KeyB: 67, KeyH: 68, KeyN: 69, KeyJ: 70, KeyM: 71, Comma: 72, KeyQ: 72, Digit2: 73, KeyW: 74, Digit3: 75, KeyE: 76, KeyR: 77, Digit5: 78, KeyT: 79, Digit6: 80, KeyY: 81, Digit7: 82, KeyU: 83, KeyI: 84 },
-  KEYLABEL: { 60: 'Z', 61: 'S', 62: 'X', 63: 'D', 64: 'C', 65: 'V', 66: 'G', 67: 'B', 68: 'H', 69: 'N', 70: 'J', 71: 'M', 72: 'Q', 73: '2', 74: 'W', 75: '3', 76: 'E', 77: 'R', 78: '5', 79: 'T', 80: '6', 81: 'Y', 82: '7', 83: 'U', 84: 'I' },
+  // 2026-11-15 PCのキーボードで弾く：2段だけで完結。Qの段が白鍵（Q＝ド〜]＝上のソ）、数字の段が黒鍵（白鍵の間の上にある数字：2 3 5 6 7 9 0 ^/=）
+  // 作曲ソフト（FL Studio）の上の段と同じ並び。キーの「位置」で決めるので日本語キーボード・英語キーボードどちらでも同じ場所。表示は端末の配列から読む
+  KEYMAP: { KeyQ: 60, Digit2: 61, KeyW: 62, Digit3: 63, KeyE: 64, KeyR: 65, Digit5: 66, KeyT: 67, Digit6: 68, KeyY: 69, Digit7: 70, KeyU: 71, KeyI: 72, Digit9: 73, KeyO: 74, Digit0: 75, KeyP: 76, BracketLeft: 77, Equal: 78, BracketRight: 79 },
+  KEYLABEL: { 60: 'Q', 61: '2', 62: 'W', 63: '3', 64: 'E', 65: 'R', 66: '5', 67: 'T', 68: '6', 69: 'Y', 70: '7', 71: 'U', 72: 'I', 73: '9', 74: 'O', 75: '0', 76: 'P', 77: '[', 78: '=', 79: ']' },
   isPC: matchMedia('(hover: hover) and (pointer: fine)').matches,   // マウスで操作する端末（タッチ画面つきのPCも含む）
   NAMES: ['ド', 'レ♭', 'レ', 'ミ♭', 'ミ', 'ファ', 'ソ♭', 'ソ', 'ラ♭', 'ラ', 'シ♭', 'シ'],
   LO: 60, HI: 84,   // ド(C4)〜2つ上のド(C6)。横画面いっぱいの鍵盤
@@ -9402,7 +9402,8 @@ const PIANO = {
   // 横画面にする：縦持ちのままなら鍵盤ごと90度回して表示（スマホを横にして弾く）。端末が横向きならそのまま
   labels() {   // 鍵盤の表記
     const key = this.isPC && this.keyLbl;
-    for (const k of this.el.querySelectorAll('.pk')) { const m = +k.dataset.m; k.querySelector('span').textContent = key ? this.KEYLABEL[m] : this.NAMES[m % 12]; k.classList.toggle('kl', key); }
+    if (key && !this.lmTried && navigator.keyboard && navigator.keyboard.getLayoutMap) { this.lmTried = true; navigator.keyboard.getLayoutMap().then(L => { const inv = {}; for (const [c, m] of Object.entries(this.KEYMAP)) { const ch = L.get(c); if (ch) inv[m] = ch.toUpperCase(); } Object.assign(this.KEYLABEL, inv); this.labels(); }).catch(() => { }); }   // 2026-11-15 日本語キーボードなら @ [ ^ の表示に
+    for (const k of this.el.querySelectorAll('.pk')) { const m = +k.dataset.m; k.querySelector('span').textContent = key ? (this.KEYLABEL[m] || '') : this.NAMES[m % 12]; k.classList.toggle('kl', key); }
     const lb = this.el.querySelector('#pnLbl'); if (lb) lb.textContent = key ? TR('ドレミ表示') : TR('キー表示');
   },
   fit() {
@@ -14379,7 +14380,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.13';
+const VERSION = '0.15.14';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
