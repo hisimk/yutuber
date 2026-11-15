@@ -799,8 +799,9 @@
   <div class="sub">夜の旧校舎で、決定的瞬間を撮って帰る</div>
   <div class="rankLine"><span>ランク</span><b id="rankTag"></b></div>
   <div class="opts">
-    <div class="opt"><div class="nmL">名前<small>※コメントでの呼び名</small></div><input id="chName" maxlength="20" placeholder="心霊チャンネル"></div>
-    <div class="opt" id="yomiRow"><div>よみがな</div><input id="chYomi" maxlength="20" placeholder="ひらがなで入力"></div>
+    <div class="opt"><div class="nmL">名前<small>※コメントでの呼び名</small></div><input id="chName" maxlength="12" placeholder="心霊チャンネル"></div>
+    <div class="opt" id="yomiRow"><div>よみがな</div><input id="chYomi" maxlength="12" placeholder="ひらがなで入力"></div>
+    <div id="nameNg" style="display:none;color:#ff6a5a;font-size:13px;font-weight:600;text-align:center;padding:2px 4px"></div>
     <div class="opt" id="startRow" style="display:none"><div id="startLbl">スタート地点</div><div class="stSeg"><button type="button" data-st="front">玄関から</button><button type="button" data-st="exit">2階の非常口から</button></div></div>
   </div>
   <button class="go" id="goBtn">旧校舎に入る</button>
@@ -14621,10 +14622,35 @@ function showCredits() {
   $('#credits').classList.add('show');
 }
 // チャンネル名とよみがな：この端末に保存して、次に開いた時も入っている。よみがなはチャンネル名を入力した時だけ出す
-{ const n = $('#chName'), y = $('#chYomi'), row = $('#yomiRow');
-  try { n.value = localStorage.getItem('yt_chName') || ''; y.value = localStorage.getItem('yt_chYomi') || ''; } catch (e) { }
-  const sync = () => { row.classList.toggle('show', n.value.trim() !== ''); try { localStorage.setItem('yt_chName', n.value); localStorage.setItem('yt_chYomi', y.value); } catch (e) { } };
-  n.addEventListener('input', sync); y.addEventListener('input', sync); sync(); }
+/* =========================================================
+   2026-11-15 名前の禁止ワード（判定は端末の中だけ。どこにも送らない）
+   ・PART：含まれていたらNG／EXACT：名前全体がこの言葉ならNG。足す・減らす時はここだけ直す
+   ・「うんこ」「ばか」「あほ」などの軽い言葉は入れない
+   ========================================================= */
+const NAME_NG = {
+  PART: [
+    /* 性的な言葉（ひらがな） */ 'ちんこ', 'ちんぽ', 'まんこ', 'おまんこ', 'ぺにす', 'ばぎな', 'せっくす', 'ふぇら', 'くんに', 'おなにー', 'おなに', 'ざーめん', 'せいえき', 'しゃせい', 'ぼっき', 'いんけい', 'いんもう', 'くりとりす', 'ぱいずり', 'てまん', 'てこき', 'なかだし', 'がんしゃ', 'あなるせ', 'やりまん', 'やりちん', 'びっち', 'れいぷ', 'ごうかん', 'りんかん', 'ちかん', 'ろりこん', 'しょたこん', 'えんこう', 'ばいしゅん', 'ふうぞく',
+    /* 性的な言葉（漢字） */ '陰茎', '陰毛', '膣', '精液', '精子', '射精', '勃起', '性交', '強姦', '輪姦', '痴漢', '中出し', '顔射', '手コキ', '自慰', '淫', '売春', '援交', '援助交際', '風俗',
+    /* 差別・侮辱 */ 'きちがい', 'きちがえ', 'がいじ', 'かたわ', 'めくら', 'つんぼ', 'ちゃんころ', 'しなじん', 'くろんぼ', 'ちょんこ', 'ちょんじん', '気違い', '支那人',
+    /* 暴言・死や暴力をすすめる言葉 */ 'しねしね', 'しんでくれ', 'しんじまえ', 'ころすぞ', 'ころしてやる', 'ころしたる', 'じさつしろ', '死ね', '殺す', '殺し', '殺害',
+    /* 英語 */ 'fuck', 'porn', 'penis', 'vagina', 'pussy', 'blowjob', 'handjob', 'nigger', 'nigga', 'faggot', 'whore', 'slut', 'cunt', 'chinko', 'chinpo', 'manko', 'hitler', 'nazi',
+  ],
+  EXACT: [/* 「にがー」は「ー」を取ると「にが」になり、「にがうり」なども止めてしまうので完全一致に */ 'にがー', 'しね', 'ころす', 'ころせ', 'ちょん', 'ぽこちん', 'せーし', 'せいし', 'えろ', 'えっち', 'ぶっかけ', 'sex', 'sexy', 'rape', 'cum', 'dick', 'cock', 'anal', 'retard', 'bitch', 'kill', 'killyou', 'die', 'hentai'],
+  /* ALLOW：NGの言葉を中に含むが普通の言葉（判定の前に取り除く）。例：エセックス（地名）・フェラーリ */
+  ALLOW: ['えせっくす', 'させっくす', 'うぇせっくす', 'ふぇらーり', 'ふぇらがも'],
+  /* 判定用にそろえる：全角半角（NFKC）→ カタカナをひらがな → 英字は小文字 → 文字（ひらがな・漢字・英数字）以外を取り除く。小さい文字は残す */
+  norm(t) { return String(t || '').normalize('NFKC').replace(/[\u30a1-\u30f6]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)).toLowerCase().replace(/[^\u3041-\u3096\u4e00-\u9fff\u3400-\u4dbfa-z0-9々〆]/g, ''); },
+  _l: null,
+  lists() { if (!this._l) this._l = { p: this.PART.map(w => this.norm(w)).filter(Boolean), e: new Set(this.EXACT.map(w => this.norm(w))), a: this.ALLOW.map(w => this.norm(w)) }; return this._l; },
+  bad(t) { const s = this.norm(t); if (!s) return false; const L = this.lists(); if (L.e.has(s)) return true; let r = s; for (const a of L.a) r = r.split(a).join('|'); return L.p.some(w => r.includes(w)); },
+};
+{ const n = $('#chName'), y = $('#chYomi'), row = $('#yomiRow'), ng = $('#nameNg'), go = $('#goBtn'), cut = v => Array.from(v || '').slice(0, 12).join('');
+  try { n.value = cut(localStorage.getItem('yt_chName')); y.value = cut(localStorage.getItem('yt_chYomi')); } catch (e) { }
+  if (NAME_NG.bad(n.value) || NAME_NG.bad(y.value)) { n.value = ''; y.value = ''; }   /* 前に保存した名前がNGなら空に（心霊チャンネルとして遊べる） */
+  const check = () => { const bad = NAME_NG.bad(n.value) || NAME_NG.bad(y.value); ng.textContent = LANG === 'en' ? "That name can't be used. Please choose another." : 'その名前は使えません。別の名前にしてください'; ng.style.display = bad ? 'block' : 'none'; go.disabled = bad; go.style.opacity = bad ? '0.4' : ''; return bad; };
+  const sync = () => { if (Array.from(n.value).length > 12) n.value = cut(n.value); if (Array.from(y.value).length > 12) y.value = cut(y.value); row.classList.toggle('show', n.value.trim() !== ''); check(); try { localStorage.setItem('yt_chName', n.value); localStorage.setItem('yt_chYomi', y.value); } catch (e) { } };
+  n.addEventListener('input', sync); y.addEventListener('input', sync); sync();
+  go.addEventListener('click', e => { if (check()) { e.stopImmediatePropagation(); e.preventDefault(); } }, true); }
 /* =========================================================
    2026-11-14 あとに残る怪異の痕跡：起きた瞬間を撮っていなくても、残っている間に映せば撮れ高（血溜まり・手形・黒板の文字など）
    ・ボールのように、そこにあっても不自然でない物は対象外（今まで通り、動いている瞬間だけ）
@@ -14730,7 +14756,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.32';
+const VERSION = '0.15.33';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
