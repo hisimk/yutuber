@@ -2236,7 +2236,11 @@ box(0.26, 0.05, 7.8, M.concrete, -9.73, 0.975, -13);
   /* 美術室・理科室の外壁 */
   windowWallX(-1.5, -40.5, -33); wallX(15, -40.5, -33); windowWallZ(-40.5, -1.5, 15); windowWallZ(-40.5, 15, 29.6); windowWallX(29.6, -40.5, -33);
   fixture(0, -31.6, true, 'half', ['2C']); fixture(7, -31.5, false, 'off'); fixture(21, -31.5, false, 'flicker', ['2D']);
-  fixture(6.5, -36.7, true, 'half', ['ART']); fixture(22.3, -36.7, true, 'flicker', ['SCI']);
+  /* 2026-11-15 美術室・理科室の天井の蛍光灯：ほかの教室と同じく4本ずつ。点いていない物が多く、1本だけ点滅 */
+  for (const [x, z, st, zn] of [[2.5, -35.4, 'off'], [9.5, -35.4, 'flicker', 'ART'], [2.5, -38.4, 'off'], [9.5, -38.4, 'off'], [18.5, -35.4, 'off'], [24.5, -35.4, 'off'], [18.5, -38.4, 'flicker', 'SCI'], [24.5, -38.4, 'off']]) fixture(x, z, true, st, zn ? [zn] : undefined);
+  /* 理科室の流し（ほかの部屋の洗面台）と、黒板の前の教卓（ほかの教室の教卓） */
+  { const pb = box(0.5, 0.85, 0.45, M.porcelain, 18.8, 0.425, -40.22, { col: true }); prop('Washbasin', scene, 18.8, LH, -40.25, 0, [pb]); }
+  prop('Lectern', scene, 17.35, LH, -36.7, Math.PI / 2, [box(0.6, 0.78, 1.4, M.wood, 17.35, 0.39, -36.7, { col: true, cast: true })], [1.17, .855, 1.07]);
   nameplate('美術室', 1.0, -32.6, Math.PI / 2); nameplate('美術室', 12.0, -32.6, Math.PI / 2); nameplate('理科室', 15.7, -32.6, Math.PI / 2); nameplate('理科室', 22.45, -32.6, Math.PI / 2);
   /* 2026-11-15 入れない2階（渡り廊下の上）は、南の端（2階の廊下の東の壁）も北の端（新しい棟の廊下の南の壁）もシャッターで閉まっている（調べられない） */
   { const mkT = (w, h, fn) => { const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return L({ map: t }); };
@@ -14773,7 +14777,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.38';
+const VERSION = '0.15.39';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -17074,6 +17078,11 @@ const XCHAT = {   /* 撮れ高以外のできごとに、コメントを混ぜ�
   },
 };
 
+/* 2026-11-15 木目と金属の模様（理科室・美術室の机・棚など） */
+const WTEX = (() => { const mk = (base, line, n, metal) => { const c = document.createElement('canvas'); c.width = 128; c.height = 128; const g = c.getContext('2d'); g.fillStyle = base; g.fillRect(0, 0, 128, 128);
+    for (let i = 0; i < n; i++) { g.strokeStyle = line; g.globalAlpha = metal ? 0.08 : 0.22 + Math.random() * 0.2; g.lineWidth = metal ? 1 : 1 + Math.random() * 2; g.beginPath(); const y = Math.random() * 128; g.moveTo(0, y); for (let x = 0; x <= 128; x += 16) g.lineTo(x, y + (metal ? 0 : Math.sin(x / 20 + i) * 3)); g.stroke(); }
+    g.globalAlpha = 1; const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; return L({ map: t }); };
+  return { wood: mk('#9a7a52', '#5a4028', 22), dwood: mk('#6a4e34', '#3a2818', 22), metal: mk('#9aa0a2', '#ffffff', 60, true), sci: mk('#8a7a60', '#4a3a28', 18) }; })();
 /* ── 小物を作る道具（箱・円柱・板。物ごとにまとめて軽くする） */
 const WB = {
   m: {}, mat(c) { return this.m[c] || (this.m[c] = L({ color: c })); },
@@ -17225,9 +17234,9 @@ const SCIRM = {
     WB.bx(st, 1.6, 1.8, 0.45, 0x8a7a60, 19.8, 0.9, -33.35); WB.bx(st, 1.5, 1.6, 0.02, glass, 19.8, 0.95, -33.59); for (let i = 0; i < 3; i++) WB.bx(st, 1.5, 0.02, 0.4, wood, 19.8, 0.45 + i * 0.5, -33.35);
     for (let i = 0; i < 8; i++) WB.cy(st, 0.05, 0.05, 0.16, glass, 19.2 + (i % 4) * 0.4, 0.55 + Math.floor(i / 4) * 0.5, -33.35);
     WB.col(19.0, 20.6, -33.6, -33.1, true, 1.8);
-    WB.bx(st, 1.4, 1.7, 0.45, 0x9aa0a0, 21.9, 0.85, -33.35); WB.bx(st, 1.3, 1.5, 0.02, 0xb8bcbc, 21.9, 0.9, -33.59); WB.bx(st, 0.12, 0.08, 0.04, 0xc8a040, 22.0, 1.0, -33.62); WB.pl(st, 0.3, 0.12, WB.tex(120, 48, (x) => { x.fillStyle = '#e8d84a'; x.fillRect(0, 0, 120, 48); x.fillStyle = '#111'; x.font = 'bold 20px sans-serif'; x.fillText('劇薬注意', 16, 32); }), 21.9, 1.45, -33.61);
+    WB.bx(st, 1.4, 1.7, 0.45, WTEX.metal, 21.9, 0.85, -33.35); WB.bx(st, 1.3, 1.5, 0.02, 0xb8bcbc, 21.9, 0.9, -33.59); WB.bx(st, 0.12, 0.08, 0.04, 0xc8a040, 22.0, 1.0, -33.62); WB.pl(st, 0.3, 0.12, WB.tex(120, 48, (x) => { x.fillStyle = '#e8d84a'; x.fillRect(0, 0, 120, 48); x.fillStyle = '#111'; x.font = 'bold 20px sans-serif'; x.fillText('劇薬注意', 16, 32); }), 21.9, 1.45, -33.61);
     WB.col(21.2, 22.6, -33.6, -33.1, true, 1.7);
-    WB.bx(st, 1.5, 0.9, 0.7, 0x8a8e90, 25.2, 0.45, -33.45); WB.bx(st, 1.5, 0.05, 0.7, black, 25.2, 0.92, -33.45); WB.bx(st, 1.5, 0.9, 0.04, glass, 25.2, 1.5, -33.78); WB.bx(st, 1.5, 0.75, 0.7, 0x8a8e90, 25.2, 2.3, -33.45); WB.bx(st, 0.04, 0.9, 0.7, 0x8a8e90, 24.47, 1.4, -33.45); WB.bx(st, 0.04, 0.9, 0.7, 0x8a8e90, 25.93, 1.4, -33.45);
+    WB.bx(st, 1.5, 0.9, 0.7, WTEX.metal, 25.2, 0.45, -33.45); WB.bx(st, 1.5, 0.05, 0.7, black, 25.2, 0.92, -33.45); WB.bx(st, 1.5, 0.9, 0.04, glass, 25.2, 1.5, -33.78); WB.bx(st, 1.5, 0.75, 0.7, 0x8a8e90, 25.2, 2.3, -33.45); WB.bx(st, 0.04, 0.9, 0.7, 0x8a8e90, 24.47, 1.4, -33.45); WB.bx(st, 0.04, 0.9, 0.7, 0x8a8e90, 25.93, 1.4, -33.45);
     WB.col(24.4, 26.0, -33.8, -33.1, true, 2.6);
     WB.bake(st);
     /* ダクトの格子（換気装置の下）。外れる */
@@ -17244,7 +17253,7 @@ const SCIRM = {
       for (const s of [-1, 1]) { WB.cy(g, 0.016, 0.014, 0.6, bone, s * 0.2, 1.15, 0, 6, 0, s * 0.12); WB.cy(g, 0.02, 0.018, 0.85, bone, s * 0.08, 0.42, 0, 6); } this.skelH = V(28.7, Y + 1.62, -39.6); }
     /* ホルマリン漬けの瓶（カエル・魚・目玉）：目玉はこちらを追う */
     { const g = WB.g(15.6, Y, -33.9); WB.bx(g, 0.5, 0.9, 0.5, wood, 0, 0.45, 0); WB.col(15.3, 15.9, -34.2, -33.6, true, 0.9);
-      const jar = (x, inner) => { const j = new THREE.Group(); j.position.set(x, 1.02, 0); g.add(j); const liq = new THREE.MeshLambertMaterial({ color: 0xc8c070, transparent: true, opacity: 0.45, depthWrite: false }); WB.cy(j, 0.06, 0.06, 0.2, liq, 0, 0, 0, 12); WB.cy(j, 0.065, 0.065, 0.025, 0x3a3a3a, 0, 0.11, 0, 12); inner(j); return j; };
+      const jar = (x, inner) => { const j = new THREE.Group(); j.position.set(x, 1.02, 0); g.add(j); const liq = new THREE.MeshLambertMaterial({ color: 0xc8c070, emissive: 0x2a3418, transparent: true, opacity: 0.45, depthWrite: false });   /* 2026-11-15 月明かりで液体がうっすら光って見える */ WB.cy(j, 0.06, 0.06, 0.2, liq, 0, 0, 0, 12); WB.cy(j, 0.065, 0.065, 0.025, 0x3a3a3a, 0, 0.11, 0, 12); inner(j); return j; };
       jar(-0.16, j => { WB.sp(j, 0.035, 0x6a7a40, 0, -0.01, 0).scale.set(1.2, 0.7, 1); for (const s of [-1, 1]) WB.cy(j, 0.006, 0.006, 0.07, 0x6a7a40, s * 0.03, -0.04, 0, 4, 0, s * 0.8); });
       jar(0.0, j => { WB.sp(j, 0.03, 0x8a9aa8, 0, 0, 0).scale.set(1.8, 0.7, 0.5); WB.bx(j, 0.02, 0.03, 0.005, 0x8a9aa8, 0.055, 0, 0); });
       jar(0.16, j => { const eye = WB.sp(j, 0.042, 0xf2eee6, 0, 0, 0); const ir = new THREE.Mesh(new THREE.CircleGeometry(0.018, 14), WB.mat(0x5a3a20)); const pu = new THREE.Mesh(new THREE.CircleGeometry(0.009, 10), WB.mat(0x050505)); pu.position.z = 0.0005; ir.add(pu); ir.position.z = 0.0425; const piv = new THREE.Group(); piv.add(ir); eye.add(piv); this.eyePiv = piv; for (let i = 0; i < 4; i++) WB.cy(j, 0.003, 0.003, 0.05, 0xa04040, rnd(-0.02, 0.02), -0.04, rnd(-0.02, 0.02), 3, rnd(-0.5, 0.5)); this.eyeObj = eye; });
@@ -17300,8 +17309,8 @@ const ARTRM = {
   build() {
     if (this.built) return; this.built = true; const Y = LH; const st = WB.g(0, Y, 0); const wood = 0x9a7a52, dwood = 0x6a4e34, plaster = 0xe8e4da;
     /* 作業机4台と丸椅子 */
-    for (const x of [6.2, 10.4]) for (const z of [-36.1, -38.7]) { WB.bx(st, 1.8, 0.06, 1.0, wood, x, 0.74, z); for (const [a, b] of [[-0.85, -0.45], [0.85, -0.45], [-0.85, 0.45], [0.85, 0.45]]) WB.bx(st, 0.06, 0.72, 0.06, dwood, x + a, 0.36, z + b);
-      for (const [dx, dz] of [[-0.5, -0.75], [0.5, -0.75], [-0.5, 0.75], [0.5, 0.75]]) { WB.cy(st, 0.15, 0.15, 0.03, wood, x + dx, 0.45, z + dz, 10); for (const a of [0, 2.1, 4.2]) WB.cy(st, 0.012, 0.012, 0.45, dwood, x + dx + Math.cos(a) * 0.1, 0.22, z + dz + Math.sin(a) * 0.1, 5); }
+    for (const x of [6.2, 10.4]) for (const z of [-36.1, -38.7]) { WB.bx(st, 1.8, 0.06, 1.0, WTEX.wood, x, 0.74, z); for (const [a, b] of [[-0.85, -0.45], [0.85, -0.45], [-0.85, 0.45], [0.85, 0.45]]) WB.bx(st, 0.06, 0.72, 0.06, WTEX.dwood, x + a, 0.36, z + b);
+      for (const [dx, dz] of [[-0.5, -0.75], [0.5, -0.75], [-0.5, 0.75], [0.5, 0.75]]) { WB.cy(st, 0.15, 0.15, 0.03, WTEX.wood, x + dx, 0.45, z + dz, 10); for (const a of [0, 2.1, 4.2]) WB.cy(st, 0.012, 0.012, 0.45, WTEX.dwood, x + dx + Math.cos(a) * 0.1, 0.22, z + dz + Math.sin(a) * 0.1, 5); }
       WB.col(x - 0.92, x + 0.92, z - 0.52, z + 0.52, true, 0.78); }
     /* パレット・筆洗いバケツ・絵の具のチューブ・汚れた布・石膏の手・りんご */
     for (const [x, z] of [[5.7, -35.9], [10.9, -38.5]]) { WB.cy(st, 0.14, 0.14, 0.01, 0xd8c8a0, x, 0.775, z, 14); for (let i = 0; i < 5; i++) WB.sp(st, 0.018, [0xc82020, 0x2040c0, 0xe0c020, 0x208040, 0xf0f0f0][i], x + Math.cos(i) * 0.08, 0.785, z + Math.sin(i) * 0.08); }
@@ -17309,9 +17318,9 @@ const ARTRM = {
     for (let i = 0; i < 6; i++) WB.cy(st, 0.012, 0.014, 0.08, [0xc83020, 0x3050c0, 0xd8c030, 0x30a050, 0x9030a0, 0xf0f0f0][i], 9.9 + i * 0.05, 0.785, -36, 6, Math.PI / 2, 0);
     WB.bx(st, 0.3, 0.01, 0.25, 0x8a8070, 11.0, 0.775, -36.4, 0, 0.4); WB.bx(st, 0.07, 0.03, 0.16, plaster, 5.9, 0.79, -38.5, 0, 0.3); for (let i = 0; i < 4; i++) WB.bx(st, 0.016, 0.016, 0.07, plaster, 5.86 + i * 0.022, 0.79, -38.61, 0, 0.3); WB.sp(st, 0.045, 0xb82a20, 6.15, 0.82, -38.35);
     /* 乾燥棚・粘土作品の棚・流し（北の壁ぞい） */
-    WB.bx(st, 1.6, 1.6, 0.5, dwood, 6.8, 0.8, -33.4); for (let i = 0; i < 9; i++) WB.bx(st, 1.55, 0.015, 0.45, 0x5a4430, 6.8, 0.15 + i * 0.17, -33.4); for (let i = 0; i < 6; i++) WB.pl(st, 0.36, 0.26, WB.mat([0xd8b8a0, 0xa0c0d8, 0xe0d8a0][i % 3]), 6.3 + (i % 3) * 0.4, 0.33 + Math.floor(i / 3) * 0.34, -33.4, -Math.PI / 2);
+    WB.bx(st, 1.6, 1.6, 0.5, WTEX.dwood, 6.8, 0.8, -33.4); for (let i = 0; i < 9; i++) WB.bx(st, 1.55, 0.015, 0.45, WTEX.dwood, 6.8, 0.15 + i * 0.17, -33.4); for (let i = 0; i < 6; i++) WB.pl(st, 0.36, 0.26, WB.mat([0xd8b8a0, 0xa0c0d8, 0xe0d8a0][i % 3]), 6.3 + (i % 3) * 0.4, 0.33 + Math.floor(i / 3) * 0.34, -33.4, -Math.PI / 2);
     WB.col(6.0, 7.6, -33.65, -33.1, true, 1.6);
-    WB.bx(st, 1.8, 0.04, 0.4, dwood, 10.0, 1.2, -33.35); WB.bx(st, 1.8, 0.04, 0.4, dwood, 10.0, 0.7, -33.35); WB.bx(st, 0.04, 1.2, 0.4, dwood, 9.1, 0.6, -33.35); WB.bx(st, 0.04, 1.2, 0.4, dwood, 10.9, 0.6, -33.35);
+    WB.bx(st, 1.8, 0.04, 0.4, WTEX.dwood, 10.0, 1.2, -33.35); WB.bx(st, 1.8, 0.04, 0.4, WTEX.dwood, 10.0, 0.7, -33.35); WB.bx(st, 0.04, 1.2, 0.4, WTEX.dwood, 9.1, 0.6, -33.35); WB.bx(st, 0.04, 1.2, 0.4, WTEX.dwood, 10.9, 0.6, -33.35);
     for (let i = 0; i < 5; i++) WB.sp(st, 0.06 + (i % 2) * 0.02, [0xa86a4a, 0x8a5a3a, 0xc0905a][i % 3], 9.3 + i * 0.32, 0.78, -33.35).scale.set(1, 0.8 + (i % 3) * 0.3, 1);
     WB.col(9.05, 10.95, -33.6, -33.1, true, 1.25);
     WB.bx(st, 1.2, 0.85, 0.6, 0xa8acae, 3.6, 0.43, -33.45); WB.bx(st, 1.0, 0.04, 0.45, 0x8a8e90, 3.6, 0.87, -33.45); WB.cy(st, 0.012, 0.012, 0.25, 0xb0b4b8, 3.6, 1.0, -33.65, 6); WB.col(3.0, 4.2, -33.8, -33.1, true, 0.9);   /* 2026-11-15 流しは扉②の前から西へ移した */
@@ -17471,6 +17480,62 @@ const BCAST = {
 };
 
 /* ── 2026-11-15 新しい棟まわりの扉・東階段・非常口 */
+/* ── 2026-11-15 理科室・美術室を「本物の学校の部屋」に：時計・カーテン・黒板（美術室）・掲示物・流しのそばの物・作品の棚・額縁・エプロン・白衣・段ボール、窓からの月明かり
+   骸骨・実験台・標本の瓶の棚・胸像・イーゼル・デッサン人形は、あとで3Dモデルに差し替えるので触らない（瓶の液体だけ、月明かりでうっすら光らせる） */
+const ROOMDECO = {
+  built: false,
+  build() {
+    if (this.built) return; this.built = true; const Y = LH, st = WB.g(0, Y, 0);
+    const T = (w, h, f) => { const m = WB.tex(w, h, f); m.userData = { keep: 1 }; return m; };
+    const pl = (w, h, m, x, y, z, ry) => { const q = WB.pl(st, w, h, m, x, y, z, 0, ry); q.userData.keep = true; return q; };
+    const poster = (w, h, cw, ch, f, x, y, z, ry) => pl(w, h, T(cw, ch, (g, W, H) => { g.fillStyle = '#ece8dc'; g.fillRect(0, 0, W, H); f(g, W, H); g.strokeStyle = 'rgba(0,0,0,.25)'; g.lineWidth = 2; g.strokeRect(1, 1, W - 2, H - 2); }), x, y, z, ry);
+    const title = (g, W, t, s = 16) => { g.fillStyle = '#222'; g.font = `bold ${s}px sans-serif`; g.textAlign = 'center'; g.fillText(t, W / 2, s + 6); g.textAlign = 'left'; };
+    const lines = (g, x, y, n, w, gap = 13) => { g.fillStyle = 'rgba(40,40,40,.55)'; for (let i = 0; i < n; i++) g.fillRect(x, y + i * gap, w * (0.6 + 0.4 * ((i * 37) % 10) / 10), 3); };
+    const N = Math.PI / 2, S = Math.PI;   /* 向き：西の壁の掲示物は N（＋x向き）、南の壁は S（−z向き） */
+    /* ── 理科室：掲示物 */
+    poster(0.5, 0.7, 100, 140, (g, W, H) => { title(g, W, '理科室のきまり', 13); g.font = '10px sans-serif'; g.fillStyle = '#333'; ['1. 先生の話をよく聞く', '2. 火を使う時はそばをはなれない', '3. 薬品にさわらない', '4. ガラスはていねいに', '5. 使った物は元の場所へ'].forEach((t, i) => g.fillText(t, 6, 40 + i * 19)); }, 18.2, 1.6, -33.11, S);
+    poster(0.5, 0.32, 120, 76, (g, W, H) => { g.fillStyle = '#e8c838'; g.fillRect(0, 0, W, 18); title(g, W, '実験の注意', 12); lines(g, 10, 30, 3, W - 20, 13); }, 21.9, 2.2, -33.11, S);
+    poster(0.7, 0.5, 140, 100, (g, W, H) => { g.fillStyle = '#121828'; g.fillRect(0, 0, W, H); g.fillStyle = '#dde'; g.font = 'bold 12px sans-serif'; g.fillText('冬の星座', 8, 16); const P = [[30, 40], [50, 55], [70, 45], [60, 75], [90, 70], [110, 50], [100, 85]]; g.strokeStyle = 'rgba(200,210,255,.6)'; g.beginPath(); P.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke(); for (const [x, y] of P) { g.beginPath(); g.arc(x, y, 2.4, 0, 7); g.fill(); } }, 26.9, 1.85, -33.11, S);
+    poster(0.5, 0.8, 100, 160, (g, W, H) => { title(g, W, '人体のしくみ', 12); g.fillStyle = '#e8c8a8'; g.beginPath(); g.ellipse(50, 42, 12, 14, 0, 0, 7); g.fill(); g.fillRect(36, 56, 28, 50); g.fillRect(28, 58, 8, 40); g.fillRect(64, 58, 8, 40); g.fillRect(38, 106, 10, 46); g.fillRect(52, 106, 10, 46); g.fillStyle = '#b84040'; g.beginPath(); g.ellipse(54, 70, 5, 6, 0, 0, 7); g.fill(); g.fillStyle = '#c87a8a'; g.fillRect(40, 64, 7, 14); g.fillRect(53, 64, 7, 14); g.fillStyle = '#8a5a3a'; g.fillRect(42, 82, 16, 10); }, 15.13, 1.6, -40.05, N);
+    /* 白衣を掛けたフック（南の壁の東の端） */
+    for (const x of [28.3, 29.05]) { WB.bx(st, 0.04, 0.04, 0.08, 0x8a8e90, x, 1.75, -33.15); const c = WB.g(x, Y, -33.18); WB.bx(c, 0.42, 0.85, 0.06, 0xe8e8e2, 0, 1.3, 0, 0.05, 0, rnd(-0.05, 0.05)); WB.bx(c, 0.14, 0.75, 0.05, 0xdcdcd4, -0.25, 1.32, 0, 0, 0, 0.12); WB.bx(c, 0.14, 0.75, 0.05, 0xdcdcd4, 0.25, 1.32, 0, 0, 0, -0.12); }
+    /* 段ボール箱の山（北西の隅） */
+    { const cb = 0x9a7a52; for (const [x, y, z, w, h, d, r] of [[17.05, 0.2, -40.2, 0.5, 0.4, 0.4, 0.1], [17.55, 0.18, -40.18, 0.42, 0.36, 0.38, -0.2], [17.2, 0.58, -40.2, 0.44, 0.36, 0.36, 0.3]]) { WB.bx(st, w, h, d, cb, x, y, z, 0, r); WB.bx(st, w + 0.004, 0.006, 0.06, 0xb8a070, x, y + h / 2 + 0.002, z, 0, r); } WB.col(16.8, 17.8, -40.42, -39.95, true, 0.8); }
+    /* ── 美術室：黒板（南の壁・流しの上）と書き残し */
+    { const b = pl(3.0, 1.0, T(384, 128, (g, W, H) => { g.fillStyle = '#1f3428'; g.fillRect(0, 0, W, H); g.fillStyle = 'rgba(255,255,255,.06)'; for (let i = 0; i < 9; i++) { g.beginPath(); g.ellipse(40 + i * 40, 60 + (i % 3) * 20, 50, 14, 0.2, 0, 7); g.fill(); }
+        g.fillStyle = 'rgba(235,235,225,.85)'; g.font = 'bold 30px sans-serif'; g.fillText('静物デッサン', 26, 46); g.font = '18px sans-serif'; g.fillText('モチーフ：りんご・びん・布', 30, 82); g.fillText('影をよく見て', 250, 110); g.fillStyle = 'rgba(235,235,225,.5)'; g.fillText('11/15', 300, 30); }), 3.6, 1.6, -33.11, S);
+      WB.bx(st, 3.0, 0.04, 0.08, 0x6a5a40, 3.6, 1.08, -33.16); }
+    /* 掲示物：作品展のポスター・絵の具の色の表・生徒の版画 */
+    poster(0.5, 0.7, 100, 140, (g, W, H) => { g.fillStyle = '#c8402a'; g.fillRect(0, 0, W, 40); g.fillStyle = '#fff'; g.font = 'bold 20px sans-serif'; g.textAlign = 'center'; g.fillText('作品展', 50, 28); g.fillStyle = '#333'; g.font = '11px sans-serif'; g.fillText('11月20日〜', 50, 60); g.fillText('体育館にて', 50, 78); g.fillStyle = '#5a7ac8'; g.beginPath(); g.arc(50, 112, 18, 0, 7); g.fill(); g.textAlign = 'left'; }, 8.3, 1.5, -33.11, S);
+    poster(0.7, 0.45, 140, 90, (g, W, H) => { title(g, W, '絵の具の色', 12); const C = ['#c82020', '#e87a20', '#e8c820', '#40a040', '#2060c0', '#6040a0', '#8a5a3a', '#202020', '#f0f0f0', '#e890a8']; C.forEach((c, i) => { g.fillStyle = c; g.fillRect(10 + (i % 5) * 25, 30 + Math.floor(i / 5) * 28, 20, 20); }); }, 10.0, 1.9, -33.11, S);
+    for (let i = 0; i < 4; i++) poster(0.26, 0.34, 52, 68, (g, W, H) => { g.fillStyle = '#e8e4d8'; g.fillRect(0, 0, W, H); g.fillStyle = '#1a1a1a'; for (let k = 0; k < 7; k++) { g.beginPath(); g.ellipse(10 + ((k * 13 + i * 7) % 34), 12 + ((k * 17 + i * 5) % 44), 5 + (k % 3) * 3, 3 + (k % 2) * 4, k, 0, 7); g.fill(); } }, 6.05 + i * 0.36, 2.15, -33.11, S);
+    /* 作品を入れた棚（北の窓の下・西の隅） */
+    { WB.bx(st, 2.4, 0.9, 0.42, WTEX.dwood, 0, 0.45, -40.2); for (let i = 0; i < 9; i++) WB.bx(st, 0.02, 0.62, 0.36, [0xd8d0c0, 0xc8b8a0, 0xe8e0d0][i % 3], -1.0 + i * 0.25, 0.42, -40.18, 0, 0, rnd(-0.12, 0.12)); WB.col(-1.25, 1.25, -40.45, -39.95, true, 0.9); }
+    /* 床に立てかけた額縁（西の壁ぎわ） */
+    for (const [z, w, h, c] of [[-38.6, 0.6, 0.8, 0x6a4e34], [-38.15, 0.5, 0.65, 0x8a7a5a], [-37.7, 0.7, 0.5, 0x3a3a3a]]) { const f = WB.g(-1.32, Y, z, N); WB.bx(f, w, h, 0.04, WTEX.wood, 0, h / 2, 0, -0.18); WB.pl(f, w - 0.1, h - 0.1, [0xc8b890, 0x7a8aa0, 0xb89a7a][Math.round(w * 10) % 3], 0, h / 2 + 0.01, 0.025, -0.18); } WB.col(-1.45, -1.05, -39.0, -37.3, true, 0.8);
+    /* 汚れたエプロン（流しの横のフック） */
+    { WB.bx(st, 0.04, 0.04, 0.08, 0x8a8e90, 4.7, 1.55, -33.15); pl(0.42, 0.62, T(64, 96, (g, W, H) => { g.fillStyle = '#5a6a7a'; g.fillRect(6, 10, W - 12, H - 10); g.fillRect(18, 0, W - 36, 14); for (const c of ['#c82020', '#e8c820', '#2060c0', '#40a040']) { g.fillStyle = c; g.beginPath(); g.ellipse(10 + Math.random() * 44, 20 + Math.random() * 70, 3 + Math.random() * 5, 2 + Math.random() * 4, Math.random() * 3, 0, 7); g.fill(); } }), 4.7, 1.22, -33.13, S); }
+    WB.bake(st);
+    /* ── 時計（ほかの教室と同じ。止まった時計の候補にもなる） */
+    makeClock(3.6, LH + 2.43, -33.13, Math.PI, 'ART', F2G); makeClock(15.13, LH + 2.43, -36.7, Math.PI / 2, 'SCI', F2G);
+    /* ── カーテン（窓の両端にたばねた物と、半分・片寄った物） */
+    const curt = (x, z, ry, w, folds) => { const H = 1.27, geo = new THREE.PlaneGeometry(w, H, Math.max(6, Math.round(w * 16)), 6), P = geo.attributes.position; for (let i = 0; i < P.count; i++) { const u = P.getX(i) / w + 0.5; P.setZ(i, Math.sin(u * Math.PI * folds) * 0.035); } geo.computeVertexNormals(); const m = new THREE.Mesh(geo, CURT_MAT); m.position.set(x, Y + 0.95 + H / 2, z); m.rotation.y = ry; F2G.add(m); };
+    const rod = (x0, x1, z0, z1) => { const r = new THREE.Mesh(new THREE.BoxGeometry(Math.abs(x1 - x0) || 0.03, 0.03, Math.abs(z1 - z0) || 0.03), L({ color: 0x8c8a84 })); r.position.set((x0 + x1) / 2, Y + 2.24, (z0 + z1) / 2); F2G.add(r); };
+    rod(-1.3, -1.3, -40.3, -33.2); curt(-1.3, -40.0, N, 0.42, 5); curt(-1.3, -33.5, N, 0.42, 5); curt(-1.3, -36.2, N, 1.3, 9);   /* 美術室・西の窓 */
+    rod(-1.3, 14.8, -40.3, -40.3); curt(-1.0, -40.3, 0, 0.42, 5); curt(14.5, -40.3, 0, 0.42, 5); curt(5.6, -40.3, 0, 1.7, 11);   /* 美術室・北の窓（片寄った1枚） */
+    rod(15.2, 29.4, -40.3, -40.3); curt(15.5, -40.3, 0, 0.42, 5); curt(29.1, -40.3, 0, 0.42, 5); curt(22.3, -40.3, 0, 1.3, 9);   /* 理科室・北の窓 */
+    rod(29.4, 29.4, -40.3, -33.2); curt(29.4, -39.9, -N, 0.42, 5); curt(29.4, -33.5, -N, 0.42, 5); curt(29.4, -35.6, -N, 1.0, 7);   /* 理科室・東の窓 */
+    /* ── 月明かり：窓の外を夜空でほんのり明るくし（暗がりで物の輪郭が分かる）、床に窓の形の青白い光 */
+    const sky = new THREE.MeshBasicMaterial({ color: 0x080d18, fog: false });
+    const skyP = (w, x, z, ry) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, 1.1), sky); m.position.set(x, Y + 1.53, z); m.rotation.y = ry; F2G.add(m); };
+    skyP(7.5, -1.75, -36.75, N); skyP(16.5, 6.75, -40.75, 0); skyP(14.6, 22.3, -40.75, 0); skyP(7.5, 29.85, -36.75, -N);
+    const poolT = (() => { const c = document.createElement('canvas'); c.width = 128; c.height = 64; const g = c.getContext('2d'); const gr = g.createLinearGradient(0, 0, 0, 64); gr.addColorStop(0, 'rgba(120,150,210,.9)'); gr.addColorStop(1, 'rgba(120,150,210,0)'); g.fillStyle = gr; for (let i = 0; i < 4; i++) g.fillRect(4 + i * 31, 6, 26, 56); const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; return t; })();
+    const pool = (len, x, z, ry) => { const t = poolT.clone(); t.needsUpdate = true; t.repeat.set(Math.round(len / 1.8), 1); const m = new THREE.Mesh(new THREE.PlaneGeometry(len, 1.3), new THREE.MeshBasicMaterial({ map: t, transparent: true, opacity: 0.07, blending: THREE.AdditiveBlending, depthWrite: false, fog: false })); m.rotation.set(-N, ry, 0, 'YXZ'); m.position.set(x, Y + 0.006, z); m.renderOrder = 2; F2G.add(m); };
+    pool(7.4, -0.85, -36.75, -N); pool(16.4, 6.75, -39.85, 0); pool(14.5, 22.3, -39.85, 0); pool(7.4, 28.95, -36.75, N);
+    /* 標本の瓶の棚のあたり：月明かりがぼんやり届く */
+    { const m = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.6), new THREE.MeshBasicMaterial({ map: TX.glow, color: 0x2a3a58, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false })); m.position.set(15.14, Y + 1.15, -33.9); m.rotation.y = N; F2G.add(m); }
+  },
+};
 const NWX = {
   built: false,
   build() {
@@ -17506,7 +17571,7 @@ const NWX = {
 };
 Object.assign(EN, { '重いものでふさがれているようだ': 'Something heavy seems to be blocking it.', '内側から何かでふさがれているようだ': 'Something seems to be blocking it from the inside.', '鍵がかかっている': "It's locked.", '向こう側にバリケードがあって開かない': "Something is barricaded on the other side. It won't open.", '階段が崩れていて上れない': "The stairs have collapsed. You can't go up.", '飛び降りる': 'Jump down', '玄関から': 'Front entrance', '2階の非常口から': '2F emergency exit', 'スタート地点': 'Start from' });
 const NEWWING = {
-  reset() { CHBLOOD.reset(); NWX.reset(); SCIRM.reset(); ARTRM.reset(); PMASK.reset(); DUCT.reset(); BCAST.reset(); this.items(); },
+  reset() { CHBLOOD.reset(); NWX.reset(); ROOMDECO.build(); SCIRM.reset(); ARTRM.reset(); PMASK.reset(); DUCT.reset(); BCAST.reset(); this.items(); },
   items() {   /* 予備バッテリー（80%）と石膏のお面（毎回） */
     for (const [id, p] of [['sparebat', V(0, -50, 0)], ['pmask', V(0, -50, 0)]]) if (!ITEM.get(id)) ITEM.add(id, p, 1);
     const sb = ITEM.get('sparebat'); sb.lk = null; sb.spot = null; if (WF('sparebat') || chance(0.8)) { sb.taken = false; sb.lv = 1; sb.pos.copy(pick(SCIRM.spots())); } else { sb.taken = true; sb.pos.set(0, -50, 0); }
