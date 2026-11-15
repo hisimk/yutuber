@@ -11174,14 +11174,14 @@ const CLK = {
       const c = addCol(ox - 0.47, ox, z - 0.26, z + 0.26); c.lv = 1;
       const meshes = []; piv.traverse(o => { if (o.isMesh) meshes.push(o); });
       const lk = { x: ox, hinge, door: parts[0], parts, handle, o: V(ox, LH, z), yaw: -Math.PI / 2, lv: 1, extra: true, group: G, clk: true }; lk.center = lkP(lk, 0, 1.0, 0); lockers.push(lk);   // 2026-11-14 開けられる・隠れられる
-      this.list.push({ room, G, piv, meshes, col: c, ox, z, lk, st: 'stand', a: 0, v: 0, hits: 0, plan: false, seen: false });
+      this.list.push({ room, G, piv, meshes, col: c, ox, z, lk, st: 'stand', a: 0, v: 0, hits: 0, plan: false, seen: false, dir: room === '2A' ? -1 : 1 });   // 2026-11-15 前のランドセル棚に当たらないよう、壁ぞいに横へ倒れる（2-Aは南、2-Bは北へ）
     }
   },
   reset() {
     for (const l of lockers) if (l.extra && HIDE.lk !== l) { l.openAt = undefined; l.hinge.rotation.y = 0; }   // 2026-11-14 前の周に開けた扉を閉じる
     const force = /[?&]clk\b/.test(location.search), arm = chance(0.5) ? pick(this.list) : null, off = /[?&]noclk\b/.test(location.search);
     for (const k of this.list) {
-      k.plan = !off && (force || k === arm); k.lk.noHide = k.plan; k.st = 'stand'; k.a = 0; k.v = 0; k.hits = 0; k.seen = false; k.piv.rotation.x = 0;
+      k.plan = !off && (force || k === arm); k.lk.noHide = k.plan; k.st = 'stand'; k.a = 0; k.v = 0; k.hits = 0; k.seen = false; k.piv.rotation.set(0, 0, 0); k.piv.position.set(0, 0, 0);
       Object.assign(k.col, { x0: k.ox - 0.47, x1: k.ox, z0: k.z - 0.26, z1: k.z + 0.26 });
     }
   },
@@ -11205,15 +11205,15 @@ const CLK = {
           SND.thud(p, 2.4); SND.clatter(p); SND.knock && SND.knock(p, 1.8); setTimeout(() => SND.thud(p, 0.9), 90);
           playSfx('locker_close', { pos: p, ref: 1.4, gain: 1.3, rate: 0.8 }); playSfx('metal_rattle', { pos: p, ref: 1.3, gain: 1.1, dur: 1.0 });
           world.vhs = Math.max(world.vhs || 0, 0.55);
-          Object.assign(k.col, { x0: k.ox - 0.02, x1: k.ox + 1.82, z0: k.z - 0.26, z1: k.z + 0.26 });   // 床に寝た形
-          if (player.lv === 1 && player.x < k.ox + 2.1 && Math.abs(player.z - k.z) < 0.5) player.z = k.z + (k.room === '2A' ? -0.52 : 0.52);   // 2026-11-14 下敷きにしない（部屋の側へよける。壁と挟まない）
+          Object.assign(k.col, k.dir < 0 ? { x0: k.ox - 0.47, x1: k.ox, z0: k.z - 2.07, z1: k.z - 0.2 } : { x0: k.ox - 0.47, x1: k.ox, z0: k.z + 0.2, z1: k.z + 2.07 });   // 床に寝た形（壁ぞい）
+          if (player.lv === 1 && player.x < k.ox + 0.3 && player.z > k.col.z0 - 0.3 && player.z < k.col.z1 + 0.3) player.x = k.ox + 0.55;   // 下敷きにしない（部屋の内側へよける）
           if (rec.active && (k.seen || seen(p, { maxD: 9, ignore: k.meshes }))) award('clsLocker', '教室の隅で倒れたロッカー', 45);
         }
         k.hits++;
         if (k.hits < 3 && k.v > 1.0) { k.v = -k.v * 0.18; if (k.hits === 2) SND.knock && SND.knock(this.top(k, 1.0), 0.5); }
         else k.st = 'down';
       }
-      k.piv.rotation.x = -k.a;
+      { const th = -k.dir * k.a, e = k.dir * 0.25; k.piv.rotation.set(0, 0, th); k.piv.position.set(e - e * Math.cos(th), -e * Math.sin(th), 0); }   // 横の下の辺を支点に倒れる
     }
   },
 };
@@ -12505,7 +12505,7 @@ function tick(now) {
   updateInteractions();
   DIM.update(dt); applyLights(dt); FL.update(dt); STAIRBLINK.update(dt);
   WD.update(dt);
-  CH.update(dt); MANN.update(dt); PHAN.update(dt); cvoiceUpdate(dt);
+  CH.update(dt); MANN.update(dt); PHAN.update(dt); PHAN.tintUpd(dt); cvoiceUpdate(dt);
   HIDE.update(dt);
   // 2026-11-14 追われている間の継続点（1秒あたり）：撮りながら逃げる＝逆さ女4・クモ女5・人体模型6／インカメラに追ってくる姿が映る＝逆さ女8・クモ女10・人体模型12
   if (rec.active && world.state === 'play' && !CAP.on) {
@@ -14397,7 +14397,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.16';
+const VERSION = '0.15.17';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -15961,7 +15961,7 @@ const PHAN = {
     this.hits = 0; this.mode = 'idle'; this.nextHunt = 0; this.trackT = 0; this.sndT = 3; this.tintK = this.on ? 1 : 0; this.wasCh = false; this.dead = null;
     this.troll0 = ((this.runSt === 0 && chance(0.25)) || (this.runSt === 9 && chance(0.1)) || ((TEST || BETA) && /[?&]troll\b/.test(location.search)));   // 段階0：数周に1回くらい
     if (this.tag) this.tag.visible = false;
-    if (!this.on) postMat.uniforms.tint.value.set(1, 1, 1);
+    this.tk = this.on ? 1 : 0; this.tkSet = true; postMat.uniforms.tint.value.set(1, 1, 1);
     if (TEST || DEV) console.log('PHAN run', this.runSt, this.on ? 'monster' : '', this.troll0 ? 'troll' : '');
   },
   // ── 荒らしの文面（日本語・英語は同じ言葉の組で作る）
@@ -16049,7 +16049,6 @@ const PHAN = {
   // ── 毎フレーム（追跡の更新のあと）
   update(dt) {
     if (!this.on || world.state !== 'play') return;
-    if (typeof RED === 'undefined' || !RED.on) { const k = this.tintK; postMat.uniforms.tint.value.set(1 + 0.5 * k, 1 - 0.42 * k, 1 - 0.46 * k); }   // 校舎の明かりが赤っぽい（録画にも入る）
     if (!SG.ready) return;
     if (SP.ready && SP.mixer && this.mode !== 'done') { if (!SP.cur || SP.cur !== SP.act.CeilingCrawl) spPlay('CeilingCrawl', 0); SP.mixer.update(dt * 1.3); }
     if (MANN.ready && this.mode !== 'done' && MANN.cur !== 'Run') MANN.play('Run', 1.15);
@@ -16073,6 +16072,15 @@ const PHAN = {
       else SND.breath(rnd(-0.6, 0.6), 1.2);
       this.sndT = rnd(2.2, 4.5);
     }
+  },
+  // 2026-11-15 赤っぽい明かり：化け物の周はずっと（倒すと消える）。ふだんの周も、電池が残り30%を切ってチャイムが鳴ったら、3秒かけて赤っぽくなりそのまま
+  tintUpd(dt) {
+    if (world.state !== 'play') return;
+    const tgt = this.on ? this.tintK : (world.chime30 ? 1 : 0), c = this.tk ?? 0;
+    this.tk = this.on ? tgt : c + clamp(tgt - c, -dt / 3, dt / 3);
+    if (typeof RED !== 'undefined' && RED.on) return;   // 赤く染まる別の演出の間はそちら
+    if (this.tk <= 0 && !this.tkSet) return; this.tkSet = this.tk > 0; const k = this.tk;
+    postMat.uniforms.tint.value.set(1 + 0.5 * k, 1 - 0.42 * k, 1 - 0.46 * k);   // 録画にも入る
   },
   // 少し離れた見えない所から現れて、追ってくる
   hunt() {
