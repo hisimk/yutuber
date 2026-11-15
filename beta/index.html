@@ -14812,7 +14812,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.10';
+const VERSION = '0.16.11';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -17662,7 +17662,8 @@ const URAH_CFG = {
   nohLose: 14,                 /* 能面：これより離れたら見失う */
   nohSwap: 2.5,                /* 見つめている能面にこれより近づくと、急に般若に変わる */
   lostT: 10, peekLost: 20, slipLost: 8, reach: 1.5, reachT: 7.5,
-  grope: 2.0, squeeze: 2.0, squeezeNoh: 0.45,   /* 狭い入口：般若は2秒つかもうとして2秒ねじ込む。能面はいきなりねじ込む */
+  grope: 0, squeeze: 0.55, squeezeNoh: 0.35,   /* 2026-11-15 つっかえない体：入口でまさぐらず、体を縮めて一気にすり抜ける（般若0.55秒・能面0.35秒） */
+  _old_grope: 2.0,   /* 狭い入口：般若は2秒つかもうとして2秒ねじ込む。能面はいきなりねじ込む */
   swapMin: 18, swapMax: 40,    /* 徘徊中、顔がぐるっと入れ替わる間隔 */
   reachNear: 0.35,             /* 体が大きくて届かない：腕を伸ばせば届く距離（腕の長さ＋この分）なら、その場で手を伸ばす */
   hand: { every: [2.6, 4.2], ahead: [3.6, 6.0], life: 4.5, out: 0.5, slow: 0.45, slowT: 0.8, nohPush: 1.0 },   /* 追跡中の赤い手 */
@@ -17911,7 +17912,7 @@ const URAH = {
     if (!this.chasing() && this.st !== 'walk') return false; const z0 = this.zoneAt(this.pos.x, this.pos.z, this.pos.y), z1 = this.zoneAt(nx, nz, this.pos.y);
     if (z1 === z0 || !this.TIGHT[z1] || this.inside[z1]) { if (!this.TIGHT[z0]) for (const k in this.inside) if (k !== z1) delete this.inside[k]; return false; }
     if (this.st === 'walk' && z1 !== 'S1' && z1 !== 'S2') { this.route = []; return true; }   /* 気づいていない時は、階段だけ（ほかの部屋には無理して入らない） */
-    const dir = V(nx - this.pos.x, 0, nz - this.pos.z).normalize(); this.sq = { room: z1, t: 0, ph: this.face === 'hannya' && this.st !== 'walk' ? 'grope' : 'push', dir, p0: this.pos.clone(), back: this.st };
+    const dir = V(nx - this.pos.x, 0, nz - this.pos.z).normalize(); this.sq = { room: z1, t: 0, ph: 'push', dir, p0: this.pos.clone(), back: this.st };
     this.st = 'squeeze'; if (TEST || DEV) console.log('URAH squeeze', z1, this.sq.ph); return true;
   },
   updSqueeze(dt) {
@@ -17922,13 +17923,14 @@ const URAH = {
       if (Q.t >= C.grope) { Q.ph = 'push'; Q.t = 0; this.restArm(); this.gigi(1.2); }
       return;
     }
-    const dur = this.face === 'noh' ? C.squeezeNoh : C.squeeze, u = clamp(Q.t / dur, 0, 1), dist = 1.3 * this.root.scale.x;
+    const dur = this.face === 'noh' ? C.squeezeNoh : C.squeeze, u = clamp(Q.t / dur, 0, 1), s0 = this.sc(), dist = 1.3 * s0;
+    { const k = 1 - 0.35 * Math.sin(Math.PI * u); this.root.scale.set(s0 * k, s0 * (1 + 0.08 * Math.sin(Math.PI * u)), s0 * k); }   /* 体を細く縮めて通る */
     /* 体を左右に震わせ、正面から見て時計回り・反時計回りに20度ずつ揺すりながら入る */
-    const step = Math.floor(Q.t / (this.face === 'noh' ? 0.08 : 0.22)), ang = (step % 2 ? 1 : -1) * 20 * Math.PI / 180;
+    const step = Math.floor(Q.t / (this.face === 'noh' ? 0.06 : 0.09)), ang = (step % 2 ? 1 : -1) * 20 * Math.PI / 180;
     this.roll += (ang - this.roll) * Math.min(1, dt * 18); const rx = Q.dir.z, rz = -Q.dir.x, sh = Math.sin(Q.t * (this.face === 'noh' ? 60 : 34)) * 0.06;
     const tgt = Q.p0.clone().addScaledVector(Q.dir, dist * (u * u * (3 - 2 * u))); this.pos.x = tgt.x + rx * sh; this.pos.z = tgt.z + rz * sh;
     if (step !== Q.ls) { Q.ls = step; SND.knock(this.head(), 0.5); if (step % 2) SND.thud(this.pos.clone().setY(this.pos.y + 1), 0.4); }
-    if (u >= 1) { this.roll = 0; this.inside[Q.room] = 1; this.st = Q.back === 'walk' ? 'walk' : 'chase'; this.rep = 0; this.route = []; this.sq = null; if (this.st === 'walk' && this.dest) this.goTo(this.dest); }   /* 階段に入ったら、そのまま行き先へ */
+    if (u >= 1) { this.root.scale.setScalar(s0); this.roll = 0; this.inside[Q.room] = 1; this.st = Q.back === 'walk' ? 'walk' : 'chase'; this.rep = 0; this.route = []; this.sq = null; if (this.st === 'walk' && this.dest) this.goTo(this.dest); }   /* 階段に入ったら、そのまま行き先へ */
   },
   /* ── 手を伸ばす動き（ArmReach をもとに、まさぐる・遠くへ伸ばして素早くグーパー） */
   reachPose(t, grope) {
@@ -18094,13 +18096,14 @@ const URAH = {
     /* 体が大きくて届かない：あと少しなら、その場で手を伸ばす */
     const got = Math.hypot(this.pos.x - x0, this.pos.z - z0); this.stall = got < this.spd * dt * 0.3 && this.spd > 0.5 ? (this.stall || 0) + dt : 0;
     const reachD = (this.reachL || 2.5) * this.root.scale.x + C.reachNear;
-    if (!this.frozen && dist < reachD && dist > C.catchR && Math.abs(player.y - this.pos.y) < 0.6 && clearLine(camera.position.clone(), [], this.pos.clone().setY(this.pos.y + 1.0)) && (this.stall > 0.5 || !this.direct())) { this.st = 'reach'; this.rt = 0; return; }
+    if (!this.frozen && dist < reachD && dist > C.catchR && Math.abs(player.y - this.pos.y) < 0.6 && clearLine(camera.position.clone(), [], this.pos.clone().setY(this.pos.y + 1.0)) && this.stall > 0.35) { this.st = 'reach'; this.rt = 0; return; }   /* 2026-11-15 本当に進めない時だけ（立ち止まらない） */
+    if (this.stall > 0.6) { this.stall = 0; if (this.route.length > 1) this.route.shift(); this.rep = 0; this.goTo(V(player.x, player.y, player.z)); }   /* 進めなくなったら、すぐ道を選び直す */
     if (this.slip && this.lostT > C.slipLost && dist > 8) { if (rec.active) award('urahSlip', '反対側の扉から逃げ切る', 70); this.slip = null; }
     if (this.lostT > (room ? 25 : C.lostT)) { this.slip = null; const f = this.face; this.toWalk(); if (f === 'hannya') URAHV.say('hanLost', 'hannya'); }
   },
   updReach(dt, dist) {   /* その場で、主人公の方へ腕を伸ばしてまさぐる */
     this.rt += dt; this.by += clamp(uAng(Math.atan2(player.x - this.pos.x, player.z - this.pos.z) - (this.reachA || 0), this.by), -5 * dt, 5 * dt); this.reachPose(this.rt, true); this.grabCheck(); if (this.st === 'cap') return;
-    if (this.rt > 2.4 || dist > (this.reachL || 2.5) * this.root.scale.x + URAH_CFG.reachNear + 0.6) { this.restArm(); this.st = 'chase'; this.rep = 0; }
+    if (this.rt > 1.3 || dist > (this.reachL || 2.5) * this.root.scale.x + URAH_CFG.reachNear + 0.6) { this.restArm(); this.st = 'chase'; this.rep = 0; }
   },
   /* ── ロッカー・ベッドの下・トイレの個室：見られていたら、開けて（のぞき込んで）引きずり出す */
   toGrab() {
@@ -18156,6 +18159,7 @@ const URAH = {
     if (this.st === 'cap' || world.state !== 'play') return; scareZoom1(); if (world.selfie) SELF.set(false); if (DIR.active) DIR.end(DIR.active);
     if (HIDE.lk) { const lk = HIDE.lk; lk.hinge.rotation.y = 1.5; HIDE.lk = null; player.hidden = false; lockerInside.visible = false; }
     world.capture = 0.0001; PAD.hit(1); $('#hud').classList.add('off'); $('#actBtn').classList.remove('show');
+    this.root.scale.setScalar(this.sc()); this.sq = null;
     this.restArm(); this.st = 'cap'; this.cap = { t: 0, side, next: 0 }; this.play(null); this.restPose(); this.cy = 0; this.pitch = 0; this.roll = 0; this.frozen = false;
     for (const k of ['NohThroat', 'HannyaThroat']) if (this.bones[k]) this.bones[k].scale.setScalar(0.001);
     look.yaw = Math.atan2(-(this.pos.x - player.x), -(this.pos.z - player.z)); look.pitch = -0.25;
@@ -18186,14 +18190,14 @@ const URAH = {
    「...」は0.4秒・「..」は0.2秒の間。「…」は語尾を伸ばして弱める。小さい「ェ」「ォ」は前の音を引き伸ばす。〇〇はよみがな（無い時はそのセリフを飛ばす） */
 const URAHV = {
   L: {
-    nohIdle: ['たす...けて…', 'だれ...か', 'うるさい', 'くらいよ…さむいよ…', 'わたし…だれだっけ…'],
-    nohFound: ['あ…ひと…', 'まって…'],
-    nohNear: ['おね...がい…', '〇〇…', 'たすけて'],
-    hanIdle: ['トモダチ…トモダチ…', 'たりない…まだ、たりない…', 'みんな、おんなじに'],
-    hanFound: ['あはは', 'みつけたァ…！', 'トモダチィ…！'],
-    hanChase: ['にげないでェ…', '〇〇…トモダチに、なろう…', 'ずっと…いっしょ…', 'ひひひひとつに...', 'ど..こォ…どこォ…'],
-    hanLost: ['かくれ..んぼ…？', 'すぐ…みつけ...る…'],
-    hanDoor: ['でておいでェ…', 'あけろォ…'],
+    nohIdle: ['たす　けて', 'だれ　か', 'うるさい', 'ユルサナイ', 'くらいよ、さむいよ', 'わたし、だれだっけ'],
+    nohFound: ['あ、ひと', 'まって'],
+    nohNear: ['おね　がい', '〇〇', 'たすけて'],
+    hanIdle: ['トモダチ、トモダチ', 'たりない、まだ、たりない', 'みんな、おんなじに'],
+    hanFound: ['みいつけた！', 'トモダチィ！', 'あそぼー！'],
+    hanChase: ['にげないでェ', '〇〇、ト　モダチ', 'ずっと、いっしょ', 'な　かよし', 'ど　こォ、どこォ'],
+    hanLost: ['かくれんぼ？', 'すぐ、みつけ　る'],
+    hanDoor: ['でておいでェ', 'あけろォ'],
   },
   bag: {}, busy: 0, idleT: 6, chaseT: 3, peekT: 4, cur: null,
   yomi() { const y = (world.yomi || '').trim(); return /^[ぁ-ゟ゠-ヿー]+$/.test(y) ? y : ''; },
@@ -18213,8 +18217,9 @@ const URAHV = {
       if (c === '.' || c === '。') { flush(); out.push({ gap: 0.12 }); continue; }
       if (c === '…') { flush(); const L = lastV(); if (L) out.push({ id: 'kn_' + L.v, v: L.v, long: true, g: 0.42 }); out.push({ gap: 0.12 }); continue; }   // 語尾を伸ばして弱める
       if ('ぁぃぅぇぉ'.includes(c)) { flush(); const L = lastV(), v = L ? L.v : 'a'; out.push({ id: 'kn_' + v, v, long: true }); continue; }   // 前の音を引き伸ばす
-      if ('、,'.includes(c)) { flush(); out.push({ gap: 0.16 }); continue; }
-      if ('！!？? 　'.includes(c)) { flush(); out.push({ gap: 0.06 }); continue; }
+      if ('、,'.includes(c)) { flush(); out.push({ gap: 0.25 }); continue; }
+      if (c === '　') { flush(); out.push({ gap: 0.45 }); continue; }
+      if ('！!？? '.includes(c)) { flush(); out.push({ gap: 0.06 }); continue; }
       run += c;
     }
     flush(); return out;
@@ -18228,27 +18233,38 @@ const URAHV = {
     const inG = ctx.createGain(), nodes = [pn, out, inG], t0 = ctx.currentTime + 0.04;
     if (H) {   // 低く・割れた音
       const ws = ctx.createWaveShaper(), cv = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; cv[i] = Math.tanh(x * 3.4) / Math.tanh(3.4); } ws.curve = cv;
-      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600; const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 70;
-      inG.connect(hp); hp.connect(ws); ws.connect(lp); lp.connect(out); out.gain.value = loud ? 1.25 : 0.95; nodes.push(ws, lp, hp);
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600; const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 130;
+      inG.connect(hp); hp.connect(ws); ws.connect(lp); lp.connect(out); out.gain.value = loud ? 0.5 : 0.38; nodes.push(ws, lp, hp);
     } else {   // 高く・細く、小さめ
-      const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 650; const pk = ctx.createBiquadFilter(); pk.type = 'peaking'; pk.frequency.value = 3200; pk.gain.value = 4;
+      const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 420; const pk = ctx.createBiquadFilter(); pk.type = 'peaking'; pk.frequency.value = 2400; pk.gain.value = 2;
       inG.connect(hp); hp.connect(pk); pk.connect(out); out.gain.value = 0.5; nodes.push(hp, pk);
     }
-    const base = H ? 0.64 : 1.42, rate = (i, n, m) => base * (H ? 1 : 1 + Math.sin(i * 2.1) * 0.035) * (m && m.long && !H ? 0.97 : 1);
+    /* 能面：ときどき低い声がまざる（低くなる音を選ぶ）。「ユルサナイ」は後ろ半分が必ず低い */
+    const idx = seq.map((m, i) => m.id ? i : -1).filter(i => i >= 0), low = new Set();
+    if (!H) {
+      if (/ゆるさない|ユルサナイ/.test(text)) idx.slice(Math.floor(idx.length / 2)).forEach(i => low.add(i));
+      else { if (idx.length && Math.random() < 0.6) { const L = 1 + ((Math.random() * 3) | 0), s = (Math.random() * Math.max(1, idx.length - L + 1)) | 0; idx.slice(s, s + L).forEach(i => low.add(i)); } idx.forEach(i => { if (Math.random() < 0.2) low.add(i); }); }
+    }
+    const base = H ? 0.64 : 1.16, rate = (i, n, m) => (low.has(i) ? 0.62 : 1) * base * (H ? 1 : (1 + Math.sin(i * 2.1) * 0.05 + Math.sin(i * 5.3) * 0.025) * (1 - 0.1 * i / Math.max(1, n - 1))) * (m && m.long && !H ? 0.94 : 1);
     const gainAt = i => (seq[i] || {}).g || 1;
     const each = (sN, g, i, tt, du) => {
       const m = seq[i]; if (!m || !m.id) return;
       if (H) {   // 1オクターブ下を同じ長さで重ねる
         const e = KANA.edge(m.id), r = sN.playbackRate.value * 0.5, s2 = ctx.createBufferSource(), g2 = ctx.createGain(); s2.buffer = sN.buffer; s2.playbackRate.value = r;
-        g2.gain.setValueAtTime(0, tt); g2.gain.linearRampToValueAtTime(0.85, tt + 0.01); g2.gain.setValueAtTime(0.85, tt + Math.max(0.012, du - 0.03)); g2.gain.linearRampToValueAtTime(0, tt + du);
+        g2.gain.setValueAtTime(0, tt); g2.gain.linearRampToValueAtTime(0.55, tt + 0.01); g2.gain.setValueAtTime(0.55, tt + Math.max(0.012, du - 0.03)); g2.gain.linearRampToValueAtTime(0, tt + du);
         s2.connect(g2); g2.connect(inG); s2.start(tt, e.off + (m.long ? e.len * 0.45 : 0), du * r + 0.01); s2.stop(tt + du + 0.02); freeLater(tt - ctx.currentTime + du + 0.5, s2, g2);
       } else {   // 息のようなかすれ
+        if (low.has(i)) {   // 低い声：さらに1オクターブ下を重ねる（細くする削りを通さない）
+          const e = KANA.edge(m.id), r = sN.playbackRate.value * 0.5, s3 = ctx.createBufferSource(), lp = ctx.createBiquadFilter(), g3 = ctx.createGain(); s3.buffer = sN.buffer; s3.playbackRate.value = r; lp.type = 'lowpass'; lp.frequency.value = 1800;
+          g3.gain.setValueAtTime(0, tt); g3.gain.linearRampToValueAtTime(0.75, tt + 0.015); g3.gain.setValueAtTime(0.75, tt + Math.max(0.017, du - 0.03)); g3.gain.linearRampToValueAtTime(0, tt + du);
+          s3.connect(lp); lp.connect(g3); g3.connect(out); s3.start(tt, e.off + (m.long ? e.len * 0.45 : 0), du * r + 0.01); s3.stop(tt + du + 0.02); freeLater(tt - ctx.currentTime + du + 0.5, s3, lp, g3);
+        }
         const s2 = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g2 = ctx.createGain(); s2.buffer = A.noise; bp.type = 'bandpass'; bp.frequency.value = 2600; bp.Q.value = 0.8;
-        g2.gain.setValueAtTime(0, tt); g2.gain.linearRampToValueAtTime(0.09 * gainAt(i), tt + 0.02); g2.gain.linearRampToValueAtTime(0, tt + du);
+        g2.gain.setValueAtTime(0, tt); g2.gain.linearRampToValueAtTime(0.2 * gainAt(i), tt + 0.02); g2.gain.linearRampToValueAtTime(0, tt + du);
         s2.connect(bp); bp.connect(g2); g2.connect(out); s2.start(tt, Math.random() * 2); s2.stop(tt + du + 0.02); freeLater(tt - ctx.currentTime + du + 0.5, s2, bp, g2);
       }
     };
-    const len = KANA.speak(inG, seq, t0, { rate, gain: 1, gainAt, each, overlap: H ? 0.92 : 0.86 });
+    const len = KANA.speak(inG, seq, t0, { rate, gain: 1, gainAt, each, overlap: H ? 0.92 : 0.97 });
     freeLater(len + 1.5, ...nodes); this.busy = ctx.currentTime + len + 0.25; this.cur = { pn, face, end: this.busy };
     if (TEST || DEV) console.log('URAHV', cat, text, len.toFixed(2));
     return len;
