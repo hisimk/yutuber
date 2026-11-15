@@ -14812,7 +14812,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.11';
+const VERSION = '0.16.12';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -18012,6 +18012,7 @@ const URAH = {
     this.root.visible = false; this.play(null); this.restPose(); this.mouthSet(0.15);
     for (const k of ['NohThroat', 'HannyaThroat']) if (this.bones[k]) this.bones[k].scale.setScalar(0.001);
     if (this.on && (TEST || DEV)) console.log('URAH on', s);
+    if (this.on) { URAHT.init(); this.blind = !URAHT.target; }
   },
   spawn() {
     const q = new URLSearchParams(location.search).get('urahnode'); let k = q && this.N[q] ? q : null;
@@ -18156,7 +18157,7 @@ const URAH = {
   },
   /* ── 捕まえる：帯の下の口が目の前で大きく開いて、かみつく */
   capture(side) {
-    if (this.st === 'cap' || world.state !== 'play') return; scareZoom1(); if (world.selfie) SELF.set(false); if (DIR.active) DIR.end(DIR.active);
+    if (this.st === 'cap' || world.state !== 'play') return; if (URAHT.blocked()) return;   /* テスト用の無敵 */ scareZoom1(); if (world.selfie) SELF.set(false); if (DIR.active) DIR.end(DIR.active);
     if (HIDE.lk) { const lk = HIDE.lk; lk.hinge.rotation.y = 1.5; HIDE.lk = null; player.hidden = false; lockerInside.visible = false; }
     world.capture = 0.0001; PAD.hit(1); $('#hud').classList.add('off'); $('#actBtn').classList.remove('show');
     this.root.scale.setScalar(this.sc()); this.sq = null;
@@ -18278,6 +18279,49 @@ const URAHV = {
     else if (U.st === 'door' && U.dph === 'peek') { this.peekT -= dt; if (this.peekT <= 0) { this.peekT = rnd(6, 10); this.say('nohNear', 'noh'); } }
   },
   reset() { this.bag = {}; this.busy = 0; this.idleT = rnd(5, 9); this.chaseT = 3; this.peekT = 3; this.cur = null; },
+};
+/* 2026-11-15 オフタリサマの遊び用パネル（試し版で ?urah の時だけ）：無敵・ターゲット・近くに呼ぶ・顔の切り替え */
+const URAHT = {
+  god: false, target: true,
+  load() { try { const d = JSON.parse(localStorage.getItem('yt_urah_test') || '{}'); this.god = !!d.god; this.target = d.target !== false; } catch (e) { } },
+  save() { try { localStorage.setItem('yt_urah_test', JSON.stringify({ god: this.god, target: this.target })); } catch (e) { } },
+  on() { return (TEST || BETA || DEV) && /[?&]urah\b/.test(location.search); },
+  init() {
+    if (!this.on() || this.el) return; this.load(); URAH.blind = !this.target;
+    const el = this.el = document.createElement('div'); el.id = 'urahTest';
+    el.style.cssText = 'position:fixed;left:6px;top:calc(env(safe-area-inset-top) + 104px);z-index:99998;background:rgba(10,10,12,.82);color:#eee;font:12px/1.4 system-ui,sans-serif;padding:6px 8px;border-radius:8px;border:1px solid #533;max-width:172px;-webkit-user-select:none;user-select:none;touch-action:manipulation';
+    for (const t of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'touchmove', 'click', 'mousedown', 'mouseup']) el.addEventListener(t, e => e.stopPropagation(), { passive: t !== 'click' });
+    el.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const a = b.dataset.a;
+      if (a === 'min') this.mini = !this.mini;
+      else if (a === 'god') { this.god = !this.god; this.save(); }
+      else if (a === 'tgt') { this.target = !this.target; URAH.blind = !this.target; if (!this.target && URAH.on && URAH.chasing() && URAH.st !== 'cap') URAH.toWalk(); this.save(); }
+      else if (a === 'call') this.call();
+      else if (a === 'face' && URAH.on && URAH.st !== 'cap') URAH.swap(URAH.face === 'noh' ? 'hannya' : 'noh', URAH.st !== 'walk');
+      this.draw(); });
+    document.body.appendChild(el); this.draw(); setInterval(() => this.draw(true), 500);
+  },
+  // 近くに呼ぶ：主人公から8〜12m、見えていない所に出して、すぐ追わせる（ターゲットOFFなら歩き回るだけ）
+  call() {
+    if (!URAH.ready || !URAH.on || URAH.st === 'cap') return; if (URAH.st === 'wait' || URAH.st === 'off') URAH.spawn();
+    const ks = Object.keys(URAH.N).filter(k => !/^ue/.test(k)), ok = ks.filter(k => { const p = URAH.npos(k), d = Math.hypot(p.x - player.x, p.z - player.z); return Math.abs(p.y - player.y) < 1 && d > 8 && d < 12 && !onScreen(p.clone().setY(p.y + 1.2), 1.1); });
+    const k = pick(ok.length ? ok : ks); URAH.pos.copy(URAH.npos(k)); URAH.route = []; URAH.sq = null; URAH.root.scale.setScalar(URAH.sc()); URAH.root.visible = true;
+    if (this.target) { URAH.lastSeen = world.t; URAH.toChase(); } else URAH.toWalk(); URAH.apply();
+  },
+  // 無敵：つかまれる代わりに、画面が乱れるだけ
+  blocked() { if (!this.god) return false; if (world.t > (this.gT || 0)) { this.gT = world.t + 1; world.vhs = Math.max(world.vhs || 0, 0.6); SND.glitch && SND.glitch(0.15); try { PAD.hit && PAD.hit(0.4); } catch (e) { } } return true; },
+  draw(auto) {
+    const el = this.el; if (!el) return;
+    const B = (a, t, on) => `<button data-a="${a}" style="margin:2px;padding:5px 8px;border-radius:6px;border:1px solid #744;background:${on ? '#a22' : '#222'};color:#fff;font:12px system-ui">${t}</button>`;
+    if (this.mini) { if (!auto) el.innerHTML = B('min', '▸ テスト', false); return; }
+    if (auto && el.querySelector('.st')) { const U = URAH, d = U.pos ? Math.hypot(player.x - U.pos.x, player.z - U.pos.z) : 0, NM = { off: '出ていない', wait: '出る前', walk: '歩き回り', chase: '追跡', squeeze: 'すり抜け', reach: '手を伸ばす', grab: '引きずり出し', door: '戸口', climb: 'よじ登り', cap: '捕まえた' }; el.querySelector('.st').textContent = U.on ? `${NM[U.st] || U.st}・${U.face === 'noh' ? '能面' : '般若'}・${d.toFixed(1)}m` : ''; return; }
+    const U = URAH, d = U.pos ? Math.hypot(player.x - U.pos.x, player.z - U.pos.z) : 0;
+    const NM0 = 0, NM = { off: '出ていない', wait: '出る前', walk: '歩き回り', chase: '追跡', squeeze: 'すり抜け', reach: '手を伸ばす', grab: '引きずり出し', door: '戸口', climb: 'よじ登り', cap: '捕まえた' };
+    el.innerHTML = `<b>オフタリサマ（テスト）</b> ${B('min', '▾', false)}<br>`
+      + B('god', '無敵 ' + (this.god ? 'ON' : 'OFF'), this.god) + B('tgt', 'ターゲット ' + (this.target ? 'ON' : 'OFF'), this.target) + '<br>'
+      + B('call', '近くに呼ぶ', false) + B('face', '顔を切替', false)
+      + `<div class="st" style="margin-top:3px;color:#ccc"></div>`;
+    const st = el.querySelector('.st'); if (st) st.textContent = U.on ? `${NM[U.st] || U.st}・${U.face === 'noh' ? '能面' : '般若'}・${d.toFixed(1)}m` : '?urah&wingopen で出ます';
+  },
 };
 URAH.load();
 Object.assign(AW_TABLE, { urahReach: ['A', 70], urahPeek: ['B', 40], urahDesk: ['A', 70], urahSlip: ['A', 70] });
@@ -18541,7 +18585,7 @@ if (typeof XCHAT !== 'undefined') XCHAT.LIST.second = ['en2.01', 'en2.02', 'en2.
 /* クモ女の巣ワープは撮れ高から外す */
 delete AW_TABLE.toes; delete CHIP_DESC.toes; COL.LIST = COL.LIST.filter(x => x[0] !== 'toes');
 delete AW_TABLE.spWarp; delete CHIP_DESC.spWarp; COL.LIST = COL.LIST.filter(x => x[0] !== 'spWarp'); delete EN['巣に触れたクモ女が別の巣へ移った瞬間']; if (CHAT_DICT.ev) delete CHAT_DICT.ev['巣に触れたクモ女が別の巣へ移った瞬間'];
-if (TEST && window.__G) Object.assign(window.__G, { ENEMY, CHBLOOD, glassPanes, mannGlassAhead, PROPS3D, SCIRM, ARTRM, URAH, URAHV, REDHAND, URAH_CFG, urahVoice, DOORS2, rooms, WING, NAVX, closedDoorOn, KEHAI, KEHAI_CFG, WINDAMB, amb, CALL, PREBROKEN, UNDER, HIDE, CBGM });
+if (TEST && window.__G) Object.assign(window.__G, { ENEMY, CHBLOOD, glassPanes, mannGlassAhead, PROPS3D, SCIRM, ARTRM, URAH, URAHV, URAHT, REDHAND, URAH_CFG, urahVoice, DOORS2, rooms, WING, NAVX, closedDoorOn, KEHAI, KEHAI_CFG, WINDAMB, amb, CALL, PREBROKEN, UNDER, HIDE, CBGM });
 /* 新しいアイテム */
 Object.assign(ITEM.defs, {
   sparebat: { name: '予備バッテリー', desc: '理科室にあった予備のバッテリー。電池が20％回復する。', size: 0.2 },
