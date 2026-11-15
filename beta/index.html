@@ -956,6 +956,7 @@ const CONFIG = {
   battery: { start: 100, idlePerSec: 0.20 / 1.5, recPerSec: 0.75 / 1.5 }, // 減り切るまでの時間を以前の1.5倍に（録画中は合計0.5%/秒）
   recMaxSec: 120,   // 持ち帰れる録画は通算120秒
   walkSpeed: 2.0,
+  backMul: 0.9,           // 2026-11-15 後ろ歩きの速さ（前へ歩く時の何倍か）。横は1、斜め後ろはその間でなめらかに
   spiderChaseMul: 0.8,   // 蜘蛛女の追跡速度（主人公の何倍か）。出現から電池30%ぶんで spiderChaseMax まで上がる
   spiderChaseMax: 1.0,
   womanChaseMul: 0.7,     // 逆さ女の追跡速度。見えるようになってから電池30%ぶんで womanChaseMax まで
@@ -12727,7 +12728,10 @@ function tick(now) {
   if (world.outro > 0 || world.capture || player.hidden || REVIVE.on || KOK.k > 0) { mx = 0; my = 0; }
   const fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw), rx = Math.cos(player.yaw), rz = -Math.sin(player.yaw);
   const wsp = CONFIG.walkSpeed * PERM.speedMul() * CROUCH.spd() * (typeof CHBLOOD !== 'undefined' ? CHBLOOD.slow() * NWX.stag() : 1);   // シュン足：1.08倍。しゃがむと半分
-  const vx = (fx * -my + rx * mx) * wsp, vz = (fz * -my + rz * mx) * wsp;
+  /* 2026-11-15 斜めでも前より速くならない（入力の大きさは1まで）。後ろへ歩く時は CONFIG.backMul 倍（前・横は1。間はなめらかに） */
+  { const m = Math.hypot(mx, my); if (m > 1) { mx /= m; my /= m; } }
+  const dirMul = 1 - (1 - CONFIG.backMul) * Math.max(0, my) / Math.max(1e-6, Math.hypot(mx, my));
+  const vx = (fx * -my + rx * mx) * wsp * dirMul, vz = (fz * -my + rz * mx) * wsp * dirMul;
   const ox = player.x, oz = player.z;
   { // 階段：足元の高さを追い、段差が大きい方向（手すりの外・別の段）へは進めない
     /* 2026-11-14 2階の階段の上り口の左（下りる時の左）：手すりの切れ目から吹き抜けへ落ちられる（主人公だけ。手前・奥の階段とも） */
@@ -14785,7 +14789,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.5';
+const VERSION = '0.16.6';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16034,7 +16038,7 @@ if (TEST && window.__G) Object.assign(window.__G, { SIDE, RKLIST, RING, AFIX, SE
 
 setInterval(() => CHATLOG.tick(), 400);
 setInterval(() => { try { VOICE.tick(); } catch (e) { if (TEST || DEV) console.warn('VOICE', e); } }, 33);   // 2026-11-14 声の判定（約30回/秒）
-if (TEST && window.__G) Object.assign(window.__G, { VOICE, CONFIG, player, renderer });
+if (TEST && window.__G) Object.assign(window.__G, { VOICE, CONFIG, player, renderer, input });
 
 /* ---------- ランク昇格のお知らせ（タイトルに戻った時に1回） ---------- */
 const RANKPOP = {
