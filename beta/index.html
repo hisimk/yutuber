@@ -1363,7 +1363,7 @@ function plane(w, h, mat, x, y, z, ry = 0, rx = 0, o = {}) {
 /* ---------- 言語（日本語／English）：画面の文言は T() で英語に置き換える。英語の表が無い文言は日本語のまま ---------- */
 let LANG = 'ja'; try { const l = localStorage.getItem('yt_lang'); if (l === 'en' || l === 'ja') LANG = l; } catch (e) { }
 const EN = {
-  '机の陰で息を殺す': 'Holding your breath behind a desk', '神回の動画を端末に残す': 'Keep top-episode videos on this device', '動画はこの端末の中だけに保存され、外部には送られません。1本あたり最大で約50MBです。': 'Videos are stored only on this device and never sent anywhere. Up to about 50 MB each.', '上位3位まで': 'Top 3', '1位だけ': 'Top 1 only', '残さない': "Don't keep", '保存している動画はありません': 'No saved videos', 'この動画を消す': 'Delete this video', 'この回の動画を消しますか？': 'Delete the video for this episode?', '内訳は残ります。': 'The breakdown will stay.', 'やめる': 'Cancel', '消す': 'Delete', '動画は残さない設定です（設定で変えられます）': 'Videos are set not to be kept (you can change this in Settings)', '端末の空きが少なめです': 'Your device is low on space', '神回の動画は1本あたり最大で約50MBです。空きが足りない時は、動画を保存せずに内訳だけ残します。「1位だけ」か「残さない」にすると安心です。': 'Each top-episode video can be up to about 50 MB. If space runs short, only the breakdown is kept. "Top 1 only" or "Don\'t keep" is safer.', 'このまま': 'Keep as is', '1位だけにする': 'Switch to Top 1 only', '動画を保存できませんでした': "Couldn't save the video", '端末の空きが足りないため、この回の動画は保存していません（内訳とランキングは残っています）。設定の「神回の動画を端末に残す」で本数を減らすと、空きが増えます。': 'There wasn\'t enough space, so this episode\'s video wasn\'t saved (the breakdown and ranking are kept). Keeping fewer videos in Settings frees up space.', 'ベッドの下にもぐる': 'Under the bed', 'ピアノの下にもぐる': 'Under the piano', 'ベッドの下でやり過ごす': 'Waited it out under the bed', 'ピアノの下でやり過ごす': 'Waited it out under the piano', 'やり過ごしたはずの逆さの顔': 'The upside-down face, after it left', '非通知の着信に出た': 'Answered an unknown caller', 'いま、あなたのうしろにいるの': "I'm right behind you now", '振り返ったら、いた': 'Turned around, and she was there', '誰もいない場所に顔を検出': 'A face detected where no one is', '大量に検出された顔': 'Faces detected everywhere', '出る': 'Get out', '窓の下をくぐり抜ける': 'Sneaking under the windows', 'もはや筋トレ配信': 'Basically a workout stream now', 'しゃがむ': 'Crouch', '立つ': 'Stand', 'しゃがむ・立つ': 'Crouch / stand', 'しゃがむと窓の下や机の陰に隠れられます': 'Crouch to hide below windows or behind desks',
+  '机の陰で息を殺す': 'Holding your breath behind a desk', '神回の動画を端末に残す': 'Keep top-episode videos on this device', '動画はこの端末の中だけに保存され、外部には送られません。1本あたり最大で約50MBです。': 'Videos are stored only on this device and never sent anywhere. Up to about 50 MB each.', '上位3位まで': 'Top 3', '1位だけ': 'Top 1 only', '残さない': "Don't keep", '保存している動画はありません': 'No saved videos', 'この動画を消す': 'Delete this video', 'この回の動画を消しますか？': 'Delete the video for this episode?', '内訳は残ります。': 'The breakdown will stay.', 'やめる': 'Cancel', '消す': 'Delete', '動画は残さない設定です（設定で変えられます）': 'Videos are set not to be kept (you can change this in Settings)', '端末の空きが少なめです': 'Your device is low on space', '神回の動画は1本あたり最大で約50MBです。空きが足りない時は、動画を保存せずに内訳だけ残します。「1位だけ」か「残さない」にすると安心です。': 'Each top-episode video can be up to about 50 MB. If space runs short, only the breakdown is kept. "Top 1 only" or "Don\'t keep" is safer.', 'このまま': 'Keep as is', '1位だけにする': 'Switch to Top 1 only', '動画を保存できませんでした': "Couldn't save the video", '端末の空きが足りないため、この回の動画は保存していません（内訳とランキングは残っています）。設定の「神回の動画を端末に残す」で本数を減らすと、空きが増えます。': 'There wasn\'t enough space, so this episode\'s video wasn\'t saved (the breakdown and ranking are kept). Keeping fewer videos in Settings frees up space.', 'ベッドの下にもぐる': 'Under the bed', 'ピアノの下にもぐる': 'Under the piano', 'ベッドの下でやり過ごす': 'Waited it out under the bed', 'ピアノの下でやり過ごす': 'Waited it out under the piano', 'やり過ごしたはずの逆さの顔': 'The upside-down face, after it left', '非通知の着信に出た': 'Answered an unknown caller', 'いま、あなたのうしろにいるの': "I'm right behind you now", '振り返ると電話の主': 'Turned around, and she was there', '誰もいない場所に顔を検出': 'A face detected where no one is', '大量に検出された顔': 'Faces detected everywhere', '出る': 'Get out', '窓の下をくぐり抜ける': 'Sneaking under the windows', 'もはや筋トレ配信': 'Basically a workout stream now', 'しゃがむ': 'Crouch', '立つ': 'Stand', 'しゃがむ・立つ': 'Crouch / stand', 'しゃがむと窓の下や机の陰に隠れられます': 'Crouch to hide below windows or behind desks',
   '動画を切り抜き編集': 'Clip & edit', 'おすすめ': 'Recommended', '切り抜き・コメント・結果カード': 'Trim · comments · result card', 'そのまま保存': 'Save as is', 'そのままシェア': 'Share as is',
   '何をシェアする？': 'What to share?', 'X向け': 'For X', 'TikTok・インスタ向け': 'For TikTok / Instagram', '動画': 'Video', '結果画像': 'Result image', '投稿文': 'Post text', '#幽tuber とURL（コピーもします）': '#幽tuber and the link (also copied)',
   'シェアする': 'Share', '結果画像だけ保存': 'Save result image only', 'この環境ではシェアできないため、保存してから投稿してください': 'Sharing isn’t available here, so the files were saved. Please post them from your app.', '（投稿文はコピーしました）': ' (Post text copied.)',
@@ -9730,7 +9730,7 @@ const COL = {
     ['wander', '暗がりを滑る逆さ女', 40], ['glance', 'こっちを見た？', 60], ['slitCloth', 'ロッカーの前を横切る赤い布', 50], ['lockerFace', 'ロッカーに隠れたのがバレる', 80], ['capture', '逆さ女に襲われた瞬間', 120],
     ['toes', '戸口から覗く上履き', 70], ['stand', '教室に立つ女子高生', 15], ['semari', 'ズームで迫り来る女子高生の霊', 100], ['trio', '奇跡の3ショット', 300],
     ['dripRipple', '床に落ちる血の滴と広がる波紋', 60], ['doorBlood', 'トイレの扉の内側に垂れる血の筋', 40], ['stallTop', 'トイレの個室の上から覗く逆さ顔', 100], ['basinBlood', '洗面器に溜まっていく血溜まり', 40], ['peek', '戸口から真横に覗く顔', 60],
-    ['boardWoman', '掲示板を読む女', 30], ['boardLunge', '振り向いた掲示板の女', 80], ['lidBlood', '便器の中の血溜まり', 40], ['lidEye', '便器の中からのぞく目', 60], ['lidTrap', 'フタを開けたら閉じ込められた', 80], ['eqFull', 'どういうお笑い？', 100], ['crouchHide', '机の陰で息を殺す', 30], ['underHide', 'ベッドの下にもぐる', 10], ['underEscape', 'ベッドの下でやり過ごす', 40], ['underPeek', 'やり過ごしたはずの逆さの顔', 70], ['callAnswer', '非通知の着信に出た', 10], ['callBehind', 'いま、あなたのうしろにいるの', 30], ['callTurn', '振り返ったら、いた', 300], ['faceOne', '誰もいない場所に顔を検出', 60], ['faceMany', '大量に検出された顔', 100], ['winSneak', '窓の下をくぐり抜ける', 20], ['squat30', 'もはや筋トレ配信', 60], ['f2bed', 'めくった布団の中', 25], ['exitFlip', '逆さまに走る非常口', 45],
+    ['boardWoman', '掲示板を読む女', 30], ['boardLunge', '振り向いた掲示板の女', 80], ['lidBlood', '便器の中の血溜まり', 40], ['lidEye', '便器の中からのぞく目', 60], ['lidTrap', 'フタを開けたら閉じ込められた', 80], ['eqFull', 'どういうお笑い？', 100], ['crouchHide', '机の陰で息を殺す', 30], ['underHide', 'ベッドの下にもぐる', 10], ['underEscape', 'ベッドの下でやり過ごす', 40], ['underPeek', 'やり過ごしたはずの逆さの顔', 70], ['callAnswer', '非通知の着信に出た', 10], ['callBehind', 'いま、あなたのうしろにいるの', 30], ['callTurn', '振り返ると電話の主', 300], ['faceOne', '誰もいない場所に顔を検出', 60], ['faceMany', '大量に検出された顔', 100], ['winSneak', '窓の下をくぐり抜ける', 20], ['squat30', 'もはや筋トレ配信', 60], ['f2bed', 'めくった布団の中', 25], ['exitFlip', '逆さまに走る非常口', 45],
     ['blackoutFace', '復電の一瞬に立つ女', 50], ['micLamp', '一度だけ点いた赤ランプ', 20], ['micTurn', 'こちらを向くマイク', 60], ['glassSelf', 'ガラスに残ったカメラを構えたままの自分', 60], ['innerLock', '勝手に回るトイレの内鍵', 50],
     ['mirrorLag', '鏡の中の自分だけが遅れて動く', 70], ['drainEye', '排水口の暗がりの片目', 50], ['runner', '窓の外の人影', 60],
     ['smudge', '小窓に残る五本の指跡', 30], ['fireFace', 'レンズ前に割り込む顔', 60], ['prints', '近づいてくる濡れた足跡', 60], ['chalk', '床に落ちていたチョーク', 10], ['broom', '倒れていたほうき', 10],
@@ -10125,6 +10125,9 @@ function mannGlassAhead(x, z, fx, fz, dist, lv) {
     if (!best || t < best.d) best = { g, d: t, x: x + fx * t, z: z + fz * t }; }
   return best;
 }
+const _mq = new THREE.Quaternion(), _mq2 = new THREE.Quaternion(), _MX = new THREE.Vector3(1, 0, 0), _MY = new THREE.Vector3(0, 1, 0), _MZ = new THREE.Vector3(0, 0, 1);
+/* 2026-11-15 どちらかが階段にいる・高さが違う：突進しない */
+function mannStairs(m, p) { return !!(stairZone(p.x, p.z) || stairZone(m.pos.x, m.pos.z)) || Math.abs(m.pos.y - p.y) > 0.3; }
 const MANN = {
   ready: false, root: new THREE.Group(), mixer: null, act: {}, cur: '', bones: {}, mats: [],
   SPOT: V(-2.15, 0, -16.35), SCALE: 1.12,
@@ -10603,7 +10606,7 @@ const MANN = {
     for (const k of navPath(n0, dest)) pts.push(nodePos(k)); this.path = pts;
   },
   updEnemy(dt) {
-    const H = this.head();
+    const H = this.head(); if (!this.path) this.path = [];
     if (this.st === 'absent') {   // 電池を20%使ったら、見えていないどこかに現れて歩き出す
       if ((world.batUsed || 0) < (world.mannRun ? (world.enemyAt ?? 20) : 20) && !/[?&]mannv=spawn_now\b/.test(location.search)) return;
       const ks = WD.dests.filter(k => NAV[k]), far = ks.filter(k => { const p = nodePos(k); return Math.hypot(p.x - player.x, p.z - player.z) > 12 && !onScreen(V(p.x, (p.y || 0) + 1.2, p.z), 1.1); });   /* 2026-11-15 dests は場所の名前（座標ではない）ので座標に直す */
@@ -10640,14 +10643,16 @@ const MANN = {
         const ub = this.bones.UpperR; if (ub && this.rest.UpperR) { const a = clamp((t - 0.25) / 1.0, 0, 1); ub.quaternion.copy(this.rest.UpperR).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-a * Math.PI * 2, 0, 0.25 * Math.sin(a * Math.PI)))); }
         this.spT = (this.spT || 0) - dt; if (t < 1.25 && this.spT <= 0) { this.spT = 0.07; SND.knock(H, 0.25); }
         if (!this.screamed && t > 0.35) { this.screamed = true; (playSfx('psycho_scream', { pos: H.clone(), ref: 1.6, gain: 1.25, rate: 0.6, lowpass: 2400 }) && playSfx('psycho_scream', { pos: H.clone(), ref: 1.6, gain: 0.6, rate: 0.48, lowpass: 1200 })) || SND.scream();   /* 2026-11-15 ずっと低い、男の声に */ world.vhs = Math.max(world.vhs || 0, 0.5); }
-        if (t >= 1.7) { this.st = 'windup'; this.t = 0; this.hy = 0; this.hp = 0; this.restPose(); this.play('Run', 0.5); this.rattleStart(0.6); }
+        if (t >= 1.7) { this.hy = 0; this.hp = 0; this.windup(0); }
         break;
       }
-      case 'windup': {   // その場で走る動き。だんだん速く（1.5秒）
-        this.t += dt; this.face(this.toPlayer(), dt, 3); this.apply();
-        this.act.Run && (this.act.Run.timeScale = 0.8 + 1.9 * Math.min(1, this.t / 1.5));
-        this.stepTick(dt, 2 + 6 * Math.min(1, this.t / 1.5));
-        if (this.t >= 1.5) { this.st = 'dash'; this.t = 0; this.speed = 1.5; this.act.Run.timeScale = 2.7; WING.aim(this); }
+      case 'windup': {   // 2026-11-15 腕をぶんぶん回す → 0.5秒でスタートの構え（足を前後に開き、腕を曲げて前後に構え、前傾）→ 0.5秒止まって → 突進
+        this.t += dt; const t = this.t; this.face(this.toPlayer(), dt, t < 0.8 ? 3 : 8); this.apply();
+        if (t < 0.8) { if (!this.wuS) { this.wuS = true; playSfx('swivel_creak', { pos: H.clone(), ref: 0.8, gain: 0.6, rate: 1.25, dur: 0.8 }); this.rattleStart(0.8); } this.armSpin(t); }
+        else { if (!this.wuP) { this.wuP = true; this.stanceFrom(); playSfx('drop_air', { pos: H.clone(), ref: 0.8, gain: 0.8, rate: 1.5, dur: 0.4 }); this.step(0.9); } this.stance(clamp((t - 0.8) / 0.5, 0, 1)); }
+        if (t >= 1.8) { this.wuS = this.wuP = false; this.restPose();
+          if (mannStairs(this, player)) { this.st = 'hunt'; this.t = 0; this.rep = 0; this.play('Run', 1.8); break; }   /* 階段では突進しない（歩いて追う） */
+          this.st = 'dash'; this.t = 0; this.speed = 1.5; this.play('Run', 2.7); WING.aim(this); }
         break;
       }
       case 'dash': {   // 一直線に突進。少しだけ追尾
@@ -10658,6 +10663,7 @@ const MANN = {
         const hit = segBlocked(this.pos.x, this.pos.z, this.pos.x + fx * (mv + 0.28), this.pos.z + fz * (mv + 0.28), this.lv(), 0.1);
         const stopD = this.speed * this.speed / (2 * 22) + 0.35, wallSoon = segBlocked(this.pos.x, this.pos.z, this.pos.x + fx * stopD, this.pos.z + fz * stopD, this.lv(), 0.1);
         const lineOk = Math.abs(this.pos.y - player.y) < 1.0 && !segBlocked(this.pos.x, this.pos.z, player.x, player.z, this.lv(), 0.1);
+        if (!this.breach && (stairZone(this.pos.x + fx * stopD, this.pos.z + fz * stopD) || stairZone(this.pos.x, this.pos.z))) { this.skid(false); break; }   /* 2026-11-15 階段の手前で止まり、歩いて上る */
         if (WING.hit(this, fx, fz, mv)) break; WING.dashTick(this);   // 2026-11-15 2階のバリケードに激突
         /* 2026-11-15 窓ガラス越し：1回ぶつかった次の突進で、ガラスを割って飛び込む（続けては割れない）。割れている窓は、そのまま飛び越える */
         if (this.breach) { const B = this.breach; B.t += dt; this.pos.x += fx * mv; this.pos.z += fz * mv; const u = clamp(B.t / B.dur, 0, 1); this.jumpY = 1.1 * Math.sin(Math.PI * u); this.tilt = 0.9 * Math.sin(Math.PI * u); if (!B.hitG && u > 0.35) { B.hitG = true; this.smash(B.x, B.z); } this.apply();
@@ -10680,17 +10686,22 @@ const MANN = {
         break;
       }
       case 'hunt': {   // 通路を回り込んで追う。まっすぐ狙える所に出たら、また突進
+        /* 2026-11-15 入り組んだ所・階段では突進せず歩いて追う。近づけない（行き詰まった）と分かったら、頭以外の上半身を腕ごとぐるぐる回しながら、ゆっくり丁寧に歩く */
         this.t += dt; this.rep -= dt; if (this.rep <= 0) { this.rep = 0.6; this.walkTo(V(player.x, player.y, player.z)); }
-        let move = 3.3 * dt;
+        const dNow = Math.hypot(player.x - this.pos.x, player.z - this.pos.z) + Math.abs(player.y - this.pos.y) * 2;
+        if (!this.prog || dNow < this.prog.d - 0.6) this.prog = { d: dNow, t: 0 }; else this.prog.t += dt;
+        if (!this.creep && (this.prog.t > 2.5 || (this.skids || 0) >= 2)) this.creepOn();
+        let move = (this.creep ? 1.9 : 3.3) * dt;
         while (move > 0 && this.path.length) {
           const t = this.path[0], dx = t.x - this.pos.x, dz = t.z - this.pos.z, d = Math.hypot(dx, dz);
           if (d > 0.01) this.face(Math.atan2(dx, dz), dt, 6);
           if (d <= move) { this.pos.copy(t); move -= d; this.path.shift(); } else { const k = move / d; this.pos.x += dx * k; this.pos.z += dz * k; this.pos.y += ((t.y || 0) - this.pos.y) * k; move = 0; }
         }
-        this.apply(); this.stepTick(dt, 5.5);
-        const lineOk = Math.abs(this.pos.y - player.y) < 1.0 && !segBlocked(this.pos.x, this.pos.z, player.x, player.z, this.lv(), 0.1) && !player.hidden;
-        if (lineOk && this.t > 0.3) { this.st = 'windup'; this.t = 0.9; this.face(this.toPlayer(), 1, 50); this.play('Run', 1.2); }
-        else if (this.t > 12 || player.hidden) { this.st = 'walk'; this.bonked = false; this.rattleStop(); this.play('Walk', 1); this.walkTo(pick(WD.dests)); }
+        this.apply(); if (this.creep) { this.creepPose(dt); this.stepTick(dt, 3); } else this.stepTick(dt, 5.5);
+        const lineOk = Math.abs(this.pos.y - player.y) < 1.0 && !mannStairs(this, player) && !segBlocked(this.pos.x, this.pos.z, player.x, player.z, this.lv(), 0.1) && !player.hidden;
+        this.lineT = lineOk ? (this.lineT || 0) + dt : 0;
+        if (lineOk && this.t > 0.3 && (!this.creep || this.lineT > 0.8)) { this.creepOff(); this.face(this.toPlayer(), 1, 50); this.windup(0.3); }
+        else if ((this.t > 12 && !this.creep) || this.t > 24 || player.hidden) { this.creepOff(); this.st = 'walk'; this.bonked = false; this.rattleStop(); this.play('Walk', 1); this.walkTo(pick(WD.dests)); }
         break;
       }
       case 'stun': {   // 2026-11-14 壁に激突：のけぞって跳ね返り、首が1回転半してから、すごい勢いで追う相手を向く
@@ -10705,7 +10716,7 @@ const MANN = {
       case 'turn': {   // その場の歩きで向きを変える
         this.t += dt; this.face(this.seesPlayer(30, 3.2) ? this.toPlayer() : this.turnTo, dt, 1.6); this.apply(); this.stepTick(dt, 1.6);
         if (this.t > 1.8) {
-          if (this.seesPlayer(world.dark ? 20 : 14, 1.6)) { this.st = 'windup'; this.t = 0.6; this.play('Run', 0.5); }
+          if (this.seesPlayer(world.dark ? 20 : 14, 1.6)) this.windup(0.3);
           else { this.st = 'walk'; this.rattleStop(); this.play('Walk', 1); this.walkTo(world.dark ? nearestNode(player.x, player.z, undefined, player.y) : pick(WD.dests)); }
         }
         break;
@@ -10717,21 +10728,37 @@ const MANN = {
     try { SP.breakWindow(x, z); } catch (e) { } SP.lv = lv0;
     if (SP.broken && SP.broken.length > n0) this.broken.push(...SP.broken.slice(n0));
   },
+  /* ── 2026-11-15 突進前の構え・行き詰まった時の歩き方（骨を直接動かす） */
+  windup(t0) { this.st = 'windup'; this.t = t0; this.wuS = this.wuP = false; this.play(null); this.restPose(); },
+  bq(k, ...rs) { const b = this.bones[k], r = this.rest[k]; if (!b || !r) return; b.quaternion.copy(r); for (const [ax, a] of rs) b.quaternion.multiply(_mq.setFromAxisAngle(ax === 'x' ? _MX : ax === 'y' ? _MY : _MZ, a)); },
+  armSpin(t) { const a = t * 15; this.bq('UpperR', ['x', -a]); this.bq('UpperL', ['x', -a + Math.PI]); this.bq('ForeR', ['x', -0.5]); this.bq('ForeL', ['x', -0.5]); },
+  stanceFrom() { },
+  stance(k) { const e = k * k * (3 - 2 * k), lean = 0.3 * e;   /* x軸：＋で上が後ろ・下が前へ */
+    this.bq('Body', ['x', -lean]); this.bq('ThighL', ['x', lean + 0.6 * e]); this.bq('ShinL', ['x', -0.3 * e]); this.bq('ThighR', ['x', lean - 0.55 * e]); this.bq('ShinR', ['x', -0.6 * e]);
+    this.bq('UpperR', ['x', lean + 0.9 * e]); this.bq('ForeR', ['x', 1.4 * e]); this.bq('UpperL', ['x', lean - 0.75 * e]); this.bq('ForeL', ['x', 1.2 * e]); this.bq('Head', ['x', lean * 0.8]); },
+  creepOn() { this.creep = true; this.spinA = 0; this.crT = 0; this.cph = 0; this.play(null); this.restPose(); if (!this.rp) { this.rp = {}; for (const k of ['ThighL', 'ThighR', 'Head']) if (this.bones[k]) this.rp[k] = this.bones[k].position.clone(); } if (TEST || DEV) console.log('MANN creep'); },
+  creepOff() { if (!this.creep) return; this.creep = false; this.skids = 0; this.prog = null; this.restPose(); for (const k in this.rp || {}) this.bones[k].position.copy(this.rp[k]); this.play('Run', 1.8); },
+  creepPose(dt) {
+    this.spinA += dt * 8; this.cph += dt * 5; const a = this.spinA, s = Math.sin(this.cph), qn = _mq2.setFromAxisAngle(_MY, -a);
+    this.bq('Body', ['y', a]); this.bq('UpperR', ['z', -0.7]); this.bq('UpperL', ['z', 0.7]);
+    for (const [k, sw] of [['ThighL', 0.4 * s], ['ThighR', -0.4 * s], ['Head', 0]]) { const b = this.bones[k]; if (!b || !this.rest[k]) continue; b.quaternion.copy(qn).multiply(this.rest[k]); if (sw) b.quaternion.multiply(_mq.setFromAxisAngle(_MX, sw)); if (this.rp && this.rp[k]) b.position.copy(this.rp[k]).applyQuaternion(qn); }
+    this.crT -= dt; if (this.crT <= 0) { this.crT = 1.1; playSfx('swivel_creak', { pos: this.head(), ref: 0.8, gain: 0.55, rate: 1.3, dur: 1.0 }); }
+  },
   bonk() { if (typeof WING !== 'undefined') WING.dashEnd(this);
     const p = V(this.pos.x + Math.sin(this.heading) * 0.25, this.floorY() + 1.1, this.pos.z + Math.cos(this.heading) * 0.25);
-    this.clatter(p, 1.6); SND.thud(p, 2.6); SND.knock(p, 1.8); setTimeout(() => SND.knock(p, 1.0), 70);   // 2026-11-14 激しい衝突音
-    playSfx('locker_close', { pos: p, ref: 1.6, gain: 1.4, rate: 0.72 }); playSfx('chair_pull', { pos: p, ref: 1.4, gain: 0.5, rate: 0.6, dur: 0.35 });
+    /* 2026-11-15 「ドゥン」という低く重い衝突音（録音した音を低くして重ねる。電子音は使わない） */
+    playSfx('door_pound', { pos: p, ref: 1.6, gain: 1.6, rate: 0.5, lowpass: 520, dur: 0.9 }); playSfx('locker_close', { pos: p, ref: 1.6, gain: 1.2, rate: 0.42, lowpass: 800 }); playSfx('metal_rattle', { pos: p, ref: 1.1, gain: 0.3, dur: 0.35, lowpass: 1500, rate: 0.7 });
     const dd = camera.position.distanceTo(p); if (dd < 9) { world.vhs = Math.max(world.vhs || 0, 0.75 - dd * 0.05); noiseHit(0.35); }
     this.dropOrgan(); this.st = 'stun'; this.t = 0; this.play('Walk', 0); this.speed = 0;
   },
-  skid(hard) { if (typeof WING !== 'undefined') WING.dashEnd(this);   // キュッ（上履きが床で鳴る）
+  skid(hard) { if (typeof WING !== 'undefined') WING.dashEnd(this); this.skids = (this.skids || 0) + 1;   // キュッ（上履きが床で鳴る）
     this.st = 'skid'; this.t = 0; if (hard) this.speed = 0;
     const p = V(this.pos.x, this.floorY() + 0.05, this.pos.z); SND.squeak(p, 1.2); setTimeout(() => SND.squeak(p, 0.7), 110);
   },
-  spot() { this.st = 'spot'; this.bonked = false; this.t = 0; this.screamed = false; this.spT = 0; this.play(null); this.restPose(); this.rattleStart(0.7); SND.creak(this.head(), 1.6, 0.6); playSfx('swivel_creak', { pos: this.head(), ref: 0.8, gain: 0.6, rate: 1.7, dur: 1.2 }); },
+  spot() { this.st = 'spot'; this.bonked = false; this.skids = 0; this.prog = null; this.t = 0; this.screamed = false; this.spT = 0; this.play(null); this.restPose(); this.rattleStart(0.7); SND.creak(this.head(), 1.6, 0.6); playSfx('swivel_creak', { pos: this.head(), ref: 0.8, gain: 0.6, rate: 1.7, dur: 1.2 }); },
   // ── 捕まった：両手でスマホを押さえ、顔を近づけてカクカク動きながら叫ぶ。映像はそこで途切れる
   capture() {
-    if (this.cap || world.state !== 'play') return; scareZoom1();
+    if (this.cap || world.state !== 'play') return; this.creepOff(); scareZoom1();
     if (world.selfie) SELF.set(false);
     if (DIR.active) DIR.end(DIR.active);
     if (HIDE.lk) { const lk = HIDE.lk; lk.hinge.rotation.y = 1.5; HIDE.lk = null; player.hidden = false; lockerInside.visible = false; }
@@ -12282,7 +12309,7 @@ const UNDER = {
 const CALL = {
   plan: false, done: false, ph: '', t: 0, qT: 0, ring: null, noise: null, tk: 0, card: null, lastSec: -1,
   reset() { this.stopAll(); this.plan = !world.phanRun && (chance(0.3) || /[?&]call/.test(location.search)); this.done = false; this.ph = ''; this.qT = 0; this.t0 = world.t; this.look = null; this.hide(); },
-  busy() { return this.ph === 'ring' || this.ph === 'talk' || this.ph === 'end' || this.ph === 'scare'; },
+  busy() { return this.ph === 'ring' || this.ph === 'talk' || this.ph === 'end' || this.ph === 'scare' || this.ph === 'whip'; },
   can() {
     return world.state === 'play' && typeof AMB !== 'undefined' && AMB.quiet() && !world.selfie && !(typeof SP !== 'undefined' && SP.st === 'chase') && !CROUCH.chasing() && !UNDER.on && !SET.open && !INV.open && !world.capture && !REVIVE.on && world.outro === 0;
   },
@@ -12304,6 +12331,7 @@ const CALL = {
       if (this.t >= this.endAt) { this.busyTone(); this.ph = 'end'; this.t = 0; }
     } else if (this.ph === 'end') { this.draw(true); if (this.t > 1.6) { this.hide(); this.ph = 'after'; this.t = 0; this.look = { b: player.yaw + Math.PI, st: 0, t: 0 }; this.scare2 = chance(0.5) || /[?&]call2/.test(location.search); } }
     else if (this.ph === 'after') this.updLook(dt);
+    else if (this.ph === 'whip') this.updWhip(dt);
     else if (this.ph === 'scare') this.updScare(dt);
   },
   // ── 着信
@@ -12356,16 +12384,28 @@ const CALL = {
     CHATLOG.add('call', { p: 'hang' });
   },
   // ── 振り返る
+  /* 2026-11-15 振り返ると電話の主：フラグが立った回は、振り返る動きに合わせて同じ向きにカメラをさっと振り、その先にいる */
   updLook(dt) {
-    const L = this.look; if (!L) { this.ph = ''; return; } L.t += dt; const d = Math.abs(Math.atan2(Math.sin(player.yaw - L.b), Math.cos(player.yaw - L.b)));
-    if (L.st === 0) { if (d < 0.6) { L.st = 1; L.t = 0; CHATLOG.add('call', { p: 'none' }); } else if (L.t > 10) this.ph = ''; }   // 1回目：誰もいない
-    else if (L.st === 1) { if (!this.scare2) { if (L.t > 3) this.ph = ''; } else if (d > 1.6) { L.st = 2; L.t = 0; } else if (L.t > 15) this.ph = ''; }
-    else if (L.st === 2) { if (d < 0.6 && this.can2()) this.startScare(); else if (L.t > 15) this.ph = ''; }
+    const L = this.look; if (!L) { this.ph = ''; return; } L.t += dt;
+    const dy = Math.atan2(Math.sin(player.yaw - (L.py ?? player.yaw)), Math.cos(player.yaw - (L.py ?? player.yaw))); L.py = player.yaw;
+    const toB = Math.atan2(Math.sin(L.b - player.yaw), Math.cos(L.b - player.yaw)), d = Math.abs(toB);
+    if (dt > 0 && Math.abs(dy) / dt > 0.5 && Math.sign(dy) === Math.sign(toB)) { L.dir = Math.sign(dy); L.mt = 0.25; } else L.mt = Math.max(0, (L.mt || 0) - dt);
+    if (L.st === 0) {
+      if (this.scare2 && L.mt > 0 && d < 1.3 && this.can2()) { this.startWhip(L.dir); return; }   /* 振り返っている途中で */
+      if (d < 0.6) { L.st = 1; L.t = 0; CHATLOG.add('call', { p: 'none' }); } else if (L.t > 12) this.ph = '';
+    }
+    else if (L.st === 1) { if (L.t > 3) this.ph = ''; }   // 誰もいない
+  },
+  startWhip(dir) { this.ph = 'whip'; this.t = 0; this.wh = { dir, t: 0, dur: 0.24, amt: 0.85 }; world.vhs = Math.max(world.vhs || 0, 0.6); playSfx('drop_air', { gain: 0.5, rate: 1.6, dur: 0.3 }); },
+  updWhip(dt) {
+    const W = this.wh; W.t += dt; const k0 = Math.min(1, (W.t - dt) / W.dur), k1 = Math.min(1, W.t / W.dur), ez = k => 1 - (1 - k) * (1 - k);
+    look.yaw += W.dir * W.amt * (ez(k1) - ez(Math.max(0, k0))); world.vhs = Math.max(world.vhs || 0, 0.7);
+    if (W.t >= W.dur) { player.yaw = look.yaw + (gyro.on && gyro.got ? gyro.acc - gyro.ref : 0); camera.rotation.y = player.yaw; this.startScare(1.5); }
   },
   can2() { return world.state === 'play' && !CAP.on && !world.capture && CH.state === 'off' && !player.hidden && !world.selfie && !DIR.active; },
-  startScare() {
+  startScare(dist = 3.6) {
     this.ph = 'scare'; this.t = 0; this.saw = false; borrowWoman(); woman.setHollow(true, 'mouth'); woman.c.pose = 'stand';
-    const f = camFwd(); f.y = 0; f.normalize(); this.dir = f; this.p0 = camera.position.clone().addScaledVector(f, 3.6); this.p0.y = player.camY + CONFIG.eyeHeight - 0.02;
+    const f = V(-Math.sin(player.yaw), 0, -Math.cos(player.yaw)); this.dir = f; this.p0 = camera.position.clone().addScaledVector(f, dist); this.p0.y = player.camY + CONFIG.eyeHeight - 0.02;
     placeHeadAt(this.p0); world.vhs = Math.max(world.vhs || 0, 0.5);
     this.st = playSfx('static_cam', { gain: 0.55, offset: Math.random() * 1.5 }) || playSfx('static_raw', { gain: 0.5 }); CHATLOG.add('call', { p: 'scare' });
   },
@@ -12374,7 +12414,7 @@ const CALL = {
     const p = this.p0.clone().lerp(camera.position.clone().addScaledVector(this.dir, 0.42).setY(this.p0.y), step); placeHeadAt(p);
     const c = woman.c; if (Math.floor(this.t / 0.07) !== this.jt) { this.jt = Math.floor(this.t / 0.07); c.headRoll = rnd(-0.45, 0.45); c.headYaw = rnd(-0.3, 0.3); c.headPitch = rnd(-0.25, 0.25); }
     if (seen(headWorld(woman, V()), { maxD: 4 })) this.saw = true;
-    if (this.t > 1.0) { if (this.saw && rec.active) award('callTurn', '振り返ったら、いた', 300); this.endScare(); world.lastEventEnd = world.t; }
+    if (this.t > 1.0) { if (this.saw && rec.active) award('callTurn', '振り返ると電話の主', 300); this.endScare(); world.lastEventEnd = world.t; }
   },
   endScare() { noiseHit(1); world.vhs = Math.max(world.vhs || 0, 0.8); try { if (this.st && this.st.s) this.st.s.stop(); } catch (e) { } this.st = null; woman.setHollow(false); releaseWoman(); this.ph = ''; },
   // ── 画面（キャンバスに描く・録画に入る）
@@ -12384,6 +12424,7 @@ const CALL = {
       this.edge = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({ transparent: true, depthTest: false, depthWrite: false, uniforms: { a: { value: 0 } }, vertexShader: 'varying vec2 v; void main(){ v=uv; gl_Position=vec4(position.xy,0.,1.); }',
         fragmentShader: 'varying vec2 v; uniform float a; void main(){ float d=min(min(v.x,1.-v.x),min(v.y,1.-v.y)); float e=smoothstep(0.06,0.,d); gl_FragColor=vec4(0.75,0.95,0.8,e*a); }' })); this.edge.renderOrder = -1; this.ov.add(this.edge);
       const el = document.createElement('div'); el.id = 'callHit'; el.innerHTML = '<button type="button" id="callNo" aria-label="拒否"></button><button type="button" id="callYes" aria-label="応答"></button><button type="button" id="callEnd" aria-label="終話"></button>'; document.body.appendChild(el); this.el = el;
+      this.dc = document.createElement('canvas'); this.dc.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none'; el.prepend(this.dc);
       for (const t of ['pointerdown', 'touchstart']) el.addEventListener(t, e => e.stopPropagation());
       el.querySelector('#callNo').addEventListener('click', e => { e.stopPropagation(); this.reject(); }); el.querySelector('#callYes').addEventListener('click', e => { e.stopPropagation(); this.answer(); }); el.querySelector('#callEnd').addEventListener('click', e => { e.stopPropagation(); this.hangup(); }); }
     this.vis = true; this.el.classList.add('show');
@@ -12392,7 +12433,9 @@ const CALL = {
   draw(talk) {
     if (!this.cv) return; const W0 = 360, H0 = Math.round(360 * H / W) || 640; const key = (talk ? 't' : 'r') + (talk ? Math.floor(this.t) : 0) + this.ph; if (key === this.dk && this.cv.height === H0) return; this.dk = key;
     if (this.el) this.el.classList.toggle('talk', !!talk);
-    const c = this.cv; c.width = W0; c.height = H0; const g = c.getContext('2d'); g.clearRect(0, 0, W0, H0);
+    /* 2026-11-15 画面に見せる分は、スマホの画面と同じ細かさのキャンバスにも描く（録画に入る分はこれまでどおり） */
+    const sc = this.dc ? Math.min(4, Math.max(1, (innerWidth * (devicePixelRatio || 1)) / W0)) : 0;
+    for (const [c, k] of [[this.cv, 1], [this.dc, sc]]) { if (!c || !k) continue; c.width = Math.round(W0 * k); c.height = Math.round(H0 * k); const g = c.getContext('2d'); g.setTransform(k, 0, 0, k, 0, 0); g.clearRect(0, 0, W0, H0);
     const x0 = W0 * 0.06, y0 = H0 * 0.135, w = W0 * 0.88, h = W0 * 0.46, r = 22;   // 録画時間・残容量の下
     g.fillStyle = 'rgba(18,20,24,0.86)'; g.beginPath(); g.roundRect ? g.roundRect(x0, y0, w, h, r) : g.rect(x0, y0, w, h); g.fill(); g.strokeStyle = 'rgba(255,255,255,.12)'; g.lineWidth = 1.5; g.stroke();
     g.textAlign = 'center'; g.fillStyle = '#9aa0a8'; g.font = '600 13px -apple-system,"Hiragino Sans",sans-serif';
@@ -12405,6 +12448,8 @@ const CALL = {
       g.beginPath(); g.ellipse(-rr2 * 0.32, -rr2 * 0.1, rr2 * 0.17, rr2 * 0.1, -0.6, 0, Math.PI * 2); g.ellipse(rr2 * 0.32, -rr2 * 0.1, rr2 * 0.17, rr2 * 0.1, 0.6, 0, Math.PI * 2); g.fill(); g.lineWidth = rr2 * 0.13; g.strokeStyle = '#fff'; g.beginPath(); g.arc(0, rr2 * 0.25, rr2 * 0.42, 1.15 * Math.PI, 1.85 * Math.PI); g.stroke(); g.restore(); };
     if (this.ph === 'ring') { btn(W0 * 0.3, '#d8382f', 'no'); btn(W0 * 0.7, '#2fae54', 'yes'); g.fillStyle = '#cfcfcf'; g.font = '11px sans-serif'; g.fillText(en ? 'Decline' : '拒否', W0 * 0.3, by + br + 15); g.fillText(en ? 'Answer' : '応答', W0 * 0.7, by + br + 15); }
     else { btn(W0 / 2, this.ph === 'end' ? '#555' : '#d8382f', 'no', 19); g.fillStyle = '#cfcfcf'; g.font = '11px sans-serif'; g.fillText(en ? 'End' : '終話', W0 / 2, by + 34); }
+    }
+    const by = H0 * 0.135 + W0 * 0.46 - 46, br = 26;
     this.tex.needsUpdate = true;
     // 透明のボタンを、描いた丸に重ねる（割合で）
     if (this.el) { const pos = (id, cx, rr2) => { const b = this.el.querySelector(id); b.style.left = ((cx - rr2 - 6) / W0 * 100) + '%'; b.style.top = ((by - rr2 - 6) / H0 * 100) + '%'; b.style.width = ((rr2 + 6) * 2 / W0 * 100) + '%'; b.style.height = ((rr2 + 6) * 2 / H0 * 100) + '%'; };
@@ -14572,7 +14617,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.23';
+const VERSION = '0.15.24';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16696,43 +16741,7 @@ const SMASH = {
 };
 
 /* ── 霧の日 */
-const FOG = {
-  planes: [], built: false,
-  build() {
-    if (this.built) return; this.built = true;
-    const c = document.createElement('canvas'); c.width = 64; c.height = 64; const x = c.getContext('2d'); const gr = x.createRadialGradient(32, 32, 4, 32, 32, 44); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(220,224,230,0.85)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64);
-    const tx = new THREE.CanvasTexture(c);
-    const box = new THREE.Box3(), cen = V(), sz = V();
-    for (const g of glassPanes) {
-      g.updateMatrixWorld(true); box.setFromObject(g); box.getCenter(cen); box.getSize(sz); if (sz.y < 0.3) continue;
-      const nx = sz.x < sz.z, nrm = nx ? V(1, 0, 0) : V(0, 0, 1), w = nx ? sz.z : sz.x;
-      let out = null; for (const s of [1, -1]) { const p = cen.clone().addScaledVector(nrm, s * 0.7); const zn = zoneOf(p.x, p.z, p.y), zb = zoneOf(cen.x - nrm.x * s * 0.7, cen.z - nrm.z * s * 0.7, cen.y); if (/^X/.test(zn) && !/^X/.test(zb)) out = nrm.clone().multiplyScalar(s); }
-      if (!out) continue;
-      for (const [dd, op] of [[0.18, 0.5], [0.6, 0.6], [1.1, 0.9]]) {
-        const m = new THREE.Mesh(new THREE.PlaneGeometry(w * 1.4 + dd, sz.y * 1.4 + dd), new THREE.MeshBasicMaterial({ color: 0x6a7078, map: tx, transparent: true, opacity: op, depthWrite: false, fog: false }));
-        m.position.copy(cen).addScaledVector(out, dd); m.lookAt(cen); m.userData.hw = w / 2; m.userData.hh = sz.y / 2; m.visible = false; m.renderOrder = 1; scene.add(m); this.planes.push(m);
-      }
-    }
-  },
-  reset() {
-    world.fog = HF('fog') || chance(0.15); this.build(); for (const m of this.planes) m.visible = world.fog;
-    this.siren = world.fog ? rnd(25, 70) : -1; this.winT = 0; if (TEST || DEV) console.log('FOG', world.fog, this.planes.length);
-  },
-  sirenPlay() {   // 遠くで、かすかに1回だけ
-    if (!A.ctx) return; const t = A.ctx.currentTime, o = A.ctx.createOscillator(), g = A.ctx.createGain(), lp = A.ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900;
-    o.type = 'sawtooth'; o.frequency.setValueAtTime(320, t); for (let i = 0; i < 4; i++) { o.frequency.linearRampToValueAtTime(620, t + 1.2 + i * 2.4); o.frequency.linearRampToValueAtTime(320, t + 2.4 + i * 2.4); }
-    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.022, t + 2); g.gain.setValueAtTime(0.022, t + 7.5); g.gain.linearRampToValueAtTime(0, t + 10);
-    o.connect(lp); lp.connect(g); g.connect(A.verb || A.bus); o.start(t); o.stop(t + 10.2);
-  },
-  update(dt) {
-    if (!world.fog || world.state !== 'play') return;
-    if (this.siren > 0 && world.t > this.siren) { this.siren = -1; this.sirenPlay(); }
-    if (awarded.has('fogHill') || !rec.active) { this.winT = 0; return; }
-    const cp = camera.position; let ok = false;
-    for (const m of this.planes) { if (m.position.y < cp.y - 2 || m.position.y > cp.y + 2) continue; const n = V(0, 0, 1).applyQuaternion(m.quaternion); const d = cp.clone().sub(m.position).dot(n);   /* 霧の板は建物の内側を向いている */ if (d > 0 && d < 1.5 + 1.1 && camFwd().dot(n) < -0.6) { const q = cp.clone().addScaledVector(n, -d).sub(m.position); if (Math.abs(q.y) < m.userData.hh && Math.hypot(q.x, q.z) < m.userData.hw) { ok = true; break; } }   /* 窓の正面に立って、外を見ている */ }
-    this.winT = ok ? this.winT + dt : 0; if (this.winT >= 3) award('fogHill', '霧に沈んだ静かな丘', 40);
-  },
-};
+/* 2026-11-15 霧の日（FOG）はなしにした */
 
 /* ── 振り返ったら戸棚が全部開いていた */
 const CAB = {
@@ -16847,14 +16856,13 @@ const CURTF = {
 };
 
 const HOMAGE = {
-  reset() { SMASH.reset(); FOG.reset(); CAB.reset(); FCG.reset(); CURTF.reset(); },
-  update(dt) { FOG.update(dt); CAB.update(dt); FCG.update(dt); CURTF.update(dt); },
+  reset() { SMASH.reset(); CAB.reset(); FCG.reset(); CURTF.reset(); },
+  update(dt) { CAB.update(dt); FCG.update(dt); CURTF.update(dt); },
 };
-Object.assign(AW_TABLE, { hereSakasa: ['S', 150], fogHill: ['B', 40], cabOpen: ['A', 70], fixGirl: ['A', 80], curtFeet: ['A', 60], gekouPA: ['B', 40] });
-COL.LIST.push(['hereSakasa', 'ヒアーズ・サカサ！', 150], ['fogHill', '霧に沈んだ静かな丘', 40], ['cabOpen', '第六感が告げた、開いた戸棚', 70], ['fixGirl', '部屋の隅に立つ子（定点カメラにだけ）', 80], ['curtFeet', 'カーテンの下の足', 60], ['gekouPA', '下校を告げる放送', 40]);
+Object.assign(AW_TABLE, { hereSakasa: ['S', 150], cabOpen: ['A', 70], fixGirl: ['A', 80], curtFeet: ['A', 60], gekouPA: ['B', 40] });
+COL.LIST.push(['hereSakasa', 'ヒアーズ・サカサ！', 150], ['cabOpen', '第六感が告げた、開いた戸棚', 70], ['fixGirl', '部屋の隅に立つ子（定点カメラにだけ）', 80], ['curtFeet', 'カーテンの下の足', 60], ['gekouPA', '下校を告げる放送', 40]);
 Object.assign(CHIP_DESC, {
   hereSakasa: ['閉めた引き戸を叩き割って、裂け目から逆さの顔が突き出した。', 'She smashed through the closed door and pushed her upside-down face through the crack.'],
-  fogHill: ['霧の日。窓の外は、何も見えないほど白かった。', 'A foggy day. Outside the window, nothing but white.'],
   cabOpen: ['目を離した数秒の間に、戸棚と引き出しが全部開いていた。', 'In the few seconds you looked away, every cabinet door and drawer had opened.'],
   fixGirl: ['定点カメラの映像の中だけ、部屋の隅に女の子が立っていた。', 'Only on the fixed camera: a girl standing in the corner of the room.'],
   curtFeet: ['膨らんだカーテンの下から、上履きの足がのぞいていた。', 'Feet in school slippers showed under a bulging curtain.'],
@@ -17716,7 +17724,7 @@ ENDCARD.ORD.PH = -1;
 CHAT_CFG.coef.PH = 1.2;
 setInterval(() => { if (PHAN.el && world.state === 'play') PHAN.panel(); }, 1000);
 PHAN.load(); PHAN.panel();
-if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, WD, CH, SP, MANN, NAV, RED: typeof RED !== 'undefined' ? RED : null, postMat, CHAT, RES_CHAT, COL, ENDCARD, makeResultImage, KOK, MYNAME, awarded, PERM, RAP, WING, SCIRM, ARTRM, PMASK, DUCT, BCAST, NEWWING, CROUCH, MIC, MICLV, mic, POSTER, HOMAGE, SMASH, FOG, CAB, FCG, CURTF, MINOR, DOORS2, GEAR, curtains, TOUR, NEWEV, CORR, MAZE, RANDFLY, NBOT, MSTAND, LIBFALL, LIBGIRL, NAVX, NAV, NAV_ADJ, wdScreamLong, screamCut, MOZ, PIANO, F2, SELF, avatar, selfCam, STAIRS, groundAt, escapeRun: escape, evid: () => evidence, recS: () => rec, world });
+if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, WD, CH, SP, MANN, NAV, RED: typeof RED !== 'undefined' ? RED : null, postMat, CHAT, RES_CHAT, COL, ENDCARD, makeResultImage, KOK, MYNAME, awarded, PERM, RAP, WING, SCIRM, ARTRM, PMASK, DUCT, BCAST, NEWWING, CROUCH, MIC, MICLV, mic, POSTER, HOMAGE, SMASH, CAB, FCG, CURTF, MINOR, DOORS2, GEAR, curtains, TOUR, NEWEV, CORR, MAZE, RANDFLY, NBOT, MSTAND, LIBFALL, LIBGIRL, NAVX, NAV, NAV_ADJ, wdScreamLong, screamCut, MOZ, PIANO, F2, SELF, avatar, selfCam, STAIRS, groundAt, escapeRun: escape, evid: () => evidence, recS: () => rec, world });
 
 /* =========================================================
    2026-11-14 データをリセット（スタート画面・設定の「撮れ高コレクション」の直下）
