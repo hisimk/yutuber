@@ -2300,9 +2300,17 @@ const FURN = {
           i++;
         }
       }); }),
-    time: tx(128, 160, (g, w, h) => { g.fillStyle = '#efeadb'; g.fillRect(0, 0, w, h); g.fillStyle = '#222'; g.font = 'bold 13px sans-serif'; g.textAlign = 'center'; g.fillText('じかんわり', w / 2, 16); const D = ['月', '火', '水', '木', '金'], S = ['こくご', 'さんすう', 'りか', 'しゃかい', 'おんがく', 'たいいく', 'ずこう', 'どうとく'];
-      g.strokeStyle = '#555'; for (let i = 0; i <= 5; i++) { g.beginPath(); g.moveTo(8 + i * 22.4, 24); g.lineTo(8 + i * 22.4, h - 8); g.stroke(); } for (let j = 0; j <= 6; j++) { g.beginPath(); g.moveTo(8, 24 + j * 21); g.lineTo(w - 8, 24 + j * 21); g.stroke(); }
-      g.font = '9px sans-serif'; for (let i = 0; i < 5; i++) { g.fillText(D[i], 19 + i * 22.4, 37); for (let j = 1; j < 6; j++) g.fillText(S[Math.floor(rr() * S.length)].slice(0, 3), 19 + i * 22.4, 37 + j * 21); } }),
+    time: tx(256, 320, (g, w, h) => {   // 2026-11-15 時間割：全部のマスを「どうとく」に。文字はマスに収まる大きさに自動で合わせる
+      g.fillStyle = '#efeadb'; g.fillRect(0, 0, w, h); g.fillStyle = '#222'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = 'bold 26px sans-serif'; g.fillText('じかんわり', w / 2, 24);
+      const D = ['月', '火', '水', '木', '金'], x0 = 14, nw = 24, cw = (w - 14 - x0 - nw) / 5, y0 = 46, rh = (h - 14 - y0) / 6;
+      g.strokeStyle = '#555'; g.lineWidth = 1.5; g.strokeRect(x0, y0, w - 14 - x0, h - 14 - y0);
+      for (let i = 0; i <= 5; i++) { const x = x0 + nw + i * cw; g.beginPath(); g.moveTo(x, y0); g.lineTo(x, h - 14); g.stroke(); }
+      for (let j = 1; j < 6; j++) { const y = y0 + j * rh; g.beginPath(); g.moveTo(x0, y); g.lineTo(w - 14, y); g.stroke(); }
+      const fit = (t, mw, mh, wt) => { let px = mh; g.font = `${wt} ${px}px sans-serif`; const tw = g.measureText(t).width; if (tw > mw) px = Math.floor(px * mw / tw); g.font = `${wt} ${px}px sans-serif`; return px; };
+      fit('月', cw, rh * 0.5, 'bold'); for (let i = 0; i < 5; i++) g.fillText(D[i], x0 + nw + (i + 0.5) * cw, y0 + rh / 2);
+      for (let j = 1; j < 6; j++) { fit('5', nw - 4, rh * 0.45, 'bold'); g.fillText(String(j), x0 + nw / 2, y0 + (j + 0.5) * rh); }   // 時限の番号
+      const px = fit('どう', cw - 6, rh * 0.4, 'normal'); for (let i = 0; i < 5; i++) for (let j = 1; j < 6; j++) { const cx = x0 + nw + (i + 0.5) * cw, cy = y0 + (j + 0.5) * rh; g.fillText('どう', cx, cy - px * 0.55); g.fillText('とく', cx, cy + px * 0.55); }   // マスが細いので2行
+    }),
     duty: tx(96, 48, (g, w, h) => { g.fillStyle = '#e8d9a8'; g.fillRect(0, 0, w, h); g.fillStyle = '#222'; g.font = 'bold 15px sans-serif'; g.textAlign = 'center'; g.fillText('にっちょく', w / 2, 18); g.font = '12px sans-serif'; g.fillText('　　　　', w / 2, 36); g.fillStyle = 'rgba(80,60,30,.35)'; g.fillRect(14, 28, w - 28, 12); }),
     run: tx(128, 176, (g, w, h) => { g.fillStyle = '#e6e0cf'; g.fillRect(0, 0, w, h); g.fillStyle = '#b02020'; g.font = 'bold 22px sans-serif'; g.textAlign = 'center'; g.fillText('ろうかは', w / 2, 46); g.fillText('はしらない', w / 2, 76); g.fillStyle = '#333'; g.beginPath(); g.arc(w / 2, 122, 26, 0, Math.PI * 2); g.lineWidth = 4; g.strokeStyle = '#b02020'; g.stroke(); g.font = '12px sans-serif'; g.fillStyle = '#333'; g.fillText('せいかつ委員会', w / 2, 166); }),
     tidy: tx(128, 176, (g, w, h) => { g.fillStyle = '#dfe6d6'; g.fillRect(0, 0, w, h); g.fillStyle = '#245a2a'; g.font = 'bold 20px sans-serif'; g.textAlign = 'center'; g.fillText('くつを', w / 2, 50); g.fillText('そろえよう', w / 2, 80); g.fillStyle = '#5a3a20'; g.fillRect(36, 110, 22, 30); g.fillRect(70, 110, 22, 30); }),
@@ -2400,7 +2408,7 @@ const FURN = {
     // 掃除用具入れ（1階だけ。2階は隅のロッカーがある）
     if (!lv) { const x = 1.98, z = bz - s * 0.26, g = F.g('cleanLocker', lv, x, z, s > 0 ? Math.PI : 0); const q = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.8, 0.45), [FM.grey, FM.grey, FM.grey, FM.grey, ML.locker, FM.grey]); q.position.y = 0.9; g.add(q); F.meshes++; F.col(lv, x - 0.26, x + 0.26, z - 0.24, z + 0.24); F.occ(q); }
     // 掲示物：時間割と日直の札（前の壁・黒板の左）、習字と絵（2階は後ろの壁、1階は前の壁の右）
-    { const g = F.g('posters', lv, 0, 0, 0); F.wallZ(g, 0.5, 0.62, ML.time, 3.4, 1.65, fz, s); F.wallZ(g, 0.3, 0.15, ML.duty, 4.5, 1.25, fz, s);
+    { const g = F.g('posters', lv, 0, 0, 0); F.wallZ(g, 0.56, 0.7, ML.time, 3.4, 1.62, fz, s); F.wallZ(g, 0.3, 0.15, ML.duty, 4.5, 1.25, fz, s);
       const sho = [0, 1, 2, 3, 4].map(() => shoT[Math.floor(Math.random() * shoT.length)]);
       if (lv) { for (let i = 0; i < 5; i++) { const m = L({ map: sho[i] }); const p = F.wallZ(g, 0.26, 0.64, m, 3.2 + i * 0.36 + jit(0.03), 1.72 + jit(0.03), R.b, -s); p.rotation.z = jit(0.04); } for (let i = 0; i < 3; i++) { const p = F.wallZ(g, 0.42, 0.31, L({ map: drawT[i] }), 6.0 + i * 0.52, 1.66 + jit(0.04), R.b, -s); p.rotation.z = jit(0.05); } }
       else { for (let i = 0; i < 4; i++) { const p = F.wallZ(g, 0.26, 0.64, L({ map: sho[i] }), 10.25 + i * 0.36 + jit(0.03), 1.72, fz, s); p.rotation.z = jit(0.04); } for (let i = 0; i < 2; i++) F.wallZ(g, 0.42, 0.31, L({ map: drawT[i] }), 10.6 + i * 0.6, 1.15 + jit(0.03), fz, s); } }
@@ -12407,7 +12415,7 @@ function tick(now) {
   if (Math.abs(zoom - prevZoom) > 0.0015) focus.lastZoomMove = world.t; prevZoom = zoom;
   camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(CONFIG.fov1x / 2)) / zoom)); camera.updateProjectionMatrix();
   // 視点
-  if (KB.down('lookL')) look.yaw += 1.8 * dt; if (KB.down('lookR')) look.yaw -= 1.8 * dt; PCLOOK.tick(dt); FIXCAM.tick(dt); LID.tick(dt); UNDER.update(dt); KOK.update(dt); CALL.update(dt); FDET.update(dt); CROUCH.tick(dt);
+  if (KB.down('lookL')) look.yaw += 1.8 * dt; if (KB.down('lookR')) look.yaw -= 1.8 * dt; PCLOOK.tick(dt); FIXCAM.tick(dt); LID.tick(dt); UNDER.update(dt); KOK.update(dt); MYNAME.update(dt); CALL.update(dt); FDET.update(dt); CROUCH.tick(dt);
   if (KB.down('lookU')) look.pitch = clamp(look.pitch + 1.2 * dt, -1.54, 1.54); if (KB.down('lookD')) look.pitch = clamp(look.pitch - 1.2 * dt, -1.54, 1.54);
   if (gyro.on && gyro.got) { player.yaw = look.yaw + (gyro.acc - gyro.ref); player.pitch = clamp(gyro.pitch + look.pitch, -1.55, 1.55); }
   else { player.yaw = look.yaw; player.pitch = look.pitch; }
@@ -14086,7 +14094,7 @@ $('#goBtn').addEventListener('click', () => {
   INTRO.run(beginPlay);
 });
 function beginPlay() {
-  $('#hud').classList.remove('off'); PHAN.place(); KOK.reset();   // 2026-11-15 化け物の周だけ、お札5枚
+  $('#hud').classList.remove('off'); PHAN.place(); KOK.reset(); MYNAME.reset();   // 2026-11-15 化け物の周だけ、お札5枚
   world.state = 'play';
   postMat.uniforms.black.value = 1; postMat.uniforms.grain.value = 1;
   if (DEV) $('#dev').classList.add('show'), $('#devInfo').style.display = 'block';
@@ -14397,7 +14405,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.17';
+const VERSION = '0.15.18';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -15922,6 +15930,129 @@ COL.LIST.push(['kokMove', '十円玉が動いた', 40], ['kokName', '十円玉�
 Object.assign(CHIP_DESC, { kokMove: ['こっくりさんの十円玉が、ひとりでに紙の上をすべった。', "The coin slid across the kokkuri-san sheet on its own."], kokName: ['十円玉が、自分の呼び名を一文字ずつなぞった。', 'The coin spelled out your name, one letter at a time.'], kokDrop: ['「か・え・れ」のあと、十円玉は机から落ちた。', 'After spelling "LEAVE", the coin fell off the desk.'] });
 Object.assign(EN, { '十円玉が動いた': 'The coin moved', '十円玉が自分の名前をなぞった': 'The coin spelled your name', '机から落ちた十円玉': 'The coin that fell off the desk', 'こっくりさんを始める': 'Start kokkuri-san', 'やめる': 'Stop', 'こっくりさんをやめる': 'Stop kokkuri-san' });
 /* =========================================================
+   2026-11-15 プレイヤーの名前を使った撮れ高（周の最初に抽選。最初からそこにある。それぞれ約40%の周）
+   ・下駄箱に自分の名前（B40）：名前の札と、中に濡れた上履き
+   ・出席簿の自分の名前（A60）：1階の教室の教卓の上。名前だけ赤い線で消されている
+   ・黒板の相合傘（C25）：教室の正面の黒板に、チョークで相合傘。相手は殴り書きで読めない
+   ・撮れ高は「ちゃんと見た時」だけ：録画中・画面の中心から幅の2割以内・1.5秒以上・1.2m以内（2倍ズームなら2.5m、3倍なら3.5m）・ライトの輪の中・正面から60度以内
+   ・確認用：?nameall で3つとも出す
+   ========================================================= */
+const MYNAME = {
+  objs: [], g: null,
+  name() { return (world.chRaw || '').trim() || 'しんれいちゃんねる'; },
+  // 決まった枠の中に必ず収める（大きすぎれば小さく、それでも長ければ2行）
+  fit(g, t, cx, cy, w, h, maxPx, font) {
+    const A = Array.from(t), one = () => { let px = Math.min(maxPx, h * 0.85); g.font = `${px}px ${font}`; const tw = g.measureText(t).width; if (tw > w) px *= w / tw; return px; };
+    let px = one();
+    if (px < Math.min(maxPx, h * 0.85) * 0.6 && A.length >= 4) {
+      let m = Math.ceil(A.length / 2); if ('ゃゅょっぁぃぅぇぉャュョッァィゥェォーん、。'.includes(A[m]) && m + 1 < A.length) m++; const l1 = A.slice(0, m).join(''), l2 = A.slice(m).join(''); let p2 = Math.min(maxPx, h * 0.45); g.font = `${p2}px ${font}`; const tw = Math.max(g.measureText(l1).width, g.measureText(l2).width); if (tw > w) p2 *= w / tw;
+      if (p2 > px) { g.font = `${p2}px ${font}`; g.fillText(l1, cx, cy - p2 * 0.55); g.fillText(l2, cx, cy + p2 * 0.55); return p2; }
+    }
+    g.font = `${px}px ${font}`; g.fillText(t, cx, cy); return px;
+  },
+  reset() {
+    for (const o of this.objs) if (o.g && o.g.parent) o.g.parent.remove(o.g); this.objs = [];
+    const all = (TEST || BETA) && /[?&]nameall\b/.test(location.search);
+    if (all || chance(0.4)) this.shoe(); if (all || chance(0.4)) this.roll(); if (all || chance(0.4)) this.umb();
+    if (TEST || DEV) console.log('MYNAME', this.objs.map(o => o.key).join(','));
+  },
+  add(key, label, pts, g, pos, normal, upd) { const o = { key, label, pts, g, pos, normal, t: 0, upd }; this.objs.push(o); return o; },
+  // ── 1. 下駄箱に自分の名前：玄関の両側の下駄箱（0.25m角のマス）のどれか1つ
+  shoe() {
+    const side = chance(0.5) ? -1 : 1, k = 1 + Math.floor(Math.random() * 11), r = 2 + Math.floor(Math.random() * 4);
+    const fx = side * 2.3, zc = side < 0 ? 3.3 - 0.25 * k - 0.125 : -0.1 + 0.25 * k + 0.125, yc = 0.25 * r + 0.125, n = V(-side, 0, 0);
+    const g = new THREE.Group(); g.position.set(fx, 0, zc); g.rotation.y = side < 0 ? Math.PI / 2 : -Math.PI / 2; scene.add(g);   // 前（+z）が通路
+    const c = document.createElement('canvas'); c.width = 256; c.height = 80; const x = c.getContext('2d');
+    x.fillStyle = '#f4f1e8'; x.fillRect(0, 0, 256, 80); x.strokeStyle = 'rgba(0,0,0,.18)'; x.strokeRect(1, 1, 254, 78);
+    x.fillStyle = '#1c1a20'; x.textAlign = 'center'; x.textBaseline = 'middle'; this.fit(x, this.name(), 128, 41, 236, 70, 52, '"Yomogi","Klee","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif');
+    const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 4;
+    const tag = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.0625), L({ map: tx })); tag.position.set(0, yc + 0.08, 0.004); tag.rotation.z = rnd(-0.04, 0.04); g.add(tag);
+    // 中の濡れた上履き（かかとがのぞく）と、垂れる水
+    const sh = L({ color: 0xe8e6de }), band = L({ color: 0x3a5a9a }), wet = new THREE.MeshBasicMaterial({ color: 0x1a1612, transparent: true, opacity: 0.35, depthWrite: false });
+    const hole = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.15), new THREE.MeshBasicMaterial({ color: 0x0c0b0a })); hole.position.set(0, yc - 0.02, 0.002); g.add(hole);
+    for (const dx of [-0.05, 0.05]) { const s = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.05, 0.08), sh); s.position.set(dx, yc - 0.065, 0.03); g.add(s); const b = new THREE.Mesh(new THREE.BoxGeometry(0.077, 0.014, 0.03), band); b.position.set(dx, yc - 0.083, 0.06); g.add(b); }
+    const st = new THREE.Mesh(new THREE.PlaneGeometry(0.06, yc - 0.1), wet); st.position.set(0.02, (yc - 0.1) / 2, 0.003); g.add(st);   // 濡れて垂れた跡
+    const pud = new THREE.Mesh(new THREE.CircleGeometry(0.09, 14), wet); pud.rotation.x = -Math.PI / 2; pud.position.set(0.02, 0.004, 0.12); g.add(pud);
+    const dm = new THREE.MeshBasicMaterial({ color: 0xb8c4cc, transparent: true, opacity: 0.8 }), drops = [];
+    for (let i = 0; i < 2; i++) { const d = new THREE.Mesh(new THREE.SphereGeometry(0.006, 6, 4), dm); d.scale.y = 1.6; g.add(d); drops.push({ d, t: -i * 0.9 }); }
+    this.add('nameShoe', '下駄箱に自分の名前', 40, g, () => tag.getWorldPosition(V()), () => n, dt => { for (const D of drops) { D.t += dt; const T = 1.8; if (D.t < 0) { D.d.visible = false; continue; } const k = D.t % T; const y0 = yc - 0.09; D.d.visible = true; D.d.position.set(0.03, k < 0.9 ? y0 : y0 - 4.9 * (k - 0.9) * (k - 0.9), 0.07); if (D.d.position.y < 0.01) D.d.visible = false; } }).cv = c;
+  },
+  // ── 2. 出席簿：1階の教室（2-2・2-3）の教卓の上に開いて置く。名前だけ赤い線で消されている
+  roll() {
+    const R = chance(0.5) ? { z: -17.1, ry: 0 } : { z: -19.0, ry: Math.PI };   // 教卓の向こう（黒板側）から生徒側を向いて読める向き
+    const g = new THREE.Group(); g.position.set(7.5 + (ITEM.keyAt === 'desk' && Math.abs(ITEM.get('key').pos.z - R.z) < 0.2 ? -0.38 : 0.12), 0.905, R.z); g.rotation.y = R.ry + rnd(-0.12, 0.12); scene.add(g);
+    const W = 640, H = 440, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+    x.fillStyle = '#e9e3d0'; x.fillRect(0, 0, W, H); x.fillStyle = 'rgba(0,0,0,.12)'; x.fillRect(W / 2 - 3, 0, 6, H);
+    const F = '"Yu Mincho","Hiragino Mincho ProN",serif', SUR = ['青木', '石田', '上田', '小川', '加藤', '木村', '工藤', '小林', '佐藤', '清水', '鈴木', '高橋', '田中', '中村', '林', '松本', '森', '山田', '吉田', '和田'], GIV = ['はると', 'さくら', 'そうた', 'ゆい', 'れん', 'ひな', 'あおい', 'ゆうと', 'めい', 'こはる', 'りく', 'みお', 'そら', 'ゆな', 'かいと', 'りん', 'たいが', 'ゆあ'];
+    const names = Array.from({ length: 22 }, () => `${pick(SUR)}　${pick(GIV)}`), me = Math.floor(Math.random() * 11);
+    x.fillStyle = '#2a2420'; x.textAlign = 'left'; x.textBaseline = 'middle'; x.font = `bold 24px ${F}`; x.fillText('出席簿', 26, 30); x.font = `16px ${F}`; x.fillText(R.z > -18 ? '二年二組' : '二年三組', 130, 32);
+    const rows = 11, top = 62, rh = (H - top - 18) / rows; x.strokeStyle = 'rgba(60,50,40,.45)'; x.lineWidth = 1;
+    let rowP = null;
+    for (let p = 0; p < 2; p++) { const x0 = p ? W / 2 + 14 : 16, x1 = p ? W - 16 : W / 2 - 14;
+      for (let i = 0; i <= rows; i++) { x.beginPath(); x.moveTo(x0, top + i * rh); x.lineTo(x1, top + i * rh); x.stroke(); }
+      for (let i = 0; i < rows; i++) { const y = top + (i + 0.5) * rh, idx = p * rows + i; x.fillStyle = '#2a2420'; x.textAlign = 'left'; x.font = `14px ${F}`; x.fillText(String(idx + 1), x0 + 4, y);
+        for (let d = 0; d < 6; d++) { x.font = `13px ${F}`; x.fillText(Math.random() < 0.9 ? '○' : '／', x0 + 192 + d * 18, y); }
+        if (p === 0 && i === me) { x.textAlign = 'center'; x.fillStyle = '#2a2420'; this.fit(x, this.name(), x0 + 30 + 75, y, 148, rh - 4, 20, F); x.strokeStyle = 'rgba(200,20,20,.9)'; x.lineWidth = 3; x.beginPath(); x.moveTo(x0 + 26, y + 1); x.lineTo(x0 + 184, y - 2); x.stroke(); x.lineWidth = 1; x.strokeStyle = 'rgba(60,50,40,.45)'; rowP = [x0 + 105, y]; }
+        else { x.textAlign = 'left'; x.font = `18px ${F}`; x.fillText(names[idx], x0 + 32, y); } } }
+    const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 4;
+    const PW = 0.42, PD = 0.29, cover = new THREE.Mesh(new THREE.BoxGeometry(PW + 0.02, 0.012, PD + 0.02), L({ color: 0x23324a })); cover.position.y = 0.006; g.add(cover);
+    const page = new THREE.Mesh(new THREE.PlaneGeometry(PW, PD), L({ map: tx })); page.rotation.x = -Math.PI / 2; page.position.y = 0.0135; g.add(page);
+    const lp = V((rowP[0] / W - 0.5) * PW, 0.014, (rowP[1] / H - 0.5) * PD), up = V(0, 1, 0);
+    this.add('nameRoll', '出席簿の自分の名前', 60, g, () => g.localToWorld(lp.clone()), () => up).cv = c;
+  },
+  // ── 3. 黒板の相合傘（教室の正面の黒板。チョークのかすれ・ハートや落書き）
+  umb() {
+    const B = pick([{ z: -18.125, ry: Math.PI, lv: 0 }, { z: -17.875, ry: 0, lv: 0 }, { z: -17.875, ry: 0, lv: 1 }, { z: -19.125, ry: Math.PI, lv: 1 }]);
+    const s = B.ry ? -1 : 1, g = new THREE.Group(); g.position.set(8.55 + rnd(-0.2, 0.2), B.lv * LH + 1.55, B.z + s * 0.006); g.rotation.y = B.ry; scene.add(g);
+    const W = 320, H = 400, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'); x.clearRect(0, 0, W, H);
+    const ch = a => `rgba(236,236,226,${a})`; x.lineCap = 'round'; x.lineJoin = 'round';
+    const chalk = (pts, lw) => { for (let k = 0; k < 3; k++) { x.strokeStyle = ch(0.25 + Math.random() * 0.3); x.lineWidth = lw * (0.6 + k * 0.25); x.beginPath(); pts.forEach(([a, b], i) => { const j = () => (Math.random() - 0.5) * 2.2; i ? x.lineTo(a + j(), b + j()) : x.moveTo(a + j(), b + j()); }); x.stroke(); } };
+    // 傘：三角の屋根と柄
+    chalk([[50, 128], [160, 40], [270, 128]], 5); chalk([[50, 128], [270, 128]], 3); chalk([[160, 40], [160, 340], [150, 352], [138, 344]], 5);
+    const heart = (hx, hy, r) => chalk(Array.from({ length: 26 }, (_, i) => { const t = i / 25 * Math.PI * 2; return [hx + r * 16 * Math.pow(Math.sin(t), 3) / 16, hy - r * (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) / 16]; }), 3);
+    heart(160, 24, 14);
+    // 左：プレイヤーの名前（縦書き。長ければ小さく・2列）
+    { const A = Array.from(this.name()), maxH = 200, colW = 70; let cols = A.length > 9 ? 2 : 1, per = Math.ceil(A.length / cols), px = Math.min(34, maxH / per, cols === 2 ? 30 : 40);
+      x.fillStyle = ch(0.85); x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = `${px}px "Yomogi","Klee","Hiragino Maru Gothic ProN",sans-serif`;
+      for (let i = 0; i < A.length; i++) { const col = Math.floor(i / per), r = i % per; const cx = 105 + (cols === 2 ? (col === 0 ? 18 : -18) : 0), cy = 150 + (r + 0.5) * Math.min(px * 1.05, maxH / per); x.save(); x.translate(cx, cy); x.rotate((Math.random() - 0.5) * 0.12); if ('ーー〜（）「」'.includes(A[i])) x.rotate(Math.PI / 2); x.fillText(A[i], 0, 0); x.restore(); } }
+    // 右：相手の名前は、ぐちゃぐちゃに殴り書かれて読めない
+    for (let k = 0; k < 3; k++) { const cy = 172 + k * 58; for (let n = 0; n < 3; n++) { const pts = []; let px = 196 + Math.random() * 10, py = cy - 20; for (let i = 0; i < 14; i++) { px = 192 + Math.random() * 46; py = cy - 22 + i * 3.2 + (Math.random() - 0.5) * 10; pts.push([px, py]); } chalk(pts, 3.2); } }
+    // まわりの小さな落書き：ハート・星・顔
+    heart(40, 200, 9); heart(282, 260, 7); chalk([[288, 60], [294, 76], [310, 76], [297, 86], [302, 102], [288, 92], [274, 102], [279, 86], [266, 76], [282, 76], [288, 60]], 2);
+    chalk(Array.from({ length: 20 }, (_, i) => [44 + 16 * Math.cos(i / 19 * 6.3), 300 + 16 * Math.sin(i / 19 * 6.3)]), 2); chalk([[38, 296], [39, 297]], 3); chalk([[50, 296], [51, 297]], 3); chalk([[36, 306], [44, 311], [52, 306]], 2);
+    x.globalCompositeOperation = 'destination-out'; for (let i = 0; i < 900; i++) { x.fillStyle = `rgba(0,0,0,${Math.random() * 0.6})`; x.fillRect(Math.random() * W, Math.random() * H, 2, 2); }   // かすれ
+    x.globalCompositeOperation = 'source-over'; x.fillStyle = ch(0.05); for (let i = 0; i < 6; i++) { x.beginPath(); x.ellipse(Math.random() * W, 120 + Math.random() * 240, 30 + Math.random() * 40, 8, Math.random(), 0, 7); x.fill(); }   // 粉
+    const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace;
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(0.64, 0.8), new THREE.MeshLambertMaterial({ map: tx, transparent: true, depthWrite: false })); g.add(m);
+    const n = V(0, 0, s);
+    this.add('nameUmb', '黒板の相合傘', 25, g, () => g.localToWorld(V(0, 0.05, 0)), () => n).cv = c;
+  },
+  // ── 「ちゃんと見た」判定
+  care(o) {
+    if (!rec.active || world.state !== 'play') return false;
+    const C = viewCam(), p = o.pos(), d = C.position.distanceTo(p), z = world.selfie ? 1 : zoom, maxD = z >= 2.9 ? 3.5 : z >= 1.9 ? 2.5 : 1.2;
+    if (d > maxD) return false;
+    const q = p.clone().project(C); if (!(q.z < 1 && q.z > -1 && Math.abs(q.x) <= 0.4 && Math.abs(q.y) <= 0.6)) return false;   // 画面の中心から幅の2割以内
+    if (o.normal().dot(C.position.clone().sub(p).normalize()) < 0.5) return false;   // 正面から60度以内
+    if (!world.selfie && !inFlash(p)) { this.why = 'flash'; return false; } if (LUM.dark(p)) { this.why = 'dark'; return false; }   // ライトの輪の中
+    this.why = 'line'; return clearLine(p, [], C.position);
+  },
+  update(dt) {
+    for (const o of this.objs) { if (o.upd) o.upd(dt); if (awarded.has(o.key)) continue;
+      if (this.care(o)) { o.t += dt; if (o.t >= 1.5) award(o.key, o.label, o.pts); } else o.t = 0; }
+  },
+};
+Object.assign(AW_TABLE, { nameShoe: ['B', 40], nameRoll: ['A', 60], nameUmb: ['C', 25] });
+COL.LIST.push(['nameShoe', '下駄箱に自分の名前', 40], ['nameRoll', '出席簿の自分の名前', 60], ['nameUmb', '黒板の相合傘', 25]);
+Object.assign(CHIP_DESC, { nameShoe: ['下駄箱のひとつに、自分の名前の札。中の上履きは濡れていた。', 'One of the shoe lockers had your name on it. The slippers inside were wet.'], nameRoll: ['出席簿に自分の名前。そこだけ赤い線で消されていた。', 'Your name was in the attendance book — crossed out in red.'], nameUmb: ['黒板の相合傘。片方は自分、もう片方は読めない。', 'A chalk love umbrella: your name on one side, something unreadable on the other.'] });
+Object.assign(EN, { '下駄箱に自分の名前': 'Your name on a shoe locker', '出席簿の自分の名前': 'Your name in the attendance book', '黒板の相合傘': 'Your name under a chalk umbrella' });
+Object.assign(CHAT_DICT.t, {
+  'name.shoe.01': ['名前書いてある…', 'your name is on it…'], 'name.shoe.02': ['なんで知ってんの', 'how does it know?'], 'name.shoe.03': ['上履き濡れてる', 'the slippers are wet'], 'name.shoe.04': ['仕込み？w', 'staged? lol'],
+  'name.roll.01': ['名前消されてる', 'your name got crossed out'], 'name.roll.02': ['赤線こわ', 'that red line though'], 'name.roll.03': ['出席簿にいるの草…いや笑えない', 'lol you’re on the roll… wait not funny'], 'name.roll.04': ['欠席扱い？', 'marked absent?'],
+  'name.umb.01': ['相合傘w', 'love umbrella lol'], 'name.umb.02': ['相手だれ', "who's the other one"], 'name.umb.03': ['■■■って誰', 'who is ■■■'], 'name.umb.04': ['モテてて草', 'popular huh lol'], 'name.umb.05': ['相手が怖い', 'the partner is scary'],
+});
+if (CHAT_DICT.ev) Object.assign(CHAT_DICT.ev, { '下駄箱に自分の名前': ['name.shoe.01', 'name.shoe.02', 'name.shoe.03', 'name.shoe.04'], '出席簿の自分の名前': ['name.roll.01', 'name.roll.02', 'name.roll.03', 'name.roll.04'], '黒板の相合傘': ['name.umb.01', 'name.umb.02', 'name.umb.03', 'name.umb.04', 'name.umb.05'] });
+/* =========================================================
    2026-11-15 隠しイベント「幻の怪異」（151種類目の撮れ高）
    ・チャットに混ざる荒らしコメントをBANしていくと段階が進む（この端末に記録。データをリセットで0に戻す）
      0 ふつう（数周に1回、荒らしが1つだけ）→ BANで1 → 荒らしを合計3回BANで2 → 段階2で通算20件BANで3 → 倒したら「済」
@@ -16222,7 +16353,7 @@ ENDCARD.ORD.PH = -1;
 CHAT_CFG.coef.PH = 1.2;
 setInterval(() => { if (PHAN.el && world.state === 'play') PHAN.panel(); }, 1000);
 PHAN.load(); PHAN.panel();
-if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, WD, CH, SP, MANN, NAV, RED: typeof RED !== 'undefined' ? RED : null, postMat, CHAT, RES_CHAT, COL, ENDCARD, makeResultImage, KOK, wdScreamLong, screamCut, MOZ, PIANO, F2, SELF, avatar, selfCam, STAIRS, groundAt, escapeRun: escape, evid: () => evidence, recS: () => rec, world });
+if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, WD, CH, SP, MANN, NAV, RED: typeof RED !== 'undefined' ? RED : null, postMat, CHAT, RES_CHAT, COL, ENDCARD, makeResultImage, KOK, MYNAME, awarded, wdScreamLong, screamCut, MOZ, PIANO, F2, SELF, avatar, selfCam, STAIRS, groundAt, escapeRun: escape, evid: () => evidence, recS: () => rec, world });
 
 /* =========================================================
    2026-11-14 データをリセット（スタート画面・設定の「撮れ高コレクション」の直下）
