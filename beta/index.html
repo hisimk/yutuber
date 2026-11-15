@@ -1669,7 +1669,7 @@ windowWallZ(-30, 1.5, 11.4, M.frosted);
 transomZ(-30, 11.4, 12.9);
 windowWallZ(-30, 12.9, 13.5, M.frosted);
 windowWallZ(-30, 13.5, 19, M.glass);       // 中庭が見える
-transomZ(-30, 22.2, 25.8); wallZ(-30, 25.8, 29.6);   /* 2026-11-15 東階段の入口 */
+wallZ(-30, 22, 24.0); transomZ(-30, 24.0, 25.8); wallZ(-30, 25.8, 29.6);   /* 2026-11-15 東階段の入口（上り口の側だけ。ほかの階段と同じく、上の段の下は壁） */
 nameplate('2-3', 12.15, 2.42, -30.18, Math.PI / 2);
 prop('ClassroomSlider', scene, 13.25, 0, -29.875, 0, [plane(1.0, 2.0, M.door, 13.25, 1.0, -29.875, 0)], [.97, .966, 1]);
 // 2-3 東壁（中庭側の窓・外灯の横光）と南壁
@@ -2219,7 +2219,8 @@ box(0.26, 0.05, 7.8, M.concrete, -9.73, 0.975, -13);
   /* 南の壁：2-Bの後ろの扉への通路・中庭の窓・入れない2階の扉・東階段（手すりだけ） */
   wallZ(-30, 1.5, 10.0); transomZ(-30, 10.0, 11.2); wallZ(-30, 11.2, 13.5); windowWallZ(-30, 13.5, 19); transomZ(-30, 19, 22.0); wallZ(-30, 26, 29.6); addCol(19, 22, -30.1, -29.9);   /* 入れない2階（北の端）はシャッターで閉まっている */
   wallX(10.0, -30, -29); wallX(11.2, -30, -29);
-  /* 東階段の上り口（手すりなし。そのまま踏み出すと1階へ落ちる） */
+  /* 東階段の上り口（下り口の側だけ開いている。手すりなし。そのまま踏み出すと1階へ落ちる） */
+  wallZ(-30, 24.0, 26);
   /* 東の突き当たり：非常口 */
   wallX(29.6, -33, -32.1); transomX(29.6, -32.1, -30.9); wallX(29.6, -30.9, -30);
   exitSigns.push(plane(0.5, 0.25, M.exit.clone(), 29.48, 2.35, -31.5, -Math.PI / 2));
@@ -7378,7 +7379,11 @@ F2.build2 = function () {
   const Y2 = LH;
   // ── 階段（同じ折り返し階段を2か所に）
   for (const s of STAIRS) { s.mesh = f2put('switchback_stairs', s.ox, 0, s.oz, Math.PI / 2); if (s.mesh) s.mesh.traverse(m => { if (m.isMesh) occluders.push(m); }); }
-  { const m = f2put('switchback_stairs', 24, 0, -29.5, Math.PI); if (m) { m.traverse(q => { if (q.isMesh) occluders.push(q); }); this.esMesh = m; } }   /* 2026-11-15 壊れた東階段（上り口は北。歩いては上り下りできない） */
+  { const m = f2put('switchback_stairs', 24, 0, -29.5, Math.PI); if (m) { m.traverse(q => { if (q.isMesh) occluders.push(q); }); this.esMesh = m;
+    /* 壊れた所：1階からの上りの途中（x 24〜25.9・z -28.5〜-27.3）がごっそり崩れ落ちている */
+    renderer.localClippingEnabled = true; const cp = [new THREE.Plane(V(-1, 0, 0), 24.0), new THREE.Plane(V(1, 0, 0), -25.95), new THREE.Plane(V(0, 0, -1), -28.5), new THREE.Plane(V(0, 0, 1), 27.3)];
+    m.traverse(q => { if (q.isMesh) { q.material = Array.isArray(q.material) ? q.material.map(x => x.clone()) : q.material.clone(); for (const x of [].concat(q.material)) { x.clippingPlanes = cp; x.clipIntersection = true; x.side = THREE.DoubleSide; } } });
+    const cm = L({ color: 0x77736c }); for (const [x, y, z, w, h, d, r] of [[24.5, 0.42, -28.45, 0.7, 0.18, 0.3, 0.5], [25.4, 0.36, -28.5, 0.6, 0.16, 0.26, -0.4], [24.8, 0.86, -27.32, 0.8, 0.2, 0.3, -0.3], [25.5, 0.92, -27.3, 0.5, 0.16, 0.24, 0.6]]) { const q = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), cm); q.position.set(x, y, z); q.rotation.set(r * 0.5, r, r * 0.4); scene.add(q); } } }   /* 2026-11-15 壊れた東階段（上り口は北。ほかの階段と同じ作り） */   /* 2026-11-15 壊れた東階段（上り口は北。歩いては上り下りできない） */
 
   // ── 保健室：ベッド2台（西の壁際）。片方だけカーテンを閉める
   this.beds = [];
@@ -14723,7 +14728,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.29';
+const VERSION = '0.15.30';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -17447,10 +17452,9 @@ const NWX = {
     if (world.state !== 'play') return; const fw = camFwd(), lk = TR('鍵がかかっている');
     if (player.lv === 1) {
       if (Math.abs(player.x - 16.7) < 0.8 && player.z > -33 && player.z < -31.6 && fw.z < -0.5) wOffer(TR('調べる'), () => toast(TR('内側から何かでふさがれているようだ'), 2200));
-      if (player.x > 22.2 && player.x < 25.8 && player.z > -29.9 && !player.hidden) this.jump();   /* 踏み出したら、そのまま1階へ */
+      if (player.x > 22.2 && player.x < 24.0 && player.z > -29.9 && !player.hidden) this.jump();   /* 踏み出したら、そのまま1階へ */
     } else {
       for (const x of [7.0, 19.5]) if (Math.abs(player.x - x) < 0.7 && player.z < -31.8 && fw.z < -0.5) wOffer(TR('調べる'), () => toast(TR('向こう側にバリケードがあって開かない'), 2000));
-      if (player.x > 22.2 && player.x < 25.8 && player.z > -29.9 && player.z < -28.9 && fw.z > 0.4) wOffer(TR('調べる'), () => toast(TR('階段が崩れていて上れない'), 2000));
     }
   },
   reset() { this.build(); world.staggerUntil = 0; world.jumpShake = 0; },
