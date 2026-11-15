@@ -5408,8 +5408,10 @@ defEvent('steps', {
   },
   cleanup() { toes.visible = false; },
 });
-stepListeners.push(() => DIR.active === EV.steps && EV.steps.onStep());
-recStopListeners.push(() => DIR.active === EV.steps && EV.steps.onRecStop());
+stepListeners.push(() => EV.steps && DIR.active === EV.steps && EV.steps.onStep());
+recStopListeners.push(() => EV.steps && DIR.active === EV.steps && EV.steps.onRecStop());
+/* 2026-11-15 「戸口から覗く上履き」は、イベントごと撮れ高からも外した */
+delete EV.steps;
 
 /* ② 二倍にすると近い */
 defEvent('zoomNear', {
@@ -14728,7 +14730,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.30';
+const VERSION = '0.15.31';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16509,7 +16511,7 @@ const RANDFLY = {
       if (!onScreen(p0, 0.8) || camera.position.distanceTo(p0) > 9 || camera.position.distanceTo(p0) < 2.2) return;
       this.g = this.make(); this.g.position.copy(p0).setY(y0 + 0.3); this.g.rotation.y = R.s > 0 ? Math.PI : 0;
       this.p0 = this.g.position.clone(); this.p1 = V(clamp(x + rnd(-1.2, 1.2), 3.2, 11.8), y0 + 1.45, R.sz - R.s * rnd(2.2, 2.9)); this.y0 = y0;
-      this.st = 'rise'; this.t = 0; this.seenT = 0; SND.rustle(p0.clone(), 0.7); if (TEST || DEV) console.log('RANDFLY', z);
+      this.st = 'rise'; this.t = 0; this.seenT = 0;   /* 2026-11-15 浮き上がる時の音はなし */ if (TEST || DEV) console.log('RANDFLY', z);
       return;
     }
     const g = this.g, S = this; S.t += dt;
@@ -17567,6 +17569,7 @@ Object.assign(CHAT_DICT.t, { 'en2.01': ['2体目きた！？', 'a second one!?']
 if (CHAT_DICT.ev) CHAT_DICT.ev['血に染まる追跡'] = ['bl.01', 'bl.02', 'bl.03'];
 if (typeof XCHAT !== 'undefined') XCHAT.LIST.second = ['en2.01', 'en2.02', 'en2.03', 'en2.04'];
 /* クモ女の巣ワープは撮れ高から外す */
+delete AW_TABLE.toes; delete CHIP_DESC.toes; COL.LIST = COL.LIST.filter(x => x[0] !== 'toes');
 delete AW_TABLE.spWarp; delete CHIP_DESC.spWarp; COL.LIST = COL.LIST.filter(x => x[0] !== 'spWarp'); delete EN['巣に触れたクモ女が別の巣へ移った瞬間']; if (CHAT_DICT.ev) delete CHAT_DICT.ev['巣に触れたクモ女が別の巣へ移った瞬間'];
 if (TEST && window.__G) Object.assign(window.__G, { ENEMY, CHBLOOD, glassPanes, mannGlassAhead });
 /* 新しいアイテム */
