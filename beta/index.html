@@ -1338,6 +1338,8 @@ function boxGeo(w, h, d, tile = 1) {
   for (let f = 0; f < 6; f++) for (let i = 0; i < 4; i++) { const k = f * 4 + i; uv.setXY(k, uv.getX(k) * dims[f][0] / tile, uv.getY(k) * dims[f][1] / tile); }
   return g;
 }
+/* 2026-11-15 扉の絵（窓と取っ手）を板いっぱいに貼る（大きさに合わせて繰り返す貼り方だと、窓と取っ手が下にずれていた） */
+function pdoor(m) { const p = m.geometry.parameters; m.geometry.dispose(); m.geometry = new THREE.BoxGeometry(p.width, p.height, p.depth); return m; }
 const colliders = [];   // {x0,x1,z0,z1,on}
 const occluders = [];   // 視線をさえぎるもの（壁・机・扉）
 const focusables = [];  // ピント判定に使うもの
@@ -1692,7 +1694,7 @@ const broadcastGlass = plane(1.0, 0.95, M.glass, 26, 1.475, -32.1, Math.PI / 2);
 broadcastGlass.userData.sec = { axis: 'x', c: 26, lo: -32.6, hi: -31.6, lv: 0, y: 1.475, h: 0.95 }; glassPanes.push(broadcastGlass);   // 2026-11-14 人体模型が割れるように
 const broadcastFog = plane(0.9, 0.85, new THREE.MeshBasicMaterial({ map: TX.fog, transparent: true, opacity: 0, depthWrite: false }), 25.88, 1.45, -32.1, -Math.PI / 2); broadcastFog.renderOrder = 3;
 wallX(26, -31.6, -31.4, { noWaist: true });
-const bcDoor = box(0.06, 2.0, 1.0, M.door, 25.95, 1.0, -30.9);   // 鍵がかかっている（鍵で開く）
+const bcDoor = pdoor(box(0.06, 2.0, 1.0, M.door, 25.95, 1.0, -30.9));   // 鍵がかかっている（鍵で開く）
 transomX(26, -31.4, -30.4);
 wallX(26, -30.4, -30, { noWaist: true });
 addCol(25.9, 26.1, -33, -31.4); addCol(25.9, 26.1, -30.4, -30); const bcDoorCol = addCol(25.9, 26.1, -31.4, -30.4);
@@ -2162,7 +2164,7 @@ BUILD_Y = HT; for (const [x0, x1, z0, z1] of F2RECTS) box(x1 - x0, LH - HT - 0.0
 { const W = [DOOR2.S2, DOOR2.MUS, DOOR2.LIB, DOOR2.S1].sort((a, b) => a[0] - b[0]); let z = -33;   /* 2026-11-15 廊下の北の端（z -33）は美術室の壁に突き当たる */
   for (const [a, b] of W) { wallX(-1.5, z, a); transomX(-1.5, a, b); z = b; } wallX(-1.5, z, -3);
   const E2 = [DOOR2.B2, DOOR2.A2].sort((a, b) => a[0] - b[0]); z = -30;   /* -33〜-30 は東の新しい棟の廊下への入口 */
-  for (const [a, b] of E2) { wallX(1.5, z, a); transomX(1.5, a, b); z = b; } wallX(1.5, z, -3);
+  for (const [a, b] of E2) { wallX(1.5, z, a); transomX(1.5, a, b); z = b; } wallX(1.5, z, -8); transomX(1.5, -8, -5); wallX(1.5, -5, -3); addCol(1.4, 1.6, -8, -5);   /* 2026-11-15 入れない2階（渡り廊下の上）への入口：シャッターが床まで下りている */
   wallZ(-33, -1.5, -0.7); transomZ(-33, -0.7, 0.7); wallZ(-33, 0.7, 1.5); wallZ(-3, -1.5, 1.5);   /* 突き当たり＝美術室の扉①（扉とバリケードは WING） */
 }
 // 図書室：外に面した窓。本棚の間から窓がちらっと見える
@@ -2213,11 +2215,11 @@ box(0.26, 0.05, 7.8, M.concrete, -9.73, 0.975, -13);
   BUILD_Y = HT; for (const [x0, x1, z0, z1] of R4.concat([[19, 22, -30, -8], [1.5, 22, -8, -5]])) box(x1 - x0, LH - HT - 0.03, z1 - z0, M.concrete, (x0 + x1) / 2, (LH - HT) / 2, (z0 + z1) / 2, { recv: false }); BUILD_Y = LH;
   /* 廊下の北の壁：美術室の扉②（x 12.3〜13.5）・理科室の前の扉（ふさがれている）・後ろの扉 */
   wallZ(-33, 1.5, 12.3); transomZ(-33, 12.3, 13.5); wallZ(-33, 13.5, 16.0); transomZ(-33, 16.0, 17.4); wallZ(-33, 17.4, 22.75); transomZ(-33, 22.75, 24.15); wallZ(-33, 24.15, 29.6);
-  box(1.38, 2.0, 0.05, M.door, 16.7, 1.0, -32.95); addCol(16.0, 17.4, -33.1, -32.9);   /* 理科室の前の扉（開かない） */
+  pdoor(box(1.38, 2.0, 0.05, M.door, 16.7, 1.0, -32.95)); addCol(16.0, 17.4, -33.1, -32.9);   /* 理科室の前の扉（開かない） */
   /* 南の壁：2-Bの後ろの扉への通路・中庭の窓・入れない2階の扉・東階段（手すりだけ） */
   wallZ(-30, 1.5, 10.0); transomZ(-30, 10.0, 11.2); wallZ(-30, 11.2, 13.5); windowWallZ(-30, 13.5, 19); transomZ(-30, 19, 22.0); wallZ(-30, 26, 29.6); addCol(19, 22, -30.1, -29.9);   /* 入れない2階（北の端）はシャッターで閉まっている */
   wallX(10.0, -30, -29); wallX(11.2, -30, -29);
-  box(4.0, 0.06, 0.06, M.metal, 24, 1.0, -30.0, { occ: false }); box(4.0, 0.04, 0.04, M.metal, 24, 0.55, -30.0, { occ: false }); for (const x of [22.1, 24, 25.9]) box(0.05, 1.0, 0.05, M.metal, x, 0.5, -30.0, { occ: false }); addCol(22, 26, -30.1, -29.9);
+  /* 東階段の上り口（手すりなし。そのまま踏み出すと1階へ落ちる） */
   /* 東の突き当たり：非常口 */
   wallX(29.6, -33, -32.1); transomX(29.6, -32.1, -30.9); wallX(29.6, -30.9, -30);
   exitSigns.push(plane(0.5, 0.25, M.exit.clone(), 29.48, 2.35, -31.5, -Math.PI / 2));
@@ -2231,7 +2233,7 @@ box(0.26, 0.05, 7.8, M.concrete, -9.73, 0.975, -13);
   { const mkT = (w, h, fn) => { const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return L({ map: t }); };
     const sh = mkT(64, 256, (x, w, h) => { x.fillStyle = '#7a7e80'; x.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 8) { x.fillStyle = 'rgba(0,0,0,.28)'; x.fillRect(0, y, w, 2); x.fillStyle = 'rgba(255,255,255,.08)'; x.fillRect(0, y + 2, w, 1); } x.fillStyle = 'rgba(60,40,30,.25)'; for (let i = 0; i < 30; i++) x.fillRect(Math.random() * w, Math.random() * h, 2, 6); });
     const S = (w, x, z, ry) => { const m = plane(w, 2.0, sh, x, 1.0, z, ry); box(ry ? 0.08 : w + 0.1, 0.12, ry ? w + 0.1 : 0.08, M.metal, x, 2.06, z, { occ: false }); return m; };
-    S(2.9, 20.5, -30.0, Math.PI); S(2.9, 1.39, -6.5, -Math.PI / 2); }
+    S(3.0, 20.5, -30.0, Math.PI); S(3.0, 1.5, -6.5, -Math.PI / 2); }
   /* 入れない2階（外側の箱だけ）：1階の南の廊下の上・渡り廊下の上。窓の中は真っ暗 */
   { const dk = new THREE.MeshBasicMaterial({ color: 0x030304, side: THREE.DoubleSide });
     const dX = (x, z0, z1) => { const len = z1 - z0, mz = (z0 + z1) / 2; box(T, 1.0, len, M.waist, x, 0.5, mz, { occ: false }); box(T, HT - 2.05, len, M.wall, x, 2.05 + (HT - 2.05) / 2, mz, { occ: false }); plane(len, 1.05, dk, x, 1.525, mz, Math.PI / 2); const n = Math.round(len / 1.8); for (let i = 0; i <= n; i++) box(0.08, 1.05, 0.06, M.frame, x, 1.525, z0 + len * i / n, { occ: false }); };
@@ -2244,16 +2246,13 @@ BUILD_Y = 0; BUILD_LV = 0;
 { /* 2026-11-15 新しい棟の真下（1階）：壁と天井で囲った、入れない部屋 */
   for (const [w, d, x, z] of [[T, 7.5, -1.5, -36.75], [T, 7.5, 29.6, -36.75], [31.1, T, 14.05, -40.5]]) box(w, HT, d, M.concrete, x, HT / 2, z, { col: true });
   /* 廊下Bの北の壁：体育館の扉2枚（向こう側にバリケードがあって開かない。中は作らない） */
-  for (const [x, t] of [[7.0, '体育館'], [19.5, '体育館']]) { box(1.0, 2.0, 0.05, M.door, x, 1.0, -32.88, { occ: false }); plane(0.6, 0.16, L({ map: plateTex(t, '#e8e4da', '#111', 128, 32, t.length > 3 ? 15 : 18) }), x, 2.3, -32.86, 0); }
+  for (const [x, t] of [[7.0, '体育館'], [19.5, '体育館']]) { pdoor(box(1.0, 2.0, 0.05, M.door, x, 1.0, -32.86, { occ: false })); box(0.08, 2.08, 0.06, M.frame, x - 0.54, 1.04, -32.87, { occ: false }); box(0.08, 2.08, 0.06, M.frame, x + 0.54, 1.04, -32.87, { occ: false }); box(1.16, 0.08, 0.06, M.frame, x, 2.04, -32.87, { occ: false }); plane(0.6, 0.16, L({ map: plateTex(t, '#e8e4da', '#111', 128, 32, t.length > 3 ? 15 : 18) }), x, 2.3, -32.86, 0); }
   /* 壊れた東階段（x 22〜26・z -30〜-25.5。1階からは上れない・2階から飛び降りるだけ） */
   rectPlane(22, 26, -30, -25.5, M.floor, 0, true); rectPlane(22, 26, -30, -25.5, M.ceil, LH + HT, false);
   for (const [w, d, x, z] of [[T, 4.5, 22, -27.75], [T, 4.5, 26, -27.75], [4.2, T, 24, -25.5]]) box(w, LH + HT, d, M.wall, x, (LH + HT) / 2, z, { col: true });
-  const stp = L({ color: 0x8a8a84 }); for (let i = 0; i < 5; i++) box(2.4, 0.2 * (i + 1), 0.3, stp, 24, 0.1 * (i + 1), -25.75 - 0.3 * i, { occ: false });
-  addCol(22.8, 25.2, -27.2, -25.6);
-  for (let i = 0; i < 4; i++) box(2.4, 0.2, 0.3, stp, 24, LH - 0.1 - 0.2 * i, -29.85 + 0.3 * i, { occ: false });
-  { const sl = box(2.4, 0.18, 1.6, M.concrete, 24, LH - 0.55, -29.2, { occ: false }); sl.rotation.x = -0.5; }
-  for (const [x, z, w, h, d, r] of [[23.9, -27.6, 0.9, 0.35, 0.7, 0.4], [25.2, -28.1, 0.8, 0.5, 0.6, -0.6], [22.9, -27.4, 0.5, 0.25, 0.5, 1.1], [24.6, -28.9, 0.7, 0.3, 0.6, 0.3]]) { const q = box(w, h, d, M.concrete, x, h / 2, z, { occ: false }); q.rotation.y = r; q.rotation.z = r * 0.3; }
-  addCol(24.7, 25.7, -28.6, -27.6);
+  /* 階段そのものは、ほかの階段と同じ折り返し階段（読み込み後に F2.build2 で置く）。1階からは崩れたがれきで上れない */
+  addCol(22.3, 25.7, -29.0, -25.6);
+  for (const [x, z, y, w, h, d, r] of [[24.9, -28.2, 0.55, 1.1, 0.35, 0.8, 0.4], [24.4, -27.2, 0.9, 0.8, 0.4, 0.6, -0.6], [25.2, -28.9, 0.12, 0.6, 0.24, 0.5, 1.1], [23.6, -28.6, 0.15, 0.7, 0.3, 0.5, 0.3]]) { const q = box(w, h, d, M.concrete, x, y, z, { occ: false }); q.rotation.y = r; q.rotation.z = r * 0.3; }
   /* 非常口の外の、鉄の非常階段（踊り場と、下へ続く階段。見えるだけ） */
   const mt = M.metal; box(1.8, 0.06, 3.4, mt, 30.5, LH - 0.03, -31.5, { occ: false });
   box(0.04, 1.0, 3.4, mt, 31.4, LH + 0.5, -31.5, { occ: false }); box(1.8, 0.04, 0.04, mt, 30.5, LH + 1.0, -29.8, { occ: false }); box(1.8, 0.04, 0.04, mt, 30.5, LH + 1.0, -33.2, { occ: false });
@@ -2262,7 +2261,7 @@ BUILD_Y = 0; BUILD_LV = 0;
   for (const z of [-30, -33]) box(0.08, LH, 0.08, mt, 31.35, LH / 2, z, { occ: false });
   BUILD_LV = 1; addCol(31.3, 31.6, -33.4, -29.6); addCol(29.6, 31.6, -29.95, -29.65); addCol(29.6, 31.6, -33.4, -33.15); BUILD_LV = 0;
   /* 非常口の扉（外へ開いたまま） */
-  { const d = box(1.2, 2.0, 0.05, M.door, 30.2, LH + 1.0, -32.1, { occ: false }); }
+  { const d = pdoor(box(1.2, 2.0, 0.05, M.door, 30.2, LH + 1.0, -32.1, { occ: false })); }
 }// 外：西側の地面（落下の軌道に庇は置かない）と、2階の窓から見下ろす1階の屋上
 rectPlane(-60, -1.5, -60, 0, L({ color: 0x0d0f0e }), -0.03);
 const F2ROOF = [];
@@ -2627,14 +2626,7 @@ const FURN = {
       F.col(0, 2.3, 3.75, -33.15, -29.95);
       for (let i = c0; i < colliders.length; i++) { colliders[i].soft = false; colliders[i].bar = true; } }   // 怪異も通れない（回り道をする）
     PATN = null;
-    // ── 階段の踊り場（高さ1.6・x -5.78〜-4.42）。曲がる通り道（中ほど）はあけて、奥の壁ぎわと隅に
-    for (const z0 of [-5.4, -28.9]) { const lv = 0, y = 1.6;
-      paper(lv, -5.45, z0 - 1.25, 2, y); paper(lv, -5.1, z0 + 1.1, 1, y);
-      if (z0 > -10) { randFloor(lv, -5.62, z0 + 1.45, Math.PI / 2 + 0.3, FM.red, y); shoe1(lv, -5.5, z0 - 1.45, 2.0, FM.blue, true, y); }
-      else { const g = cbox(lv, -5.55, z0 - 1.38, 0.34, 0.26, 0.3, 0.3, y, 'cardboard', true); broomSet(lv, -5.68, z0 + 1.35, Math.PI / 2); gymBag(lv, -5.45, z0 + 0.95, 0.3, FM.navy, y); }
-    }
-    // 踊り場のほうきは高さを合わせる
-    for (const g of FURN.items.broomC || []) if (g.position.x < -5 && g.position.y < 0.1) g.position.y = 1.6;
+    /* 2026-11-15 階段の踊り場の小物はなくした（2階から階段に入った瞬間に急に見えて不自然だったため） */
     F.g = g0; F.col = col0; F.cov = cov0;
   }
   // 動かす予定のない小物（給食袋・体操着袋・床の楽譜・掲示物以外の細かい物）は、階ごとに1つにまとめる
@@ -3594,12 +3586,13 @@ try { SFX_CREDITS.push({ id: 'el_scream1', title: 'ElevenLabs_女性の叫び.mp
 function uiOut() { if (!A.ui) { A.ui = A.ctx.createGain(); A.ui.gain.value = 1; A.ui.connect(A.spk || A.ctx.destination); } return A.ui; }
 function hasSfx(id) { return !!(A.ctx && A.buf[id]); }
 // 読み込めていれば素材を鳴らしてtrueを返す（合成音とは二重に鳴らさない）
-function playSfx(id, { pos, ref = 1, roll = 1.2, gain = 1, rate = 1, lowpass, dest, ear, offset = 0, dur, delay = 0 } = {}) {
+function playSfx(id, { pos, ref = 1, roll = 1.2, gain = 1, rate = 1, lowpass, highpass, dest, ear, offset = 0, dur, delay = 0 } = {}) {
   if (!hasSfx(id)) return null;
   if (/^laugh_|^chase_chuckle/.test(id) && rec.active && (!pos || camera.position.distanceTo(pos) < 14)) CHATLOG.laugh();   // 2026-11-14 チャット用：録画に入る笑い声
   const ctx = A.ctx; const s = ctx.createBufferSource(); s.buffer = A.buf[id]; s.playbackRate.value = rate;
   const g = ctx.createGain(); g.gain.value = gain * (SFX_GAIN[id] || 1);
   let node = s, f = null; if (lowpass) { f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lowpass; s.connect(f); node = f; }
+  if (highpass) { const h = ctx.createBiquadFilter(); h.type = 'highpass'; h.frequency.value = highpass; node.connect(h); node = h; }
   node.connect(g);
   const own = dest ? null : (ear !== undefined ? earDest(ear, 0) : pos ? panAt(pos, ref, roll, undefined, 0) : null);
   g.connect(dest || own || A.bus);
@@ -7385,6 +7378,7 @@ F2.build2 = function () {
   const Y2 = LH;
   // ── 階段（同じ折り返し階段を2か所に）
   for (const s of STAIRS) { s.mesh = f2put('switchback_stairs', s.ox, 0, s.oz, Math.PI / 2); if (s.mesh) s.mesh.traverse(m => { if (m.isMesh) occluders.push(m); }); }
+  { const m = f2put('switchback_stairs', 24, 0, -29.5, Math.PI); if (m) { m.traverse(q => { if (q.isMesh) occluders.push(q); }); this.esMesh = m; } }   /* 2026-11-15 壊れた東階段（上り口は北。歩いては上り下りできない） */
 
   // ── 保健室：ベッド2台（西の壁際）。片方だけカーテンを閉める
   this.beds = [];
@@ -10017,7 +10011,7 @@ defEvent('paCall', {
     const yomi = (world.yomi || '').trim(), raw = (world.chRaw || '').trim();
     // 読む名前：よみがな → かなのチャンネル名 → 決まった名前（英語版は「しんれいチャンネル」）
     this.say = yomi && kana.test(yomi) ? yomi : raw && kana.test(raw) ? raw : (LANG === 'en' ? 'しんれいチャンネル' : 'しんれいちゃんねる');
-    this.disp = LANG === 'en' ? (raw && /^[\x20-\x7e]+$/.test(raw) ? raw : 'Shinrei Channel') : (raw || 'しんれいちゃんねる');
+    this.disp = LANG === 'en' ? (raw && /^[\x20-\x7e]+$/.test(raw) ? raw : 'Shinrei Channel') : this.say;   /* 2026-11-15 字幕の名前は、読み上げている読み方に合わせる */
     if (!playSfx('pa_chime', { dest: A.pa, gain: 1 })) SND.chime && SND.chime();
     hush && hush(12, 0.35);
   },
@@ -14543,7 +14537,7 @@ if (CHK) {
       ['扉①の前へ', () => { tp(0, -31.6, 1, 0); close(); }], ['バリケード②の前へ', () => { tp(10.4, -31.5, 1, -Math.PI / 2); close(); }], ['2-Bの後ろの扉', () => { tp(10.6, -28.4, 1, 0); close(); }],
       ['美術室の中', () => { tp(5.5, -34.6, 1, -Math.PI / 2); close(); }], ['理科室の前の扉（廊下側）', () => { tp(16.7, -31.8, 1, 0); close(); }], ['理科室の中（前の扉を見る）', () => { tp(18.6, -35.6, 1, 2.4); close(); }],
       ['非常口の前', () => { tp(28.4, -31.5, 1, -Math.PI / 2); close(); }], ['非常口の外（踊り場）', () => { tp(30.6, -31.5, 1, Math.PI / 2); close(); }],
-      ['東階段（2階）', () => { tp(24, -30.6, 1, Math.PI); close(); }], ['東階段（1階）', () => { tp(24, -29.4, 0, Math.PI); close(); }], ['1階の体育館の扉', () => { tp(7.0, -32.0, 0, 0); close(); }],
+      ['東階段（2階・手前）', () => { tp(24, -30.6, 1, Math.PI); close(); }], ['東階段（1階）', () => { tp(24.9, -29.6, 0, Math.PI); close(); }], ['1階の体育館の扉', () => { tp(7.0, -32.0, 0, 0); close(); }],
       ['2-Aの窓から中庭ごし', () => { tp(12.8, -13, 1, -Math.PI / 2); close(); }],
       ['バリケードの記録を消す（両方ふさぐ）', () => { try { for (const k of ['yt_bar1_open', 'yt_bar2_open', 'yt_wing_open']) localStorage.removeItem(k); } catch (e) { } toast('次の周から両方ふさがります'); }],
     ]],
@@ -14718,7 +14712,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.27';
+const VERSION = '0.15.28';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16990,7 +16984,7 @@ const RAP = {
     const a = rnd(0, Math.PI * 2), r = rnd(2, 4.5), y = (player.y || 0) + rnd(1.0, 2.5);
     const p = V(player.x + Math.sin(a) * r, y, player.z + Math.cos(a) * r);   // まわりの壁や天井のあたり
     const id = chance(0.5) ? 'rap_kotsun' : 'rap_ka', n = chance(0.35) ? 2 : 1;
-    for (let i = 0; i < n; i++) playSfx(id, { pos: p.clone().add(V(rnd(-0.3, 0.3), rnd(-0.2, 0.2), rnd(-0.3, 0.3))), ref: 1.2, roll: 1.0, gain: rnd(0.75, 1.0), rate: rnd(0.92, 1.06), delay: i * rnd(0.35, 0.7) });
+    for (let i = 0; i < n; i++) playSfx(id, { pos: p.clone().add(V(rnd(-0.3, 0.3), rnd(-0.2, 0.2), rnd(-0.3, 0.3))), ref: 1.2, roll: 1.0, gain: rnd(0.85, 1.05), rate: rnd(1.15, 1.28), highpass: 700, dur: id === 'rap_ka' ? 0.22 : 0.2, delay: i * rnd(0.35, 0.7) });   /* 2026-11-15 少し乾いた高めの音に（高さを上げ、低い響きと余韻を切る） */
   },
 };
 /* =========================================================
@@ -17059,7 +17053,9 @@ const WING = {
     return WB.col(Math.min(...P.map(p => p[0])), Math.max(...P.map(p => p[0])), Math.min(...P.map(p => p[1])), Math.max(...P.map(p => p[1])), soft); },
   build() {
     if (this.built) return; this.built = true;
-    this.B = [{ id: 1, key: 'yt_bar1_open', x: 0, z: -33.9, ry: 0, c: V(0, LH + 1.0, -33.0) }, { id: 2, key: 'yt_bar2_open', x: 11.8, z: -31.5, ry: Math.PI / 2, c: V(11.8, LH + 1.0, -31.5) }];
+    /* rub：壊したあとのがれき（机 d・椅子 c を [x, z, 向き]）。通り道・扉・壁にかからない所だけ。lim：飛び散る机と椅子が止まる範囲 */
+    this.B = [{ id: 1, key: 'yt_bar1_open', x: 0, z: -33.9, ry: 0, c: V(0, LH + 1.0, -33.0), rubL: [['d', -0.95, -34.5, 1.45], ['c', 0.95, -34.2, 0.4]], rubC: [[-1.35, -0.55, -34.85, -34.15], [0.65, 1.3, -34.5, -33.9]], lim: [-1.1, 1.1, -36.2, -33.5] },
+      { id: 2, key: 'yt_bar2_open', x: 11.8, z: -31.5, ry: Math.PI / 2, c: V(11.8, LH + 1.0, -31.5), rubL: [['d', 12.85, -30.5, 0.1], ['c', 11.55, -32.6, 1.2]], rubC: [[12.45, 13.3, -30.85, -30.15], [11.3, 11.85, -32.85, -32.35]], lim: [11.4, 15.6, -32.6, -30.5] }];
     for (const b of this.B) {
       const g = WB.g(b.x, LH, b.z, b.ry); b.bar = g;
       for (const [x, ry] of [[-1.05, 0.1], [-0.35, -0.08], [0.35, 0.12], [1.05, -0.1]]) { WB.desk(g, x, 0.05, ry); WB.chair(g, x + 0.05, -0.05, ry + 0.2, true).position.y = 0.76; }
@@ -17070,10 +17066,9 @@ const WING = {
       WB.bake(g);
       b.col = this.wcol(b, -1.5, 1.5, -0.4, 0.4, false); b.col.bar2 = true;
       /* がれき（壊したあとに、入口の端に残る） */
-      const r = WB.g(b.x, LH, b.z, b.ry); b.rub = r; const dz = b.id === 1 ? -0.4 : 0;
-      for (const [x, zz, ry] of [[-1.1, -0.2, 1.2], [1.12, 0.3, -1.4], [-1.05, -0.9, 0.3]]) { const d = WB.desk(r, x, zz + dz, ry); d.rotation.z = Math.PI / 2; d.position.y = 0.31; }
-      for (const [x, zz] of [[1.0, -0.7], [-1.15, 0.6], [0.95, -1.4]]) { const c = WB.chair(r, x, zz + dz, rnd(0, 6)); c.rotation.z = Math.PI / 2; c.position.y = 0.2; }
-      WB.bake(r); b.rubCols = [this.wcol(b, -1.45, -0.75, -1.3 + dz, 0.3 + dz), this.wcol(b, 0.75, 1.45, -1.7 + dz, 0.6 + dz)];
+      const r = WB.g(0, LH, 0); b.rub = r;
+      for (const [k, x, z, ry] of b.rubL) { if (k === 'd') { const d = WB.desk(r, x, z, ry); d.rotation.z = Math.PI / 2; d.position.y = 0.31; } else { const c = WB.chair(r, x, z, ry); c.rotation.z = Math.PI / 2; c.position.y = 0.2; } }
+      WB.bake(r); b.rubCols = b.rubC.map(([x0, x1, z0, z1]) => WB.col(x0, x1, z0, z1, false));
       b.pieces = [];
     }
     /* 扉①（閉じた扉。突進で倒れる） */
@@ -17106,7 +17101,7 @@ const WING = {
     const c = b.c; b.bar.visible = false; b.col.on = false; if (b.dcol) b.dcol.on = false;
     /* 崩れる机と椅子：飛び散って床に落ちる */
     const f = V(Math.sin(M.heading), 0, Math.cos(M.heading)), cs = Math.cos(b.ry), sn = Math.sin(b.ry);
-    for (let i = 0; i < 9; i++) { const lx = rnd(-1.2, 1.2), lz = rnd(-0.3, 0.3), q = i % 2 ? WB.desk(scene, b.x + lx * cs + lz * sn, b.z - lx * sn + lz * cs, rnd(0, 6)) : WB.chair(scene, b.x + lx * cs + lz * sn, b.z - lx * sn + lz * cs, rnd(0, 6)); q.position.y = LH + rnd(0.2, 2.0);
+    for (let i = 0; i < 4; i++) { const lx = rnd(-1.0, 1.0), lz = rnd(-0.2, 0.2), q = i % 2 ? WB.desk(scene, b.x + lx * cs + lz * sn, b.z - lx * sn + lz * cs, rnd(0, 6)) : WB.chair(scene, b.x + lx * cs + lz * sn, b.z - lx * sn + lz * cs, rnd(0, 6)); q.position.y = LH + rnd(0.2, 2.0);
       b.pieces.push({ q, v: f.clone().multiplyScalar(rnd(1.5, 3.5)).add(V(rnd(-1.2, 1.2), rnd(1, 3), rnd(-0.5, 0.5))), w: V(rnd(-5, 5), rnd(-5, 5), rnd(-5, 5)) }); }
     if (b.door) { b.doorFall = 0; }   /* 扉は内側へ倒れる */
     SND.bang(c, 1.6); SND.thud(c, 1.8); for (let i = 0; i < 7; i++) setTimeout(() => { SND.knock(c.clone().add(V(rnd(-1, 1), rnd(-0.8, 0.8), rnd(-1, 1))), 1.2); SND.kata && SND.kata(c, 1); }, 60 + i * rnd(60, 140));
@@ -17123,7 +17118,7 @@ const WING = {
   dashTick(M) { if (M.nearBar) M.dashMin = Math.min(M.dashMin, Math.hypot(player.x - M.pos.x, player.z - M.pos.z)); },
   update(dt) {
     for (const b of this.B) {
-      for (const P of b.pieces) { if (P.rest) continue; P.v.y -= 9.8 * dt; P.q.position.addScaledVector(P.v, dt); P.q.rotation.x += P.w.x * dt; P.q.rotation.z += P.w.z * dt; if (P.q.position.y < LH + 0.05) { P.q.position.y = LH + 0.05; P.v.multiplyScalar(0.25); P.v.y = Math.abs(P.v.y) * 0.3; if (P.v.length() < 0.4) { P.rest = true; P.q.rotation.x = Math.round(P.q.rotation.x / (Math.PI / 2)) * Math.PI / 2; P.q.rotation.z = Math.round(P.q.rotation.z / (Math.PI / 2)) * Math.PI / 2; } } }
+      for (const P of b.pieces) { if (P.rest) continue; P.v.y -= 9.8 * dt; P.q.position.addScaledVector(P.v, dt); { const Lm = b.lim, q = P.q.position; if (q.x < Lm[0] || q.x > Lm[1]) { q.x = clamp(q.x, Lm[0], Lm[1]); P.v.x *= -0.3; } if (q.z < Lm[2] || q.z > Lm[3]) { q.z = clamp(q.z, Lm[2], Lm[3]); P.v.z *= -0.3; } }   /* 壁にめりこまない */ P.q.rotation.x += P.w.x * dt; P.q.rotation.z += P.w.z * dt; if (P.q.position.y < LH + 0.05) { P.q.position.y = LH + 0.05; P.v.multiplyScalar(0.25); P.v.y = Math.abs(P.v.y) * 0.3; if (P.v.length() < 0.4) { P.rest = true; P.q.rotation.x = Math.round(P.q.rotation.x / (Math.PI / 2)) * Math.PI / 2; P.q.rotation.z = Math.round(P.q.rotation.z / (Math.PI / 2)) * Math.PI / 2; } } }
       if (b.doorFall !== undefined && b.doorFall < 1) { b.doorFall = Math.min(1, b.doorFall + dt / 0.45); const k = b.doorFall * b.doorFall; b.door.rotation.set(-Math.PI / 2 * k, 0, 0.12 * k); b.door.position.set(-0.7, LH + 0.03 * k, -33.0 - 0.4 * k); if (b.doorFall >= 1) { SND.thud(b.c, 1.4); b.doorFall = undefined; } }
     }
     if (world.state !== 'play') return;
@@ -17427,8 +17422,8 @@ const NWX = {
   stag() { return world.t < (world.staggerUntil || 0) ? 0.45 : 1; },
   /* 2階の東階段から1階へ飛び降りる：大きな音で近くの怪異が気づく。画面が揺れて、少しの間よろける */
   jump() {
-    player.lv = 0; player.y = player.camY = 0; player.x = 23.2; player.z = -28.4; world.vhs = Math.max(world.vhs || 0, 1.0); noiseHit(0.7); world.staggerUntil = world.t + 2.6; world.jumpShake = 0.6;
-    const p = V(23.2, 0.2, -28.4); SND.thud(p, 2.6); SND.bang(p, 1.3); playSfx('door_pound', { pos: p, ref: 1.6, gain: 1.5, rate: 0.5, lowpass: 600 }); playSfx('metal_rattle', { pos: p, ref: 1.0, gain: 0.5, rate: 0.6, dur: 0.5 });
+    player.lv = 0; player.y = player.camY = 0; player.x = 24.9; player.z = -29.6; world.vhs = Math.max(world.vhs || 0, 1.0); noiseHit(0.7); world.staggerUntil = world.t + 2.6; world.jumpShake = 0.6;
+    const p = V(24.9, 0.2, -29.6); SND.thud(p, 2.6); SND.bang(p, 1.3); playSfx('door_pound', { pos: p, ref: 1.6, gain: 1.5, rate: 0.5, lowpass: 600 }); playSfx('metal_rattle', { pos: p, ref: 1.0, gain: 0.5, rate: 0.6, dur: 0.5 });
     const near = q => q && Math.abs(q.y) < 1.2 && Math.hypot(q.x - p.x, q.z - p.z) < 18;
     if (womanOn() && !world.mannRun && near(WD.pos) && !WD.borrowed) { if (CH.state === 'off') CH.start('chase'); CH.lastSeen.set(p.x, 0, p.z); CH.seenAt = world.t; }
     if (SP.ready && SP.pos && SP.lv === 0 && near(V(SP.pos.x, 0, SP.pos.z)) && ['crawl', 'hang', 'fcrawl'].includes(SP.st)) SP.startChase();
@@ -17441,10 +17436,10 @@ const NWX = {
     if (world.state !== 'play') return; const fw = camFwd(), lk = TR('鍵がかかっている');
     if (player.lv === 1) {
       if (Math.abs(player.x - 16.7) < 0.8 && player.z > -33 && player.z < -31.6 && fw.z < -0.5) wOffer(TR('調べる'), () => toast(TR('内側から何かでふさがれているようだ'), 2200));
-      if (player.x > 22.3 && player.x < 25.7 && player.z > -30.9 && player.z < -30 && fw.z > 0.4) wOffer(TR('飛び降りる'), () => this.jump());
+      if (player.x > 22.2 && player.x < 25.8 && player.z > -29.9 && !player.hidden) this.jump();   /* 踏み出したら、そのまま1階へ */
     } else {
       for (const x of [7.0, 19.5]) if (Math.abs(player.x - x) < 0.7 && player.z < -31.8 && fw.z < -0.5) wOffer(TR('調べる'), () => toast(TR('向こう側にバリケードがあって開かない'), 2000));
-      if (player.x > 22.2 && player.x < 25.8 && player.z > -28.6 && player.z < -26.6 && fw.z > 0.4) wOffer(TR('調べる'), () => toast(TR('階段が崩れていて上れない'), 2000));
+      if (player.x > 22.2 && player.x < 25.8 && player.z > -29.9 && player.z < -28.9 && fw.z > 0.4) wOffer(TR('調べる'), () => toast(TR('階段が崩れていて上れない'), 2000));
     }
   },
   reset() { this.build(); world.staggerUntil = 0; world.jumpShake = 0; },
