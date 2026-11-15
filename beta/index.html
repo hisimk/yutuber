@@ -14967,7 +14967,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.19';
+const VERSION = '0.16.20';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -17458,7 +17458,7 @@ const SCIRM = {
     { const g = WB.g(19.6, Y + 1.8, -33.35); WB.cy(g, 0.012, 0.012, 0.06, wood, 0, 0.03, 0, 6); WB.sp(g, 0.11, 0x6a5038, 0, 0.16, 0).scale.set(0.9, 1.2, 0.9); const h = new THREE.Group(); h.position.set(0, 0.32, 0); g.add(h); WB.sp(h, 0.085, 0x7a5a40, 0, 0, 0); for (const s of [-1, 1]) { WB.sp(h, 0.026, 0xd8a020, s * 0.035, 0.01, 0.07); WB.sp(h, 0.012, 0x050505, s * 0.035, 0.01, 0.092); WB.bx(h, 0.02, 0.05, 0.02, 0x5a4030, s * 0.05, 0.08, 0.02, 0, 0, s * 0.4); } WB.bx(h, 0.015, 0.025, 0.02, 0x3a3020, 0, -0.02, 0.085); h.rotation.y = Math.PI; this.owlH = h; this.owlP = V(19.6, Y + 2.12, -33.35); }
   },
   /* 予備バッテリー：実験台の引き出し・薬品棚（80%の周で1個） */
-  spots() { return this.tables.map(t => V(t.x - 0.55, LH + 0.62, t.z + rnd(-0.3, 0.3))).concat([V(21.6, LH + 0.55, -33.65), V(22.2, LH + 1.1, -33.65)]); },
+  spots() { return this.tables.map(t => V(t.x + rnd(-0.3, 0.3), LH + 0.9, t.z + rnd(0.05, 0.35))); },   /* 2026-11-16 実験台の天板の上（流しとガス栓をよけた所）にちゃんと乗せる */
   reset() {
     this.build(); this.skel.rotation.y = Math.PI * 0.75; this.skelTurned = false; this.glinted = false; this.glint = 0; if (this.eyeFill) this.eyeFill.dark.emissive.setRGB(0, 0, 0); this.offT = 0; this.owlH.rotation.y = Math.PI; this.owl = 'wait'; this.owlT = 0; this.jarT = 0; this.jarCm = 0; this.pedSeen = 0;
     this.grille.visible = true; this.scope = null;
@@ -17540,7 +17540,7 @@ const ARTRM = {
   },
   dollPose() { const r = () => rnd(-1.4, 1.4); for (const j of this.dollL) j.rotation.set(r(), 0, r() * 0.6); this.doll.rotation.set(rnd(-0.3, 0.3), rnd(0, 6), rnd(-0.3, 0.3)); },
   reset() {
-    this.canvOn = WF('canvas3') || WF('canvas') || Math.random() < 0.5; this.handOn = WF('redhands') || Math.random() < 0.5;   /* 2026-11-16 キャンバスと赤い手形は、それぞれ周の最初に半分の確率で */
+    PAINT.reset(); this.canvOn = WF('canvas3') || WF('canvas') || Math.random() < 0.5; this.handOn = WF('redhands') || Math.random() < 0.5;   /* 2026-11-16 キャンバスと赤い手形は、それぞれ周の最初に半分の確率で */
     this.build(); BUSTX.reset(); DOLLX.reset(); this.stage = WF('canvas3') ? 3 : 0; this.canvasDraw(this.stage); this.bust.rotation.y = Math.PI * 0.85; this.bustTurned = false; this.bOff = 0; this.dollChanged = false; this.dOff = 0; this.cOff = 0;
     for (const j of this.dollL) j.rotation.set(0, 0, 0); for (const j of this.dollLA || []) j.rotation.set(0, 0, 0); if (this.dollHead) this.dollHead.rotation.set(0, 0, 0); this.doll.rotation.set(0, 0, 0); this.in = false;
     for (const h of this.hands || []) h.parent && h.parent.remove(h); this.hands = []; this.handSt = 'wait'; this.handT = 0; this.stay = 0;
@@ -17548,6 +17548,7 @@ const ARTRM = {
   update(dt) {
     if (world.state !== 'play' || player.lv !== 1) return; const inR = playerZone() === 'ART', cp = camera.position;
     if (inR && !this.in) { this.in = true; if (this.canvOn && this.stage < 3) { this.stage++; this.canvasDraw(this.stage); } } else if (!inR) this.in = false;
+    PAINT.offer();   /* 2026-11-16 キャンバスに絵を描く */
     if (!inR) return; this.stay += dt;
     BUSTX.update(dt); DOLLX.update(dt);   /* 2026-11-16 石膏像は近くでじっと見ると落ちて割れる／デッサン人形は見ている間に関節が動く */
     /* キャンバス：部屋の中でも、しばらく目を離すと描き足される */
@@ -17590,7 +17591,7 @@ const PROPS3D = {
         /* 瓶の目玉は、棚の中の目玉の瓶に移す（目で追う動き・判定は今まで通り） */
         const ej = o.getObjectByName('EyeJar'), ey = o.getObjectByName('Eye'); if (ej && ey) { SCIRM.eyeObj = ej; SCIRM.eyePiv = ey; SCIRM.jarP = ey.getWorldPosition(new THREE.Vector3()); } } }
     if (ARTRM.built && !ARTRM.p3) { ARTRM.p3 = true; const bu = this.m.bust, ea = this.m.easel, dl = this.m.doll; if (bu) { ARTRM.bust.clear(); ARTRM.bust.add(bu.clone()); }
-      if (ea) for (const g of ARTRM.easels) { const o = ea.clone(), cv = o.getObjectByName('Canvas'); g.userData.cv.visible = false; for (const c of [...g.children]) if (c !== g.userData.cv) g.remove(c); g.add(o);
+      if (ea) for (const g of ARTRM.easels) { const o = ea.clone(), cv = o.getObjectByName('Canvas'); g.userData.cv.visible = false; g.userData.cv3 = cv; for (const c of [...g.children]) if (c !== g.userData.cv) g.remove(c); g.add(o);
         /* 描き足されていくキャンバスは、モデルのキャンバスに今までの絵を貼る */
         if (g === ARTRM.canvG && cv) { const t = new THREE.CanvasTexture(ARTRM.canvC); t.colorSpace = THREE.SRGBColorSpace; t.flipY = false; ARTRM.canvT2 = t; cv.traverse(m => { if (m.isMesh) m.material = new THREE.MeshLambertMaterial({ map: t }); }); } }
       if (dl) { const g = ARTRM.dollG, o = dl.clone(); g.clear(); g.add(o); const n = k => o.getObjectByName(k); ARTRM.doll = n('Hips'); ARTRM.dollL = ['UpperArmL', 'UpperArmR', 'UpperLegL', 'UpperLegR'].map(n); ARTRM.dollLA = ['LowerArmL', 'LowerArmR'].map(n); ARTRM.dollHead = n('Head'); } }
@@ -19957,7 +19958,63 @@ Object.assign(CHAT_DICT.t, { 'ue.01': ['食った…', 'it ate her...'], 'ue.02'
 if (CHAT_DICT.ev) CHAT_DICT.ev['バケモノにはバケモノを'] = ['ue.01', 'ue.02', 'ue.03', 'ue.04', 'ue.05'];
 XCHAT.LIST.urahOmen = ['uo.01', 'uo.02', 'uo.03'];
 { for (const [k, n] of [['pointed', '指をさされた'], ['toes', '戸口から覗く上履き']]) { delete AW_TABLE[k]; delete CHIP_DESC[k]; delete AW_HINT[k]; delete EN[n]; if (CHAT_DICT.ev) delete CHAT_DICT.ev[n]; COL.LIST = COL.LIST.filter(x => x[0] !== k); } }
-if (TEST && window.__G) Object.assign(window.__G, { WING, CH, WD, SP, nodePos, clearLine, segBlocked, MINOR, HP, EV, DIR, URINT, URPREY, URAV, HANDS, HAND_SPOTS, POLT, MOVERS, UWA, GG_SPOTS, ABYSS, BUSTX, DOLLX, nearLook, setZoom(z) { zoom = zoomTarget = z; }, SCIRM, ARTRM, PMASK, COL, NAKA, TALLY, BROOMEV, AW_TABLE, CHIP_DESC, AW_HINT, GEAR, FIXCAM, RING, PERM, KANA, VO, PACALL, SPV, EV, seen, A, CH, HEART, CVOICE, wdScream, WARP, WD, ITEM, F2, PAD, QUALITY, opt, MP4FIX, rec, resultBlobs: () => resultBlobs, LOGOANIM, CHIP, VTITLE, NOISE, SNAKE, ACC, ACC_ICON, ACC_VIEW, award, CHATLOG, CHAT, CHATGEN, RES_CHAT, RANKPOP, yrankIdx, GOD, VDB, ACH, PERM, REVIVE, RESET, COL, escape, caught, DIR, SP, OFUDA, LUM, TRACE, HAZURE, seen, SFX_CREDITS, AW_TABLE, RANK_FIX, rankOf, MICLV, MIC, rec, opt, VED, RES_CHAT_: () => RES_CHAT, _attach: b => attachVideo(b), GODV: GOD, _blobs: () => resultBlobs, EVENTS: () => EV });
+/* =========================================================
+   2026-11-16 美術室のキャンバスに絵を描く（調べると、お絵かきの画面）
+   ・色6・太さ3・消しゴム・全部消す・完成・やめる。描いている間もゲームは止まらない
+   ・「完成」で、描いた絵をそのままゲームの中のキャンバスに映す（その周の間だけ。次の周は元に戻る）
+   ・「描き足されていくキャンバス」の1枚に描いたら、その周はもう描き足されない（自分の絵が残る）
+   ・撮れ高：録画中に完成「画伯の誕生」（B30）、追われている最中に完成「命をかけた芸術家」（A50）
+   ========================================================= */
+const PAINT = {
+  W: 256, H: 320, PAPER: '#f2eee4', COLS: ['#1a1a1a', '#f4f4f0', '#c8241c', '#2a5cc8', '#e8c41c', '#2e9a40'], SIZES: [3, 8, 18],
+  build() {
+    if (this.el) return; const T = (ja, en) => LANG === 'en' ? en : ja, el = document.createElement('div'); el.id = 'paint';
+    el.innerHTML = `<div class="pBox"><div class="pT">${T('キャンバス', 'Canvas')}</div><canvas id="pCv" width="${this.W}" height="${this.H}"></canvas><div class="pRow" id="pCols"></div><div class="pRow" id="pSz"></div><div class="pRow"><button id="pErase">${T('消しゴム', 'Eraser')}</button><button id="pClear">${T('全部消す', 'Clear')}</button></div><div class="pRow"><button id="pCancel">${T('やめる', 'Cancel')}</button><button id="pDone" class="pGo">${T('完成', 'Done')}</button></div></div>`;
+    document.body.appendChild(el); this.el = el; this.cv = el.querySelector('#pCv'); this.x = this.cv.getContext('2d');
+    const st = document.createElement('style'); st.textContent = `#paint{position:fixed;inset:0;z-index:62;display:none;align-items:center;justify-content:center;pointer-events:none}#paint.show{display:flex}
+#paint .pBox{pointer-events:auto;background:rgba(18,18,20,.88);border:1px solid #333338;border-radius:16px;padding:10px 12px 12px;width:min(300px,86vw);text-align:center}
+#paint .pT{color:#fff;font-weight:800;font-size:15px;margin-bottom:6px}#paint canvas{width:100%;aspect-ratio:4/5;background:${this.PAPER};border-radius:6px;touch-action:none;display:block}
+#paint .pRow{display:flex;gap:8px;margin-top:8px;justify-content:center}#paint button{flex:1;padding:9px 4px;border-radius:10px;font-size:14px;font-weight:700;border:1px solid #3a3a3e;background:#202024;color:#fff}
+#paint button.on{border-color:#ffd34d;color:#ffd34d}#paint .pGo{background:#e0332f;border-color:#e0332f}#paint .pc{flex:0 0 30px;height:30px;padding:0;border-radius:50%}#paint .pc.on{outline:3px solid #ffd34d;outline-offset:1px}`;
+    document.head.appendChild(st);
+    const cols = el.querySelector('#pCols'); this.COLS.forEach((c, i) => { const b = document.createElement('button'); b.className = 'pc'; b.style.background = c; b.onclick = e => { e.stopPropagation(); this.col = c; this.erase = false; this.ui(); }; cols.appendChild(b); });
+    const sz = el.querySelector('#pSz'); this.SIZES.forEach((s, i) => { const b = document.createElement('button'); b.textContent = [T('細い', 'Thin'), T('ふつう', 'Mid'), T('太い', 'Thick')][i]; b.onclick = e => { e.stopPropagation(); this.sz = s; this.ui(); }; sz.appendChild(b); });
+    const on = (id, f) => { el.querySelector('#' + id).onclick = e => { e.stopPropagation(); f(); }; };
+    on('pErase', () => { this.erase = !this.erase; this.ui(); }); on('pClear', () => this.clear()); on('pCancel', () => this.close()); on('pDone', () => this.done());
+    for (const ev of ['pointerdown', 'pointerup', 'pointermove', 'touchstart', 'touchmove', 'touchend', 'click', 'wheel']) el.addEventListener(ev, e => e.stopPropagation(), { passive: ev !== 'touchmove' });
+    const pt = e => { const r = this.cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * this.W, (e.clientY - r.top) / r.height * this.H]; };
+    this.cv.addEventListener('pointerdown', e => { e.preventDefault(); this.cv.setPointerCapture(e.pointerId); this.last = pt(e); this.line(this.last, this.last); });
+    this.cv.addEventListener('pointermove', e => { if (!this.last) return; const p = pt(e); this.line(this.last, p); this.last = p; });
+    for (const ev of ['pointerup', 'pointercancel']) this.cv.addEventListener(ev, () => { this.last = null; });
+  },
+  ui() { this.el.querySelectorAll('.pc').forEach((b, i) => b.classList.toggle('on', !this.erase && this.COLS[i] === this.col)); this.el.querySelectorAll('#pSz button').forEach((b, i) => b.classList.toggle('on', this.SIZES[i] === this.sz)); this.el.querySelector('#pErase').classList.toggle('on', !!this.erase); },
+  line(a, b) { const x = this.x; x.strokeStyle = this.erase ? this.PAPER : this.col; x.lineWidth = this.erase ? this.sz * 1.6 : this.sz; x.lineCap = x.lineJoin = 'round'; x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0] + 0.01, b[1]); x.stroke(); },
+  clear() { this.x.fillStyle = this.PAPER; this.x.fillRect(0, 0, this.W, this.H); },
+  open(g) { this.build(); this.g = g; this.col = this.col || this.COLS[0]; this.sz = this.sz || this.SIZES[1]; this.erase = false; this.clear(); this.ui(); this.el.classList.add('show'); this.isOpen = true; },
+  close() { if (this.el) this.el.classList.remove('show'); this.isOpen = false; this.last = null; },
+  done() {
+    const g = this.g; if (!g) { this.close(); return; } const c = document.createElement('canvas'); c.width = this.W; c.height = this.H; c.getContext('2d').drawImage(this.cv, 0, 0);
+    const tg = g.userData.cv3 || g.userData.cv, tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; tx.flipY = !g.userData.cv3;   /* 3Dモデルのキャンバスは上下の向きが逆 */
+    tg.traverse(m => { if (!m.isMesh) return; if (!m.userData.origMat) m.userData.origMat = m.material; m.material = new THREE.MeshLambertMaterial({ map: tx }); (this.used || (this.used = [])).push(m); });
+    if (g === ARTRM.canvG) ARTRM.canvOn = false;   /* 描き足されていくキャンバスは、その周はもう描き足されない */
+    const m = g.userData.cv;
+    if (rec.active) { award('paintDone', '画伯の誕生', 30); if (KEHAI.chasing()) award('paintChase', '命をかけた芸術家', 50); }
+    SND.rustle && SND.rustle(m.getWorldPosition(V()), 0.3); toast(LANG === 'en' ? 'Your painting is up on the canvas' : 'キャンバスに絵を描いた', 1500); this.close();
+  },
+  reset() { this.close(); for (const m of this.used || []) if (m.userData.origMat) { m.material = m.userData.origMat; m.userData.origMat = null; } this.used = []; },
+  /* 美術室で、近くのイーゼルのキャンバスを見ている時に「キャンバスに描く」 */
+  offer() {
+    if (this.isOpen || playerZone() !== 'ART' || !ARTRM.easels) return; const cp = camera.position, f = camFwd();
+    for (const g of ARTRM.easels) { const m = g.userData.cv; if (!m) continue; const p = m.getWorldPosition(V()); if (cp.distanceTo(p) > 1.7 || f.dot(p.clone().sub(cp).normalize()) < 0.75) continue; wOffer(TR('キャンバスに描く'), () => this.open(g)); return; }
+  },
+};
+Object.assign(AW_TABLE, { paintDone: ['B', 30], paintChase: ['A', 50] }); COL.LIST.push(['paintDone', '画伯の誕生', 30], ['paintChase', '命をかけた芸術家', 50]);
+Object.assign(CHIP_DESC, { paintDone: ['美術室のキャンバスに、自分の絵を描き上げた。', 'You finished a painting on the art room canvas.'], paintChase: ['追われている最中に、キャンバスの絵を描き上げた。', 'You finished a painting while being chased.'] });
+Object.assign(AW_HINT, { paintDone: ['美術室のキャンバスを調べる', 'inspect a canvas in the art room'], paintChase: ['追われながら絵を仕上げる', 'finish a painting while chased'] });
+Object.assign(EN, { '画伯の誕生': 'A master is born', '命をかけた芸術家': 'Art worth dying for', 'キャンバスに描く': 'Paint on the canvas' });
+Object.assign(CHAT_DICT.t, { 'pt.d1': ['画伯じゃん', "we've got an artist"], 'pt.d2': ['なに描いてんのｗ', 'what are you drawing lol'], 'pt.d3': ['今それやる！？', 'NOW of all times!?'], 'pt.d4': ['命がけの芸術', 'art on the line'] });
+if (CHAT_DICT.ev) Object.assign(CHAT_DICT.ev, { '画伯の誕生': ['pt.d1', 'pt.d2'], '命をかけた芸術家': ['pt.d3', 'pt.d4'] });
+if (TEST && window.__G) Object.assign(window.__G, { PAINT, WING, CH, WD, SP, nodePos, clearLine, segBlocked, MINOR, HP, EV, DIR, URINT, URPREY, URAV, HANDS, HAND_SPOTS, POLT, MOVERS, UWA, GG_SPOTS, ABYSS, BUSTX, DOLLX, nearLook, setZoom(z) { zoom = zoomTarget = z; }, SCIRM, ARTRM, PMASK, COL, NAKA, TALLY, BROOMEV, AW_TABLE, CHIP_DESC, AW_HINT, GEAR, FIXCAM, RING, PERM, KANA, VO, PACALL, SPV, EV, seen, A, CH, HEART, CVOICE, wdScream, WARP, WD, ITEM, F2, PAD, QUALITY, opt, MP4FIX, rec, resultBlobs: () => resultBlobs, LOGOANIM, CHIP, VTITLE, NOISE, SNAKE, ACC, ACC_ICON, ACC_VIEW, award, CHATLOG, CHAT, CHATGEN, RES_CHAT, RANKPOP, yrankIdx, GOD, VDB, ACH, PERM, REVIVE, RESET, COL, escape, caught, DIR, SP, OFUDA, LUM, TRACE, HAZURE, seen, SFX_CREDITS, AW_TABLE, RANK_FIX, rankOf, MICLV, MIC, rec, opt, VED, RES_CHAT_: () => RES_CHAT, _attach: b => attachVideo(b), GODV: GOD, _blobs: () => resultBlobs, EVENTS: () => EV });
 /* 2026-11-14 PC：ウィンドウ／全画面（全画面はボタンを押した時と、旧校舎に入る時に切り替える。Escで戻したらウィンドウに） */
 const SCREEN = {
   isFull() { return !!(document.fullscreenElement || document.webkitFullscreenElement); },
