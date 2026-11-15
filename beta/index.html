@@ -3666,10 +3666,17 @@ function elScreamLayer(t0, gain = 1, noGaps) {
   A.elScreamAt = t0;
   setTimeout(() => { try { L.disconnect(); out.disconnect(); } catch (e) { } }, (t0 - now + total + 0.5) * 1000);
 }
+/* 2026-11-15 いきなり目の前に現れる驚かし用：最初の短い叫び（細切れの声）は鳴らさず、長い叫びだけを途切れさせずに流す */
+function wdScreamLong(delay = 0, gain = 1) {
+  if (!A.ctx) return; if (!hasSfx('el_scream1')) { wdScream(delay, gain); return; }
+  const t0 = A.ctx.currentTime + delay; A.screamGaps = []; A.screamAt = t0; setTimeout(() => PAD.hit(1), delay * 1000);
+  elScreamLayer(t0, gain * 1.1, true); if (A.elCur) A.elCur.keep = t0;
+  const B = A.bus.gain, base = A.fxVol * A.FX_BASE; B.cancelScheduledValues(t0 - 0.05); B.setValueAtTime(base, t0 - 0.05); B.linearRampToValueAtTime(base * 0.3, t0); B.setValueAtTime(base * 0.3, t0 + 2.6); B.linearRampToValueAtTime(base, t0 + 3.6);   // 叫びの間は物音を下げる
+}
 /* 2026-11-14 女が消えたら叫びも止める（重ねた叫び声は約5.4秒あるので、驚かしが先に終わると叫びだけ残っていた） */
 function screamCut(fade = 0.2) {
   if (!A.ctx) return; const now = A.ctx.currentTime;
-  const E = A.elCur; if (E && now < E.end) { try { const G = E.L.gain; G.cancelScheduledValues(now); G.setValueAtTime(G.value, now); G.linearRampToValueAtTime(0, now + fade); for (const s of E.srcs) s.stop(now + fade + 0.05); } catch (e) { } A.elCur = null; }
+  const E = A.elCur; if (E && now < E.end) { try { const G = E.L.gain; if (E.keep !== undefined) { const at = Math.max(now, E.keep + 3.0); G.cancelScheduledValues(at); G.setValueAtTime(G.value, at); G.linearRampToValueAtTime(0, at + 0.8); for (const s of E.srcs) s.stop(at + 0.85); A.elCur = null; A.psyCur = null; if (A.screamGaps) A.screamGaps = []; return; }   /* 長い叫びは勢いを切らない：出だしから3秒は鳴らしきってから0.8秒で消す */ G.cancelScheduledValues(now); G.setValueAtTime(G.value, now); G.linearRampToValueAtTime(0, now + fade); for (const s of E.srcs) s.stop(now + fade + 0.05); } catch (e) { } A.elCur = null; }
   const P = A.psyCur; if (P) { try { const G = P.g.gain; G.cancelScheduledValues(now); G.setValueAtTime(G.value, now); G.linearRampToValueAtTime(0, now + fade); P.s.stop(now + fade + 0.05); } catch (e) { } A.psyCur = null; }
   if (A.screamGaps) A.screamGaps = [];
 }
@@ -6716,7 +6723,7 @@ const MD = {
       if (this.t > 1.0 && camFwd().x < -0.35 && this.canStartScare()) {
         this.ph = 'face'; this.t = 0; WD.borrow(); sgPlay('Scare_MouthOpen', 0); sgSetOpacity(1); SG.root.scale.setScalar(2.4);
         sgEmissive(0x3a2424);
-        this.placeFace(0.95); world.maxUsed = true; SND.hit(); wdScream(SCREAM_JAW); world.vhs = 1; U.tear.value = 0.5;
+        this.placeFace(0.95); world.maxUsed = true; SND.hit(); wdScreamLong(0.05); world.vhs = 1; U.tear.value = 0.5;
       }
       if (this.t > 30) this.ph = 'done';
     } else if (this.ph === 'face') {
@@ -7514,7 +7521,7 @@ F2.updTeddyScare = function (dt) {
     if (f.dot(to) < -0.35 && turn > 0.6 && SG.ready && !WD.borrowed && CH.state === 'off' && !CAP.on && !world.selfie && S.chair !== 'run') {
       S.scare = 'face'; S.st = 0; F2.busy = true; WD.borrow(); sgPlay('Scare_MouthOpen', 0); sgSetOpacity(1); SG.root.scale.setScalar(1.15); sgEmissive(0x3a2424);
       S.poses = [[0.2, -0.12, 0.35], [-0.22, 0.1, -0.5], [0.05, 0.18, 0.8]];   /* 2026-11-13 顔がこちらを向いたまま（首の傾きだけ大きく）。顔として分かるように */ S.pi = 0; S.pt = 0;
-      this.placeSG(0.62); world.maxUsed = true; SND.hit(); wdScream(SCREAM_JAW * 0.5, 1.0, 1.0); world.vhs = 1; U.tear.value = 0.5;
+      this.placeSG(0.62); world.maxUsed = true; SND.hit(); wdScreamLong(0.05); world.vhs = 1; U.tear.value = 0.5;
       S.yaw0 = player.yaw; S.tdir = Math.sign(Math.atan2(Math.sin(player.yaw - (S.prevYaw ?? player.yaw)), Math.cos(player.yaw - (S.prevYaw ?? player.yaw)))) || 1;
     }
   } else if (S.scare === 'face') {
@@ -8712,14 +8719,14 @@ const ITEM = {
     const top = 90, gap = 16, bot = top + gap * 4; g.strokeStyle = '#3a3226'; g.lineWidth = 1.6;
     for (let i = 0; i < 5; i++) { g.beginPath(); g.moveTo(40, top + i * gap); g.lineTo(W - 36, top + i * gap); g.stroke(); }
     g.fillStyle = '#2a241c'; g.font = '86px serif'; g.textBaseline = 'alphabetic'; g.fillText('𝄞', 42, bot + 14);
-    const L = [['ド', 0, 0], ['レ♭', 1, 1], ['レ', 1, 0], ['ミ♭', 2, 1], ['ミ', 2, 0], ['ファ', 3, 0], ['ソ♭', 4, 1], ['ソ', 4, 0], ['ラ♭', 5, 1], ['ラ', 5, 0], ['シ♭', 6, 1], ['シ', 6, 0]];
+    const L = [['ド', 0, 0], ['ド#', 0, 1], ['レ', 1, 0], ['レ#', 1, 1], ['ミ', 2, 0], ['ファ', 3, 0], ['ファ#', 3, 1], ['ソ', 4, 0], ['ソ#', 4, 1], ['ラ', 5, 0], ['ラ#', 5, 1], ['シ', 6, 0]];   // 2026-11-15 黒鍵はシャープに統一
     const n = S.notes.length, x0 = 150, dx = Math.min(66, (W - 200 - x0 + 120) / n);
     S.notes.forEach((pc, i) => {
       const [nm, step, flat] = L[pc]; const y = bot - (step - 2) * gap / 2, x = x0 + i * dx;   // ミ（E4）が一番下の線
       if (step <= 0) { g.beginPath(); g.moveTo(x - 16, bot + gap); g.lineTo(x + 16, bot + gap); g.stroke(); }   // ドは加線
-      if (flat) { g.font = 'bold 26px serif'; g.fillText('♭', x - 30, y + 9); }
+      if (flat) { g.font = 'bold 26px serif'; g.fillText('#', x - 30, y + 9); }
       g.beginPath(); g.ellipse(x, y, 10, 7, -0.35, 0, 7); g.fill(); g.fillRect(x + 8.5, y - 46, 2.2, 46);
-      g.font = 'bold 20px sans-serif'; g.textAlign = 'center'; g.fillText(nm, x, bot + 58); g.textAlign = 'left';
+      g.font = `bold ${nm.length > 2 ? 16 : 20}px sans-serif`; g.textAlign = 'center'; g.fillText(nm, x, bot + 58); g.textAlign = 'left';
     });
     g.fillStyle = 'rgba(150,20,20,.85)'; g.font = 'italic 24px serif'; g.fillText('ひいて', W - 120, H - 34);
     return c.toDataURL();
@@ -9263,7 +9270,7 @@ const PIANO = {
   KEYMAP: { KeyQ: 60, Digit2: 61, KeyW: 62, Digit3: 63, KeyE: 64, KeyR: 65, Digit5: 66, KeyT: 67, Digit6: 68, KeyY: 69, Digit7: 70, KeyU: 71, KeyI: 72, Digit9: 73, KeyO: 74, Digit0: 75, KeyP: 76, BracketLeft: 77, Equal: 78, BracketRight: 79 },
   KEYLABEL: { 60: 'Q', 61: '2', 62: 'W', 63: '3', 64: 'E', 65: 'R', 66: '5', 67: 'T', 68: '6', 69: 'Y', 70: '7', 71: 'U', 72: 'I', 73: '9', 74: 'O', 75: '0', 76: 'P', 77: '[', 78: '=', 79: ']' },
   isPC: matchMedia('(hover: hover) and (pointer: fine)').matches,   // マウスで操作する端末（タッチ画面つきのPCも含む）
-  NAMES: ['ド', 'レ♭', 'レ', 'ミ♭', 'ミ', 'ファ', 'ソ♭', 'ソ', 'ラ♭', 'ラ', 'シ♭', 'シ'],
+  NAMES: ['ド', 'ド#', 'レ', 'レ#', 'ミ', 'ファ', 'ファ#', 'ソ', 'ソ#', 'ラ', 'ラ#', 'シ'],   // 2026-11-15 黒鍵はシャープに統一
   LO: 60, HI: 84,   // ド(C4)〜2つ上のド(C6)。横画面いっぱいの鍵盤
   build() {
     if (this.el) return;
@@ -14390,7 +14397,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.15';
+const VERSION = '0.15.16';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16207,7 +16214,7 @@ ENDCARD.ORD.PH = -1;
 CHAT_CFG.coef.PH = 1.2;
 setInterval(() => { if (PHAN.el && world.state === 'play') PHAN.panel(); }, 1000);
 PHAN.load(); PHAN.panel();
-if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, WD, CH, SP, MANN, NAV, RED: typeof RED !== 'undefined' ? RED : null, postMat, CHAT, RES_CHAT, COL, ENDCARD, makeResultImage, KOK, MOZ, PIANO, F2, SELF, avatar, selfCam, STAIRS, groundAt, escapeRun: escape, evid: () => evidence, recS: () => rec, world });
+if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, WD, CH, SP, MANN, NAV, RED: typeof RED !== 'undefined' ? RED : null, postMat, CHAT, RES_CHAT, COL, ENDCARD, makeResultImage, KOK, wdScreamLong, screamCut, MOZ, PIANO, F2, SELF, avatar, selfCam, STAIRS, groundAt, escapeRun: escape, evid: () => evidence, recS: () => rec, world });
 
 /* =========================================================
    2026-11-14 データをリセット（スタート画面・設定の「撮れ高コレクション」の直下）
