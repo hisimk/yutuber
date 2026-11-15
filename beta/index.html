@@ -4716,7 +4716,7 @@ function doorStallTick(who, dt) {
 }
 // 逆さ女がはっきり見え、追ってくるようになったか（電池残り60%〜30%の間のどこかから）
 function womanOn() {
-  const on = world.chime30 || (world.batUsed || 0) >= (world.sgShowUsed ?? 30) || (typeof PHAN !== 'undefined' && PHAN.on);   // 2026-11-15 化け物の周は最初から
+  const on = (world.womanUp && !world.sealedWoman) || (typeof PHAN !== 'undefined' && PHAN.on);   /* 2026-11-15 出る時期は ENEMY が決める */   // 2026-11-15 化け物の周は最初から
   if (on && WD.showUsed === undefined) { WD.showUsed = world.batUsed || 0; if (TEST || DEV) console.log('WOMAN on', (world.battery || 0).toFixed(1)); }
   return on;
 }
@@ -4857,6 +4857,7 @@ const WD = {
     let vis = sgVisibleByLight(this.pos);
     // 30%チャイムまでは、ときどき・うっすら・一瞬だけ
     const pre = !womanOn() && !world.dark;
+    if (world.sealedWoman || (world.dark && world.enemy1 && ENEMY.darkChaser() !== 'woman')) vis = false;   /* 2026-11-15 封じた逆さ女は、その周は姿を見せない */
     if (pre) {
       if (vis && this.preT === undefined && world.t >= (this.preCool || 0)) this.preT = world.t;
       if (this.preT !== undefined) { if (!vis || world.t - this.preT > this.preDur) { this.preT = undefined; this.preCool = world.t + rnd(18, 35); this.preDur = rnd(0.6, 1.1); vis = false; } }
@@ -7970,7 +7971,16 @@ SP.spawn = function () {
 const spFloor = lv => lv ? LH : 0;
 const _qz = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI);
 function spQ(yaw, floor, out = new THREE.Quaternion()) { out.setFromAxisAngle(V(0, 1, 0), yaw); if (floor) out.multiply(_qz); return out; }   // 床では天井の姿勢を裏返す
-SP.apply = function () { this.wrap.position.copy(this.pos); spQ(this.yaw, this.onFloor, this.wrap.quaternion); this.wrap.updateMatrixWorld(true); };
+SP.apply = function () {
+  this.wrap.position.copy(this.pos);
+  /* 2026-11-15 巣を移った直後は、天井からにじみ出るように現れる（天井の中から下りてきて、だんだん濃くなる） */
+  if (this.emergeT !== undefined) { const k = clamp((world.t - this.emergeT) / 0.9, 0, 1); if (!this.onFloor) this.wrap.position.y += (1 - k) * (1 - k) * 0.9; this.emergeOp(k < 1 ? 0.15 + 0.85 * k : 1); if (k >= 1) this.emergeT = undefined; }
+  spQ(this.yaw, this.onFloor, this.wrap.quaternion); this.wrap.updateMatrixWorld(true);
+};
+SP.emergeOp = function (a) {
+  if (!this.emMats) { this.emMats = []; this.wrap.traverse(o => { if (o.isMesh) for (const m of [].concat(o.material)) if (!this.emMats.includes(m)) this.emMats.push(m); }); }
+  for (const m of this.emMats) { if (m.userData.emT0 === undefined) m.userData.emT0 = { t: m.transparent, o: m.opacity }; const B = m.userData.emT0, tr = a < 0.999 || B.t; if (m.transparent !== tr) { m.transparent = tr; m.needsUpdate = true; } m.opacity = B.o * a; }
+};
 SP.newTarget = function () {
   const R = this.web.def.rect; const y = spCeil(this.lv);
   if (world.t - this.lastWarp > 12 && this.webs.length > 1 && chance(0.55)) { this.tgt = this.web.touch.clone(); this.toWeb = true; return; }
@@ -7979,11 +7989,9 @@ SP.newTarget = function () {
 SP.warp = function () {
   // ワープの主体は蜘蛛女：同じ個体の位置と所属階を同じ更新で切り替える（補間・非表示フレームなし）
   const from = this.web; const others = this.webs.filter(w => w !== from); const to = pick(others);
-  const seenFrom = seen(spFacePos(V()), { maxD: 12 });
   from.jig = 0.6; to.jig = 0.6;
   this.web = to; this.lv = to.def.lv; this.pos.copy(to.touch); this.yaw = Math.atan2(to.inward.x, to.inward.z); this.apply();
-  const seenTo = seen(spFacePos(V()), { maxD: 12 });
-  if (seenFrom || seenTo) award('spWarp', '巣に触れたクモ女が別の巣へ移った瞬間', 100);
+  this.emergeT = world.t; this.apply();   /* 2026-11-15 巣ワープの撮れ高はなし。移った先では天井からにじみ出る */
   this.lastWarp = world.t; this.tgt = null; this.stepStop(true); this.stepGap = 0;   // 足音の発生点も到着側へ
   if (TEST || DEV) console.log('SPIDER warp', from.def.id, '->', to.def.id);
 };
@@ -7995,13 +8003,16 @@ SP.update = function (dt) {
   if (world.phanRun) return;   // 2026-11-15 化け物の周は、クモ女は単体で出ない
   if (this.st === 'sealed') return;   // 封印のお札で消えていく途中
   // 出現の判定（録画で得た累計得点。初めて規定値に届いた瞬間の電池で一度だけ決める）
-  if (!this.decided) { const tot = evidence.reduce((a, e) => a + e.pts, 0); if (tot > SPIDER_SCORE && (world.batUsed || 0) >= 50) { this.decided = true; this.flag = true;   /* 2026-11-14 電池を50%以上使い、得点が300を超えている時 */ if (TEST || DEV) console.log('SPIDER flag', this.flag, tot, world.battery.toFixed(1)); } }
+  if (!this.decided && world.spiderUp && !world.sealedSpider) { this.decided = true; this.flag = true; this.spawnAt = 0; this.chaseOnSpawn = true; if (TEST || DEV) console.log('SPIDER flag (ENEMY)'); }   /* 2026-11-15 出る時期は ENEMY が決める */
   else if (!this.flag && f2force('spider')) this.flag = true;
   if (!this.decided && f2force('spider')) { this.decided = true; this.flag = true; }
   for (const w of this.webs) if (w.jig > 0) { w.jig -= dt; const k = Math.max(0, w.jig) / 0.6; w.o.rotation.x = Math.sin(world.t * 38) * 0.05 * k; w.o.rotation.z = Math.cos(world.t * 31) * 0.04 * k; }
   if (!this.ready || world.state !== 'play') { if (this.updShards) this.updShards(dt); return; }
+  if (this.emergeT !== undefined && this.st !== 'none') this.apply();
   this.updShards(dt);   // 2026-11-14 割れたガラスは、クモ女がいない時も落ちて散らばる
-  if (this.st === 'none') { if (this.flag && this.webs.length && world.t > (this.spawnAt || 0)) this.spawn(); return; }   // お札で封じた後は、しばらく出てこない
+  if (this.st === 'none' && this.flag && !this.webs.length && this.webSrc) { const fl = this.flag, de = this.decided, co = this.chaseOnSpawn; this.reset(); this.flag = fl; this.decided = de; this.chaseOnSpawn = co; }   /* 読み込みが周の開始に間に合わなかった時は、ここで巣を張る */
+  if (this.st === 'none') { if (this.flag && !world.sealedSpider && this.webs.length && world.t > (this.spawnAt || 0)) { this.spawn(); if (this.chaseOnSpawn) { this.chaseOnSpawn = false; this.firstChaseAt = world.t + rnd(2, 4); } } return; }   /* 2026-11-15 お札で封じたら、その周はもう出ない */
+  if (this.firstChaseAt && world.t > this.firstChaseAt) { this.firstChaseAt = 0; if (this.st === 'crawl' && this.lv === player.lv && !player.hidden) this.startChase(); }   // お札で封じた後は、しばらく出てこない
   this.mixer.update(dt); this.t += dt;
   // 奇跡の3ショット：インカメラに、自分・クモ女・逆さ女が一緒に写る（2026-11-14 途中の版で抜け落ちていたので戻した）
   if (rec.active && world.selfie && this.wrap.visible && SG.ready && SG.root.visible && (SG.opacity ?? 1) > 0.3 && !awarded.has('trio')) {
@@ -8294,8 +8305,9 @@ SP.updChase = function (dt, fp) {
     const sp3 = V(this.pos.x, this.pos.y - 0.35, this.pos.z);
     const see = !hid && Math.abs(sp3.y - camera.position.y) < 3.2 && enemySees(sp3, [this.wrap]);
     this.lostT = see ? 0 : this.lostT + dt; if (see) this.seenAt = world.t;
-    if (hid ? this.lostT > 2.5 : this.lostT > 6) { this.lv = this.gy > 1.6 ? 1 : 0; this.endChase(); return; }
-    if (dH > CONFIG.loseDist && !stairZone(player.x, player.z) && !inStair) { this.lv = this.gy > 1.6 ? 1 : 0; this.endChase(); return; }   // 離れすぎると見失う
+    const darkHunt = world.dark && world.huntStarted && typeof ENEMY !== 'undefined' && ENEMY.darkChaser() === 'spider';   /* 2026-11-15 真っ暗になってからは見失わない */
+    if (hid ? this.lostT > 2.5 : (this.lostT > 6 && !darkHunt)) { this.lv = this.gy > 1.6 ? 1 : 0; this.endChase(); return; }
+    if (dH > CONFIG.loseDist && !darkHunt && !stairZone(player.x, player.z) && !inStair) { this.lv = this.gy > 1.6 ? 1 : 0; this.endChase(); return; }   // 離れすぎると見失う
   }
   if (doorStallTick(this, dt)) { this.apply(); this.stepUpdate(dt, false); return; }   // 閉まった引き戸で足止め
   if (!ret && !hid && !world.noCatch && dH < 0.85 && Math.abs((this.pos.y - 0.9) - camera.position.y) < 1.3) { this.lv = this.gy > 1.6 ? 1 : 0; this.startDrop(); return; }   // 追いつかれた（階段の上でも）
@@ -10104,6 +10116,15 @@ function surfAt(x, z, lv, bottom, floor) {
   let y = floor; for (const c of colliders) if (c.surfY !== undefined && c.on && c.lv === lv && x > c.x0 && x < c.x1 && z > c.z0 && z < c.z1 && bottom > c.surfY - 0.12) y = Math.max(y, c.surfY + (lv ? LH : 0));
   return y;
 }
+/* 2026-11-15 人体模型の突進の先に窓ガラスがあるか（割れた窓も返す） */
+function mannGlassAhead(x, z, fx, fz, dist, lv) {
+  let best = null;
+  for (const g of glassPanes) { const S = g.userData.sec; if (!S || (S.lv !== lv && S.lv !== -1)) continue;
+    const pa = S.axis === 'x' ? x : z, fa = S.axis === 'x' ? fx : fz; if (Math.abs(fa) < 0.2) continue; const t = (S.c - pa) / fa; if (t < 0 || t > dist) continue;
+    const along = S.axis === 'x' ? z + fz * t : x + fx * t; if (along < S.lo + 0.15 || along > S.hi - 0.15) continue;
+    if (!best || t < best.d) best = { g, d: t, x: x + fx * t, z: z + fz * t }; }
+  return best;
+}
 const MANN = {
   ready: false, root: new THREE.Group(), mixer: null, act: {}, cur: '', bones: {}, mats: [],
   SPOT: V(-2.15, 0, -16.35), SCALE: 1.12,
@@ -10201,15 +10222,15 @@ const MANN = {
     if (!this.ready) return;
     const q = location.search.match(/[?&]mann=(\w+)/); const force = q ? q[1] : '';   // 確認用 ?mann=enemy / ?mann=run
     let unlocked = false; try { unlocked = localStorage.getItem('yt_mann_unlock') === '1'; } catch (e) { }
-    world.mannRun = !world.phanRun && (force === 'enemy' || (force !== 'run' && unlocked && chance(world.wingOpen ? 0.05 : 0.2)));   /* 2026-11-15 2階のバリケードを壊す前は20%、壊したあとは5% */   // 2026-11-14 かくれんぼFINALをクリアするまでは出ない。クリア後は半分の周で逆さ女と交代
+    world.mannRun = !world.phanRun && world.enemy1 === 'mann';   /* 2026-11-15 敵のくじ引きは ENEMY.decide（FINAL前は出ない・後は1/3） */
     // 交代の回の出方：半分は保健室の前から（さらに半分ずつ「目を離した隙に」／「離れたら」動き出す）。残り半分は電池を20%使うまでどこにもいない
-    const qv = location.search.match(/[?&]mannv=(\w+)/); this.ev = qv ? qv[1] : pick(['look', 'far', 'spawn', 'spawn']); this.seenOnce = false;
+    const qv = location.search.match(/[?&]mannv=(\w+)/); this.ev = qv ? qv[1] : world.mannRun ? 'spawn' : pick(['look', 'far', 'spawn', 'spawn']);   /* 2026-11-15 敵の回は、電池を20〜50%使うまでどこにもいない */ this.seenOnce = false;
     this.runPlan = !world.mannRun;   // 2026-11-14 走り出す回の抽選はなし（首が回った後、6秒写せば必ず走る）
     this.st = 'stand'; this.t = 0; this.look = 0; this.jolted = false; this.pos = this.SPOT.clone(); this.heading = Math.atan2(-4.8 - this.SPOT.x, -13.4 - this.SPOT.z);
     /* 2026-11-15 走り出す人体模型の回は、ときどき先生のように教卓の前に立つ（保健室70%・1階の2-2の教卓15%・2階の2-B（奥の教室）の教卓15%） */
     { const qs = location.search.match(/[?&]mannspot=(\w+)/); let k = qs ? qs[1] : pickW([['nurse', 0.7], ['r2', 0.15], ['b2', 0.15]]); if (k === 'b2' && world.maze) k = 'nurse'; if (!this.runPlan || world.mannRun) k = 'nurse';
       this.spotK = k; if (k === 'r2') { this.pos.set(7.5, 0, -17.55); this.heading = 0; } else if (k === 'b2') { this.pos.set(7.5, LH, -19.75); this.heading = Math.PI; }
-      const c = this.col; c.x0 = this.pos.x - 0.22; c.x1 = this.pos.x + 0.22; c.z0 = this.pos.z - 0.2; c.z1 = this.pos.z + 0.2; c.lv = this.pos.y > 1.6 ? 1 : 0; this.jumpY = 0; this.vaultY = 0; this.vault = null; }
+      const c = this.col; c.x0 = this.pos.x - 0.22; c.x1 = this.pos.x + 0.22; c.z0 = this.pos.z - 0.2; c.z1 = this.pos.z + 0.2; c.lv = this.pos.y > 1.6 ? 1 : 0; this.jumpY = 0; this.vaultY = 0; this.vault = null; this.glassArmed = false; this.breach = null; }
     this.reattach(); this.left = this.ORG.length; this.finalHunt = false;
     if (this.broken) for (const g of this.broken) g.visible = true; this.broken = [];
     this.cap = null; this.rattleStop(); this.col.on = true; this.root.rotation.set(0, this.heading, 0); this.root.position.copy(this.pos);
@@ -10584,9 +10605,9 @@ const MANN = {
   updEnemy(dt) {
     const H = this.head();
     if (this.st === 'absent') {   // 電池を20%使ったら、見えていないどこかに現れて歩き出す
-      if ((world.batUsed || 0) < 20 && !/[?&]mannv=spawn_now\b/.test(location.search)) return;
-      const far = WD.dests.filter(p => Math.hypot(p.x - player.x, p.z - player.z) > 12 && !onScreen(V(p.x, (p.y || 0) + 1.2, p.z), 1.1));
-      const p0 = pick(far.length ? far : WD.dests); this.pos.set(p0.x, p0.y || 0, p0.z); this.heading = rnd(0, 6.28); this.apply();
+      if ((world.batUsed || 0) < (world.mannRun ? (world.enemyAt ?? 20) : 20) && !/[?&]mannv=spawn_now\b/.test(location.search)) return;
+      const ks = WD.dests.filter(k => NAV[k]), far = ks.filter(k => { const p = nodePos(k); return Math.hypot(p.x - player.x, p.z - player.z) > 12 && !onScreen(V(p.x, (p.y || 0) + 1.2, p.z), 1.1); });   /* 2026-11-15 dests は場所の名前（座標ではない）ので座標に直す */
+      const p0 = nodePos(pick(far.length ? far : ks)); this.pos.set(p0.x, p0.y || 0, p0.z); this.heading = rnd(0, 6.28); this.apply();
       this.setOp(1); this.hy = 0; this.hp = 0; this.lookHead(); this.st = 'walk'; this.play('Walk', 1); this.walkTo(pick(WD.dests)); if (TEST || DEV) console.log('MANN appeared', p0.x.toFixed(1), p0.z.toFixed(1));
       return;
     }
@@ -10618,7 +10639,7 @@ const MANN = {
         const k = clamp(t / 1.2, 0, 1), e = k < 1 ? k * k * (3 - 2 * k) : 1; this.hy = e * Math.PI * 6; this.hp = Math.sin(t * 9) * 0.15 * (1 - k); this.lookHead();
         const ub = this.bones.UpperR; if (ub && this.rest.UpperR) { const a = clamp((t - 0.25) / 1.0, 0, 1); ub.quaternion.copy(this.rest.UpperR).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-a * Math.PI * 2, 0, 0.25 * Math.sin(a * Math.PI)))); }
         this.spT = (this.spT || 0) - dt; if (t < 1.25 && this.spT <= 0) { this.spT = 0.07; SND.knock(H, 0.25); }
-        if (!this.screamed && t > 0.35) { this.screamed = true; playSfx('psycho_scream', { pos: H.clone(), ref: 1.6, gain: 1.15, rate: 1.22 }) || SND.scream(); world.vhs = Math.max(world.vhs || 0, 0.5); }
+        if (!this.screamed && t > 0.35) { this.screamed = true; (playSfx('psycho_scream', { pos: H.clone(), ref: 1.6, gain: 1.25, rate: 0.6, lowpass: 2400 }) && playSfx('psycho_scream', { pos: H.clone(), ref: 1.6, gain: 0.6, rate: 0.48, lowpass: 1200 })) || SND.scream();   /* 2026-11-15 ずっと低い、男の声に */ world.vhs = Math.max(world.vhs || 0, 0.5); }
         if (t >= 1.7) { this.st = 'windup'; this.t = 0; this.hy = 0; this.hp = 0; this.restPose(); this.play('Run', 0.5); this.rattleStart(0.6); }
         break;
       }
@@ -10638,6 +10659,14 @@ const MANN = {
         const stopD = this.speed * this.speed / (2 * 22) + 0.35, wallSoon = segBlocked(this.pos.x, this.pos.z, this.pos.x + fx * stopD, this.pos.z + fz * stopD, this.lv(), 0.1);
         const lineOk = Math.abs(this.pos.y - player.y) < 1.0 && !segBlocked(this.pos.x, this.pos.z, player.x, player.z, this.lv(), 0.1);
         if (WING.hit(this, fx, fz, mv)) break; WING.dashTick(this);   // 2026-11-15 2階のバリケードに激突
+        /* 2026-11-15 窓ガラス越し：1回ぶつかった次の突進で、ガラスを割って飛び込む（続けては割れない）。割れている窓は、そのまま飛び越える */
+        if (this.breach) { const B = this.breach; B.t += dt; this.pos.x += fx * mv; this.pos.z += fz * mv; const u = clamp(B.t / B.dur, 0, 1); this.jumpY = 1.1 * Math.sin(Math.PI * u); this.tilt = 0.9 * Math.sin(Math.PI * u); if (!B.hitG && u > 0.35) { B.hitG = true; this.smash(B.x, B.z); } this.apply();
+          if (u >= 1) { this.breach = null; this.jumpY = 0; this.tilt = 0; this.step(1.0); SND.thud(V(this.pos.x, this.floorY() + 0.1, this.pos.z), 0.9); this.apply(); if (segBlocked(this.pos.x, this.pos.z, this.pos.x + fx * 0.4, this.pos.z + fz * 0.4, this.lv(), 0.1)) this.skid(true); }
+          break; }
+        if (hit || wallSoon) { const G = mannGlassAhead(this.pos.x, this.pos.z, fx, fz, Math.max(mv + 0.6, stopD), this.lv());
+          if (G) { const broken = !G.g.visible;
+            if (broken || this.glassArmed) { if (!broken) this.glassArmed = false; this.breach = { g: G.g, x: G.x, z: G.z, t: 0, dur: Math.max(0.35, (G.d + 1.0) / Math.max(4, this.speed)), hitG: broken }; this.speed = Math.max(this.speed, 6); SND.knock(V(this.pos.x, this.floorY() + 0.05, this.pos.z), 0.9); if (TEST || DEV) console.log('MANN glass', broken ? 'jump-over' : 'break'); break; }
+            else if (hit || (this.bonked && wallSoon) || (wallSoon && !lineOk && this.t > 0.6)) { this.glassArmed = true; } } }
         if (hit && !this.bonked) { this.bonked = true; this.bonk(); break; }
         if (hit || this.t > 8 || (this.bonked && wallSoon) || (wallSoon && !lineOk && this.t > 0.6)) { this.skid(hit); break; }
         this.pos.x += fx * mv; this.pos.z += fz * mv; this.apply(); this.stepTick(dt, 7.5);
@@ -10874,8 +10903,8 @@ const OFUDA = {
   },
   end() {
     this.on = false; this.mesh.visible = false;
-    if (this.kind === 'woman') { sgSetOpacity(0); WD.release(true); ITEM.banishWoman(); }
-    else { SP.wrap.visible = false; SP.st = 'none'; SP.noChaseUntil = world.t + 40; SP.lastDrop = world.t + 30; SP.spawnAt = world.t + rnd(40, 70); if (chance(0.1) || /[?&]spdrop\b/.test(location.search)) PERM.later('spider', 900); }   // 2026-11-14 倒したら10%でスパイダーセンス
+    if (this.kind === 'woman') { sgSetOpacity(0); WD.release(true); ITEM.banishWoman(); if (!world.phanRun) world.sealedWoman = true; }   /* 2026-11-15 封じた敵は、その周はもう出ない */
+    else { SP.wrap.visible = false; SP.st = 'none'; SP.noChaseUntil = world.t + 40; SP.lastDrop = world.t + 30; SP.spawnAt = world.t + rnd(40, 70); if (!world.phanRun) world.sealedSpider = true; if (chance(0.1) || /[?&]spdrop\b/.test(location.search)) PERM.later('spider', 900); }   // 2026-11-14 倒したら10%でスパイダーセンス
   },
   // 運命：ベートーベンの額縁が落ちる
   fall() {
@@ -12530,7 +12559,7 @@ function tick(now) {
   if (KB.down('up')) my = -1; if (KB.down('down')) my = 1; if (KB.down('left')) mx = -1; if (KB.down('right')) mx = 1;
   if (world.outro > 0 || world.capture || player.hidden || REVIVE.on || KOK.k > 0) { mx = 0; my = 0; }
   const fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw), rx = Math.cos(player.yaw), rz = -Math.sin(player.yaw);
-  const wsp = CONFIG.walkSpeed * PERM.speedMul() * CROUCH.spd();   // シュン足：1.08倍。しゃがむと半分
+  const wsp = CONFIG.walkSpeed * PERM.speedMul() * CROUCH.spd() * (typeof CHBLOOD !== 'undefined' ? CHBLOOD.slow() : 1);   // シュン足：1.08倍。しゃがむと半分
   const vx = (fx * -my + rx * mx) * wsp, vz = (fz * -my + rz * mx) * wsp;
   const ox = player.x, oz = player.z;
   { // 階段：足元の高さを追い、段差が大きい方向（手すりの外・別の段）へは進めない
@@ -12923,7 +12952,7 @@ function updateDark(dt) {
   scene.fog.density = 0.075; streetSpot.intensity = 3;
   for (const l of exitLights) { l.intensity = 2.2; l.distance = 7; }
   postMat.uniforms.grain.value = 1.4;
-  if (!world.huntStarted && world.darkT > 4) { world.huntStarted = true; if (WD.borrowed) WD.release(false); CH.start('hunt'); }
+  if (!world.huntStarted && world.darkT > 4) { world.huntStarted = true; ENEMY.darkStart(); }   /* 2026-11-15 1体目（封じていたら2体目）が追ってくる */
 }
 function caught() { CAP.start(); }
 function escape() {
@@ -14224,7 +14253,7 @@ $('#goBtn').addEventListener('click', () => {
   world.channel = ($('#chName').value || '').trim() || '心霊チャンネル';
   world.chRaw = ($('#chName').value || '').trim(); world.yomi = world.chRaw ? ($('#chYomi').value || '').trim() : '';
   CHATLOG.reset(); world.chatRk = yrankIdx(ACH.load().total); world.chatM = YRANK[world.chatRk][3]; world.chatName = chatCallName(); world.chatNick = NICK.of(world.chRaw, world.yomi); world.chatLang = LANG;   // 2026-11-14 チャット：撮影開始時のランク倍率と呼び名をこの動画に固定
-  NEWEV.decide(); PHAN.begin(); MANN.reset(); WD.init(); WARP.reset(); VO.stopAll(); FIXCAM.reset(); CROUCH.reset(); UNDER.reset(); CALL.reset(); FDET.reset(); if (LID.list.length) LID.reset(); DIR.planRun(); MINOR.reset(); SELF.reset(); MD.reset(); DOORS2.reset(); TAP.reset(); F2.reset(); SP.reset(); NEKO.reset(); OFUDA.reset(); ITEM.reset(); MAZE.after(); SNAKE.reset(); UWA.reset(); TEN.reset(); GG.reset(); POLT.reset(); MF.reset(); STREETFIG.reset(); EXITF.reset(); STAY.reset(); RED.reset(); MG.reset();
+  NEWEV.decide(); PHAN.begin(); ENEMY.decide(); MANN.reset(); WD.init(); WARP.reset(); VO.stopAll(); FIXCAM.reset(); CROUCH.reset(); UNDER.reset(); CALL.reset(); FDET.reset(); if (LID.list.length) LID.reset(); DIR.planRun(); MINOR.reset(); SELF.reset(); MD.reset(); DOORS2.reset(); TAP.reset(); F2.reset(); SP.reset(); NEKO.reset(); OFUDA.reset(); ITEM.reset(); MAZE.after(); SNAKE.reset(); UWA.reset(); TEN.reset(); GG.reset(); POLT.reset(); MF.reset(); STREETFIG.reset(); EXITF.reset(); STAY.reset(); RED.reset(); MG.reset();
   if (MIC30) CONFIG.recMaxSec = 30;   // 2026-11-14 開発用の30秒テスト（本番の120秒は変えない）
   $('#start').classList.remove('show');
   world.state = 'intro'; world.battery = CONFIG.battery.start; world.batUsed = Math.max(0, 100 - CONFIG.battery.start); world.sgShowUsed = rnd(50, 70);   /* 2026-11-14 逆さ女が見えるようになる時（電池の残り50〜30%のどこか。検証版から） */
@@ -14368,7 +14397,7 @@ if (CHK) {
   const dbgWeb = (lv, rect, front) => ({ def: { id: 'DBG', p: [(rect[0] + rect[1]) / 2, (rect[2] + rect[3]) / 2], yaw: 0, lv, rect, front }, o: null, touch: V((rect[0] + rect[1]) / 2, spCeil(lv), (rect[2] + rect[3]) / 2), inward: V(1, 0, 0), jig: 0 });
   const spReady = () => { if (!SP.ready) { toast('クモ女の読み込み中です'); return false; } if (SP.st === 'none') { SP.decided = true; SP.flag = true; SP.spawn(); } SP.lastWarp = world.t + 9999; SP.thread && (SP.thread.visible = false); SP.onFloor = false; return true; };
   const spPut = (x, z, lv, rect, front = false) => { SP.lv = lv; SP.web = dbgWeb(lv, rect, front); SP.pos.set(x, spCeil(lv), z); SP.gy = lv ? LH : 0; SP.onFloor = false; SP.yaw = 0; SP.st = 'crawl'; SP.tgt = null; SP.t = 0; SP.spawnT = world.t - 99; SP.apply(); SP.wrap.visible = true; };
-  const womanOnNow = () => { world.sgShowUsed = Math.min(world.sgShowUsed ?? 70, world.batUsed || 0); womanOn(); };
+  const womanOnNow = () => { world.womanUp = true; world.sealedWoman = false; womanOn(); };
   let spdK = 0;
   const setK = k => { spdK = k; const u = world.batUsed || 0; SP.appearUsed = u - 30 * k; womanOnNow(); WD.showUsed = u - 30 * k; };
   const sections = [
@@ -14543,7 +14572,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.22';
+const VERSION = '0.15.23';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16874,7 +16903,7 @@ const XCHAT = {   /* 撮れ高以外のできごとに、コメントを混ぜ�
   chat(d) {
     if (!d || !d.items || !d.end) return; const ev = (CHATLOG.ev || []).filter(e => e.k === 'xc'); if (!ev.length) return;
     const R = chatRng((d.seed ^ 0x51ed27) >>> 0), T = CHAT_DICT.t, U = Math.max(6, (d.users || []).length || 12), maxR = d.end.R + (d.end.ec ? 3 : -0.2), out = [];
-    for (const e of ev) { const ids = (this.LIST[e.w] || []).filter(id => T[id]); const n = Math.min(ids.length, (e.w === 'wingIn' ? 4 : 2) + (R() < 0.4 ? 1 : 0));
+    for (const e of ev) { const ids = (this.LIST[e.w] || []).filter(id => T[id]); const n = Math.min(ids.length, (e.w === 'wingIn' || e.w === 'second' ? 4 : 2) + (R() < 0.4 ? 1 : 0));
       const pool = ids.slice(); for (let i = 0; i < n; i++) { const id = pool.splice(Math.floor(R() * pool.length), 1)[0]; const t = e.t + 0.6 + i * (0.6 + R() * 0.8); if (!id || t > maxR) continue; out.push([Math.round(t * 100) / 100, Math.floor(R() * U), id, T[id][0], T[id][1]]); } }
     if (out.length) d.items = d.items.concat(out).sort((a, b) => a[0] - b[0]);
   },
@@ -17246,16 +17275,114 @@ const BCAST = {
 };
 
 const NEWWING = {
-  reset() { SCIRM.reset(); ARTRM.reset(); PMASK.reset(); DUCT.reset(); BCAST.reset(); this.items(); },
+  reset() { CHBLOOD.reset(); SCIRM.reset(); ARTRM.reset(); PMASK.reset(); DUCT.reset(); BCAST.reset(); this.items(); },
   items() {   /* 予備バッテリー（80%）と石膏のお面（毎回） */
     for (const [id, p] of [['sparebat', V(0, -50, 0)], ['pmask', V(0, -50, 0)]]) if (!ITEM.get(id)) ITEM.add(id, p, 1);
     const sb = ITEM.get('sparebat'); sb.lk = null; sb.spot = null; if (WF('sparebat') || chance(0.8)) { sb.taken = false; sb.lv = 1; sb.pos.copy(pick(SCIRM.spots())); } else { sb.taken = true; sb.pos.set(0, -50, 0); }
     const mk = ITEM.get('pmask'); mk.taken = false; mk.lv = 1; mk.pos.copy(ARTRM.maskP); ITEM.have.pmask = false; ITEM.skin(sb); ITEM.skin(mk);
     if (WF('mask')) ITEM.have.pmask = true;
   },
-  update(dt) { WOFF = []; WING.update(dt); SCIRM.update(dt); ARTRM.update(dt); PMASK.update(dt); DUCT.update(dt); BCAST.update(dt); },
+  update(dt) { WOFF = []; ENEMY.update(dt); CHBLOOD.update(dt); WING.update(dt); SCIRM.update(dt); ARTRM.update(dt); PMASK.update(dt); DUCT.update(dt); BCAST.update(dt); },
   offer() { for (const [l, f] of WOFF) { offerAction(l, f); return; } },
 };
+/* =========================================================
+   2026-11-15 敵の出方
+   ・周の最初に、追ってくる敵（1体目）をくじ引き：かくれんぼFINALの前は 逆さ女1/2・クモ女1/2、あとは 逆さ女・クモ女・人体模型 1/3ずつ（化け物の周はくじ引きなし）
+   ・電池を20〜50%使ったところ（周ごとにランダム）で、1体目が現れて追ってくる
+   ・逆さ女かクモ女の周で、電池の残りが50%未満・その周の得点が500点超えなら、もう片方も出る（人体模型はいつも1体だけ）
+   ・封印のお札で追い払った敵は、その周はもう出てこない
+   ・確認用：?enemy=woman|spider|mann ?enemyat=数字（電池を何%使ったら出るか） ?enemy2（2体目をすぐ出す）
+   ========================================================= */
+const ENEMY = {
+  decide() {
+    const q = new URLSearchParams(location.search), any = TEST || BETA || DEV;
+    let unlocked = false; try { unlocked = localStorage.getItem('yt_mann_unlock') === '1'; } catch (e) { }
+    world.sealedWoman = false; world.sealedSpider = false; world.womanUp = false; world.spiderUp = false; world.enemy2 = null; this.e1On = false;
+    if (world.phanRun) { world.enemy1 = null; return; }
+    let e = pick(unlocked ? ['woman', 'spider', 'mann'] : ['woman', 'spider']);
+    const f = q.get('enemy'), fm = (q.get('mann') || '');
+    if (any && ['woman', 'spider', 'mann'].includes(f)) e = f; if (fm === 'enemy') e = 'mann'; if (fm === 'run' && e === 'mann') e = 'woman';
+    world.enemy1 = e; world.mannRun = e === 'mann';
+    world.enemyAt = any && q.get('enemyat') !== null ? +q.get('enemyat') || 0 : rnd(20, 50); this.force2 = any && q.has('enemy2');
+    if (TEST || DEV) console.log('ENEMY', e, world.enemyAt.toFixed(1), unlocked ? 'unlocked' : '');
+  },
+  up(kind) { if (kind === 'woman') { world.womanUp = true; womanOn(); this.wChaseAt = world.t + rnd(1.5, 3); } else if (kind === 'spider') { world.spiderUp = true; } },
+  update(dt) {
+    if (world.phanRun || !world.enemy1 || world.state !== 'play') return;
+    const used = world.batUsed || 0;
+    /* 現れたら追い始める（逆さ女：同じ階で見失う距離より近ければ） */
+    if (this.wChaseAt && world.t > this.wChaseAt) { this.wChaseAt = 0; if (womanOn() && !world.mannRun && CH.state === 'off' && !WD.borrowed && !player.hidden && Math.abs(WD.pos.y - player.y) < 1.0 && distTo(WD.pos.x, WD.pos.z) < CONFIG.loseDist) { CH.start('chase'); CH.grace = 0.8; } }
+    /* 暗闇でクモ女が追う番なら、見失っても追い直す */
+    if (world.dark && world.huntStarted && this.darkChaser() === 'spider' && SP.ready) { this.spT = (this.spT || 0) - dt; if (this.spT <= 0) { this.spT = 3; if (SP.st === 'none' && SP.webs.length) SP.spawn(); else if (['crawl', 'hang', 'fcrawl'].includes(SP.st)) SP.startChase(); } }
+    if (!this.e1On && used >= world.enemyAt) { this.e1On = true; this.up(world.enemy1); if (TEST || DEV) console.log('ENEMY up', world.enemy1); }
+    if (this.e1On && !world.enemy2 && world.enemy1 !== 'mann') {
+      const score = evidence.reduce((a, e) => a + (e.pts || 0), 0);
+      if (this.force2 || ((world.battery ?? 100) < 50 && score > 500)) {
+        const o = world.enemy1 === 'woman' ? 'spider' : 'woman'; world.enemy2 = o; this.up(o);
+        if (typeof XCHAT !== 'undefined') XCHAT.log('second'); if (TEST || DEV) console.log('ENEMY second', o);
+      }
+    }
+  },
+  /* 電池が切れて真っ暗になった時に追ってくる敵：1体目（倒されていたら2体目） */
+  darkChaser() {
+    if (world.phanRun) return 'woman'; const ok = k => k && !(k === 'woman' && world.sealedWoman) && !(k === 'spider' && world.sealedSpider);
+    return ok(world.enemy1) ? world.enemy1 : ok(world.enemy2) ? world.enemy2 : null;
+  },
+  darkStart() {
+    const e = this.darkChaser(); if (TEST || DEV) console.log('ENEMY dark', e);
+    if (e === 'woman') { world.womanUp = true; if (WD.borrowed) WD.release(false); CH.start('hunt'); }
+    else if (e === 'spider' && SP.ready) { world.spiderUp = true; SP.decided = true; SP.flag = true; if (SP.st === 'none' && SP.webs.length) SP.spawn(); if (SP.startChase) SP.startChase(); }
+  },
+};
+
+/* ── 電池20%未満の追跡：天井・壁・床に血だまりが広がる（音はなし）。床の血だまりを踏むと少し遅くなる。追跡が終わると小さくなって消える */
+const CHBLOOD = {
+  list: [], next: 0, mats: null,
+  mk() {
+    if (this.mats) return; const tex = seed => { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'); let r = seed; const rn = () => (r = (r * 9301 + 49297) % 233280) / 233280;
+      for (let i = 0; i < 40; i++) { const a = rn() * 6.28, d = Math.pow(rn(), 0.7) * 80, x = 128 + Math.cos(a) * d, y = 128 + Math.sin(a) * d, R = 16 + rn() * 44 * (1 - d / 120); const gr = g.createRadialGradient(x, y, 0, x, y, R); gr.addColorStop(0, `rgba(${70 + rn() * 40 | 0},4,6,${0.55 + rn() * 0.35})`); gr.addColorStop(0.7, 'rgba(95,8,10,0.35)'); gr.addColorStop(1, 'rgba(110,10,12,0)'); g.fillStyle = gr; g.beginPath(); g.arc(x, y, R, 0, 7); g.fill(); }
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; };
+    const spl = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); g.fillStyle = 'rgba(110,6,8,.85)'; for (let i = 0; i < 26; i++) { const a = Math.random() * 6.28, d = Math.random() * 56; g.beginPath(); g.arc(64 + Math.cos(a) * d, 64 + Math.sin(a) * d, 1 + Math.random() * 6 * (1 - d / 64), 0, 7); g.fill(); } g.beginPath(); g.arc(64, 64, 14, 0, 7); g.fill(); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+    const M = map => new THREE.MeshLambertMaterial({ map, emissive: 0x220000, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
+    this.mats = { pool: [M(tex(11)), M(tex(77))], spl: M(spl) };
+  },
+  active() {
+    if (world.state !== 'play' || (world.battery ?? 100) >= 20) return false;
+    return (CH.state && CH.state !== 'off') || SP.st === 'chase' || (world.mannRun && ['windup', 'dash', 'skid', 'hunt'].includes(MANN.st));
+  },
+  add() {
+    this.mk(); const fy = player.lv ? LH : 0, a = rnd(0, Math.PI * 2), r = rnd(1.2, 5.5), x = player.x + Math.sin(a) * r, z = player.z + Math.cos(a) * r;
+    const zn = zoneOf(x, z, fy + 1); if (/^X/.test(zn) || stairZone(x, z)) return;
+    const kind = pickW([['ceil', 0.4], ['wall', 0.3], ['pool', 0.15], ['spl', 0.15]]);
+    const mat = kind === 'spl' ? this.mats.spl : pick(this.mats.pool); const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat); m.renderOrder = 3;
+    let size = kind === 'ceil' ? rnd(1.0, 2.2) : kind === 'wall' ? rnd(0.6, 1.3) : kind === 'pool' ? rnd(0.8, 1.3) : rnd(0.3, 0.7);
+    if (kind === 'wall') {   /* 近くの壁に貼る */
+      const o = V(player.x, fy + rnd(0.6, 2.0), player.z), d = V(Math.sin(a), 0, Math.cos(a)); const rc = new THREE.Raycaster(o, d, 0, 5); const h = rc.intersectObjects(occluders, false)[0]; if (!h || !h.face) return;
+      const n = h.face.normal.clone().transformDirection(h.object.matrixWorld); if (Math.abs(n.y) > 0.3) return; m.position.copy(h.point).addScaledVector(n, 0.012); m.lookAt(h.point.clone().add(n)); m.rotateZ(rnd(0, 6));
+    } else if (kind === 'ceil') { m.position.set(x, fy + HT - 0.008, z); m.rotation.set(Math.PI / 2, 0, rnd(0, 6)); }
+    else { m.position.set(x, fy + 0.004 + this.list.length * 0.0002, z); m.rotation.set(-Math.PI / 2, 0, rnd(0, 6)); }
+    m.scale.setScalar(0.001); scene.add(m); this.list.push({ m, kind, size, k: 0, grow: rnd(0.8, 1.6), lv: player.lv });
+  },
+  slow() { let s = 1; for (const b of this.list) if (b.kind === 'pool' && b.k > 0.4 && b.lv === player.lv && Math.hypot(player.x - b.m.position.x, player.z - b.m.position.z) < b.size * b.k * 0.42) s = 0.72; return s; },   /* 床の血だまりを踏むと少し遅い */
+  update(dt) {
+    const on = this.active();
+    if (on) { this.next -= dt; if (this.next <= 0 && this.list.filter(b => !b.out).length < 28) { this.next = rnd(0.35, 0.8); this.add(); } }
+    for (const b of this.list) { if (!on) b.out = true; b.k = b.out ? Math.max(0, b.k - dt / 1.6) : Math.min(1, b.k + dt / b.grow); const s = Math.max(0.001, b.size * (b.out ? b.k : 1 - Math.pow(1 - b.k, 2))); b.m.scale.setScalar(s); }
+    this.list = this.list.filter(b => { if (b.out && b.k <= 0) { scene.remove(b.m); b.m.geometry.dispose(); return false; } return true; });
+    if (on && rec.active && this.list.length) { const b = this.list[(this.ci = ((this.ci || 0) + 1) % this.list.length)]; this.seenT = seen(b.m.position, { maxD: 9 }) ? 0.5 : Math.max(0, (this.seenT || 0) - dt); if (this.seenT > 0) awardCont('chaseBlood', '血に染まる追跡', 2, dt); }
+  },
+  reset() { for (const b of this.list) scene.remove(b.m); this.list = []; this.next = 0; },
+};
+Object.assign(AW_TABLE, { chaseBlood: ['A', 2] });
+COL.LIST.push(['chaseBlood', '血に染まる追跡', 2]);
+Object.assign(CHIP_DESC, { chaseBlood: ['電池が残りわずかの追跡。天井にも壁にも、血だまりが広がっていった。', 'A chase on a dying battery — blood spread across the ceiling and walls.'] });
+Object.assign(EN, { '血に染まる追跡': 'The chase stained with blood' });
+Object.assign(CHAT_DICT.t, { 'en2.01': ['2体目きた！？', 'a second one!?'], 'en2.02': ['無理無理無理', 'no no no no'], 'en2.03': ['神回確定', 'legendary episode confirmed'], 'en2.04': ['2体はずるい', 'two is not fair'], 'bl.01': ['天井血だらけ', 'blood all over the ceiling'], 'bl.02': ['足元やばい', 'watch your feet'], 'bl.03': ['電池もうない', 'battery is almost gone'] });
+if (CHAT_DICT.ev) CHAT_DICT.ev['血に染まる追跡'] = ['bl.01', 'bl.02', 'bl.03'];
+if (typeof XCHAT !== 'undefined') XCHAT.LIST.second = ['en2.01', 'en2.02', 'en2.03', 'en2.04'];
+/* クモ女の巣ワープは撮れ高から外す */
+delete AW_TABLE.spWarp; delete CHIP_DESC.spWarp; COL.LIST = COL.LIST.filter(x => x[0] !== 'spWarp'); delete EN['巣に触れたクモ女が別の巣へ移った瞬間']; if (CHAT_DICT.ev) delete CHAT_DICT.ev['巣に触れたクモ女が別の巣へ移った瞬間'];
+if (TEST && window.__G) Object.assign(window.__G, { ENEMY, CHBLOOD, glassPanes, mannGlassAhead });
 /* 新しいアイテム */
 Object.assign(ITEM.defs, {
   sparebat: { name: '予備バッテリー', desc: '理科室にあった予備のバッテリー。電池が20％回復する。', size: 0.2 },
