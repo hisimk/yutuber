@@ -680,6 +680,15 @@
   #pnBat{margin-left:6px}
   #pnQuit{flex:0 0 auto;height:34px;padding:0 18px;border-radius:17px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.6);color:#fff;font-size:13px;font-weight:700}
   #pnKeys{position:relative;flex:1;touch-action:none}
+  /* 2026-11-15 演奏中の持ち物：楽譜のメモを鍵盤の上（中央）に置く */
+  #pnInv{flex:0 0 auto;height:34px;padding:0 14px;border-radius:17px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:12px;font-weight:700}
+  #pnInvPop{display:none;position:absolute;left:12px;top:50px;z-index:3;min-width:220px;max-width:70%;background:rgba(20,18,16,.96);border:1px solid rgba(255,255,255,.25);border-radius:12px;padding:6px;box-shadow:0 6px 18px rgba(0,0,0,.5)}
+  #pnInvPop.show{display:block}
+  #pnInvPop .pi{display:flex;align-items:center;gap:8px;padding:5px 6px;color:#eee;font-size:12px}#pnInvPop .pi img{width:30px;height:30px;object-fit:contain}#pnInvPop .pi b{flex:1}
+  #pnInvPop .pi button{height:28px;padding:0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.6);background:rgba(255,214,10,.18);color:#fff;font-size:12px;font-weight:700}
+  #pnInvPop .none{color:rgba(255,255,255,.6);font-size:12px;padding:6px}
+  #pnSheet{display:none;flex:0 0 auto;height:27%;justify-content:center;align-items:center;padding:0 0 6px}
+  #pnSheet.show{display:flex}#pnSheet img{height:100%;max-width:70%;object-fit:contain;border-radius:3px;box-shadow:0 2px 10px rgba(0,0,0,.6)}
   #pianoUI.pc{background:transparent;pointer-events:none}   /* PC：上はピアノの景色、下に鍵盤 */
   #pianoUI.pc #pnRot{pointer-events:auto;background:rgba(11,10,9,.94);border-top:1px solid rgba(255,255,255,.12)}
   #pnLbl{flex:0 0 auto;height:34px;padding:0 14px;border-radius:17px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:12px;font-weight:700}
@@ -9258,7 +9267,7 @@ const PIANO = {
   build() {
     if (this.el) return;
     const el = document.createElement('div'); el.id = 'pianoUI';
-    el.innerHTML = `<div id="pnRot"><div id="pnBar"><div id="pnMemo"></div><div id="pnStat"><span class="lb">残容量</span><span class="bar"><i id="pnCapF"></i></span><span id="pnCapT">2:00</span><span id="pnBat">100%</span></div><button class="btn" id="pnLbl">キー表示</button><button class="btn" id="pnQuit">やめる</button></div><div id="pnKeys"></div></div>`;
+    el.innerHTML = `<div id="pnRot"><div id="pnBar"><button class="btn" id="pnInv">持ち物</button><div id="pnMemo"></div><div id="pnStat"><span class="lb">残容量</span><span class="bar"><i id="pnCapF"></i></span><span id="pnCapT">2:00</span><span id="pnBat">100%</span></div><button class="btn" id="pnLbl">キー表示</button><button class="btn" id="pnQuit">やめる</button></div><div id="pnInvPop"></div><div id="pnSheet"><img alt=""></div><div id="pnKeys"></div></div>`;
     (FRAME.on ? document.documentElement : document.body).appendChild(el); this.el = el;   // PCはゲーム画面の枠の外（ウィンドウいっぱい）に鍵盤を出す
     addEventListener('resize', () => this.on && this.fit());
     const K = el.querySelector('#pnKeys');
@@ -9276,6 +9285,8 @@ const PIANO = {
     for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) K.addEventListener(t, e => release(e.pointerId));
     for (const t of ['touchstart', 'touchmove', 'touchend', 'pointerdown', 'pointerup', 'click']) el.addEventListener(t, e => e.stopPropagation());
     el.querySelector('#pnQuit').addEventListener('click', e => { e.stopPropagation(); this.exit(); });
+    el.querySelector('#pnInv').addEventListener('click', e => { e.stopPropagation(); this.invToggle(); });   // 2026-11-15 演奏中の持ち物（楽譜のメモを見る）
+    el.querySelector('#pnSheet').addEventListener('click', e => { e.stopPropagation(); this.sheet(false); });
     // PC：鍵盤の表記を「ドレミ」と「キーボードのキー」で切り替える
     const lb = el.querySelector('#pnLbl'); if (!this.isPC) lb.style.display = 'none';
     try { this.keyLbl = localStorage.getItem('yt_pnLbl') === 'key'; } catch (_) { this.keyLbl = false; }
@@ -9383,7 +9394,7 @@ const PIANO = {
     this.place();
   },
   exit() {
-    if (!this.on) return; this.extAllUp(); this.on = false;
+    if (!this.on) return; this.extAllUp(); this.on = false; this.invToggle(false); if (this.sheetOn) this.sheet(false);
     this.el.classList.remove('show'); $('#hud').classList.remove('piano');
     for (const k of this.el.querySelectorAll('.pk.on')) k.classList.remove('on');
     this.ovHeld = {}; this.ovLit = {};
@@ -9399,7 +9410,7 @@ const PIANO = {
     const R = this.el.querySelector('#pnRot'), W = innerWidth, H = innerHeight, cs = getComputedStyle(document.documentElement);
     const sat = parseFloat(cs.getPropertyValue('--sat')) || 0, sab = parseFloat(cs.getPropertyValue('--sab')) || 0;
     this.el.classList.toggle('pc', this.isPC);
-    if (this.isPC) { const kh = Math.round(Math.min(H * 0.46, Math.max(220, W * 0.22))); R.style.width = W + 'px'; R.style.height = kh + 'px'; R.style.top = (H - kh) + 'px'; R.style.transform = 'none'; R.style.paddingLeft = R.style.paddingRight = ''; return; }
+    if (this.isPC) { const kh = Math.round(Math.min(H * 0.46, Math.max(220, W * 0.22)) + (this.sheetOn ? Math.min(150, H * 0.18) : 0)); R.style.width = W + 'px'; R.style.height = kh + 'px'; R.style.top = (H - kh) + 'px'; R.style.transform = 'none'; R.style.paddingLeft = R.style.paddingRight = ''; return; }
     R.style.top = '0px';
     if (H > W) { R.style.width = H + 'px'; R.style.height = W + 'px'; R.style.transform = `translateX(${W}px) rotate(90deg)`; R.style.paddingLeft = Math.max(12, sat) + 'px'; R.style.paddingRight = Math.max(12, sab) + 'px'; }
     else { R.style.width = W + 'px'; R.style.height = H + 'px'; R.style.transform = 'none'; R.style.paddingLeft = R.style.paddingRight = ''; }
@@ -9410,6 +9421,26 @@ const PIANO = {
     $('#pnCapF').style.width = (left / CONFIG.recMaxSec * 100).toFixed(1) + '%'; $('#pnCapT').textContent = t;
     const bt = $('#pnBat'); bt.textContent = b + '%'; bt.style.color = b < 20 ? '#ff4d4d' : b <= 50 ? '#ffd34d' : '#fff';
   },
+  // ── 2026-11-15 演奏中の持ち物：「見る」で楽譜のメモを鍵盤の上（中央）に。録画にも、ピアノの譜面台に置いた紙として映る
+  invToggle(on) {
+    const P = this.el.querySelector('#pnInvPop'); on = on ?? !P.classList.contains('show'); P.classList.toggle('show', on); if (!on) return;
+    const own = INV.owned(); P.innerHTML = own.length ? '' : `<div class="none">${TR('まだ何も持っていない')}</div>`;
+    for (const id of own) { const D = ITEM.defs[id]; if (!D) continue; const d = document.createElement('div'); d.className = 'pi'; d.innerHTML = '<img alt=""><b></b>'; d.querySelector('img').src = ITEM_IMG[id]; d.querySelector('b').textContent = TR(D.name) + (id === 'ofuda' && ITEM.have.ofuda > 1 ? ' ×' + ITEM.have.ofuda : '');
+      if (id === 'memo') { const b = document.createElement('button'); b.type = 'button'; b.textContent = TR(this.sheetOn ? 'しまう' : '見る'); b.addEventListener('click', e => { e.stopPropagation(); this.sheet(!this.sheetOn); this.invToggle(false); }); d.appendChild(b); }
+      P.appendChild(d); }
+  },
+  sheet(on) {
+    this.sheetOn = !!on && !!ITEM.have.memo; const el = this.el.querySelector('#pnSheet');
+    if (this.sheetOn) { const url = ITEM.memoScore(ITEM.memoSong); el.querySelector('img').src = url; this.sheetMesh3(url); }
+    el.classList.toggle('show', this.sheetOn); if (this.sm) this.sm.visible = this.sheetOn; this.fit();
+  },
+  sheetMesh3(url) {   // 譜面台の位置に紙を立てる（録画に入る）
+    if (!F2.piano || !this.bb) return; const bb = this.bb, cz = (bb.min.z + bb.max.z) / 2;
+    if (!this.sm) { this.sm = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.1875), new THREE.MeshLambertMaterial({ side: THREE.DoubleSide, emissive: 0x2a2620 })); scene.add(this.sm); }
+    const im = new Image(); im.onload = () => { const t = new THREE.Texture(im); t.colorSpace = THREE.SRGBColorSpace; t.needsUpdate = true; if (this.sm.material.map) this.sm.material.map.dispose(); this.sm.material.map = t; this.sm.material.needsUpdate = true; }; im.src = url;
+    this.sm.position.set(bb.max.x - this.SX, LH + this.SY, cz); this.sm.rotation.set(0, Math.PI / 2, 0); this.sm.rotateX(-0.25); this.sm.visible = true;
+  },
+  SX: 0.42, SY: 1.08,
   place() {   // 椅子に座って鍵盤を見下ろす視点
     camera.fov = CONFIG.fov1x; camera.updateProjectionMatrix();
     camera.position.copy(this.cam.p); camera.lookAt(this.cam.t); camera.updateMatrixWorld();
@@ -14349,7 +14380,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.11';
+const VERSION = '0.15.12';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
