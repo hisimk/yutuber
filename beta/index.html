@@ -14782,7 +14782,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.3';
+const VERSION = '0.16.4';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16911,9 +16911,10 @@ const SMASH = {
 /* 2026-11-15 霧の日（FOG）はなしにした */
 
 /* ── 振り返ったら戸棚が全部開いていた */
+/* 2026-11-15 保健室の低い白い戸棚（C の a）は、入口の南側（人体模型のすぐ前・走り出す通り道）から、入口の北側（入口と高い戸棚 b の間）へ移した */
 const CAB = {
   sets: {}, built: false, plan: null,
-  SPOTS: { C: [[-1.82, -15.55, -Math.PI / 2, 'a'], [-1.85, -11.3, -Math.PI / 2, 'b']], R2: [[11.55, -17.66, 0, 'a'], [12.55, -17.7, 0, 'b']], R3: [[11.55, -18.34, Math.PI, 'a'], [12.55, -18.3, Math.PI, 'b']], LIB: [[-3.3, -16.66, 0, 'a'], [-2.35, -16.7, 0, 'b']] },
+  SPOTS: { C: [[-1.82, -12.22, -Math.PI / 2, 'a'], [-1.85, -11.3, -Math.PI / 2, 'b']], R2: [[11.55, -17.66, 0, 'a'], [12.55, -17.7, 0, 'b']], R3: [[11.55, -18.34, Math.PI, 'a'], [12.55, -18.3, Math.PI, 'b']], LIB: [[-3.3, -16.66, 0, 'a'], [-2.35, -16.7, 0, 'b']] },
   build() {
     if (this.built) return; this.built = true;
     const body = L({ color: 0xc9c4b6 }), door = L({ color: 0xd9d4c6 }), dark = L({ color: 0x15130f }), knob = L({ color: 0x777a7c });
