@@ -4572,7 +4572,7 @@ function awardCont(key, label, pps, dt, cap = 200) {
   const add = Math.min(cap - e.acc, pps * dt); e.acc = Math.min(cap, e.acc + pps * dt); e.sec += dt; e.pts = Math.floor(e.acc); e.label = `${label}（${Math.round(e.sec)}秒）`;
   if (add > 0 && closeUp()) closeBonus(add * (CLOSE.mul - 1));
 }
-function award(key, label, pts) { if (awarded.has(key)) return; if (key !== 'exitStart' && world.startAt === 'exit' && world.t - (world.playT0 ?? 0) < 60 && rec.active && !awarded.has('exitStart')) setTimeout(() => award('exitStart', '非常口からのスタート', 20), 400);   /* 2026-11-16 非常口から始めて1分以内 */ if (typeof KEHAI !== 'undefined') KEHAI.onAward(awBase(key)); { const a = AW_TABLE[awBase(key)]; if (a) pts = a[1]; } awarded.set(key, true); const ev = { t: rec.time, label, pts, key }; if (seenVia === 'fix' && world.t - FIXCAM.hitT < 0.2) ev.cam = 'fix'; else if (seenVia === 'wipe') ev.cam = 'wipe';   /* 2026-11-14 どのカメラで撮れたか */ evidence.push(ev); CHATLOG.add('aw', { key, label, pts }); if (rec.active) CHATLOG.bhAward(key); likePop(ev); if (closeUp()) closeBonus(pts * (CLOSE.mul - 1)); if (TEST || DEV) console.log('EVIDENCE', key, rec.time.toFixed(2)); }
+function award(key, label, pts) { if (awarded.has(key)) return;  if (typeof KEHAI !== 'undefined') KEHAI.onAward(awBase(key)); { const a = AW_TABLE[awBase(key)]; if (a) pts = a[1]; } awarded.set(key, true); const ev = { t: rec.time, label, pts, key }; if (seenVia === 'fix' && world.t - FIXCAM.hitT < 0.2) ev.cam = 'fix'; else if (seenVia === 'wipe') ev.cam = 'wipe';   /* 2026-11-14 どのカメラで撮れたか */ evidence.push(ev); CHATLOG.add('aw', { key, label, pts }); if (rec.active) CHATLOG.bhAward(key); likePop(ev); if (closeUp()) closeBonus(pts * (CLOSE.mul - 1)); if (TEST || DEV) console.log('EVIDENCE', key, rec.time.toFixed(2)); }
 function accum(key, cond, dt, need) { if (!cond) return false; evAcc[key] = (evAcc[key] || 0) + dt; return evAcc[key] >= need; }
 const _v = V(), _dir = V(), ray = new THREE.Raycaster();
 function onScreen(pos, margin = 1) { _v.copy(pos).project(camera); return _v.z < 1 && _v.z > -1 && Math.abs(_v.x) <= margin && Math.abs(_v.y) <= margin; }
@@ -14835,7 +14835,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.13';
+const VERSION = '0.16.14';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -17743,7 +17743,7 @@ const URAH_B64 = 'Z2xURgIAAADorQcAvHoAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvciI6ImdsVE
    ・動き：Noh_Walk・Hannya_Chase・Idle・ArmReach（般若側へ左右反転して使う）・Noh/Hannya_Detect（見つけた時）・Noh/Hannya_GrabBite（捕まえた時）
    ========================================================= */
 const URAH_CFG = {
-  scale: 1.15, catchR: 1.0,
+  scale: 1.15, catchR: 1.0, stepGain: 2.5,   /* 2026-11-16 足音の大きさ（前の足音の何倍か。聞いて調整） */
   /* 2026-11-15 速さは主人公の歩く速さを1とした倍率。追う速さは、追いかけ始めてから rampT 秒かけて最大へ */
   walkK: [0.8, 0.9],           /* ふだん歩き回る速さ（歩くたびに、この間でばらつく） */
   hannyaK: [1.1, 1.15],        /* 般若の追う速さ */
@@ -17819,6 +17819,80 @@ const REDHAND = {
   },
   slow() { return world.t < (world.handSlowUntil || 0) ? URAH_CFG.hand.slow : 1; },
   reset() { for (const h of this.list) h.g.visible = false; this.next = 0; world.handSlowUntil = 0; },
+};
+/* 2026-11-16 オフタリサマの歩き方：作ってある歩きの動きは使わず、4本の腕を毎フレーム計算で決める
+   ・手のひらが床に着いている間は、その手は床の同じ場所から動かさない（体のほうが手を支点に進む）
+   ・着く場所を先に決めて、そこへ腕を振り下ろす（肩・ひじの2か所を曲げて届かせる）
+   ・歩幅×足を出す速さ＝体の進む速さ。速い時は歩幅を大きく・腕を速く振る
+   ・前足（進む側の2本）は遠くをつかんで引き寄せる。後ろ足はひじを締めて手前に着き、押し出す
+   ・能面の歩きは4本が順番に、般若の追いかけは対角の2本ずつ同時に
+   ・曲がる時は、行きたい向きへ回した所に手を着く → 手を止めたまま体が回る */
+const URGAIT = {
+  LEGS: [['FrontR', -1, 1], ['FrontL', 1, 1], ['BackR', -1, -1], ['BackL', 1, -1]],
+  on: false, legs: null, ph: 0, _q: new THREE.Quaternion(), _q2: new THREE.Quaternion(), _a: new THREE.Vector3(), _b: new THREE.Vector3(),
+  surf(x, z) { const U = URAH, s = stairOf(x, z); if (s) { const h = stairH(s, x, z); if (h !== null) return h; } const lv = U.pos.y > 1.6 ? 1 : 0; return (U.cy > 0.3 ? U.pos.y + U.cy : lv * LH); },
+  /* 体の向き yaw・位置 p の時の、その足の着く基準の場所 */
+  home(L, p, yaw, lead) {
+    const s = URAH.root.scale.x, front = L.fz * lead > 0, hz = front ? 1.38 : -0.62, hx = L.side * (front ? 0.62 : 0.72);   // 前足は遠く、後ろ足は体の近く（進む側寄り）
+    const lz = hz * lead, c = Math.cos(yaw), si = Math.sin(yaw); const x = p.x + (hx * c + lz * si) * s, z = p.z + (-hx * si + lz * c) * s; return V(x, this.surf(x, z) + 0.04 * s, z);
+  },
+  reset() { this.on = false; this.legs = null; },
+  start() {
+    const U = URAH; U.root.updateMatrixWorld(true); this.legs = this.LEGS.map(([k, side, fz]) => { const h = U.bones[k + 'Hand'].getWorldPosition(V()); h.y = this.surf(h.x, h.z) + 0.04 * U.root.scale.x; return { k, side, fz, P: h, sw: null }; });
+    this.lp = U.pos.clone(); this.lby = U.by; this.v = V(); this.w = 0; this.ph = 0; this.on = true; this.L1 = null;
+  },
+  /* 2か所曲げ：肩 S から手 T へ届かせる（ひじは pole の向きへ出す） */
+  solve(k, T, pole) {
+    const U = URAH, sh = U.bones[k + 'Shoulder'], el = U.bones[k + 'Elbow'], hd = U.bones[k + 'Hand'];
+    sh.quaternion.copy(U.rest[k + 'Shoulder']); el.quaternion.copy(U.rest[k + 'Elbow']); hd.quaternion.copy(U.rest[k + 'Hand']); sh.updateMatrixWorld(true);
+    const S = sh.getWorldPosition(V()), E0 = el.getWorldPosition(V()), H0 = hd.getWorldPosition(V()); const L1 = S.distanceTo(E0), L2 = E0.distanceTo(H0);
+    const d = clamp(S.distanceTo(T), Math.abs(L1 - L2) + 0.01, L1 + L2 - 0.01), dir = T.clone().sub(S).normalize(), a = (L1 * L1 - L2 * L2 + d * d) / (2 * d), h = Math.sqrt(Math.max(0, L1 * L1 - a * a));
+    const pv = pole.clone().addScaledVector(dir, -pole.dot(dir)).normalize(), E = S.clone().addScaledVector(dir, a).addScaledVector(pv, h), Tc = S.clone().addScaledVector(dir, d);
+    this.aim(sh, E0, E); el.updateMatrixWorld(true); this.aim(el, hd.getWorldPosition(V()), Tc);
+  },
+  aim(b, childW, want) {
+    const P = b.getWorldPosition(V()), d0 = childW.clone().sub(P).normalize(), d1 = want.clone().sub(P).normalize(), q = this._q.setFromUnitVectors(d0, d1);
+    const wq = b.getWorldQuaternion(this._q2), nw = q.multiply(wq), pq = b.parent.getWorldQuaternion(new THREE.Quaternion()).invert(); b.quaternion.copy(pq.multiply(nw)); b.updateMatrixWorld(true);
+  },
+  /* 毎フレーム（体の位置・向きを決めたあと） */
+  tick(dt, mode) {
+    const U = URAH, s = U.root.scale.x; if (!this.on) this.start();
+    const v = U.pos.clone().sub(this.lp).multiplyScalar(1 / Math.max(dt, 1e-3)); v.y = 0; this.v.lerp(v, Math.min(1, dt * 8)); this.w += (uAng(U.by, this.lby) / Math.max(dt, 1e-3) - this.w) * Math.min(1, dt * 8); this.lp.copy(U.pos); this.lby = U.by;
+    const sp = this.v.length(), fw = V(Math.sin(U.by), 0, Math.cos(U.by)), lead = sp > 0.05 && this.v.dot(fw) < -0.2 * sp ? -1 : 1;   // 進む側の2本が前足
+    const trot = mode === 'trot', duty = trot ? 0.42 : 0.24, OFF = trot ? { FrontR: 0, BackL: 0, FrontL: 0.5, BackR: 0.5 } : { FrontR: 0, BackL: 0.25, FrontL: 0.5, BackR: 0.75 };
+    const strideMax = 1.35 * s, moving = sp > 0.06 || Math.abs(this.w) > 0.25;
+    const f = moving ? clamp(Math.max(sp / (strideMax * (trot ? 0.9 : 0.8)), Math.abs(this.w) * 0.35), 0.55, trot ? 2.6 : 2.4) : 0;   // 足を出す速さ（1秒に何周）。歩幅が最大を超える時は速さで合わせる
+    this.f = f; this.ph += f * dt;
+    const swD = duty / Math.max(f, 0.55), stD = (1 - duty) / Math.max(f, 0.55);
+    for (const L of this.legs) {
+      const lp = ((this.ph - OFF[L.k]) % 1 + 1) % 1, want = moving && lp < duty;
+      if (want && !L.sw) {   // 振り上げ開始：着く場所を先に決める（体が進む・回る先を見込む）
+        const T = swD + stD * 0.5, p2 = U.pos.clone().addScaledVector(this.v, T), y2 = U.by + clamp(this.w, -3, 3) * T, b = this.home(L, p2, y2, lead);
+        L.sw = { a: L.P.clone(), b, t: 0, dur: Math.max(0.12, swD), front: L.fz * lead > 0 };
+      }
+      if (L.sw) { L.sw.t += dt; if (L.sw.t >= L.sw.dur || (!moving && L.sw.t > 0.05 && L.sw.t >= L.sw.dur)) { L.P.copy(L.sw.b); L.sw = null; URSTEP.play(L.P.clone(), U.st === 'walk' ? 0.5 : U.face === 'noh' ? 0.6 : 0.8); } }
+    }
+    /* 止まっている時：基準から離れすぎた足だけ、1本ずつ置き直す */
+    if (!moving && !this.legs.some(o => o.sw)) { let worst = null, wd = 0.7 * s; for (const L of this.legs) { const H = this.home(L, U.pos, U.by, 1), d = H.distanceTo(L.P); if (d > wd) { wd = d; worst = L; } } if (worst) worst.sw = { a: worst.P.clone(), b: this.home(worst, U.pos, U.by, 1), t: 0, dur: 0.3, front: worst.fz > 0 }; }
+    /* 体の上下：押している時に少し上がり、振っている時に少し沈む。前足が引き寄せる時に体がぐっと前へ */
+    let swing = 0; for (const L of this.legs) if (L.sw) swing += Math.sin(Math.PI * clamp(L.sw.t / L.sw.dur, 0, 1));
+    const bob = (moving ? 0.05 * s : 0) - swing * 0.035 * s; this.bob = (this.bob || 0) + (bob - (this.bob || 0)) * Math.min(1, dt * 10);
+    this.surge = moving ? 1 + 0.3 * Math.sin(this.ph * Math.PI * 2 * (trot ? 2 : 4)) : 1;
+  },
+  /* 腕の形を決める（root の位置・向きを置いたあと） */
+  pose() {
+    const U = URAH, s = U.root.scale.x, up = V(0, 1, 0); U.root.updateMatrixWorld(true);
+    for (const L of this.legs) {
+      let T = L.P, curl = 0.1; const out = V(Math.cos(U.by) * L.side, 0, -Math.sin(U.by) * L.side);   // 体の外側
+      if (L.sw) { const u = clamp(L.sw.t / L.sw.dur, 0, 1), e = u * u * (3 - 2 * u); T = L.sw.a.clone().lerp(L.sw.b, e);
+        if (L.sw.front) { T.y += Math.sin(Math.PI * Math.min(1, u * 1.25)) * 0.75 * s; T.addScaledVector(out, Math.sin(Math.PI * u) * 0.15 * s); curl = 0.9 - u * 0.8; }   // 前足：大きく振り上げて、伸ばして遠くへ振り下ろす
+        else { T.y += Math.sin(Math.PI * u) * 0.5 * s; T.addScaledVector(out, Math.sin(Math.PI * u) * 0.3 * s); curl = 0.7; } }   // 後ろ足：外へ開いて振りかぶり、ひじを締める
+      const fwd = V(Math.sin(U.by), 0, Math.cos(U.by)).multiplyScalar(L.fz);
+      const pole = up.clone().multiplyScalar(1.0).addScaledVector(out, 0.55).addScaledVector(fwd, L.sw && !L.sw.front ? -0.35 : 0.15);
+      this.solve(L.k, T, pole);
+      for (let i = 0; i < 5; i++) { const fb = U.bones[L.k + 'Finger' + i]; if (fb) fb.quaternion.copy(U.rest[L.k + 'Finger' + i]).multiply(_uq.setFromEuler(_ue.set(curl, 0, 0))); }
+    }
+  },
 };
 const URAH = {
   ready: false, on: false, root: new THREE.Group(), mixer: null, act: {}, bones: {}, rest: {}, rp: {}, glow: { noh: [], hannya: [] }, fly: [], broken: [],
@@ -17947,7 +18021,7 @@ const URAH = {
     return true;
   },
   /* ── 音 */
-  gigi(dur) { const p = this.head(); SND.creak(p, dur, 1.0); playSfx('swivel_creak', { pos: p, ref: 1.0, gain: 0.95, rate: 0.5, lowpass: 900, dur: Math.min(dur, 3) }) || SND.creak(p, dur, 0.8); },
+  gigi(dur) { const p = this.head(); SND.creak(p, dur, 1.6); playSfx('swivel_creak', { pos: p, ref: 1.8, gain: 2.4, rate: 0.55, lowpass: 2600, dur: Math.min(dur + 0.3, 3) }) || SND.creak(p, dur, 1.4); },   /* 2026-11-16 ギィーとはっきり聞こえるように大きく */
   scream(side, ear, delay = 0) { if (!A.ctx) return; const out = ear ? earDest(0, 6 + delay) : panAt(this.head(side), side === 'hannya' ? 2.2 : 0.9, 1.1, undefined, 6 + delay); urahVoice(A.ctx, id => A.buf[id], out, side, A.ctx.currentTime + delay); this.scrUntil = world.t + delay + 2.7; URAHV.busy = Math.max(URAHV.busy, A.ctx.currentTime + delay + 2.7);   /* 叫び声とセリフは重ねない */ if (side === 'hannya') world.vhs = Math.max(world.vhs || 0, 0.5); },
   chant() { if (world.t < (this.chantT || -99)) return; this.chantT = world.t + 40; playSfx('chant_found', { ear: 0, gain: 0.3, lowpass: 3200 }); },   /* 見つかった時、お経がうっすら */
   /* 2026-11-15 足音：4本の腕（足）が床に着くたびに1回。能面の歩きは4本が順番に、般若は対角の2本ずつ同時に着く（動きに合わせるので、速く歩けば足音も速い） */
@@ -17956,18 +18030,27 @@ const URAH = {
     if (!this.bones.FrontRHand || !this.root.visible) return; this.root.updateMatrixWorld(true); const s = this.root.scale.x, y0 = this.root.position.y; this.fUp = this.fUp || [0, 0, 0, 0]; let n = 0;
     this.HANDS.forEach((k, i) => { const p = this.bones[k].getWorldPosition(V()), h = p.y - y0;
       if (h > 0.09 * s) this.fUp[i] = 1;
-      else if (this.fUp[i] && h < 0.055 * s) { this.fUp[i] = 0; if (vol > 0) { const d = n++ * rnd(0.012, 0.03); const go = () => { SND.knock(p, vol * 0.42); SND.thud(p, vol * 0.3); }; d ? setTimeout(go, d * 1000) : go(); } } });
+      else if (this.fUp[i] && h < 0.055 * s) { this.fUp[i] = 0; if (vol > 0) { const d = n++ * rnd(0.012, 0.03); const go = () => URSTEP.play(p, vol); d ? setTimeout(go, d * 1000) : go(); } } });
   },
   stepSnd(dt, rate, vol) { this.stT = (this.stT || 0) - dt * rate; if (this.stT > 0) return; this.stT = 1; const p = V(this.pos.x, this.pos.y + this.cy + 0.05, this.pos.z); SND.knock(p, vol * 0.5); SND.thud(p, vol * 0.35); },
   /* ── 顔の入れ替わり：体はそのまま、首から上だけがぐるっと回る（少し行きすぎて戻る） */
   swap(to, loud) { if (to === this.face) return; this.face = to; this.rw = null; if (to === 'hannya' && this.st === 'walk' && Math.hypot(player.x - this.pos.x, player.z - this.pos.z) < 15) { URAHV.idleT = rnd(8, 15); setTimeout(() => URAHV.say('hanIdle', 'hannya'), 800); }   /* 般若の顔が前を向いたら、低くうなる */ this.headT = to === 'hannya' ? Math.PI : 0; this.gigi(0.7); SND.knock(this.head(), 0.6); if (loud && to === 'hannya') { this.once('Hannya_Detect'); this.scream('hannya'); } },
   headTick(dt) {
     const k = 70, c = 7.5; this.headV += (k * (this.headT - this.headA) - c * this.headV) * dt; this.headA += this.headV * dt;
-    const h = this.bones.Head; if (h) h.quaternion.copy(this.rest.Head).multiply(_uq.setFromAxisAngle(_MY, this.headA));
+    /* 2026-11-16 顔だけは、ずっと主人公の方を見続ける（前を向いている顔で） */
+    const cp = camera.position, dx = cp.x - this.pos.x, dz = cp.z - this.pos.z, dh = Math.hypot(dx, dz), base = this.by;   /* 前を向いている顔は、首の回転ですでに体の前にある */
+    const on = this.st !== 'cap' && dh < 22 && this.st !== 'door', ty = on ? clamp(uAng(Math.atan2(dx, dz), base), -1.25, 1.25) : 0, tp = on ? clamp(Math.atan2(cp.y - (this.pos.y + 1.45 * this.root.scale.x), dh), -0.55, 0.55) : 0;
+    this.trkY = (this.trkY || 0) + (ty - (this.trkY || 0)) * Math.min(1, dt * 7); this.trkP = (this.trkP || 0) + (tp - (this.trkP || 0)) * Math.min(1, dt * 7);
+    /* たまにカマキリのように首をかしげる：機械みたいに一瞬で曲げて止まり、またすぐ戻す（能面で止まっている時はしない） */
+    this.tiltT = (this.tiltT ?? rnd(3, 8)) - dt;
+    if (this.tilt) { this.tilt.t -= dt; if (this.tilt.t <= 0) { this.tilt = null; SND.knock(this.head(), 0.35); } }
+    else if (this.tiltT <= 0 && !(this.face === 'noh' && this.frozen) && this.st !== 'cap') { this.tiltT = rnd(4, 10); this.tilt = { a: (Math.random() < 0.5 ? -1 : 1) * rnd(0.38, 0.55), t: rnd(0.35, 0.9) }; SND.knock(this.head(), 0.45); }
+    const tilt = this.tilt && !(this.face === 'noh' && this.frozen) ? this.tilt.a : 0, ps = this.face === 'hannya' ? 1 : -1;
+    const h = this.bones.Head; if (h) h.quaternion.copy(this.rest.Head).multiply(_uq.setFromAxisAngle(_MY, this.headA + this.trkY)).multiply(_uq.setFromEuler(_ue.set(ps * this.trkP, 0, tilt)));
   },
   /* 目の光：見つけた時だけ、今の顔の目だけ。能面は見られている間じわっと消える */
   glowTick(dt) {
-    const found = this.chasing() && this.st !== 'cap', nohDim = this.face === 'noh' && !!this.rw;
+    const found = this.chasing() && this.st !== 'cap', nohDim = false;   /* 2026-11-16 能面は見られて止まっている間も目が光ったまま */
     const tn = found && this.face === 'noh' && !nohDim ? 1 : 0, th = found && this.face === 'hannya' ? 1 : 0;
     this.gN += (tn - this.gN) * Math.min(1, dt * (tn < this.gN ? 1.2 : 6)); this.gH += (th - this.gH) * Math.min(1, dt * (th < this.gH ? 2 : 6));
     for (const m of this.glow.noh) m.opacity = this.gN; for (const m of this.glow.hannya) m.opacity = this.gH;
@@ -18087,9 +18170,13 @@ const URAH = {
     this.cy += (ty - this.cy) * Math.min(1, dt * (ty > this.cy ? 7 : 4));
     if (this.cy > 0.4 && rec.active && seen(this.head(this.face), { maxD: 9 })) award('urahDesk', '机の上を這ってくるオフタリサマ', 70);
   },
+  gaitOn() { return (this.st === 'walk' || this.st === 'chase') && this.root.visible && !this.manual; },
   apply() {
     let hy = 0; if (this.hop) { this.hop.t += 1 / 60; const u = clamp(this.hop.t / 0.5, 0, 1); hy = 0.7 * Math.sin(Math.PI * u); if (u >= 1) this.hop = null; }
-    this.root.position.set(this.pos.x, this.pos.y + this.cy + hy, this.pos.z); this.root.rotation.set(this.pitch || 0, this.by, this.roll || 0);
+    const g = this.gaitOn() && URGAIT.on ? URGAIT.bob || 0 : 0;
+    this.root.position.set(this.pos.x, this.pos.y + this.cy + hy + g, this.pos.z); this.root.rotation.set(this.pitch || 0, this.by, this.roll || 0);
+    if (this.gaitOn() && this.gDt > 0) { URGAIT.tick(this.gDt, this.st === 'chase' && this.face === 'hannya' ? 'trot' : 'walk'); URGAIT.pose(); } else if (URGAIT.on && !this.gaitOn()) URGAIT.reset();
+    this.gDt = 0;
   },
   reset() {
     if (!this.ready) { this.on = false; return; }
@@ -18124,15 +18211,16 @@ const URAH = {
   update(dt) {
     if (!this.ready || !this.on) return;
     this.updFly(dt); REDHAND.update(dt);
-    if (this.st === 'cap') { this.updCap(dt); return; }
-    if (world.state !== 'play' || this.st === 'off') return;
+    if (this.st === 'cap') { URASP.stop(); this.updCap(dt); return; }
+    if (world.state !== 'play' || this.st === 'off') { URASP.stop(); return; }
     if (this.st === 'wait') { if (world.t >= this.at) this.spawn(); return; }
     if (typeof REVIVE !== 'undefined' && REVIVE.on) return;
     const dist = Math.hypot(player.x - this.pos.x, player.z - this.pos.z), dy = Math.abs(player.y - this.pos.y);
     if (dist < URAH_CFG.catchR * this.root.scale.x / 1.15 && dy < 1.2 && !player.hidden && this.st !== 'climb' && !(this.face === 'noh' && this.frozen)) { this.capture(this.face); return; }
     if (this.sees()) this.lastSeen = world.t;
-    if (!this.frozen) { this.mixer.update(dt); this.feet(this.st === 'walk' ? 0.5 : this.face === 'noh' ? 0.6 : 0.8); }
-    this.headTick(dt); this.glowTick(dt); URAHV.tick(dt);
+    this.gDt = this.frozen ? 0.0001 : dt;
+    if (!this.frozen) { this.mixer.update(dt); if (!this.gaitOn()) this.feet(this.st === 'walk' ? 0.5 : this.face === 'noh' ? 0.6 : 0.8); }
+    this.headTick(dt); this.glowTick(dt); URAHV.tick(dt); URASP.update(dt);
     /* 帯の下の口：追う時はガブガブ */
     { const ch = this.chasing() && !this.frozen; this.mouthK = ch ? 0.35 + 0.65 * Math.abs(Math.sin(world.t * (this.face === 'noh' ? 11 : 8))) : 0.12 + 0.05 * Math.sin(world.t * 1.3); this.mouthSet(this.mouthK); if (ch && Math.sin(world.t * (this.face === 'noh' ? 11 : 8)) > 0.97 && Math.random() < 0.3) SND.knock(this.pos.clone().setY(this.pos.y + 0.5), 0.3); }
     if (this.st === 'climb') { this.climbTick(dt); this.apply(); return; }
@@ -18140,7 +18228,7 @@ const URAH = {
     switch (this.st) {
       case 'walk': {
         if (!this.route.length) { this.wk = rnd(URAH_CFG.walkK[0], URAH_CFG.walkK[1]); } if (!this.route.length) this.goTo(this.npos(pick(Object.keys(this.N).filter(k => !/^ue/.test(k) && !(this.TIGHT[this.N[k][2]] && !/^S/.test(this.N[k][2]))))));   /* 徘徊の行き先：狭い部屋（階段以外）は選ばない */
-        { const ws = this.sp('walk'); this.play('Noh_Walk', ws / 0.85 * 0.8); this.move(dt, ws); }
+        { const ws = this.sp('walk'); this.play('Noh_Walk', ws / 0.85 * 0.8); this.move(dt, ws * (URGAIT.on ? URGAIT.surge || 1 : 1)); }
         if (world.t > this.swapAt) { this.swapAt = world.t + rnd(URAH_CFG.swapMin, URAH_CFG.swapMax); this.swap(this.face === 'noh' ? 'hannya' : 'noh', false); }   /* ふとした時に顔が入れ替わる */
         this.seeT = this.sees() ? this.seeT + dt : 0;
         if (this.seeT > 0.3) { this.seeT = 0; this.toChase(); }
@@ -18185,7 +18273,7 @@ const URAH = {
       const S = this.D && this.standAt(this.D, 'reach'); if (S && Math.hypot(this.pos.x - S.x, this.pos.z - S.z) < 0.3 && Math.abs(this.pos.y - S.y) < 0.5) { this.toDoor(); return; }
     } else if (this.direct()) { this.route = [V(player.x, player.y, player.z)]; this.glass(); }
     else if (this.rep <= 0) { this.rep = 0.5; this.goTo(V(player.x, player.y, player.z)); }
-    const x0 = this.pos.x, z0 = this.pos.z; this.move(dt, this.spd);
+    const x0 = this.pos.x, z0 = this.pos.z; this.move(dt, this.spd * (URGAIT.on ? URGAIT.surge || 1 : 1));
     if (this.rw && this.rw.ph === 'coast') { this.rw.d += Math.hypot(this.pos.x - x0, this.pos.z - z0); this.rw.pts.push({ x: this.pos.x, y: this.pos.y, z: this.pos.z, by: this.by }); }
     /* 体が大きくて届かない：あと少しなら、その場で手を伸ばす */
     const got = Math.hypot(this.pos.x - x0, this.pos.z - z0); this.stall = got < this.spd * dt * 0.3 && this.spd > 0.5 ? (this.stall || 0) + dt : 0;
@@ -18282,6 +18370,40 @@ const URAH = {
    前の顔の能面：高く・細く・かすれ気味に、小さく。助けを求めてすがる
    後ろの顔の般若：ぐっと低く、割れた音に。さらに1オクターブ下を重ねて、男と女が混ざった響き。トモダチを欲しがって狂っている
    「...」は0.4秒・「..」は0.2秒の間。「…」は語尾を伸ばして弱める。小さい「ェ」「ォ」は前の音を引き伸ばす。〇〇はよみがな（無い時はそのセリフを飛ばす） */
+/* 2026-11-16 オフタリサマ：足音（提供素材 Body_Fall_Heavy_Rhythmic_Hits_Thud。中の重い音を1つずつ切り出して使う）と、のどを鳴らすガラガラ音（逆さ女と同じ throat_rasp） */
+Object.assign(SFX_B64, { urah_step: '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lHGLqt5QyY6hKVGdgcw+gPorZq/MSqGcy5WbPrcykYypHr2atvq83FaUK6nv1vj/e1Gi/3UXxWoURlm3GgkWAkZCVVHRuIBmtXRIlOf2OROYim7CT0c1Ml6fWrjA0gEDMQPGkwRPgMf/dYn/ot/r07+7X/T7PUoohXgELQZMzf/7UsRqAAjUdSOnsGJBFo8jWPGYuPSYJQqZGA2Jn0XSojCRVGNKldKLnrDk0ROjF9K3DQAFQka6Cqaelj4EWIgkNsofXZGqc/IMNNUwam1oCXWKy59ADMEPBWEIqYUHSRVZdo0eR29dT32qleoaLIJFqLkNTarVVVIkHbD1C7o8Xas6hOyBkgRwKpPtHVnCAmDAWQJaKwjMngQDkyKgFQGEAUKIUSF49qXJUi2LpAipldVNsxrVvf2Fnish5ovUqzfVXrlFl95tkaKOeJ2LueOC//tSxIGAB+B1IUeEZoEgAqJA9iQAV4GPFCJ8rqQQDb01ASAQAAFBDetKKc1KLc3VMvCr9T/fh/fFX2TdZGl97KTM6e0y81JL+W9h2/SG/nPs1l3lW0PCeNqnKsi4lpDypJkVLp6N9L4sYPEgCHlSVk//7e/R/DIWL/+QnLkLlJ8hLkIUJhmFciELCQomIWQkTqYTEwoWKaIX5hUwwimsuFCeaUBUmPboVY0Aj6qlKqrV6vQEBDCuENVMQU1FMy4xMDBVVVVVVVVVVVVVVVVVVVX/+1LEnAAIqAsSJ7AgAQiBoljyiABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/7UsS2AMkxCw8DhFPZODSfgFCO+VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//tSxKGDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=' });
+SFX_CREDITS.push({ id: 'urah_step', title: 'Body Fall Heavy Rhythmic Hits Thud（Body_Fall_Heavy_Rhythmic_Hits_Thud_OCP-1733-43.wav）', author: '提供素材', license: '提供素材', edit: 'モノラル・64kbps・音量をそろえた。中の重い音を1つずつ切り出し、オフタリサマの手が床に着くたびに鳴らす' });
+const URSTEP = {
+  CUT: [[0.07, 0.13], [0.31, 0.18], [0.545, 0.13], [0.985, 0.09], [1.225, 0.1]],
+  play(p, vol) {
+    this.n = (this.n || 0) + 1;
+    const c = this.CUT[Math.floor(Math.random() * this.CUT.length)], K = URAH_CFG.stepGain ?? 2.5, H = URAH.face === 'hannya' && URAH.chasing(), d = camera.position.distanceTo(p);
+    playSfx('urah_step', { pos: p, ref: 1.6, roll: 1.1, gain: vol * 0.55 * K, rate: (H ? 0.84 : 1) * rnd(0.95, 1.05), offset: c[0] + 0.02, dur: c[1] + 0.06, lowpass: H ? 2600 : 5200 }) || (SND.knock(p, vol * 0.42 * K), SND.thud(p, vol * 0.3 * K));
+    if (d < 7) SND.thud(p, vol * (H ? 0.55 : 0.4) * K * (1 - d / 7));   // 近くでは床が響く（低い音を少し足す）
+  },
+};
+const URASP = {
+  on: false, r: 1, tr: 1, chT: 0, jT: 6, j: null,
+  start() { if (this.on || !hasSfx('throat_rasp') || !A.ctx) return; const c = A.ctx, s = c.createBufferSource(); s.buffer = A.buf.throat_rasp; s.loop = true; const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 6000; const g = c.createGain(); g.gain.value = 0;
+    const p = c.createPanner(); p.panningModel = 'HRTF'; p.distanceModel = 'inverse'; p.refDistance = 0.9; p.rolloffFactor = 1.6; p.maxDistance = 60; s.connect(lp); lp.connect(g); g.connect(p); p.connect(A.bus); s.start(0, rnd(0, 10)); Object.assign(this, { on: true, src: s, lp, g, p }); },
+  stop() { if (!this.on) return; try { this.g.gain.setTargetAtTime(0, A.ctx.currentTime, 0.05); this.src.stop(A.ctx.currentTime + 0.3); } catch (e) { } freeLater(0.5, this.p, this.lp); this.on = false; },
+  update(dt) {
+    if (!A.ctx) return; if (!URAH.ready || !URAH.on || world.state !== 'play' || URAH.st === 'cap' || URAH.st === 'wait' || URAH.st === 'off' || !URAH.root.visible) { this.stop(); return; }
+    if (!this.on) this.start(); if (!this.on) return;
+    const t = A.ctx.currentTime, pos = URAH.head(URAH.face); setP(this.p, pos);
+    const other = Math.abs(pos.y - camera.position.y) > 2.2 && !stairZone(camera.position.x, camera.position.z), clear = !other && clearLine(pos), chase = URAH.chasing();
+    this.lp.frequency.setTargetAtTime(other ? 600 : clear ? 6500 : 1600, t, 0.15);   // 壁の向こうでは、こもった音に
+    const talk = URAHV.cur ? 0.45 : 1;   // セリフの間は少し小さく
+    this.g.gain.setTargetAtTime((chase ? 0.4 : 0.13) * (other ? 0.35 : 1) * talk * (SFX_GAIN.throat_rasp || 1), t, 0.3);
+    /* 音の高さ：ゆっくり不規則に上げ下げ（能面が前＝高め、般若が前＝低め）。ときどき0.3秒くらい急に高く／低くなって戻る */
+    const lo = URAH.face === 'noh' ? 0.9 : 0.6, hi = URAH.face === 'noh' ? 1.4 : 1.0;
+    this.chT -= dt; if (this.chT <= 0) { this.chT = rnd(1, 3); this.tr = rnd(lo, hi); }
+    this.r += (this.tr - this.r) * Math.min(1, dt * 1.2);
+    this.jT -= dt; if (this.jT <= 0) { this.jT = rnd(5, 10); this.j = { t: 0.3, k: Math.random() < 0.5 ? 1.35 : 0.68 }; }
+    let r = this.r; if (this.j) { this.j.t -= dt; r *= this.j.k; if (this.j.t <= 0) this.j = null; }
+    this.src.playbackRate.setTargetAtTime(clamp(r, 0.4, 1.9), t, this.j ? 0.03 : 0.25);
+  },
+};
 const URAHV = {
   L: {
     nohIdle: ['たす　けて', 'だれ　か', 'うるさい', 'ユルサナイ', 'くらいよ、さむいよ', 'わたし、だれだっけ'],
@@ -18368,9 +18490,9 @@ const URAHV = {
   tick(dt) {
     if (this.cur) { if (!A.ctx || A.ctx.currentTime > this.cur.end) this.cur = null; else setP(this.cur.pn, URAH.head(this.cur.face)); }   // 頭の位置から
     const U = URAH, d = Math.hypot(player.x - U.pos.x, player.z - U.pos.z);
-    if (U.st === 'walk') { this.idleT -= dt; if (this.idleT <= 0) { this.idleT = rnd(8, 15); if (d < 15) this.say(U.face === 'noh' ? 'nohIdle' : 'hanIdle', U.face); } }
-    else if (U.st === 'chase' || U.st === 'reach') { this.chaseT -= dt; if (this.chaseT <= 0 && world.t > (U.scrUntil || 0)) { this.chaseT = rnd(3, 6); if (U.face === 'hannya') this.say('hanChase', 'hannya'); else if (!U.frozen && !U.rw && d < 9) this.say('nohNear', 'noh'); } }
-    else if (U.st === 'door' && U.dph === 'peek') { this.peekT -= dt; if (this.peekT <= 0) { this.peekT = rnd(6, 10); this.say('nohNear', 'noh'); } }
+    if (U.st === 'walk') { this.idleT -= dt; if (this.idleT <= 0) { this.idleT = rnd(5, 9); if (d < 15) this.say(U.face === 'noh' ? 'nohIdle' : 'hanIdle', U.face); } }
+    else if (U.st === 'chase' || U.st === 'reach') { this.chaseT -= dt; if (this.chaseT <= 0 && world.t > (U.scrUntil || 0)) { this.chaseT = rnd(2, 4); if (U.face === 'hannya') this.say('hanChase', 'hannya'); else if (!U.frozen && !U.rw && d < 9) this.say('nohNear', 'noh'); } }
+    else if (U.st === 'door' && U.dph === 'peek') { this.peekT -= dt; if (this.peekT <= 0) { this.peekT = rnd(4, 7); this.say('nohNear', 'noh'); } }
   },
   reset() { this.bag = {}; this.busy = 0; this.idleT = rnd(5, 9); this.chaseT = 3; this.peekT = 3; this.cur = null; },
 };
@@ -18679,7 +18801,7 @@ if (typeof XCHAT !== 'undefined') XCHAT.LIST.second = ['en2.01', 'en2.02', 'en2.
 /* クモ女の巣ワープは撮れ高から外す */
 delete AW_TABLE.toes; delete CHIP_DESC.toes; COL.LIST = COL.LIST.filter(x => x[0] !== 'toes');
 delete AW_TABLE.spWarp; delete CHIP_DESC.spWarp; COL.LIST = COL.LIST.filter(x => x[0] !== 'spWarp'); delete EN['巣に触れたクモ女が別の巣へ移った瞬間']; if (CHAT_DICT.ev) delete CHAT_DICT.ev['巣に触れたクモ女が別の巣へ移った瞬間'];
-if (TEST && window.__G) Object.assign(window.__G, { ENEMY, CHBLOOD, glassPanes, mannGlassAhead, PROPS3D, SCIRM, ARTRM, DUCT, NWX, URAH, URAHV, URAHT, REDHAND, URAH_CFG, urahVoice, DOORS2, rooms, WING, NAVX, closedDoorOn, KEHAI, KEHAI_CFG, WINDAMB, amb, CALL, PREBROKEN, UNDER, HIDE, CBGM });
+if (TEST && window.__G) Object.assign(window.__G, { ENEMY, CHBLOOD, glassPanes, mannGlassAhead, PROPS3D, SCIRM, ARTRM, DUCT, NWX, URAH, URAHV, URAHT, URGAIT, URASP, URSTEP, REDHAND, URAH_CFG, urahVoice, DOORS2, rooms, WING, NAVX, closedDoorOn, KEHAI, KEHAI_CFG, WINDAMB, amb, CALL, PREBROKEN, UNDER, HIDE, CBGM });
 /* 新しいアイテム */
 Object.assign(ITEM.defs, {
   sparebat: { name: '予備バッテリー', desc: '理科室にあった予備のバッテリー。電池が20％回復する。', size: 0.2 },
@@ -18739,8 +18861,8 @@ COL.LIST = COL.LIST.map(x => x[0] === 'curtain' ? ['curtain', '閉めきった�
 /* レア度と点数 */
 Object.assign(AW_TABLE, { capture: ['S', 120], alive: ['D', 10], chaseSelfie: ['C', 8], chaseBlood: ['C', 2], selfieRun: ['C', 2], f2blood: ['B', 40], mannHide1: ['B', 40], mannHide2: ['B', 40] });
 /* 新しい撮れ高 */
-Object.assign(AW_TABLE, { nameCall: ['A', 80], redHandDodge: ['B', 40], thanksReach: ['S', 150], ceilingDrop: ['A', 60], exitStart: ['C', 20], matadorPro: ['S', 120], battery1: ['S', 120], lastSecond: ['A', 60] });
-COL.LIST.push(['nameCall', '名前を覚えられた', 80], ['redHandDodge', '足もとから伸びる赤い手', 40], ['thanksReach', 'ありがとう…？', 150], ['ceilingDrop', '天井から失礼します', 60], ['exitStart', '非常口からのスタート', 20], ['matadorPro', '闘牛士・極', 120], ['battery1', '電池1%の帰還', 120], ['lastSecond', '最後の1秒', 60]);
+Object.assign(AW_TABLE, { nameCall: ['A', 80], redHandDodge: ['B', 40], thanksReach: ['S', 150], ceilingDrop: ['A', 60], matadorPro: ['S', 120], battery1: ['S', 120], lastSecond: ['A', 60] });
+COL.LIST.push(['nameCall', '名前を覚えられた', 80], ['redHandDodge', '足もとから伸びる赤い手', 40], ['thanksReach', 'ありがとう…？', 150], ['ceilingDrop', '天井から失礼します', 60], ['matadorPro', '闘牛士・極', 120], ['battery1', '電池1%の帰還', 120], ['lastSecond', '最後の1秒', 60]);
 COL.fixPts && COL.fixPts();
 Object.assign(CHIP_DESC, {
   nakayoshi: ['インカメラに、自分と怪異たちが仲良く並ぶ。奇跡の一枚。', 'You and the spirits, lined up together in one selfie. A miracle shot.'],
@@ -18756,13 +18878,12 @@ Object.assign(CHIP_DESC, {
   redHandDodge: ['追われながら、床から伸びる赤い手を、触れずにかわした。', 'While being chased, you dodged the red hand reaching up from the floor.'],
   thanksReach: ['血だまりに沈みながら、ナカヨシがこちらへ手を伸ばした。何かを言いかけていた。', 'Sinking into the blood, Nakayoshi reached out toward you — as if trying to say something.'],
   ceilingDrop: ['ダクトを抜けて、放送室の天井から下りた。', 'You came through the duct and dropped down from the broadcast room ceiling.'],
-  exitStart: ['2階の非常口から入り、1分もしないうちに撮れ高をつかんだ。', 'You came in through the 2F fire exit and got footage within a minute.'],
   matadorPro: ['人体模型の猛ダッシュを、すれすれでかわした。', 'You dodged the mannequin’s dash by a hair.'],
   battery1: ['電池が1%を切るまで粘り、映像を持ち帰った。', 'You held on until the battery hit 1% and brought the footage home.'],
   lastSecond: ['録画が切れる最後の1秒に、怪異が映っていた。', 'A spirit showed up in the very last second of the recording.'],
 });
 Object.assign(EN, { 'ひとりでに動く机': 'The desk that moves on its own', '生えてくる灰色の手': 'Gray hands growing out', 'ひとりでに増えていく正の字': 'The tally that writes itself', '掃除の時間': 'Cleaning time',
-  '名前を覚えられた': 'It knows your name', '足もとから伸びる赤い手': 'Red hands from the floor', 'ありがとう…？': 'Thank you…?', '天井から失礼します': 'Pardon me, from the ceiling', '非常口からのスタート': 'Fire exit start',
+  '名前を覚えられた': 'It knows your name', '足もとから伸びる赤い手': 'Red hands from the floor', 'ありがとう…？': 'Thank you…?', '天井から失礼します': 'Pardon me, from the ceiling',
   '闘牛士・極': 'Master matador', '電池1%の帰還': 'Home on 1%', '最後の1秒': 'The last second' });
 Object.assign(CHAT_DICT.t, {
   'nk.gs.01': ['女子会かな？', "girls' night out?"], 'nk.gs.02': ['並ぶな並ぶな', 'stop lining up!'], 'nk.mn.01': ['模型くんも入れてもらえてよかったね', 'glad the mannequin got invited'], 'nk.mn.02': ['臓器出てるって', 'your organs are showing'],
@@ -18781,7 +18902,7 @@ Object.assign(CHAT_DICT.t, {
   'ls.01': ['最後の最後に映った', 'right at the very end'], 'ls.02': ['録画切れる瞬間に…', 'just as it cut out…'], 'ls.03': ['持ってるなぁ', 'what timing'],
 });
 if (CHAT_DICT.ev) Object.assign(CHAT_DICT.ev, { 'ひとりでに増えていく正の字': ['tl.01', 'tl.02', 'tl.03'], '掃除の時間': ['bm.01', 'bm.02', 'bm.03'], '閉めきった窓で揺れるカーテン': ['ct.01', 'ct.02', 'ct.03'],
-  '名前を覚えられた': ['nc.01', 'nc.02', 'nc.03'], '足もとから伸びる赤い手': ['rh.01', 'rh.02', 'rh.03'], 'ありがとう…？': ['th.01', 'th.02', 'th.03'], '天井から失礼します': ['cd.01', 'cd.02', 'cd.03'], '非常口からのスタート': ['es.01', 'es.02'],
+  '名前を覚えられた': ['nc.01', 'nc.02', 'nc.03'], '足もとから伸びる赤い手': ['rh.01', 'rh.02', 'rh.03'], 'ありがとう…？': ['th.01', 'th.02', 'th.03'], '天井から失礼します': ['cd.01', 'cd.02', 'cd.03'],
   '闘牛士・極': ['mp.01', 'mp.02', 'mp.03'], '電池1%の帰還': ['b1.01', 'b1.02', 'b1.03'], '最後の1秒': ['ls.01', 'ls.02', 'ls.03'] });
 const NAKA_BASE = (CHAT_DICT.ev && CHAT_DICT.ev['なかよしスリーショット'] || []).slice();
 /* 撮り方のヒント（撮れた物の説明の最後に（　）で） */
