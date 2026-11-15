@@ -82,6 +82,7 @@
   .zb.on{color:#ffd60a;font-size:13px;transform:scale(1.08)}
   #recBtn{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--sab) + 34px);width:80px;height:80px;border-radius:50%;border:4px solid #fff;background:transparent;padding:0;display:flex;align-items:center;justify-content:center}
   #recBtn{-webkit-appearance:none;appearance:none;overflow:hidden;isolation:isolate}
+  .tapSafe{touch-action:manipulation;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}   /* 2026-11-15 click で動くボタン：長押しメニュー・ダブルタップ拡大を防ぐ */
   #recBtn i{display:block;width:64px;height:64px;border-radius:50%;background:#ff3b30;transform:translateZ(0) scale(1);transition:transform .18s ease,border-radius .18s ease;will-change:transform}
   #recBtn.on i{transform:translateZ(0) scale(.469);border-radius:13px}   /* 30px角・角丸6px相当 */
   #recBtn.full i{background:#666}
@@ -4174,7 +4175,11 @@ const NOZOOM = {
     for (const ev of ['selectstart', 'contextmenu']) document.addEventListener(ev, e => { if (!isIn(e.target)) e.preventDefault(); });
     // ゲーム画面（視点・スティック）と丸いボタンは、指を置いた時点でブラウザの長押し・ダブルタップの動きを止める（押した判定は別の仕組みなので影響なし）
     const stop = e => { if (e.cancelable && !isIn(e.target)) e.preventDefault(); };
-    for (const el of [touchEl, ...document.querySelectorAll('#hud .btn, #actBtn')]) el.addEventListener('touchstart', stop, { passive: false });
+    /* 2026-11-15 指を置いた瞬間に止めてよいのは、touchstart・pointerdown で動くボタンだけ（録画・インカメラ・しゃがむ・調べる）。
+       click で動くボタン（設定・持ち物・ズームなど）で止めると、スマホでは click が起きずタップに反応しなくなる → CSS（.tapSafe）で長押し・ダブルタップ拡大を防ぐ */
+    const PRESS = '#recBtn, #camBtn, #crouchBtn, #actBtn';
+    for (const el of [touchEl, ...document.querySelectorAll(PRESS)]) el.addEventListener('touchstart', stop, { passive: false });
+    for (const el of document.querySelectorAll('#hud .btn')) if (!el.matches(PRESS)) el.classList.add('tapSafe');
     const vv = window.visualViewport; if (!vv) return; let tm = 0;
     const fix = () => { clearTimeout(tm); if (vv.scale <= 1.02) return; tm = setTimeout(() => { if (vv.scale <= 1.02) return; const m = document.querySelector('meta[name=viewport]'); if (!m) return; const c = m.getAttribute('content'); m.setAttribute('content', c.replace(/,?\s*maximum-scale=[\d.]+/, '') + ',maximum-scale=1.0001'); setTimeout(() => m.setAttribute('content', c), 60); window.scrollTo(0, 0); }, 500); };
     vv.addEventListener('resize', fix); document.addEventListener('touchend', () => { if (vv.scale > 1.02) fix(); }, { passive: true });
@@ -14777,7 +14782,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.0';
+const VERSION = '0.16.1';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
