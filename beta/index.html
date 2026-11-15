@@ -10651,10 +10651,15 @@ const MANN = {
   },
   // ── 敵になる周
   walkTo(dest) {   // 保健室の中からは、まず戸口へ
+    let fin = null; if (dest && typeof dest === 'object') { fin = dest; dest = nearestNode(fin.x, fin.z, undefined, fin.y || 0); }   /* 2026-11-15 座標で渡された時は、いちばん近い通り道の点へ（以前は道が作れず、その場で止まっていた） */
     const pts = []; const inC = this.pos.x < -1.5 && this.pos.z < -10 && this.pos.z > -17 && this.lv() === 0;
     if (inC) pts.push(V(-1.2, 0, -13.5));
     const from = inC ? pts[0] : this.pos; const n0 = nearestNode(from.x, from.z, undefined, from.y || 0);
-    for (const k of navPath(n0, dest)) pts.push(nodePos(k)); this.path = pts;
+    for (const k of navPath(n0, dest)) pts.push(nodePos(k));
+    const h2 = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+    if (!inC) while (pts.length >= 2 && ((Math.abs((pts[1].y || 0) - this.pos.y) < 0.3 && !segBlocked(this.pos.x, this.pos.z, pts[1].x, pts[1].z, this.lv(), 0.1)) || h2(this.pos, pts[1]) < h2(pts[0], pts[1]) - 0.05)) pts.shift();   /* 階段の途中でも、すでに次の点へ向かっていれば戻らない */   /* 2026-11-15 後ろの点へ戻らない（追い直すたびに行ったり来たりしていた） */
+    if (fin) { const L = pts[pts.length - 1] || this.pos; if (Math.abs((fin.y || 0) - (L.y || 0)) < 0.5 && !segBlocked(L.x, L.z, fin.x, fin.z, (fin.y || 0) > 1.6 ? 1 : 0, 0.1)) pts.push(V(fin.x, fin.y || 0, fin.z)); }
+    this.path = pts;
   },
   updEnemy(dt) {
     const H = this.head(); if (!this.path) this.path = [];
@@ -10694,7 +10699,7 @@ const MANN = {
         const ub = this.bones.UpperR; if (ub && this.rest.UpperR) { const a = clamp((t - 0.25) / 1.0, 0, 1); ub.quaternion.copy(this.rest.UpperR).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-a * Math.PI * 2, 0, 0.25 * Math.sin(a * Math.PI)))); }
         this.spT = (this.spT || 0) - dt; if (t < 1.25 && this.spT <= 0) { this.spT = 0.07; SND.knock(H, 0.25); }
         if (!this.screamed && t > 0.35) { this.screamed = true; (playSfx('psycho_scream', { pos: H.clone(), ref: 1.6, gain: 1.25, rate: 0.6, lowpass: 2400 }) && playSfx('psycho_scream', { pos: H.clone(), ref: 1.6, gain: 0.6, rate: 0.48, lowpass: 1200 })) || SND.scream();   /* 2026-11-15 ずっと低い、男の声に */ world.vhs = Math.max(world.vhs || 0, 0.5); }
-        if (t >= 1.7) { this.hy = 0; this.hp = 0; this.windup(0); }
+        if (t >= 1.7) { this.hy = 0; this.hp = 0; if (this.canCharge()) this.windup(0); else this.toHunt(); }
         break;
       }
       case 'windup': {   // 2026-11-15 腕を伸ばしたり曲げたりカクカクと0.5秒で大きく脚を開いた前傾の構えへ（顔は下）→ 1秒止まる → 顔をぐいっと上げる → 0.5秒後にスタート
@@ -10705,7 +10710,7 @@ const MANN = {
         else { if (!this.wuP) { this.wuP = true; playSfx('swivel_creak', { pos: H.clone(), ref: 0.8, gain: 0.75, rate: 1.6, dur: 0.5 }); SND.creak(H, 1.2, 0.5); } this.stance(1, Math.max(0, 1 - (t - 1.5) / 0.06), -1); }
         if (t >= 2.0) { this.wuS = this.wuP = false; this.restPose(); this.jumpY = 0;
           playSfx('start_pistol', { pos: H.clone(), ref: 1.4, gain: 1.0 });
-          if (mannStairs(this, player)) { this.st = 'hunt'; this.t = 0; this.rep = 0; this.play('Run', 1.8); break; }   /* 階段では突進しない（歩いて追う） */
+          if (mannStairs(this, player)) { this.toHunt(); break; }   /* 階段では突進しない（早歩きで追う） */
           this.st = 'dash'; this.t = 0; this.speed = 1.5; this.play('Run', 2.7); WING.aim(this); }
         break;
       }
@@ -10737,7 +10742,7 @@ const MANN = {
         this.t += dt; this.speed = Math.max(0, this.speed - 22 * dt); const fx = Math.sin(this.heading), fz = Math.cos(this.heading), mv = this.speed * dt;
         if (mv > 0 && !segBlocked(this.pos.x, this.pos.z, this.pos.x + fx * (mv + 0.3), this.pos.z + fz * (mv + 0.3), this.lv(), 0.1)) { this.pos.x += fx * mv; this.pos.z += fz * mv; } else this.speed = 0;
         this.tilt = -0.22 * Math.min(1, this.speed / 4); this.apply();
-        if (this.speed <= 0 && this.t > 0.25) { this.tilt = 0; this.apply(); this.st = 'hunt'; this.t = 0; this.rep = 0; this.play('Run', 1.8); }
+        if (this.speed <= 0 && this.t > 0.25) { this.tilt = 0; this.apply(); this.toHunt(); }
         break;
       }
       case 'hunt': {   // 通路を回り込んで追う。まっすぐ狙える所に出たら、また突進
@@ -10745,18 +10750,18 @@ const MANN = {
         this.t += dt; this.rep -= dt; if (this.rep <= 0) { this.rep = 0.6; this.walkTo(V(player.x, player.y, player.z)); }
         const dNow = Math.hypot(player.x - this.pos.x, player.z - this.pos.z) + Math.abs(player.y - this.pos.y) * 2;
         if (!this.prog || dNow < this.prog.d - 0.6) this.prog = { d: dNow, t: 0 }; else this.prog.t += dt;
-        if (!this.creep && (this.prog.t > 2.5 || (this.skids || 0) >= 2)) this.creepOn();
-        let move = (this.creep ? 1.9 : 3.3) * dt;
+        if (!this.creep && this.prog.t > 3) this.creepOn();
+        let move = (this.creep ? 1.4 : 2.4) * dt;   /* 2026-11-15 ふだんは早歩きの動き（速さは主人公の歩きの1.2倍）。突進は見通しのいい時だけ */
         while (move > 0 && this.path.length) {
           const t = this.path[0], dx = t.x - this.pos.x, dz = t.z - this.pos.z, d = Math.hypot(dx, dz);
           if (d > 0.01) this.face(Math.atan2(dx, dz), dt, 6);
           if (d <= move) { this.pos.copy(t); move -= d; this.path.shift(); } else { const k = move / d; this.pos.x += dx * k; this.pos.z += dz * k; this.pos.y += ((t.y || 0) - this.pos.y) * k; move = 0; }
         }
-        this.apply(); if (this.creep) { this.creepPose(dt); this.stepTick(dt, 3); } else this.stepTick(dt, 5.5);
+        this.procOn(); this.apply(); this.creepPose(dt); this.stepTick(dt, this.creep ? 3 : 4.4);
         const lineOk = Math.abs(this.pos.y - player.y) < 1.0 && !mannStairs(this, player) && !segBlocked(this.pos.x, this.pos.z, player.x, player.z, this.lv(), 0.1) && !player.hidden;
-        this.lineT = lineOk ? (this.lineT || 0) + dt : 0;
-        if (lineOk && this.t > 0.3 && (!this.creep || this.lineT > 0.8)) { this.creepOff(); this.face(this.toPlayer(), 1, 50); this.windup(0.3); }
-        else if ((this.t > 12 && !this.creep) || this.t > 24 || player.hidden) { this.creepOff(); this.st = 'walk'; this.bonked = false; this.rattleStop(); this.play('Walk', 1); this.walkTo(pick(WD.dests)); }
+        this.lineT = lineOk ? (this.lineT || 0) + dt : 0; this.lostT = (lineOk || this.prog.t === 0 || stairZone(this.pos.x, this.pos.z) || this.seesPlayer(world.dark ? 20 : 14, 3.2)) ? 0 : (this.lostT || 0) + dt;   /* 見えている間は追い続ける */
+        if (lineOk && this.t > 0.3 && (!this.creep || this.lineT > 0.8) && this.canCharge()) { this.creepOff(); this.face(this.toPlayer(), 1, 50); this.windup(0); }
+        else if (this.lostT > 12 || this.t > 60 || player.hidden) { this.creepOff(); this.st = 'walk'; this.bonked = false; this.rattleStop(); this.play('Walk', 1); this.walkTo(pick(WD.dests)); }
         break;
       }
       case 'stun': {   // 2026-11-14 壁に激突：のけぞって跳ね返り、首が1回転半してから、すごい勢いで追う相手を向く
@@ -10771,7 +10776,7 @@ const MANN = {
       case 'turn': {   // その場の歩きで向きを変える
         this.t += dt; this.face(this.seesPlayer(30, 3.2) ? this.toPlayer() : this.turnTo, dt, 1.6); this.apply(); this.stepTick(dt, 1.6);
         if (this.t > 1.8) {
-          if (this.seesPlayer(world.dark ? 20 : 14, 1.6)) this.windup(0.3);
+          if (this.seesPlayer(world.dark ? 20 : 14, 1.6)) { if (this.canCharge()) this.windup(0); else this.toHunt(); }
           else { this.st = 'walk'; this.rattleStop(); this.play('Walk', 1); this.walkTo(world.dark ? nearestNode(player.x, player.z, undefined, player.y) : pick(WD.dests)); }
         }
         break;
@@ -10784,7 +10789,17 @@ const MANN = {
     if (SP.broken && SP.broken.length > n0) this.broken.push(...SP.broken.slice(n0));
   },
   /* ── 2026-11-15 突進前の構え・行き詰まった時の歩き方（骨を直接動かす） */
-  windup(t0) { this.st = 'windup'; this.t = 0; this.wuS = this.wuP = false; this.play(null); this.restPose(); },   /* 2026-11-15 構えはいつも最初から（よけるタイミングの合図） */
+  toHunt() { this.st = 'hunt'; this.t = 0; this.rep = 0; this.lostT = 0; this.prog = null; this.creep = false; this.procOn(); },
+  /* 2026-11-15 猛ダッシュ（構えて突進）を使える時：同じ階・間に階段なし・まっすぐ6m以上見通せる（バリケードの前では近くても）・前の突進から4秒たった */
+  canCharge() {
+    if (world.t < (this.chargeCool || 0) || player.hidden || mannStairs(this, player)) return false;
+    const dx = player.x - this.pos.x, dz = player.z - this.pos.z, d = Math.hypot(dx, dz);
+    if (segBlocked(this.pos.x, this.pos.z, player.x, player.z, this.lv(), 0.1)) return false;
+    for (let i = 1; i < 12; i++) if (stairZone(this.pos.x + dx * i / 12, this.pos.z + dz * i / 12)) return false;
+    const nb = typeof WING !== 'undefined' && WING.B.some(b => !b.open && Math.hypot(player.x - b.c.x, player.z - b.c.z) < 3.2);
+    return d >= 6 || nb;
+  },
+  windup(t0) { this.procOff(); this.creep = false; this.st = 'windup'; this.t = 0; this.wuS = this.wuP = false; this.play(null); this.restPose(); },   /* 2026-11-15 構えはいつも最初から（よけるタイミングの合図） */
   bq(k, ...rs) { const b = this.bones[k], r = this.rest[k]; if (!b || !r) return; b.quaternion.copy(r); for (const [ax, a] of rs) b.quaternion.multiply(_mq.setFromAxisAngle(ax === 'x' ? _MX : ax === 'y' ? _MY : _MZ, a)); },
   armSpin(t) { const a = t * 15; this.bq('UpperR', ['x', -a]); this.bq('UpperL', ['x', -a + Math.PI]); this.bq('ForeR', ['x', -0.5]); this.bq('ForeL', ['x', -0.5]); },
   stanceFrom() { },
@@ -10795,22 +10810,28 @@ const MANN = {
     this.bq('ThighL', ['x', lean + 1.05 * e], ['z', -0.12 * e]); this.bq('ShinL', ['x', -1.05 * e]); this.bq('ThighR', ['x', lean - 0.75 * e], ['z', 0.12 * e]); this.bq('ShinR', ['x', -0.25 * e]);
     this.bq('UpperR', ['x', lean + 1.1 * e + ar]); this.bq('ForeR', ['x', (1.5 + ar) * e]); this.bq('UpperL', ['x', lean - 1.1 * e + al], ['z', 0.3 * e]); this.bq('ForeL', ['x', (0.7 - al * 0.5) * e]);
     this.bq('Head', ['x', lean * 0.75 - 0.95 * down * e]); },
-  creepOn() { this.creep = true; this.spinA = 0; this.crT = 0; this.cph = 0; this.play(null); this.restPose(); if (!this.rp) { this.rp = {}; for (const k of ['ThighL', 'ThighR', 'Head']) if (this.bones[k]) this.rp[k] = this.bones[k].position.clone(); } if (TEST || DEV) console.log('MANN creep'); },
-  creepOff() { if (!this.creep) return; this.creep = false; this.skids = 0; this.prog = null; this.restPose(); for (const k in this.rp || {}) this.bones[k].position.copy(this.rp[k]); this.play('Run', 1.8); },
+  /* 2026-11-15 早歩きの動き：胴体だけがぐるぐる回り、脚は早足、腕は少し外に開いてロボットのパントマイムのようにカクカク */
+  procOn() { if (this.proc) return; this.proc = true; this.spinA = 0; this.cph = 0; this.crT = 0; this.armT = 0; this.play(null); this.restPose(); if (!this.rp) { this.rp = {}; for (const k of ['ThighL', 'ThighR', 'Head']) if (this.bones[k]) this.rp[k] = this.bones[k].position.clone(); } },
+  procOff() { if (!this.proc) return; this.proc = false; this.restPose(); for (const k in this.rp || {}) this.bones[k].position.copy(this.rp[k]); },
+  creepOn() { this.creep = true; if (TEST || DEV) console.log('MANN creep'); },
+  creepOff() { this.creep = false; this.skids = 0; this.prog = null; this.procOff(); },
   creepPose(dt) {
-    this.spinA += dt * 8; this.cph += dt * 5; const a = this.spinA, s = Math.sin(this.cph), qn = _mq2.setFromAxisAngle(_MY, -a);
-    this.bq('Body', ['y', a]); this.bq('UpperR', ['z', -0.7]); this.bq('UpperL', ['z', 0.7]);
-    for (const [k, sw] of [['ThighL', 0.4 * s], ['ThighR', -0.4 * s], ['Head', 0]]) { const b = this.bones[k]; if (!b || !this.rest[k]) continue; b.quaternion.copy(qn).multiply(this.rest[k]); if (sw) b.quaternion.multiply(_mq.setFromAxisAngle(_MX, sw)); if (this.rp && this.rp[k]) b.position.copy(this.rp[k]).applyQuaternion(qn); }
-    this.crT -= dt; if (this.crT <= 0) { this.crT = 1.1; playSfx('swivel_creak', { pos: this.head(), ref: 0.8, gain: 0.55, rate: 1.3, dur: 1.0 }); }
+    this.spinA += dt * (this.creep ? 8 : 6); this.cph += dt * (this.creep ? 5 : 8.5); const a = this.spinA, s = Math.sin(this.cph), qn = _mq2.setFromAxisAngle(_MY, -a);
+    this.bq('Body', ['y', a]);
+    this.armT -= dt; if (this.armT <= 0) { this.armT = rnd(0.14, 0.24); const P = [-0.7, -0.3, 0.2, 0.6], F = [0, 0.8, 1.4]; this.arm = [pick(P), pick(F), pick(P), pick(F)]; if (Math.random() < 0.5) SND.knock && SND.knock(this.head(), 0.12); }   /* カクッと次の形へ */
+    const A = this.arm || [0, 0, 0, 0]; this.bq('UpperR', ['z', -0.38], ['x', A[0]]); this.bq('ForeR', ['x', A[1]]); this.bq('UpperL', ['z', 0.38], ['x', A[2]]); this.bq('ForeL', ['x', A[3]]);
+    for (const [k, sw] of [['ThighL', 0.5 * s], ['ThighR', -0.5 * s], ['Head', 0]]) { const b = this.bones[k]; if (!b || !this.rest[k]) continue; b.quaternion.copy(qn).multiply(this.rest[k]); if (sw) b.quaternion.multiply(_mq.setFromAxisAngle(_MX, sw)); if (this.rp && this.rp[k]) b.position.copy(this.rp[k]).applyQuaternion(qn); }
+    for (const [k, sw] of [['ShinL', Math.max(0, -s) * 0.7], ['ShinR', Math.max(0, s) * 0.7]]) this.bq(k, ['x', -sw]);
+    this.crT -= dt; if (this.crT <= 0) { this.crT = 1.1; playSfx('swivel_creak', { pos: this.head(), ref: 0.8, gain: 0.5, rate: 1.3, dur: 1.0 }); }
   },
-  bonk() { if (typeof WING !== 'undefined') WING.dashEnd(this);
+  bonk() { if (typeof WING !== 'undefined') WING.dashEnd(this); this.chargeCool = world.t + 4;
     const p = V(this.pos.x + Math.sin(this.heading) * 0.25, this.floorY() + 1.1, this.pos.z + Math.cos(this.heading) * 0.25);
     /* 2026-11-15 「ドゥン」という低く重い衝突音（録音した音を低くして重ねる。電子音は使わない） */
     playSfx('door_pound', { pos: p, ref: 1.6, gain: 1.6, rate: 0.5, lowpass: 520, dur: 0.9 }); playSfx('locker_close', { pos: p, ref: 1.6, gain: 1.2, rate: 0.42, lowpass: 800 }); playSfx('metal_rattle', { pos: p, ref: 1.1, gain: 0.3, dur: 0.35, lowpass: 1500, rate: 0.7 });
     const dd = camera.position.distanceTo(p); if (dd < 9) { world.vhs = Math.max(world.vhs || 0, 0.75 - dd * 0.05); noiseHit(0.35); }
     this.dropOrgan(); this.st = 'stun'; this.t = 0; this.play('Walk', 0); this.speed = 0;
   },
-  skid(hard) { if (typeof WING !== 'undefined') WING.dashEnd(this); this.skids = (this.skids || 0) + 1;   // キュッ（上履きが床で鳴る）
+  skid(hard) { if (typeof WING !== 'undefined') WING.dashEnd(this); this.skids = (this.skids || 0) + 1; this.chargeCool = world.t + 4;   // キュッ（上履きが床で鳴る）
     this.st = 'skid'; this.t = 0; if (hard) this.speed = 0;
     const p = V(this.pos.x, this.floorY() + 0.05, this.pos.z); SND.squeak(p, 1.2); setTimeout(() => SND.squeak(p, 0.7), 110);
   },
@@ -14697,7 +14718,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.26';
+const VERSION = '0.15.27';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
