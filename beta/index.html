@@ -2181,7 +2181,8 @@ fixture(-5.5, -13, true, 'half', ['LIB']); fixture(-5.5, -21.5, true, 'on', ['MU
 for (const [x, z] of [[4.5, -13], [10.5, -13], [4.5, -24], [10.5, -24]]) fixture(x, z, false, 'off');
 // 2-A・2-B の机（1階と同じモデルを共有）
 rooms['2A'] = { desks: [], y: LH }; rooms['2B'] = { desks: [], y: LH };
-for (const dx of DESK_X) for (const dz of [-15.4, -13.8, -12.2, -10.6]) makeDesk(dx + rnd(-0.05, 0.05), dz + rnd(-0.04, 0.04), 1, rooms['2A']);
+/* 2026-11-15 2-A は机と椅子を減らす（2-B の文化祭の迷路で物が増える分、2階全体を軽く）。前の列は全部、後ろへいくほどまばらに */
+for (const dx of DESK_X) for (const dz of [-15.4, -13.8, -12.2, -10.6]) { const keep = dz === -15.4 || (dz === -13.8 && [3.5, 7.5, 11.5].includes(dx)) || (dz === -12.2 && [5.5, 9.5].includes(dx)); if (keep) makeDesk(dx + rnd(-0.05, 0.05), dz + rnd(-0.04, 0.04), 1, rooms['2A']); }
 for (const dx of DESK_X) for (const dz of [-21.4, -23.0, -24.6, -26.2]) makeDesk(dx + rnd(-0.05, 0.05), dz + rnd(-0.04, 0.04), -1, rooms['2B']);
 // 図書室の閲覧机（机1・椅子2）
 rooms.LIB = { desks: [], y: LH };
@@ -2396,10 +2397,10 @@ const FURN = {
     // 棚のランドセル（ところどころ空いている）と、床に1つ
     const cols = [FM.red, FM.black, FM.red, FM.navy, FM.black, C(0x6a2a4a), FM.red, FM.black];
     for (let i = 0; i < 8; i++) { if (Math.random() < 0.35) continue; const x = sx0 + 0.34 + i * (sl - 0.6) / 7 + jit(0.04), y = Math.random() < 0.5 ? 0.06 : 0.5; randoseru(lv, x, y, sz - s * 0.12, (s > 0 ? Math.PI : 0) + jit(0.15), cols[i]); }
-    { const x = 4.4 + Math.random() * 4, z = bz - s * (0.95 + Math.random() * 0.3); randoseru(lv, x, 0, z, Math.random() * 6.28, FM.red, 'randoseru', Math.PI / 2 - 0.15); }
+    { const x = 4.4 + Math.random() * 4, z = bz - s * (0.95 + Math.random() * 0.3); const g = randoseru(lv, x, 0, z, Math.random() * 6.28, FM.red, 'randoseru', Math.PI / 2 - 0.15); if (R.k === '2B') g.userData.mz = true; }
     // 机の横のフック：ランドセル・給食袋・体操着袋
     const D = rooms[R.k] ? rooms[R.k].desks : [];
-    for (const d of D) { const r = Math.random(); if (r < 0.18) randoseru(lv, d.x + 0.36, 0.28, d.z, Math.PI / 2 + jit(0.1), cols[Math.floor(Math.random() * cols.length)], 'deskRandoseru'); else if (r < 0.42) bag(lv, d.x + 0.33, 0.6, d.z + jit(0.05), Math.PI / 2, FM.white, 'lunchBag'); else if (r < 0.6) bag(lv, d.x - 0.33, 0.6, d.z + jit(0.05), -Math.PI / 2, FM.blue, 'gymBag'); }
+    for (const d of D) { const r = Math.random(), n0 = F.par(lv).children.length; if (r < 0.18) randoseru(lv, d.x + 0.36, 0.28, d.z, Math.PI / 2 + jit(0.1), cols[Math.floor(Math.random() * cols.length)], 'deskRandoseru'); else if (r < 0.42) bag(lv, d.x + 0.33, 0.6, d.z + jit(0.05), Math.PI / 2, FM.white, 'lunchBag'); else if (r < 0.6) bag(lv, d.x - 0.33, 0.6, d.z + jit(0.05), -Math.PI / 2, FM.blue, 'gymBag'); if (R.k === '2B') for (const g of F.par(lv).children.slice(n0)) g.userData.mz = true; }   // 2026-11-15 迷路の回は隠す
     // 学級文庫（小さな本棚・高さ0.9）と、干からびた金魚の水槽・枯れた花（棚の上）
     { const x = 9.2, g = F.g('classLib', lv, x, sz, s > 0 ? Math.PI : 0); const q = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.9, 0.32), [FM.dwood, FM.dwood, FM.dwood, FM.dwood, ML.books, FM.dwood]); q.position.y = 0.45; g.add(q); F.meshes++;
       F.col(lv, x - 0.42, x + 0.42, sz - 0.18, sz + 0.18); F.cov(lv, x - 0.4, x + 0.4, 0.9, sz - 0.16, sz + 0.16); F.occ(q); }
@@ -2462,7 +2463,8 @@ const FURN = {
     for (const z of [-3.3, -2.1]) { const g = F.g('soap', lv, 3.3, z + 0.17, jit(0.4), 0.875); F.bx(g, 0.07, 0.024, 0.045, Math.random() < 0.5 ? C(0xa8c8a0) : C(0xd8d0a0), 0, 0.012, 0); }
   }
   // ═══ 2026-11-15 廊下・渡り廊下・踊り場に散らばった物（机・椅子・段ボールは当たりあり／通り道は1m以上あける／影なし） ═══
-  if (!/[?&]noprops\b/.test(location.search)) { const g0 = F.g; F.g = function (...a) { const g = g0.apply(this, a); g.userData.corr = true; return g; };   // 廊下の物は、あとで階ごとに1つにまとめる
+  if (!/[?&]noprops\b/.test(location.search)) { const g0 = F.g, col0 = F.col, cov0 = F.cov; let PATN = null; F.g = function (...a) { const g = g0.apply(this, a); if (PATN) g.userData.pat = PATN; else g.userData.corr = true; return g; };
+    F.col = function (...a) { const c = col0.apply(this, a); if (PATN) c.pat = PATN; return c; }; F.cov = function (...a) { cov0.apply(this, a); if (PATN) this.cover[this.cover.length - 1].pat = PATN; };   // 2026-11-15 机と椅子は周ごとに並びを変える（パターンごとに分けておく）   // 廊下の物は、あとで階ごとに1つにまとめる
     const PR = tx(96, 128, (g, w, h) => { g.fillStyle = '#ece9e0'; g.fillRect(0, 0, w, h); g.fillStyle = '#333'; g.font = 'bold 10px sans-serif'; g.fillText('おしらせ', 30, 14); g.fillStyle = '#777'; for (let i = 0; i < 12; i++) g.fillRect(10, 24 + i * 8, 50 + rr() * 26, 2); g.strokeStyle = '#999'; g.strokeRect(58, 96, 28, 22); });
     const PR2 = tx(96, 128, (g, w, h) => { g.fillStyle = '#e6e2d2'; g.fillRect(0, 0, w, h); g.fillStyle = '#444'; g.font = '9px sans-serif'; g.fillText('さんすう　名前', 8, 14); g.strokeStyle = '#666'; g.strokeRect(54, 5, 36, 12); for (let i = 0; i < 6; i++) { g.fillText((i + 1) + '）', 8, 34 + i * 16); g.fillRect(28, 32 + i * 16, 30, 1); } g.strokeStyle = '#b03030'; g.lineWidth = 2; g.beginPath(); g.arc(70, 60, 9, 0, 6.3); g.stroke(); });
     const MP = [L({ map: PR, side: THREE.DoubleSide }), L({ map: PR2, side: THREE.DoubleSide }), L({ map: TXF.script, side: THREE.DoubleSide })];
@@ -2496,48 +2498,66 @@ const FURN = {
 
     // ── 1階 廊下A（x ±1.4・z -1〜-33）。西の壁：S1 -5.3〜-3.9／保健室 -14.2〜-12.8／S2 -28.9〜-27.3、東の壁：教室の戸 -20.4〜-19.4・-17.4〜-16.2
     { const lv = 0;
-      desk(lv, 1.04, -10.4, Math.PI + 0.22); chairDown(lv, 0.42, -11.15, 0.9);
       broomSet(lv, -1.3, -10.2, Math.PI / 2);
       boxes(lv, -1.08, -22.2, 0.05, [[0.5, 0.42, 0.4, 0, 0], [0.46, 0.36, 0.38, 0.02, 0.02, 0.42, 0.12], [0.36, 0.3, 0.3, 0, -0.42, 0, 0.3, true]]);
       gymBag(lv, -1.15, -16.2, 0.4, FM.navy); randFloor(lv, 1.15, -23.6, -1.9, FM.red);
       shoes(lv, 0.35, -25.6, 0.7, FM.blue); shoe1(lv, -0.55, -30.1, 2.2, FM.red, true);
-      deskDown(lv, -1.0, -31.4, 0.15);
       for (const [x, z, n] of [[0.2, -6.2, 2], [-0.5, -14.9, 3], [0.6, -21.1, 1], [-0.2, -27.1, 2], [0.9, -32.2, 2]]) paper(lv, x, z, n);
     }
     // ── 1階 廊下L（z -7.9〜-5.05・x 1.5〜22）。北側のロッカー x 13〜18 の前は空ける
     { const lv = 0;
-      desk(lv, 6.1, -7.52, 0.12); chairDown(lv, 6.95, -7.2, -2.2);
       boxes(lv, 17.0, -7.48, -0.1, [[0.55, 0.45, 0.42, 0, 0], [0.5, 0.4, 0.4, 0.03, 0, 0.45, -0.2]]);
       paper(lv, 4.1, -6.3, 2); paper(lv, 10.6, -6.9, 1); paper(lv, 15.2, -6.6, 2); shoe1(lv, 19.4, -6.0, 0.6, FM.green);
     }
     // ── 渡り廊下W（x 19.1〜21.9・z -8〜-30）。窓の霧 z -18（東）・水たまり (20.5, -21) は空ける
     { const lv = 0;
-      desk(lv, 19.48, -10.9, Math.PI / 2 + 0.15); chairDown(lv, 20.25, -11.75, 2.6);
-      deskDown(lv, 21.5, -14.4, Math.PI / 2 - 0.2);
       boxes(lv, 19.42, -16.3, 0.12, [[0.5, 0.44, 0.42, 0, 0], [0.44, 0.38, 0.38, -0.02, 0.03, 0.44, 0.25], [0.4, 0.34, 0.34, 0.02, -0.45, 0, -0.2, true]]);
       broomFloor(lv, 20.15, -19.3, 1.25);
-      deskStack(lv, 21.48, -24.4, -Math.PI / 2 + 0.1);
-      chairDown(lv, 19.55, -25.6, 1.3);
       boxes(lv, 21.52, -28.75, -0.15, [[0.5, 0.4, 0.4, 0, 0], [0.42, 0.34, 0.36, 0.03, 0, 0.4, 0.3]]);
       shoes(lv, 20.9, -12.7, 2.4, FM.blue); shoe1(lv, 20.25, -27.4, -0.9, FM.red, true); randFloor(lv, 21.55, -22.5, 1.9, C(0x2a2a2a)); gymBag(lv, 19.4, -27.9, 0.9, FM.green);
       for (const [x, z, n] of [[20.1, -9.4, 2], [21.0, -17.3, 1], [19.7, -22.9, 2], [20.8, -26.3, 1], [20.6, -29.3, 2], [20.9, -13.6, 1]]) paper(lv, x, z, n);
     }
     // ── 1階 廊下B（z -33.1〜-30・x 1.5〜26）。南の壁ぞい
     { const lv = 0;
-      desk(lv, 10.4, -32.62, 0.08); chairDown(lv, 15.6, -32.6, 0.3);
       boxes(lv, 23.6, -32.68, 0.06, [[0.5, 0.42, 0.4, 0, 0], [0.5, 0.42, 0.4, 0.55, 0.02, 0, 0.1], [0.44, 0.36, 0.36, 0.25, 0, 0.42, -0.15]]);
       paper(lv, 4.6, -31.2, 2); paper(lv, 12.8, -31.9, 1); paper(lv, 19.4, -31.3, 2); shoe1(lv, 8.2, -30.9, 1.1, FM.blue);
     }
     // ── 2階 廊下（x ±1.4・z -3〜-32）。西：S1 -6.9〜-5.5／図書 -13.7〜-12.3／音楽 -22.2〜-20.8／S2 -30.5〜-28.9、東：-17〜-15.8・-20.4〜-19.2
     { const lv = 1;
-      desk(lv, 1.04, -12.0, Math.PI - 0.18); chairDown(lv, 0.45, -12.75, -0.6);
-      deskDown(lv, -1.0, -9.6, -0.12);
       boxes(lv, -1.08, -18.3, -0.08, [[0.5, 0.45, 0.42, 0, 0], [0.46, 0.4, 0.4, 0.02, 0, 0.45, 0.2], [0.34, 0.28, 0.3, 0.02, 0.44, 0, -0.3, true]]);
       broomSet(lv, 1.3, -23.6, -Math.PI / 2);
       gymBag(lv, -1.18, -24.3, -0.5, FM.red); randFloor(lv, 1.1, -27.0, -1.3, FM.navy);
       shoes(lv, 0.7, -14.9, -0.4, FM.green); shoe1(lv, -0.4, -30.8, 1.4, FM.blue, true);
       for (const [x, z, n] of [[0.4, -7.6, 2], [-0.3, -15.6, 3], [0.6, -24.9, 1], [-0.5, -28.1, 2], [0.2, -19.9, 1]]) paper(lv, x, z, n);
     }
+    // ── 2026-11-15 廊下の机と椅子：ふだんは3パターン（0〜2）からランダム。まれに（3）1階の廊下の突き当たりの右（廊下Bの入口）がバリケードでふさがれる
+    PATN = [0, 3];
+    desk(0, 1.04, -10.4, Math.PI + 0.22); chairDown(0, 0.42, -11.15, 0.9); deskDown(0, -1.0, -31.4, 0.15);
+    desk(0, 6.1, -7.52, 0.12); chairDown(0, 6.95, -7.2, -2.2);
+    desk(0, 19.48, -10.9, Math.PI / 2 + 0.15); chairDown(0, 20.25, -11.75, 2.6); deskDown(0, 21.5, -14.4, Math.PI / 2 - 0.2); deskStack(0, 21.48, -24.4, -Math.PI / 2 + 0.1); chairDown(0, 19.55, -25.6, 1.3);
+    desk(0, 10.4, -32.62, 0.08); chairDown(0, 15.6, -32.6, 0.3);
+    desk(1, 1.04, -12.0, Math.PI - 0.18); chairDown(1, 0.45, -12.75, -0.6); deskDown(1, -1.0, -9.6, -0.12);
+    PATN = [1];
+    desk(0, 1.04, -24.6, Math.PI + 0.1); chairDown(0, 0.5, -23.8, 2.0); deskDown(0, -1.0, -11.4, 0.1);
+    desk(0, 10.2, -7.5, -0.1); chairDown(0, 11.0, -5.6, 0.7);
+    desk(0, 21.52, -12.5, -Math.PI / 2 - 0.1); chairDown(0, 19.5, -14.9, 1.0); deskStack(0, 19.48, -21.6, Math.PI / 2); deskDown(0, 21.5, -26.3, Math.PI / 2 + 0.2);
+    desk(0, 7.2, -32.62, -0.05); chairDown(0, 17.8, -30.5, 2.4);
+    desk(1, -1.04, -17.6, 0.2); chairDown(1, -0.5, -18.6, 1.8); deskDown(1, 1.0, -11.0, Math.PI);
+    PATN = [2];
+    chairDown(0, -0.9, -19.0, 0.4); desk(0, -1.04, -23.6, 0.15); deskDown(0, 1.0, -12.0, Math.PI + 0.2);
+    deskStack(0, 8.6, -7.5, 0); chairDown(0, 14.6, -5.5, 0.4);
+    chairDown(0, 21.4, -9.8, 0.4); desk(0, 19.48, -17.0, Math.PI / 2); deskDown(0, 21.5, -23.5, Math.PI / 2); chairDown(0, 19.6, -29.0, -1.0);
+    deskDown(0, 19.0, -32.6, 0.1); desk(0, 4.6, -30.45, Math.PI);
+    chairDown(1, 0.6, -7.0, 2.2); desk(1, -1.04, -19.0, 0.1); deskDown(1, 1.0, -14.0, Math.PI);
+    PATN = [3];   // バリケード：廊下Bの入口（x 2.3〜3.7）を、机・椅子で天井近くまでふさぐ。2-1（R3）の教室を通れば回り込める
+    { const c0 = colliders.length;
+      for (const z of [-32.78, -32.14, -31.5, -30.86, -30.3]) deskStack(0, 2.62, z, Math.PI / 2 + jit(0.06));
+      for (const [z, ry] of [[-32.5, 0.3], [-31.2, -0.4], [-30.4, 1.9]]) chairDown(0, 3.35, z, ry);
+      deskDown(0, 3.45, -31.85, Math.PI / 2 + 0.1);
+      { const g = F.g('barTop', 0, 2.62, -31.55, Math.PI / 2, 1.2); for (const [ox, h, r2] of [[-1.2, 0.5, 0.2], [-0.5, 0.42, -0.1], [0.3, 0.55, 0.15], [1.0, 0.45, -0.25]]) { F.bx(g, 0.62, 0.035, 0.46, FM.wood, ox, h, 0, 0, r2, 0.25); F.bx(g, 0.022, 0.7, 0.022, FM.metal, ox + 0.25, h - 0.3, 0.18, 0.3, 0, 0.4); } F.bx(g, 3.0, 0.05, 0.02, C(0xc8b048), 0, 0.15, 0.3, 0, 0, 0.04); F.bx(g, 3.0, 0.05, 0.02, C(0xc8b048), 0, -0.25, 0.3, 0, 0, -0.06); }
+      F.col(0, 2.3, 3.75, -33.15, -29.95);
+      for (let i = c0; i < colliders.length; i++) { colliders[i].soft = false; colliders[i].bar = true; } }   // 怪異も通れない（回り道をする）
+    PATN = null;
     // ── 階段の踊り場（高さ1.6・x -5.78〜-4.42）。曲がる通り道（中ほど）はあけて、奥の壁ぎわと隅に
     for (const z0 of [-5.4, -28.9]) { const lv = 0, y = 1.6;
       paper(lv, -5.45, z0 - 1.25, 2, y); paper(lv, -5.1, z0 + 1.1, 1, y);
@@ -2546,10 +2566,10 @@ const FURN = {
     }
     // 踊り場のほうきは高さを合わせる
     for (const g of FURN.items.broomC || []) if (g.position.x < -5 && g.position.y < 0.1) g.position.y = 1.6;
-    F.g = g0;
+    F.g = g0; F.col = col0; F.cov = cov0;
   }
   // 動かす予定のない小物（給食袋・体操着袋・床の楽譜・掲示物以外の細かい物）は、階ごとに1つにまとめる
-  if (!/[?&]nomerge\b/.test(location.search)) for (const lv of [0, 1]) { const tmp = new THREE.Group(); for (const k of ['lunchBag', 'gymBag', 'sheet', 'chalkTray', 'soap', 'toiletPaper', 'paperC', 'shoeC', 'bagC', 'broomC']) { const L2 = FURN.items[k] || []; for (const g of L2.filter(g => g.userData.lv === lv)) { g.updateMatrix(); for (const m of g.children.slice()) { m.updateMatrix(); m.matrix.premultiply(g.matrix); m.matrix.decompose(m.position, m.quaternion, m.scale); tmp.add(m); } g.parent.remove(g); } FURN.items[k] = L2.filter(g => g.userData.lv !== lv); }
+  if (!/[?&]nomerge\b/.test(location.search)) for (const lv of [0, 1]) { const tmp = new THREE.Group(); for (const k of ['lunchBag', 'gymBag', 'sheet', 'chalkTray', 'soap', 'toiletPaper', 'paperC', 'shoeC', 'bagC', 'broomC']) { const L2 = FURN.items[k] || []; for (const g of L2.filter(g => g.userData.lv === lv && !g.userData.mz)) { g.updateMatrix(); for (const m of g.children.slice()) { m.updateMatrix(); m.matrix.premultiply(g.matrix); m.matrix.decompose(m.position, m.quaternion, m.scale); tmp.add(m); } g.parent.remove(g); } FURN.items[k] = L2.filter(g => g.userData.lv !== lv); }
     FURN.bake(tmp); if (tmp.children.length) FURN.par(lv).add(tmp); }
   // 2026-11-15 廊下に散らばった物（動かさない）も、階ごとに1つにまとめる
   if (!/[?&]nomerge\b/.test(location.search)) for (const lv of [0, 1]) { const tmp = new THREE.Group(); for (const k in FURN.items) { const L2 = FURN.items[k]; for (const g of L2.filter(g => g.userData.corr && g.userData.lv === lv)) { g.updateMatrix(); for (const m of g.children.slice()) { m.updateMatrix(); m.matrix.premultiply(g.matrix); m.matrix.decompose(m.position, m.quaternion, m.scale); tmp.add(m); } g.parent.remove(g); } FURN.items[k] = L2.filter(g => !(g.userData.corr && g.userData.lv === lv)); }
@@ -3225,6 +3245,11 @@ const SND = {
   thud(pos, vol = 1) { if (!A.ctx) return; const t = A.ctx.currentTime; const p = panAt(pos, 1.2, 1.0); nb(p, { t, f: 1400, q: 1.2, a: 0.002, peak: 0.22 * vol, d: 0.05 });   /* スマホのスピーカーでも聞こえる「コトッ」 */
     tn(p, { t, f0: 85, f1: 45, dur: 0.22, peak: 0.9 * vol }); nb(p, { t, f: 700, type: 'lowpass', q: 0.7, peak: 0.6 * vol, d: 0.25 });
     for (let i = 0; i < 5; i++) nb(p, { t: t + 0.05 + i * rnd(0.03, 0.06), f: rnd(1200, 2600), q: 4, peak: 0.18 * vol, d: 0.03 }); },
+  // 2026-11-15 重い木のふたが落ちる「バン！」：低くて大きい芯＋木の胴鳴り＋弦の低いうなり（軽い高音は入れない）
+  bang(pos, vol = 1) { if (!A.ctx) return; const t = A.ctx.currentTime; const p = panAt(pos, 1.8, 0.8);
+    tn(p, { t, f0: 110, f1: 38, dur: 0.55, peak: 1.3 * vol, a: 0.001 }); tn(p, { t, type: 'triangle', f0: 160, f1: 70, dur: 0.22, peak: 0.6 * vol, a: 0.001 });
+    nb(p, { t, f: 420, type: 'lowpass', q: 0.8, a: 0.001, peak: 1.1 * vol, d: 0.32 }); nb(p, { t, f: 900, q: 1.1, a: 0.001, peak: 0.3 * vol, d: 0.05 });
+    for (const [f, pk] of [[55, 0.16], [82.4, 0.1], [110, 0.06]]) tn(p, { t: t + 0.01, f0: f, f1: f * 0.995, dur: 2.2, peak: pk * vol, a: 0.01 }); },
   hit() { if (!A.ctx) return; const t = A.ctx.currentTime; tn(A.bus, { t, f0: 70, f1: 38, dur: 0.18, peak: 1.0 }); nb(A.bus, { t, f: 1800, q: 0.7, a: 0.001, peak: 0.8, d: 0.08 }); },
   breath(side = 0.6, vol = 1) { if (!A.ctx) return; const t = A.ctx.currentTime; let d = A.bus;
     if (A.ctx.createStereoPanner) { const sp = A.ctx.createStereoPanner(); sp.pan.value = side; sp.connect(A.master); d = sp; freeLater(2, sp); }
@@ -7313,7 +7338,7 @@ F2.build2 = function () {
   // ── 図書室：本棚の列（通路の先に窓）
   const rows = [-11.2, -14.8]; this.shelfZ = rows;
   for (const rz of rows) {
-    for (const x of [-8.4, -6.8, -5.2]) { const sh = f2put('bookshelf', 0, Y2, 0, rz > -13 ? Math.PI : 0); if (sh) { f2center(sh, x, Y2, rz); if (rz > -13 && x === -6.8) this.shelf1 = sh; } }
+    for (const x of [-8.4, -6.8, -5.2]) { const sh = f2put('bookshelf', 0, Y2, 0, rz > -13 ? Math.PI : 0); if (sh) { f2center(sh, x, Y2, rz); if (rz > -13 && x === -6.8) this.shelf1 = sh; (this.shelves || (this.shelves = [])).push({ sh, x, rz }); } }
     f2block(-9.2, -4.4, Y2, Y2 + 1.8, rz - 0.18, rz + 0.18);
   }
   // 落ちる本（通路側の棚の手前、空きに差しておく）
@@ -7393,7 +7418,7 @@ F2.reset = function () {
   P.chair = f2force('chair') || r() < 0.4;   // 2026-11-14 回る頻度を半分に
   P.piano = !f2force('nopiano') && (f2force('piano') || r() < 0.85);
   P.float = f2force('float') || r() < 0.3;   // 2026-11-12 出現率を半分に
-  P.vaseRoom = r() < 0.5 ? '2A' : '2B'; P.vaseI = (r() * 16) | 0;
+  P.vaseRoom = r() < 0.5 ? '2A' : '2B'; if (world.maze) P.vaseRoom = '2A'; P.vaseI = (r() * 16) | 0;
   P.fall = f2force('fall') || r() < 0.4;   // 2026-11-13 窓の外から落ちる人影：2階の教室で
   this.busy = false; this.yawOff = 0; this.clairHeard = false; this.libVisit = false; this.inLib = false; this.inMus = false; this.inC = false; this.cT = 0; this.libDone = {}; this.libCool = 0;
   this.st = { face: 'wait', bed: null, scare: 'wait', chair: 'wait', fall: P.fall ? 'wait' : 'none', crows: 'none', libPick: false, piano: 'wait', float: 'wait', vase: 'wait', page: 'wait', books: 'wait', lchair: 'wait' };
@@ -7556,15 +7581,16 @@ F2.updChair = function (dt) {
     if (S.chairAt === undefined) S.chairAt = this.cT + 5 + f2rng('chair')() * 9;
     if (this.cT < S.chairAt || S.scare === 'face' || S.scare === 'noise' || F2.busy) return;
     const p = V(-3.0, 0.55, -15.6); if (camera.position.distanceTo(p) > 6.5) return;
-    const r = f2rng('chair2'); S.cA = (r() < 0.5 ? 1 : -1) * (20 + r() * 35) * Math.PI / 180; S.chair = 'run'; S.ct = 0;
+    const r = f2rng('chair2'); S.cA = (r() < 0.5 ? 1 : -1) * (2.7 + r() * 0.6) * Math.PI * 2; S.chair = 'run'; S.ct = 0;   // 2026-11-15 3回転ぐらい勢いよく回って、だんだん遅くなって止まる
     chairSqueak(p, 0.5);   // 2026-11-14 「きぃーー、、、」という軋み（音量は前の半分ほど）
   } else if (S.chair === 'run') {
     S.ct += dt; const t = S.ct;
     // 6割まで回り、0.18秒引っ掛かって、残りを少しだけ進んで止まる
-    const k = t < 0.55 ? smooth(0, 0.55, t) * 0.6 : t < 0.73 ? 0.6 + Math.sin((t - 0.55) * 60) * 0.01 : 0.6 + smooth(0.73, 1.35, t) * 0.4;
+    const u = clamp(t / 3.6, 0, 1), k = 1 - Math.pow(1 - u, 2.6);   // 最初が速く、最後はゆっくり
     this.seat.rotation.y = S.cA * k;
+    if (!S.sq2 && t > 1.6) { S.sq2 = 1; chairSqueak(V(-3.0, 0.55, -15.6), 0.35); }
     if (rec.active && seen(V(-3.0, 0.6, -15.6), { maxD: 7 })) award('f2chair', '誰もいない椅子の座面が回った', 30);
-    if (t > 1.4) S.chair = 'done';
+    if (t > 3.7) S.chair = 'done';
   }
 };
 
@@ -7710,7 +7736,7 @@ F2.updMusic = function (dt) {
   } else if (S.piano === 'slam') {
     S.pt += dt; const k = Math.min(1, Math.pow(S.pt / 0.24, 2)); if (this.lid) this.lid.rotation.z = S.lid0 * (1 - k);
     const slit = glassPanes.concat(this.slitGlass ? [this.slitGlass] : []);
-    if (k >= 1 && !S.crash) { S.crash = 1; playSfx('piano_lid_crash', { pos: pc.clone().setY(Y2 + 1.0), ref: 1.6, roll: 0.9, gain: 1 }) || SND.thud(pc, 1);
+    if (k >= 1 && !S.crash) { S.crash = 1; playSfx('piano_lid_crash', { pos: pc.clone().setY(Y2 + 1.0), ref: 1.6, roll: 0.9, gain: 0.8, rate: 0.6, lowpass: 1300 }); SND.bang(pc.clone().setY(Y2 + 0.9), 1.15);   // 2026-11-15 低く重い「バン！」
       const L = DIM.lightNear(V(-5.5, Y2, -21.5)); if (L) { L.dimUntil = Math.max(L.dimUntil, world.t + 12); L.late = 0; L.dim = 1; if (L.t && L.t.light) { L.t.light.intensity = L.t.base * 0.06; for (const m of L.t.meshes) m.material.color.setScalar(0.12); } } }   // 蓋が落ちた瞬間に音楽室の電灯が消える（しばらくして戻る）
     if (S.pt > 0.6) { S.piano = 'done'; world.quietUntil = world.t + 14; }
   }
@@ -10409,7 +10435,7 @@ const MANN = {
   setupHide3(force) {   // かくれんぼFINAL：保健室のベッド／階段の裏／2階の教室の一番奥の席／1階の奥の教室の天井 のどれか
     this.st = 'gone'; this.finalHunt = true;
     const q = location.search.match(/[?&]hide3=(\w+)/);
-    const kinds = ['bed', 'stairs', 'desk', 'ceil'].filter(k => k !== 'bed' || (F2.ready && F2.beds && F2.beds.length));
+    const kinds = ['bed', 'stairs', 'desk', 'ceil'].filter(k => (k !== 'bed' || (F2.ready && F2.beds && F2.beds.length)) && !(k === 'desk' && world.maze));
     const kind = kinds.includes(force) ? force : q && kinds.includes(q[1]) ? q[1] : pick(kinds);
     this.h3 = kind; if (TEST || DEV) console.log('MANN hide3', kind);
     if (kind === 'bed') {
@@ -11322,7 +11348,7 @@ const DECO = (() => {
   add(W, 'cyl', -2.62, 0.775, -16.57, { s: [0.035, 0.07, 0.035], rz: H, c: 0xf2f0ea }); add(W, 'cyl', -2.70, 0.775, -16.52, { s: [0.033, 0.065, 0.033], rz: H, ry: 0.4, c: 0xf2f0ea });   // 包帯
   add(W, 'cyl', -2.56, 0.795, -16.36, { s: [0.05, 0.11, 0.05], c: 0xe3e6e2 }); add(W, 'cyl', -2.56, 0.856, -16.36, { s: [0.052, 0.014, 0.052], c: 0x9da3a6 });   // 脱脂綿の容器
   add(W, 'plane', -2.30, 0.85, -10.493, { s: [0.86, 1.62, 1], ry: Math.PI, r: 'cab' });   // 薬品棚の前面（ガラス戸の中）
-  for (const [x, h, c] of [[-2.62, 0.16, 0x6b3d1e], [-2.52, 0.12, 0xe9e6dc], [-2.43, 0.14, 0x4d6f8f]]) { add(W, 'cyl', x, 1.70 + h / 2, -10.30, { s: [0.035, h, 0.035], c }); add(W, 'cyl', x, 1.70 + h + 0.012, -10.30, { s: [0.02, 0.024, 0.02], c: 0xd8d8d2 }); }   // 棚の上の薬瓶
+  /* 2026-11-15 棚の上の薬瓶（白・赤・青）は NBOT で別に作る（落ちて転がる） */
   add(W, 'box', -2.08, 1.76, -10.30, { s: [0.26, 0.12, 0.18], c: 0xd9d2bd });
   const slip = (x, z, ry) => { for (const d of [-0.07, 0.07]) { const ox = Math.cos(ry) * d, oz = -Math.sin(ry) * d; add(W, 'box', x + ox, 0.012, z + oz, { s: [0.10, 0.024, 0.25], ry, c: 0x2e5a44 }); add(W, 'plane', x + ox - Math.sin(ry) * 0.05, 0.032, z + oz - Math.cos(ry) * 0.05, { s: [0.095, 0.12, 1], rx: -H, ry, r: 'slip' }); } };
   slip(-6.55, -11.52, 0.2); slip(-6.95, -15.48, Math.PI - 0.15);   // ベッドの脇のスリッパ（カーテンの外）
@@ -12415,7 +12441,7 @@ function tick(now) {
   if (Math.abs(zoom - prevZoom) > 0.0015) focus.lastZoomMove = world.t; prevZoom = zoom;
   camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(CONFIG.fov1x / 2)) / zoom)); camera.updateProjectionMatrix();
   // 視点
-  if (KB.down('lookL')) look.yaw += 1.8 * dt; if (KB.down('lookR')) look.yaw -= 1.8 * dt; PCLOOK.tick(dt); FIXCAM.tick(dt); LID.tick(dt); UNDER.update(dt); KOK.update(dt); MYNAME.update(dt); CALL.update(dt); FDET.update(dt); CROUCH.tick(dt);
+  if (KB.down('lookL')) look.yaw += 1.8 * dt; if (KB.down('lookR')) look.yaw -= 1.8 * dt; PCLOOK.tick(dt); FIXCAM.tick(dt); LID.tick(dt); UNDER.update(dt); KOK.update(dt); MYNAME.update(dt); NEWEV.update(dt); CALL.update(dt); FDET.update(dt); CROUCH.tick(dt);
   if (KB.down('lookU')) look.pitch = clamp(look.pitch + 1.2 * dt, -1.54, 1.54); if (KB.down('lookD')) look.pitch = clamp(look.pitch - 1.2 * dt, -1.54, 1.54);
   if (gyro.on && gyro.got) { player.yaw = look.yaw + (gyro.acc - gyro.ref); player.pitch = clamp(gyro.pitch + look.pitch, -1.55, 1.55); }
   else { player.yaw = look.yaw; player.pitch = look.pitch; }
@@ -14086,7 +14112,7 @@ $('#goBtn').addEventListener('click', () => {
   world.channel = ($('#chName').value || '').trim() || '心霊チャンネル';
   world.chRaw = ($('#chName').value || '').trim(); world.yomi = world.chRaw ? ($('#chYomi').value || '').trim() : '';
   CHATLOG.reset(); world.chatRk = yrankIdx(ACH.load().total); world.chatM = YRANK[world.chatRk][3]; world.chatName = chatCallName(); world.chatNick = NICK.of(world.chRaw, world.yomi); world.chatLang = LANG;   // 2026-11-14 チャット：撮影開始時のランク倍率と呼び名をこの動画に固定
-  PHAN.begin(); MANN.reset(); WD.init(); WARP.reset(); VO.stopAll(); FIXCAM.reset(); CROUCH.reset(); UNDER.reset(); CALL.reset(); FDET.reset(); if (LID.list.length) LID.reset(); DIR.planRun(); MINOR.reset(); SELF.reset(); MD.reset(); DOORS2.reset(); TAP.reset(); F2.reset(); SP.reset(); NEKO.reset(); OFUDA.reset(); ITEM.reset(); SNAKE.reset(); UWA.reset(); TEN.reset(); GG.reset(); POLT.reset(); MF.reset(); STREETFIG.reset(); EXITF.reset(); STAY.reset(); RED.reset(); MG.reset();
+  NEWEV.decide(); PHAN.begin(); MANN.reset(); WD.init(); WARP.reset(); VO.stopAll(); FIXCAM.reset(); CROUCH.reset(); UNDER.reset(); CALL.reset(); FDET.reset(); if (LID.list.length) LID.reset(); DIR.planRun(); MINOR.reset(); SELF.reset(); MD.reset(); DOORS2.reset(); TAP.reset(); F2.reset(); SP.reset(); NEKO.reset(); OFUDA.reset(); ITEM.reset(); MAZE.after(); SNAKE.reset(); UWA.reset(); TEN.reset(); GG.reset(); POLT.reset(); MF.reset(); STREETFIG.reset(); EXITF.reset(); STAY.reset(); RED.reset(); MG.reset();
   if (MIC30) CONFIG.recMaxSec = 30;   // 2026-11-14 開発用の30秒テスト（本番の120秒は変えない）
   $('#start').classList.remove('show');
   world.state = 'intro'; world.battery = CONFIG.battery.start; world.batUsed = Math.max(0, 100 - CONFIG.battery.start); world.sgShowUsed = rnd(50, 70);   /* 2026-11-14 逆さ女が見えるようになる時（電池の残り50〜30%のどこか。検証版から） */
@@ -14094,7 +14120,7 @@ $('#goBtn').addEventListener('click', () => {
   INTRO.run(beginPlay);
 });
 function beginPlay() {
-  $('#hud').classList.remove('off'); PHAN.place(); KOK.reset(); MYNAME.reset();   // 2026-11-15 化け物の周だけ、お札5枚
+  $('#hud').classList.remove('off'); PHAN.place(); KOK.reset(); MYNAME.reset(); NEWEV.reset();   // 2026-11-15 化け物の周だけ、お札5枚
   world.state = 'play';
   postMat.uniforms.black.value = 1; postMat.uniforms.grain.value = 1;
   if (DEV) $('#dev').classList.add('show'), $('#devInfo').style.display = 'block';
@@ -14405,7 +14431,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.18';
+const VERSION = '0.15.19';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16053,6 +16079,334 @@ Object.assign(CHAT_DICT.t, {
 });
 if (CHAT_DICT.ev) Object.assign(CHAT_DICT.ev, { '下駄箱に自分の名前': ['name.shoe.01', 'name.shoe.02', 'name.shoe.03', 'name.shoe.04'], '出席簿の自分の名前': ['name.roll.01', 'name.roll.02', 'name.roll.03', 'name.roll.04'], '黒板の相合傘': ['name.umb.01', 'name.umb.02', 'name.umb.03', 'name.umb.04', 'name.umb.05'] });
 /* =========================================================
+   2026-11-15 追加の撮れ高・演出
+   ・RANDFLY  宙を漂うランドセル（B40）：教室の後ろの棚から浮き上がって移動し、1秒止まってから床に落ちる
+   ・NBOT     保健室の棚の上の薬瓶（白・赤・青）が落ちて転がる（C20）：転がっている最中を撮れば入る
+   ・MSTAND   音楽室の譜面台が1本、少しして もう1本倒れる（まれ・C30）：倒れる瞬間を撮った時だけ
+   ・LIBFALL  図書室の右奥の一番奥で5秒たつと、たまに左の本棚が向こう側へ倒れる（B40）
+   ・LIBGIRL  図書室の左奥まで入って振り返ると、ごくまれに本を開いて持つ女子高生（A60）。ちゃんと見るか近づくとノイズで消える
+   ・CORR     廊下の机と椅子の並び（3パターン＋まれにバリケード）
+   ・MAZE     10%の周で、2-B が文化祭の机と椅子の迷路になる（怪異も壁を通れない）。ゴールにアイテムが1つ
+   ・確認用：?randfly ?nbot ?mstand ?libfall ?libgirl ?maze ?corr=0〜3
+   ========================================================= */
+const NEWEV_Q = new URLSearchParams(location.search), NEWEV_F = k => (TEST || BETA) && NEWEV_Q.has(k);
+
+/* ── 怪異の通り道（迷路・バリケードの回だけ組みかえる） */
+const NAVX = {
+  base: null,
+  apply(o = {}) {
+    if (!this.base) this.base = { nodes: Object.assign({}, NAV), edges: NAV_E.slice() };
+    for (const k of Object.keys(NAV)) delete NAV[k]; Object.assign(NAV, this.base.nodes);
+    let E = this.base.edges.slice();
+    if (o.bar) E = E.filter(([a, b]) => !((a === 'Ag' && b === 'B1') || (a === 'B1' && b === 'Ag')));
+    if (o.maze) { for (const k of ['b21', 'b22', 'b23']) delete NAV[k]; Object.assign(NAV, o.maze.nodes); E = E.filter(([a, b]) => NAV[a] && NAV[b]).concat(o.maze.edges); }
+    for (const k of Object.keys(NAV_ADJ)) delete NAV_ADJ[k]; for (const k in NAV) NAV_ADJ[k] = [];
+    for (const [a, b] of E) { if (!NAV[a] || !NAV[b]) continue; const d = Math.hypot(NAV[a][0] - NAV[b][0], NAV[a][1] - NAV[b][1], (NAV[a][3] || 0) - (NAV[b][3] || 0)); NAV_ADJ[a].push([b, d]); NAV_ADJ[b].push([a, d]); }
+  },
+};
+
+/* ── 廊下の机と椅子 */
+const CORR = {
+  pat: 0,
+  decide() {
+    const q = NEWEV_Q.get('corr'); this.pat = (TEST || BETA) && q !== null ? clamp(+q || 0, 0, 3) : Math.random() < 0.1 ? 3 : Math.floor(Math.random() * 3);
+    const on = P => !!P && P.includes(this.pat);
+    for (const k in FURN.items) for (const g of FURN.items[k]) if (g.userData.pat) g.visible = on(g.userData.pat);
+    for (const c of colliders) if (c.pat) c.on = on(c.pat);
+    for (const b of FURN.cover) if (b.pat) { if (!b.orig) b.orig = b.clone(); if (on(b.pat)) b.copy(b.orig); else b.makeEmpty(); }
+    if (TEST || DEV) console.log('CORR', this.pat);
+  },
+};
+
+/* ── 文化祭の迷路（2-B） */
+const MAZE = {
+  on: false, g: null, cols: [], occ: [], X0: 2.65, X1: 13.4, Z0: -28.2, Z1: -19.05, NX: 7, NZ: 6, saved: null,
+  decide() {
+    this.on = NEWEV_F('maze') || chance(0.1); world.maze = this.on;
+    const R = rooms['2B']; if (!this.saved) this.saved = R.desks.slice();
+    for (const d of this.saved) { d.g.scale.setScalar(this.on ? 1e-4 : 1); d.g.updateMatrixWorld(true); d.g.userData.refreshInstances?.(); d.col.on = !this.on; }
+    R.desks = this.on ? [] : this.saved.slice();
+    for (const k in FURN.items) for (const g of FURN.items[k]) if (g.userData.mz) g.visible = !this.on;
+    this.teardown(); let mz = null;
+    if (this.on) mz = this.build();
+    NAVX.apply({ bar: CORR.pat === 3, maze: mz });
+    if (TEST || DEV) console.log('MAZE', this.on);
+  },
+  teardown() {
+    if (this.g) { this.g.traverse(o => { if (o.geometry) o.geometry.dispose(); }); this.g.parent && this.g.parent.remove(this.g); this.g = null; }
+    for (const c of this.cols) { c.on = false; const i = colliders.indexOf(c); if (i >= 0) colliders.splice(i, 1); } this.cols = [];
+    for (const m of this.occ) { const i = occluders.indexOf(m); if (i >= 0) occluders.splice(i, 1); } this.occ = []; this.goal = null;
+  },
+  build() {
+    const { X0, X1, Z0, Z1, NX, NZ } = this, cw = (X1 - X0) / NX, ch = (Z1 - Z0) / NZ, cx = i => X0 + (i + 0.5) * cw, cz = j => Z1 - (j + 0.5) * ch;
+    // 穴掘り法で、行き止まりのある1本道の迷路を作る（入口は北西のマス）
+    const id = (i, j) => j * NX + i, vis = new Array(NX * NZ).fill(false), open = new Set(), dist = new Array(NX * NZ).fill(0);
+    const st = [[0, 0]]; vis[0] = true;
+    while (st.length) { const [i, j] = st[st.length - 1]; const nb = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([a, b]) => [i + a, j + b]).filter(([a, b]) => a >= 0 && b >= 0 && a < NX && b < NZ && !vis[id(a, b)]);
+      if (!nb.length) { st.pop(); continue; } const [a, b] = pick(nb); vis[id(a, b)] = true; open.add(Math.min(id(i, j), id(a, b)) + ':' + Math.max(id(i, j), id(a, b))); dist[id(a, b)] = dist[id(i, j)] + 1; st.push([a, b]); }
+    const isOpen = (p, q) => open.has(Math.min(p, q) + ':' + Math.max(p, q));
+    let gi = 0; for (let k = 1; k < NX * NZ; k++) if (dist[k] > dist[gi]) gi = k;
+    const g = new THREE.Group(); F2G.add(g); this.g = g; g.position.y = LH;
+    const card = L({ color: 0x9a7a52 }), cloth = L({ color: 0x19181b }), tape = L({ color: 0xc8b048 }), F = FURN;
+    const signTex = (t, bg, fg) => { const c = document.createElement('canvas'); c.width = 256; c.height = 96; const x = c.getContext('2d'); x.fillStyle = bg; x.fillRect(0, 0, 256, 96); x.fillStyle = fg; x.font = 'bold 54px "Hiragino Maru Gothic ProN","Yu Gothic",sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(t, 128, 50); const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; return tx; };
+    // 壁ひとつ：机2台を横に並べ、その上に段ボールか黒い布を立てる（目の高さより高く、向こうは見えない）
+    const wall = (x, z, along, len) => {
+      const w = new THREE.Group(); w.position.set(x, 0, z); w.rotation.y = along === 'x' ? 0 : Math.PI / 2; g.add(w);
+      for (const s of [-1, 1]) { const ox = s * len / 4; F.bx(w, 0.62, 0.035, 0.46, M.wood, ox, 0.72, 0); F.bx(w, 0.58, 0.18, 0.03, M.metal, ox, 0.6, -0.21); for (const [a, b] of [[-0.28, -0.2], [0.28, -0.2], [-0.28, 0.2], [0.28, 0.2]]) F.bx(w, 0.022, 0.7, 0.022, M.metal, ox + a, 0.35, b); }
+      const m = chance(0.3) ? cloth : card; F.bx(w, len + 0.04, 1.1, 0.03, m, 0, 1.29, 0); if (m === card) F.bx(w, len + 0.05, 0.05, 0.035, tape, 0, 1.3 + rnd(-0.3, 0.3), 0);
+      const hx = along === 'x' ? len / 2 + 0.02 : 0.25, hz = along === 'x' ? 0.25 : len / 2 + 0.02, c = addCol(x - hx, x + hx, z - hz, z + hz); c.lv = 1; this.cols.push(c);   // 怪異も通れない（soft にしない）
+    };
+    for (let j = 0; j < NZ; j++) for (let i = 0; i < NX; i++) {
+      if (i < NX - 1 && !isOpen(id(i, j), id(i + 1, j))) wall(X0 + (i + 1) * cw, cz(j), 'z', ch);
+      if (j < NZ - 1 && !isOpen(id(i, j), id(i, j + 1))) wall(cx(i), Z1 - (j + 1) * ch, 'x', cw);
+      if (j === NZ - 1) wall(cx(i), Z0, 'x', cw);
+      if (i === 0 && j > 0) wall(X0, cz(j), 'z', ch);
+    }
+    wall((1.5 + X0) / 2, Z1 - ch, 'x', X0 - 1.5);   // 西の壁ぞいの細い隙間をふさぐ（入口は戸の正面だけ）
+    // 看板：入口に「めいろ」、ゴールに「ゴール」
+    { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.26), L({ map: signTex('めいろ', '#e9d25a', '#5a1a1a') })); m.position.set(X0 + 0.02, 2.05, Z1 - 0.75); m.rotation.y = -Math.PI / 2; m.rotation.z = 0.04; g.add(m); }
+    const gx = cx(gi % NX), gz = cz(Math.floor(gi / NX));
+    { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.22), L({ map: signTex('ゴール', '#f2efe6', '#b01818'), side: THREE.DoubleSide })); m.position.set(gx, 2.0, gz); g.add(m); m.userData.keep = true; this.goalSign = m; }
+    F.bake(g); for (const w of g.children.slice()) if (w.isGroup) F.bake(w);
+    g.traverse(o => { if (o.isMesh && (o.material === card || o.material === cloth)) { occluders.push(o); this.occ.push(o); } });
+    this.goal = V(gx, LH + 0.25, gz);
+    // 怪異の通り道：マスの真ん中どうしを、開いている所だけつなぐ。入口のマスは戸の前（b20）へ
+    const nodes = {}, edges = [['b20', 'mz0']];
+    for (let k = 0; k < NX * NZ; k++) nodes['mz' + k] = [cx(k % NX), cz(Math.floor(k / NX)), '2B', LH];
+    for (let k = 0; k < NX * NZ; k++) { const i = k % NX, j = Math.floor(k / NX); if (i < NX - 1 && isOpen(k, k + 1)) edges.push(['mz' + k, 'mz' + (k + 1)]); if (j < NZ - 1 && isOpen(k, k + NX)) edges.push(['mz' + k, 'mz' + (k + NX)]); }
+    return { nodes, edges };
+  },
+  // アイテム：おまもり・メモリーカード・モバイルバッテリーのどれか1つをゴールに置く（ITEM.reset の後）
+  after() {
+    const it0 = this.moved; if (it0) { it0.it.pos.copy(it0.p); it0.it.lv = it0.lv; this.moved = null; }
+    if (!this.on || !this.goal) return;
+    const ids = ['omamori', 'battery'].concat(PERM.has('fixcam') ? [] : ['memcard']), it = ITEM.get(pick(ids)); if (!it) return;
+    if (it.id !== 'memcard') this.moved = { it, p: it.pos.clone(), lv: it.lv };
+    it.taken = false; it.lk = null; it.spot = { type: 'maze' }; it.lv = 1; it.pos.copy(this.goal); ITEM.skin(it);
+    if (TEST || DEV) console.log('MAZE goal', it.id, this.goal.toArray().map(v => v.toFixed(1)).join(','));
+  },
+};
+
+/* ── 宙を漂うランドセル */
+const RANDFLY = {
+  plan: false, st: 'off', g: null,
+  ROOMS: { R2: { lv: 0, sz: -8.88 + 0.19, s: 1 }, R3: { lv: 0, sz: -30 + 0.12 + 0.19, s: -1 }, '2A': { lv: 1, sz: -8.88 + 0.19, s: 1 }, '2B': { lv: 1, sz: -28.69, s: -1 } },
+  reset() { this.plan = NEWEV_F('randfly') || chance(0.35); this.st = this.plan ? 'wait' : 'off'; this.stay = 0; if (this.g) { this.g.parent && this.g.parent.remove(this.g); this.g = null; } },
+  make() {
+    const g = new THREE.Group(), col = L({ color: pick([0x8a1f1c, 0x222020, 0x283550]) });
+    const a = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.3, 0.18), col); a.position.y = 0.15; g.add(a);
+    const b = new THREE.Mesh(new THREE.BoxGeometry(0.265, 0.2, 0.03), col); b.position.set(0, 0.2, 0.1); g.add(b);
+    const c = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.04, 0.012), L({ color: 0xb8bcc0 })); c.position.set(0, 0.12, 0.118); g.add(c);
+    for (const sx of [-0.08, 0.08]) { const st = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.26, 0.012), col); st.position.set(sx, 0.16, -0.1); g.add(st); }
+    scene.add(g); return g;
+  },
+  update(dt) {
+    if (this.st === 'off' || this.st === 'done') return;
+    if (this.st === 'wait') {
+      const z = playerZone(), R = this.ROOMS[z]; if (!R || (z === '2B' && MAZE.on) || player.lv !== R.lv || world.state !== 'play') { this.stay = 0; return; }
+      this.stay += dt; if (this.stay < 4) return;
+      const y0 = R.lv * LH, x = rnd(3.3, 7.6), p0 = V(x, y0 + 0.55, R.sz - R.s * 0.12);
+      if (!onScreen(p0, 0.8) || camera.position.distanceTo(p0) > 9 || camera.position.distanceTo(p0) < 2.2) return;
+      this.g = this.make(); this.g.position.copy(p0).setY(y0 + 0.3); this.g.rotation.y = R.s > 0 ? Math.PI : 0;
+      this.p0 = this.g.position.clone(); this.p1 = V(clamp(x + rnd(-1.2, 1.2), 3.2, 11.8), y0 + 1.45, R.sz - R.s * rnd(2.2, 2.9)); this.y0 = y0;
+      this.st = 'rise'; this.t = 0; this.seenT = 0; SND.rustle(p0.clone(), 0.7); if (TEST || DEV) console.log('RANDFLY', z);
+      return;
+    }
+    const g = this.g, S = this; S.t += dt;
+    if (S.st === 'rise') { const k = smooth(0, 1.4, S.t); g.position.lerpVectors(S.p0, V(S.p0.x, S.p1.y, S.p0.z + (S.p1.z - S.p0.z) * 0.15), k); g.rotation.z = Math.sin(S.t * 2.2) * 0.08; if (S.t > 1.4) { S.st = 'move'; S.t = 0; S.pm = g.position.clone(); } }
+    else if (S.st === 'move') { const k = smooth(0, 2.6, S.t); g.position.lerpVectors(S.pm, S.p1, k); g.position.y += Math.sin(S.t * 3.1) * 0.04; g.rotation.y += dt * 0.35; g.rotation.z = Math.sin(S.t * 2.2) * 0.1; if (S.t > 2.6) { S.st = 'hold'; S.t = 0; S.ph = g.position.clone(); } }
+    else if (S.st === 'hold') { g.position.copy(S.ph); g.position.x += Math.sin(S.t * 31) * 0.004; g.rotation.z = Math.sin(S.t * 1.5) * 0.04; if (S.t > 1.0) { S.st = 'fall'; S.t = 0; S.vy = 0; } }   // 1秒止まる
+    else if (S.st === 'fall') { S.vy -= 9.8 * dt; g.position.y += S.vy * dt; g.rotation.x += dt * 2.4; if (g.position.y <= S.y0) { g.position.y = S.y0; g.rotation.x = Math.PI / 2 - 0.12; g.rotation.z = 0; SND.thud(g.position.clone().setY(S.y0 + 0.1), 0.9); playSfx('drop_book', { pos: g.position.clone(), ref: 1.2, gain: 0.7, rate: 0.8 }); S.st = 'land'; S.t = 0; } }
+    else if (S.st === 'land') { if (S.t > 1.2) S.st = 'done'; }
+    if (S.st !== 'land' && S.st !== 'done') { const c = g.position.clone().setY(g.position.y + 0.15); if (seen(c, { maxD: 12 })) { S.seenT += dt; if (S.seenT > 0.5) award('randFly', '宙を漂うランドセル', 40); } }
+  },
+};
+
+/* ── 保健室の棚の上の薬瓶 */
+const NBOT = {
+  list: [], plan: false, st: 'off',
+  init() {
+    if (this.list.length) return;
+    for (const [x, h, c] of [[-2.62, 0.16, 0xe9e6dc], [-2.52, 0.12, 0x9a2a24], [-2.43, 0.14, 0x4d6f8f]]) {
+      const g = new THREE.Group(), body = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, h, 12), L({ color: c })); body.position.y = h / 2; g.add(body);
+      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.024, 10), L({ color: 0xd8d8d2 })); cap.position.y = h + 0.012; g.add(cap);
+      const inner = new THREE.Group(); inner.add(g); g.position.y = -(h + 0.024) / 2;   // 真ん中を軸に回す
+      inner.position.set(x, 1.70 + (h + 0.024) / 2, -10.30); inner.rotation.order = 'YXZ'; scene.add(inner);
+      this.list.push({ o: inner, h: h + 0.024, p0: inner.position.clone() });
+    }
+  },
+  reset() {
+    this.init(); this.plan = NEWEV_F('nbot') || chance(0.35); this.st = this.plan ? 'wait' : 'off'; this.stay = 0;
+    for (const b of this.list) { b.o.position.copy(b.p0); b.o.rotation.set(0, 0, 0); b.st = 'shelf'; }
+  },
+  clink(p, v = 1) { if (!A.ctx) return; const t = A.ctx.currentTime, pn = panAt(p, 1.0, 1.2); nb(pn, { t, f: rnd(2600, 4200), q: 14, a: 0.001, peak: 0.28 * v, d: 0.07 }); tn(pn, { t, f0: rnd(2200, 3200), f1: rnd(2000, 3000), dur: 0.09, peak: 0.12 * v }); },
+  update(dt) {
+    if (this.st === 'off' || this.st === 'done') return;
+    if (this.st === 'wait') {
+      if (playerZone() !== 'C' || player.lv !== 0 || world.state !== 'play') { this.stay = 0; return; }
+      this.stay += dt; const top = V(-2.52, 1.78, -10.3);
+      if (this.stay < 3 || !onScreen(top, 0.8) || camera.position.distanceTo(top) > 7.5) return;
+      this.st = 'run'; this.t = 0; this.seenT = 0;
+      this.list.forEach((b, i) => { b.st = 'wait'; b.at = i * rnd(0.3, 0.45); b.dir = V(rnd(-0.5, 0.5), 0, -1).normalize(); b.spd = rnd(1.0, 1.5); });
+      if (TEST || DEV) console.log('NBOT');
+      return;
+    }
+    this.t += dt; let rolling = false;
+    for (const b of this.list) {
+      const o = b.o;
+      if (b.st === 'wait') { if (this.t >= b.at) { b.st = 'tip'; b.tt = 0; } else continue; }
+      if (b.st === 'tip') { b.tt += dt; o.position.z = b.p0.z - smooth(0, 0.3, b.tt) * 0.2; o.rotation.x = -smooth(0, 0.3, b.tt) * 0.6; if (b.tt > 0.3) { b.st = 'fall'; b.vy = 0; b.vz = -0.6; } }
+      else if (b.st === 'fall') { b.vy -= 9.8 * dt; o.position.y += b.vy * dt; o.position.z += b.vz * dt; o.rotation.x -= dt * 7; const fl = 0.035;
+        if (o.position.y <= fl) { o.position.y = fl; this.clink(o.position.clone(), 1); if (b.vy < -2.2) { b.vy = -b.vy * 0.25; o.position.y = fl + 0.001; } else { b.st = 'roll'; o.rotation.set(0, Math.atan2(b.dir.x, b.dir.z) + Math.PI / 2, Math.PI / 2); b.ang = 0; b.ct = 0; } } }
+      else if (b.st === 'roll') {   // 横倒しで、ころころ転がる（だんだん遅くなる）
+        b.spd = Math.max(0, b.spd - dt * 0.42); const nx = o.position.x + b.dir.x * b.spd * dt, nz = o.position.z + b.dir.z * b.spd * dt;
+        if (nx < -7.7 || nx > -1.65) b.dir.x *= -0.6; if (nz < -16.8 || nz > -10.55) b.dir.z *= -0.6; if (nx < -5.9 && (nz > -12.2 || nz < -14.8)) b.dir.x = Math.abs(b.dir.x) + 0.2;   // 壁とベッドで跳ね返る
+        o.position.x = clamp(nx, -7.7, -1.65); o.position.z = clamp(nz, -16.8, -10.55); b.ang += b.spd * dt / 0.035; o.rotation.y = Math.atan2(b.dir.x, b.dir.z) + Math.PI / 2; o.rotation.x = b.ang;
+        b.ct -= dt; if (b.ct <= 0 && b.spd > 0.15) { b.ct = 0.13; if (A.ctx) nb(panAt(o.position.clone(), 0.8, 1.3), { f: rnd(1300, 2100), q: 3, peak: 0.05 * b.spd, d: 0.05 }); }
+        if (b.spd > 0.06) rolling = true; else b.st = 'stop';
+      }
+      if (b.st === 'fall' || b.st === 'tip') rolling = true;
+    }
+    if (rolling) { if (this.list.some(b => (b.st === 'roll' || b.st === 'fall') && seen(b.o.position.clone().setY(b.o.position.y + 0.02), { maxD: 9 }))) { this.seenT += dt; if (this.seenT > 0.35) award('nurseRoll', '落ちて転がる薬瓶', 20); } }
+    else if (this.t > 2) this.st = 'done';
+  },
+};
+
+/* ── 音楽室の譜面台が倒れる（まれ） */
+const MSTAND = {
+  plan: false, st: 'off', list: [],
+  reset() {
+    if (!this.list.length) for (const g of FURN.items.musicStand || []) { const b = g.children.find(o => o.isGroup); if (b && Math.abs(b.rotation.x) < 0.01) this.list.push({ g, b }); }
+    for (const S of this.list) { S.b.rotation.x = 0; S.b.position.set(0, 0, 0); S.st = 'up'; }
+    this.plan = NEWEV_F('mstand') || chance(0.15); this.st = this.plan ? 'wait' : 'off'; this.stay = 0;
+  },
+  topOf(S) { return S.g.localToWorld(V(0, 1.0, 0)); },
+  fall(S) { S.st = 'fall'; S.t = 0; S.seenT = 0; },
+  update(dt) {
+    if (this.st === 'off' || this.st === 'done') return;
+    if (this.st === 'wait') {
+      if (playerZone() !== 'MUS' || player.lv !== 1 || world.state !== 'play') { this.stay = 0; return; }
+      this.stay += dt; if (this.stay < 4) return;
+      const vis = this.list.filter(S => onScreen(this.topOf(S), 0.7) && camera.position.distanceTo(this.topOf(S)) < 8);
+      if (!vis.length) return;
+      this.first = pick(vis); this.second = pick(this.list.filter(S => S !== this.first)); this.fall(this.first); this.st = 'run'; this.t = 0; if (TEST || DEV) console.log('MSTAND');
+      return;
+    }
+    this.t += dt; if (this.second && this.second.st === 'up' && this.t > 1.6) this.fall(this.second);   // 1本倒れてから、もう1本
+    let busy = false;
+    for (const S of this.list) {
+      if (S.st !== 'fall') continue; busy = true; S.t += dt; const b = S.b, tw = 0.35;
+      if (S.t < tw) { b.rotation.x = Math.sin(S.t * 38) * 0.03 * (S.t / tw); }   // ぐらっと揺れて
+      else { const u = S.t - tw, a = Math.min(Math.PI / 2 - 0.08, 0.15 + 0.5 * 9 * u * u); b.rotation.x = -a; const k = a / (Math.PI / 2 - 0.08); b.position.y = 0.03 * k; b.position.z = 0.05 * k;
+        if (a >= Math.PI / 2 - 0.08) { S.st = 'down'; const p = S.g.localToWorld(V(0, 0.1, -0.9)); playSfx('metal_rattle', { pos: p, ref: 1.2, gain: 0.9 }) || SND.thud(p, 0.8); SND.knock(p, 0.9); } }
+      if (seen(S.g.localToWorld(V(0, 0.75, -0.25 * Math.min(1, S.t))), { maxD: 10 })) { S.seenT += dt; if (S.seenT > 0.2) award('standFall', '倒れる譜面台', 30); }   // 倒れる瞬間を撮った時だけ
+    }
+    if (!busy && this.t > 2.5 && (!this.second || this.second.st === 'down')) this.st = 'done';
+  },
+};
+
+/* ── 図書室：右奥の一番奥で5秒たつと、左の本棚が向こう側へ倒れる */
+const LIBFALL = {
+  plan: false, st: 'off', piv: null, col: null,
+  reset() {
+    this.plan = NEWEV_F('libfall') || chance(0.3); this.st = this.plan ? 'wait' : 'off'; this.stay = 0;
+    if (this.piv) this.piv.rotation.x = 0; if (this.col) this.col.on = false;
+  },
+  setup() {
+    if (this.piv) return true; const S = F2.shelves && F2.shelves.find(o => o.rz < -13 && o.x === -8.4); if (!S) return false;
+    const piv = new THREE.Group(); piv.position.set(S.x, LH, S.rz + 0.18); (S.sh.parent || scene).add(piv); piv.updateMatrixWorld(true); piv.attach(S.sh); this.piv = piv;
+    this.col = addCol(-9.25, -7.55, -14.62, -12.75); this.col.lv = 1; this.col.on = false; return true;
+  },
+  update(dt) {
+    if (this.st === 'off' || this.st === 'done') return;
+    if (this.st === 'wait') {
+      const ok = player.lv === 1 && playerZone() === 'LIB' && player.x < -7.3 && player.z < -15.0 && world.state === 'play' && !PHAN.on;
+      this.stay = ok ? this.stay + dt : 0; if (this.stay < 5) return;
+      if (!this.setup()) { this.st = 'off'; return; }
+      this.st = 'tip'; this.t = 0; this.seenT = 0; SND.creak(V(-8.4, LH + 1.6, -14.8), 1.2, 0.8); if (TEST || DEV) console.log('LIBFALL');
+      return;
+    }
+    this.t += dt; const P = this.piv;
+    if (this.st === 'tip') { P.rotation.x = Math.sin(this.t * 16) * 0.02 * Math.min(1, this.t / 0.5) + smooth(0.2, 0.9, this.t) * 0.08; if (this.t > 0.9) { this.st = 'fall'; this.t = 0; this.a = 0.08; this.w = 0.3; } }
+    else if (this.st === 'fall') { this.w += dt * 7 * Math.sin(this.a + 0.12); this.a += this.w * dt; if (this.a >= Math.PI / 2 - 0.04) { this.a = Math.PI / 2 - 0.04; this.st = 'down'; this.t = 0; this.col.on = true; const p = V(-8.4, LH + 0.2, -13.6); SND.bang(p, 1.4); SND.thud(p, 1.2); for (let i = 0; i < 4; i++) setTimeout(() => playSfx('drop_book', { pos: p.clone().add(V(rnd(-0.7, 0.7), 0, rnd(-0.5, 0.5))), ref: 1.2, gain: 0.8, rate: rnd(0.85, 1.1) }), 60 + i * rnd(70, 140)); world.vhs = Math.max(world.vhs || 0, 0.3); } P.rotation.x = this.a; }
+    else if (this.st === 'down') { if (this.t > 1) this.st = 'done'; }
+    if (this.st === 'tip' || this.st === 'fall' || (this.st === 'down' && this.t < 0.4)) { if ([[0, 1.4], [0.55, 1.0], [-0.55, 1.0], [0, 0.6]].some(([x, y]) => seen(P.localToWorld(V(x, y, -0.42)), { maxD: 10 }))) {   /* 棚の背板の外側（棚そのものに隠れない所）で見る */ this.seenT += dt; if (this.seenT > 0.3) award('libFall', '向こう側へ倒れる本棚', 40); } }
+  },
+};
+
+/* ── 図書室：左奥まで入って振り返ると、本を開いて持つ女子高生 */
+const LIBGIRL = {
+  plan: false, st: 'off', H: null, book: null,
+  ARM: { UpperR: [0.3, 0, 0.18], ForeR: [-1.3, 0, 0], UpperL: [0.3, 0, -0.18], ForeL: [-1.3, 0, 0] },   /* 腕を前へ出し、肘を曲げて本を持つ */
+  reset() {
+    this.plan = NEWEV_F('libgirl') || chance(0.1); this.st = this.plan ? 'wait' : 'off'; this.back = 0;
+    if (this.plan && !this.H) { const H = makeGlbHuman('ghost'); scene.add(H.root); setOpacity(H, 0); this.H = H; setupGlbHuman(H, GHOST_B64).then(() => { setOpacity(H, 0); this.makeBook(); }); }
+    if (this.H) this.hide();
+  },
+  makeBook() {
+    if (this.book || !this.H) return; const g = new THREE.Group();
+    const c = document.createElement('canvas'); c.width = 128; c.height = 96; const x = c.getContext('2d'); x.fillStyle = '#e6dfca'; x.fillRect(0, 0, 128, 96); x.fillStyle = 'rgba(40,30,20,.55)'; for (let i = 0; i < 9; i++) { x.fillRect(8, 10 + i * 9, 50, 2); x.fillRect(70, 10 + i * 9, 50, 2); } x.fillStyle = 'rgba(0,0,0,.25)'; x.fillRect(62, 0, 4, 96);
+    const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace;
+    const pg = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.21), L({ map: tx, side: THREE.DoubleSide })); g.add(pg);
+    const cv = new THREE.Mesh(new THREE.BoxGeometry(0.31, 0.22, 0.012), L({ color: 0x3a2420 })); cv.position.z = -0.008; g.add(cv);
+    g.position.set(0, 1.18, 0.3); g.rotation.x = -0.75; this.H.root.add(g); this.book = g;   // 胸の前で、開いたページを自分の顔へ向けて持つ
+  },
+  hide() { const H = this.H; if (!H || !H.ready) return; setOpacity(H, 0); H.setHollow(false); H.root.visible = false; },
+  pose() {
+    const H = this.H; animHuman(H, this.dt || 0.016);
+    for (const k in this.ARM) { const b = H.bones[k]; if (!b) continue; const [x, y, z] = this.ARM[k]; b.quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, z))); }
+  },
+  update(dt) {
+    if (this.st === 'off' || this.st === 'done') return; const H = this.H; if (!H || !H.ready) return; this.dt = dt;
+    if (this.st === 'wait') {
+      const deep = player.lv === 1 && playerZone() === 'LIB' && player.x < -7.7 && player.z > -11.0 && world.state === 'play' && CH.state === 'off';
+      this.back = deep && camFwd().x < -0.35 ? this.back + dt : 0; if (this.back < 0.8) return;
+      const p = V(-5.0, LH, -10.05); H.root.visible = true; H.root.position.copy(p); H.root.rotation.set(0, -Math.PI / 2, 0);
+      Object.assign(H.c, { pose: 'stand', speed: 0, snap: true, headYaw: 0, headPitch: 0.12, headRoll: 0.05, lean: 0 }); H.setHollow(true, 'mouth');   /* 黒い目と開いた口の怖い顔 */
+      this.pose(); H.root.updateMatrixWorld(true); const hp = headWorld(H, V());
+      if (onScreen(hp, 1.1) && clearLine(hp)) { this.hide(); return; }   // 見えている所には出さない
+      setOpacity(H, 1); this.st = 'stand'; this.t = 0; this.vt = 0; if (TEST || DEV) console.log('LIBGIRL');
+      return;
+    }
+    this.t += dt; const hp = headWorld(H, V()), body = H.root.position.clone().setY(LH + 1.1);
+    if (this.st === 'stand') {
+      this.pose(); H.c.headYaw = clamp(Math.atan2(camera.position.x - hp.x, camera.position.z - hp.z) - H.root.rotation.y, -0.6, 0.6) * 0.5;
+      if (seen(hp, { maxD: 10 }) || seen(body, { maxD: 10 })) award('libGirl', '本を開いて立つ女子高生', 60);
+      const vis = (onScreen(hp, 0.85) || onScreen(body, 0.85)) && clearLine(body); this.vt = vis ? this.vt + dt : Math.max(0, this.vt - dt * 0.5);
+      const d = Math.hypot(player.x - H.root.position.x, player.z - H.root.position.z);
+      if (this.vt > 1.0 || d < 1.7) { this.st = 'hit'; this.t = 0; noiseHit(0.9); jumpSting('jump_b', 0.6, 1.2); }   // ちゃんと見る／近づくと、ノイズで消える
+      else if (playerZone() !== 'LIB' || player.lv !== 1 || this.t > 45) { this.hide(); this.st = 'done'; }
+    } else if (this.st === 'hit') {
+      this.pose(); const U = postMat.uniforms; U.tear.value = rnd(0.35, 0.7); U.stat.value = Math.random() < 0.6 ? 0.7 : 0.2; world.vhs = 0.9; setOpacity(H, Math.random() < 0.35 && this.t < 0.18 ? 1 : 0);
+      if (this.t > 0.3) { U.tear.value = 0; U.stat.value = 0; this.hide(); this.st = 'done'; }
+    }
+  },
+};
+
+const NEWEV = {
+  decide() { CORR.decide(); MAZE.decide(); },   // goBtn：ITEM・F2 より先に
+  reset() { RANDFLY.reset(); NBOT.reset(); MSTAND.reset(); LIBFALL.reset(); LIBGIRL.reset(); },
+  update(dt) { RANDFLY.update(dt); NBOT.update(dt); MSTAND.update(dt); LIBFALL.update(dt); LIBGIRL.update(dt); },
+};
+Object.assign(AW_TABLE, { randFly: ['B', 40], nurseRoll: ['C', 20], standFall: ['C', 30], libFall: ['B', 40], libGirl: ['A', 60] });
+COL.LIST.push(['randFly', '宙を漂うランドセル', 40], ['nurseRoll', '落ちて転がる薬瓶', 20], ['standFall', '倒れる譜面台', 30], ['libFall', '向こう側へ倒れる本棚', 40], ['libGirl', '本を開いて立つ女子高生', 60]);
+Object.assign(CHIP_DESC, {
+  randFly: ['教室の後ろの棚から、ランドセルがひとりでに浮かんで漂い、止まって、落ちた。', 'A school backpack floated off the shelf, drifted, hung there — then dropped.'],
+  nurseRoll: ['保健室の棚の上の薬瓶が落ちて、床を転がっていった。', 'The medicine bottles on the infirmary shelf fell and rolled across the floor.'],
+  standFall: ['誰もいない音楽室で、譜面台が1本、また1本と倒れた。', 'In the empty music room, the music stands fell — one, then another.'],
+  libFall: ['図書室の奥で、本棚がこちらと反対側へ倒れた。', 'Deep in the library, a bookshelf toppled away from you.'],
+  libGirl: ['振り返ると、本を開いて持った女子高生が立っていた。', 'You turned around — a schoolgirl stood there holding an open book.'],
+});
+Object.assign(EN, { '宙を漂うランドセル': 'A floating school backpack', '落ちて転がる薬瓶': 'Rolling medicine bottles', '倒れる譜面台': 'Falling music stands', '向こう側へ倒れる本棚': 'A bookshelf toppling away', '本を開いて立つ女子高生': 'The girl with the open book' });
+Object.assign(CHAT_DICT.t, {
+  'nv.rand.01': ['ランドセル浮いてる', 'the backpack is floating'], 'nv.rand.02': ['止まったこわ', "it stopped... creepy"], 'nv.rand.03': ['落ちたw', 'it dropped lol'],
+  'nv.bot.01': ['瓶落ちた', 'bottles fell'], 'nv.bot.02': ['転がってくる', "they're rolling over"], 'nv.bot.03': ['誰が落とした？', 'who knocked them?'],
+  'nv.std.01': ['譜面台倒れた', 'the stand fell'], 'nv.std.02': ['もう1本！？', 'another one!?'], 'nv.std.03': ['ポルターガイストじゃん', 'poltergeist confirmed'],
+  'nv.lib.01': ['本棚倒れた！？', 'the shelf fell!?'], 'nv.lib.02': ['反対側でよかった', 'good thing it fell the other way'], 'nv.lib.03': ['音でかすぎ', 'so loud'],
+  'nv.girl.01': ['うしろ！！', 'behind you!!'], 'nv.girl.02': ['本読んでる…', "she's reading..."], 'nv.girl.03': ['顔やばい', 'that face'], 'nv.girl.04': ['消えた', 'she vanished'],
+});
+if (CHAT_DICT.ev) Object.assign(CHAT_DICT.ev, { '宙を漂うランドセル': ['nv.rand.01', 'nv.rand.02', 'nv.rand.03'], '落ちて転がる薬瓶': ['nv.bot.01', 'nv.bot.02', 'nv.bot.03'], '倒れる譜面台': ['nv.std.01', 'nv.std.02', 'nv.std.03'], '向こう側へ倒れる本棚': ['nv.lib.01', 'nv.lib.02', 'nv.lib.03'], '本を開いて立つ女子高生': ['nv.girl.01', 'nv.girl.02', 'nv.girl.03', 'nv.girl.04'] });
+/* =========================================================
    2026-11-15 隠しイベント「幻の怪異」（151種類目の撮れ高）
    ・チャットに混ざる荒らしコメントをBANしていくと段階が進む（この端末に記録。データをリセットで0に戻す）
      0 ふつう（数周に1回、荒らしが1つだけ）→ BANで1 → 荒らしを合計3回BANで2 → 段階2で通算20件BANで3 → 倒したら「済」
@@ -16353,7 +16707,7 @@ ENDCARD.ORD.PH = -1;
 CHAT_CFG.coef.PH = 1.2;
 setInterval(() => { if (PHAN.el && world.state === 'play') PHAN.panel(); }, 1000);
 PHAN.load(); PHAN.panel();
-if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, WD, CH, SP, MANN, NAV, RED: typeof RED !== 'undefined' ? RED : null, postMat, CHAT, RES_CHAT, COL, ENDCARD, makeResultImage, KOK, MYNAME, awarded, wdScreamLong, screamCut, MOZ, PIANO, F2, SELF, avatar, selfCam, STAIRS, groundAt, escapeRun: escape, evid: () => evidence, recS: () => rec, world });
+if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, WD, CH, SP, MANN, NAV, RED: typeof RED !== 'undefined' ? RED : null, postMat, CHAT, RES_CHAT, COL, ENDCARD, makeResultImage, KOK, MYNAME, awarded, NEWEV, CORR, MAZE, RANDFLY, NBOT, MSTAND, LIBFALL, LIBGIRL, NAVX, NAV, NAV_ADJ, wdScreamLong, screamCut, MOZ, PIANO, F2, SELF, avatar, selfCam, STAIRS, groundAt, escapeRun: escape, evid: () => evidence, recS: () => rec, world });
 
 /* =========================================================
    2026-11-14 データをリセット（スタート画面・設定の「撮れ高コレクション」の直下）
