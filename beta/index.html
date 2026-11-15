@@ -4980,7 +4980,7 @@ const WD = {
       let ok = false;
       if (dd < 9.5 && enemySees(head)) {
         const fwd = V(Math.sin(this.heading + SG.ovYaw), 0, Math.cos(this.heading + SG.ovYaw)); const to = V(player.x - this.pos.x, 0, player.z - this.pos.z).normalize();
-        ok = fwd.dot(to) > Math.cos(0.95) || dd < 1.6 || NOISE.fresh(this.pos) || (PHAN.on && -fwd.dot(to) > Math.cos(0.95));   // 2026-11-15 幻の怪異は背中の頭（人体模型）でも見る   // 2026-11-14 鈴や笛の音が聞こえたら、向きに関係なく気づく（見通せる時だけ）
+        ok = fwd.dot(to) > Math.cos(0.95) || dd < 1.6 || NOISE.fresh(this.pos) || (PHAN.on && -fwd.dot(to) > Math.cos(0.95));   // 2026-11-15 ナカヨシは背中の頭（人体模型）でも見る   // 2026-11-14 鈴や笛の音が聞こえたら、向きに関係なく気づく（見通せる時だけ）
       } else if (!NOISE.used && NOISE.fresh(this.pos, 0.8) && !this.scripted && !this.borrowed && this.wait <= 0) { NOISE.used = true; if (chance(0.35)) this.goTo(V(NOISE.x, NOISE.y, NOISE.z)); }   // 見えない所の音：ときどき様子を見に来る
       this.detect = ok ? this.detect + dt : Math.max(0, this.detect - dt * 0.5);
       if (this.detect > 0.6) { this.detect = 0; CH.start(); }
@@ -14812,7 +14812,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.8';
+const VERSION = '0.16.9';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -15632,7 +15632,7 @@ class ChatView {
   reset() { this.list.textContent = ''; this.shown = 0; this.lastG = 0; this.items = []; this.follow = true; this.btn.classList.remove('show'); cancelAnimationFrame(this.raf); this.raf = 0; }
   loop() { if (this.raf) return; const f = () => { this.raf = 0; this.sync(); if (!this.video.paused && !this.video.ended && this.el.isConnected) this.raf = requestAnimationFrame(f); }; this.raf = requestAnimationFrame(f); }
   ban(i, d) {
-    const D = this.data, B = D.ban || (D.ban = []); if (!B.includes(i)) { B.push(i); const x = D.items && D.items[i]; if (x && x[1] === -1 && x[2] === 'troll') PHAN.onBan(); }   // 2026-11-15 荒らしをBANすると幻の怪異の段階が進む
+    const D = this.data, B = D.ban || (D.ban = []); if (!B.includes(i)) { B.push(i); const x = D.items && D.items[i]; if (x && x[1] === -1 && x[2] === 'troll') PHAN.onBan(); }   // 2026-11-15 荒らしをBANするとナカヨシの段階が進む
     this.shown = Math.max(0, this.shown - 1);   // 一覧を作り直さず、この行だけ「BANされました」と見せてから消す
     d.classList.add('ban'); d.querySelector('.tx').textContent = cui('banned'); setTimeout(() => { d.remove(); }, 900);
     try { if (typeof PAD !== 'undefined' && PAD.rumble) PAD.rumble(0.3, 0.3, 80); } catch (e) { }
@@ -17652,9 +17652,12 @@ const URAH_B64 = 'Z2xURgIAAADorQcAvHoAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvciI6ImdsVE
    ・動き：Noh_Walk・Hannya_Chase・Idle・ArmReach（般若側へ左右反転して使う）・Noh/Hannya_Detect（見つけた時）・Noh/Hannya_GrabBite（捕まえた時）
    ========================================================= */
 const URAH_CFG = {
-  scale: 1.15, catchR: 1.0, walk: 0.85,
-  hannya: 2.4,                 /* 般若の追う速さ（歩く速さの1.2倍） */
-  noh: 3.12,                   /* 能面の追う速さ（般若の1.3倍） */
+  scale: 1.15, catchR: 1.0,
+  /* 2026-11-15 速さは主人公の歩く速さを1とした倍率。追う速さは、追いかけ始めてから rampT 秒かけて最大へ */
+  walkK: [0.8, 0.9],           /* ふだん歩き回る速さ（歩くたびに、この間でばらつく） */
+  hannyaK: [1.1, 1.15],        /* 般若の追う速さ */
+  nohK: [1.45, 1.5],           /* 能面の追う速さ */
+  rampT: 30,
   nohCoast: 1.3, nohRew: 0.55,  /* 能面：見られてから勢いで進む距離（m）と、それを巻き戻して止まるまでの時間（秒） */
   nohLose: 14,                 /* 能面：これより離れたら見失う */
   nohSwap: 2.5,                /* 見つめている能面にこれより近づくと、急に般若に変わる */
@@ -17727,6 +17730,7 @@ const URAH = {
   ready: false, on: false, root: new THREE.Group(), mixer: null, act: {}, bones: {}, rest: {}, rp: {}, glow: { noh: [], hannya: [] }, fly: [], broken: [],
   TIGHT: { T: 1, S1: 1, S2: 1, LIB: 1, MUS: 1, '2A': 1, '2B': 1 },   /* 入口が狭い：般若はつっかえてからねじ込む、能面はいきなりねじ込む */
   EXTRA: { ue0: [24.2, -30.6, 'B', 0], ue1: [23.1, -28.7, 'ES', 0], ue2: [23.1, -28.7, 'EU', LH], ue3: [23.1, -30.9, '2D', LH] },
+  sp(kind) { const C = URAH_CFG, W = CONFIG.walkSpeed, k = clamp((world.t - (this.chaseAt ?? world.t)) / C.rampT, 0, 1), r = C[kind + 'K']; return W * (kind === 'walk' ? (this.wk ?? r[0]) : lerp(r[0], r[1], k)); },
   sc() { const q = (TEST || BETA || DEV) ? +new URLSearchParams(location.search).get('urahscale') : 0; return q > 0.5 && q < 2 ? q : URAH_CFG.scale; },
   async load() {
     try {
@@ -18004,12 +18008,12 @@ const URAH = {
     if (!k) { const ks = Object.keys(this.N).filter(k => !/^ue/.test(k)), far = ks.filter(k => { const p = this.npos(k); return Math.hypot(p.x - player.x, p.z - player.z) > 14 && !onScreen(p.clone().setY(p.y + 1.2), 1.1); }); k = pick(far.length ? far : ks); }
     this.pos.copy(this.npos(k)); this.by = rnd(0, 6.28); this.root.visible = true; this.toWalk(); this.apply(); if (TEST || DEV) console.log('URAH appeared', k);
   },
-  toWalk() { this.st = 'walk'; this.route = []; this.D = null; this.sq = null; this.restArm(); this.frozen = false; this.rw = null; this.roll = 0; this.play('Noh_Walk', 1); },
+  toWalk() { this.wk = rnd(URAH_CFG.walkK[0], URAH_CFG.walkK[1]); this.st = 'walk'; this.route = []; this.D = null; this.sq = null; this.restArm(); this.frozen = false; this.rw = null; this.roll = 0; this.play('Noh_Walk', 1); },
   /* 見つけた：見つけた側の顔のまま、見失うまで同じ顔で追う */
   toChase() {
     const f = V(Math.sin(this.by), 0, Math.cos(this.by)), front = f.x * (player.x - this.pos.x) + f.z * (player.z - this.pos.z) > 0;
     const side = front ? this.face : (this.face === 'noh' ? 'hannya' : 'noh'); if (side !== this.face) this.swap(side, false);
-    this.st = 'chase'; this.lostT = 0; this.rep = 0; this.route = []; this.D = null; this.restArm(); this.spd = 0; this.frozen = false; this.rw = null;
+    this.st = 'chase'; this.chaseAt = world.t; this.lostT = 0; this.rep = 0; this.route = []; this.D = null; this.restArm(); this.spd = 0; this.frozen = false; this.rw = null;
     this.once(side === 'noh' ? 'Noh_Detect' : 'Hannya_Detect'); URAHV.busy = 0; const ln = URAHV.say(side === 'noh' ? 'nohFound' : 'hanFound', side, { loud: true }); this.scream(side, false, ln ? ln + 0.15 : 0); this.chant();   /* 見つけた瞬間のセリフ → 叫び声 */
   },
   /* ── 毎フレーム */
@@ -18031,9 +18035,8 @@ const URAH = {
     if (this.st === 'squeeze') { this.updSqueeze(dt); this.apply(); return; }
     switch (this.st) {
       case 'walk': {
-        this.play('Noh_Walk', 1);
-        if (!this.route.length) this.goTo(this.npos(pick(Object.keys(this.N).filter(k => !/^ue/.test(k) && !(this.TIGHT[this.N[k][2]] && !/^S/.test(this.N[k][2]))))));   /* 徘徊の行き先：狭い部屋（階段以外）は選ばない */
-        this.move(dt, URAH_CFG.walk); this.stepSnd(dt, 1.25, 0.5);
+        if (!this.route.length) { this.wk = rnd(URAH_CFG.walkK[0], URAH_CFG.walkK[1]); } if (!this.route.length) this.goTo(this.npos(pick(Object.keys(this.N).filter(k => !/^ue/.test(k) && !(this.TIGHT[this.N[k][2]] && !/^S/.test(this.N[k][2]))))));   /* 徘徊の行き先：狭い部屋（階段以外）は選ばない */
+        { const ws = this.sp('walk'); this.play('Noh_Walk', ws / 0.85 * 0.8); this.move(dt, ws); this.stepSnd(dt, 1.25 * ws / 0.85 * 0.8, 0.5); }
         if (world.t > this.swapAt) { this.swapAt = world.t + rnd(URAH_CFG.swapMin, URAH_CFG.swapMax); this.swap(this.face === 'noh' ? 'hannya' : 'noh', false); }   /* ふとした時に顔が入れ替わる */
         this.seeT = this.sees() ? this.seeT + dt : 0;
         if (this.seeT > 0.3) { this.seeT = 0; this.toChase(); }
@@ -18050,7 +18053,7 @@ const URAH = {
   updChase(dt, dist) {
     const C = URAH_CFG, noh = this.face === 'noh', sees = this.sees() || this.frozen; this.lostT = sees ? 0 : this.lostT + dt; this.rep -= dt;
     /* 能面：見られたら勢いで2mほど進んで、ピタッと止まる（目の光もじわっと消える） */
-    let want = noh ? C.noh : C.hannya;
+    const nohMax = this.sp('noh'); let want = noh ? nohMax : this.sp('hannya');
     if (noh) { const w = this.watched();
       /* 2026-11-15 見られたら：勢いで少し進み → それまでの動きを逆再生で巻き戻して → ピタッと止まる */
       if (!this.rw && w) this.rw = this.spd > 0.6 ? { ph: 'coast', d: 0, pts: [{ x: this.pos.x, y: this.pos.y, z: this.pos.z, by: this.by }] } : { ph: 'hold' };
@@ -18068,7 +18071,7 @@ const URAH = {
       if (dist > C.nohLose) { this.toWalk(); return; } }
     else { this.spd = Math.min(want, this.spd + 6 * dt); this.frozen = false; }
     if (this.push > 0) { const p = Math.min(this.push, dt * 1.8); this.push -= p; this.pos.x += Math.sin(this.by) * p; this.pos.z += Math.cos(this.by) * p; }   /* 赤い手のノイズの間に、能面が1m進む */
-    this.play(noh ? 'Noh_Walk' : 'Hannya_Chase', noh ? 2.6 * Math.max(0.05, this.spd / C.noh) : 1);   /* （巻き戻し中は上で逆再生） */
+    this.play(noh ? 'Noh_Walk' : 'Hannya_Chase', noh ? 2.6 * Math.max(0.05, this.spd / nohMax) : this.spd / 2.4);   /* （巻き戻し中は上で逆再生） */
     /* 隠れた所を見られていたら、引きずり出す */
     if (player.hidden) { if (this.hideT === null) this.hideT = world.t; if (world.t - this.lastSeen < 2.5 && this.hideT - this.lastSeen < 2.5) { this.toGrab(); return; } }
     else this.hideT = null;
@@ -18078,7 +18081,7 @@ const URAH = {
       const S = this.D && this.standAt(this.D, 'reach'); if (S && Math.hypot(this.pos.x - S.x, this.pos.z - S.z) < 0.3 && Math.abs(this.pos.y - S.y) < 0.5) { this.toDoor(); return; }
     } else if (this.direct()) { this.route = [V(player.x, player.y, player.z)]; this.glass(); }
     else if (this.rep <= 0) { this.rep = 0.5; this.goTo(V(player.x, player.y, player.z)); }
-    const x0 = this.pos.x, z0 = this.pos.z; this.move(dt, this.spd); this.stepSnd(dt, noh ? 4.2 * this.spd / C.noh : 2.5, noh ? 0.6 : 0.8);
+    const x0 = this.pos.x, z0 = this.pos.z; this.move(dt, this.spd); this.stepSnd(dt, noh ? 4.2 * this.spd / nohMax : 2.5 * this.spd / 2.4, noh ? 0.6 : 0.8);
     if (this.rw && this.rw.ph === 'coast') { this.rw.d += Math.hypot(this.pos.x - x0, this.pos.z - z0); this.rw.pts.push({ x: this.pos.x, y: this.pos.y, z: this.pos.z, by: this.by }); }
     /* 体が大きくて届かない：あと少しなら、その場で手を伸ばす */
     const got = Math.hypot(this.pos.x - x0, this.pos.z - z0); this.stall = got < this.spd * dt * 0.3 && this.spd > 0.5 ? (this.stall || 0) + dt : 0;
@@ -18103,7 +18106,7 @@ const URAH = {
   updGrab(dt) {
     const G = this.gr; G.t += dt;
     if (!player.hidden && !world.inStall) { this.restArm(); this.st = 'chase'; this.rep = 0; return; }
-    if (G.ph === 'go') { this.play(this.face === 'noh' ? 'Noh_Walk' : 'Hannya_Chase', 1.2); const arrived = this.move(dt, URAH_CFG.hannya); if (arrived || Math.hypot(this.pos.x - G.at.x, this.pos.z - G.at.z) < 0.6 || G.t > 12) { G.ph = 'act'; G.t = 0; } return; }
+    if (G.ph === 'go') { this.play(this.face === 'noh' ? 'Noh_Walk' : 'Hannya_Chase', 1.2); const arrived = this.move(dt, this.sp('hannya')); if (arrived || Math.hypot(this.pos.x - G.at.x, this.pos.z - G.at.z) < 0.6 || G.t > 12) { G.ph = 'act'; G.t = 0; } return; }
     const tgt = V(player.x, 0, player.z); this.by += clamp(uAng(Math.atan2(tgt.x - this.pos.x, tgt.z - this.pos.z), this.by), -5 * dt, 5 * dt);
     if (G.kind === 'locker') {   /* 扉をこじ開けて、かみつく */
       if (G.t < 0.6) { if (Math.random() < 0.3) SND.rattle && SND.rattle(G.lk.center.clone(), 0.8); }
@@ -18548,16 +18551,16 @@ for (const k of ['micLamp', 'micTurn']) { delete AW_TABLE[k]; delete CHIP_DESC[k
 COL.LIST = COL.LIST.filter(x => x[0] !== 'micLamp' && x[0] !== 'micTurn');
 for (const n of ['一度だけ点いた赤ランプ', 'こちらを向くマイク']) { delete EN[n]; if (CHAT_DICT.ev) delete CHAT_DICT.ev[n]; }
 /* =========================================================
-   2026-11-15 隠しイベント「幻の怪異」（151種類目の撮れ高）
+   2026-11-15 隠しイベント「ナカヨシ」（151種類目の撮れ高）
    ・チャットに混ざる荒らしコメントをBANしていくと段階が進む（この端末に記録。データをリセットで0に戻す）
      0 ふつう（数周に1回、荒らしが1つだけ）→ BANで1 → 荒らしを合計3回BANで2 → 段階2で通算20件BANで3 → 倒したら「済」
      「済」のあとも10周に1回くらい荒らしが1つ出て、BANするとまた段階1から
    ・段階3の周：校舎の明かりが赤っぽくなり、逆さ女・クモ女・人体模型を合体させた化け物が、逆さ女の追跡のしくみで追ってくる（ほかの敵は出ない）
      この周だけ「封印のお札」が5枚どこかにある（ピアノの「運命」のお札も数に入る）。お札を持って捕まると貼る
-     1・2枚目：うめいて背を向けて去り、消えて20〜40秒後にまた来る／3枚目：崩れて消え、色が戻り、撮れ高「幻の怪異を倒す」
+     1・2枚目：うめいて背を向けて去り、消えて20〜40秒後にまた来る／3枚目：崩れて消え、色が戻り、撮れ高「ナカヨシを倒す」
    ・試し版の確認用：?phantest で段階を切り替える小さな画面、?phan=0〜3 / ?phan=9（済）で段階を指定
    ========================================================= */
-const PHAN_AW = ['phantom', '幻の怪異を倒す', 550];
+const PHAN_AW = ['phantom', '人知れぬ怪異「継ぎ接ぎのナカヨシ」を倒す', 550];   /* 2026-11-15 ナカヨシ → 人知れぬ怪異「継ぎ接ぎのナカヨシ」 */
 function rkTxt(r) { return r === 'PH' ? (LANG === 'en' ? 'Phantom' : '幻') : r; }
 const PHAN = {
   KEY: 'yt_phan', d: null, runSt: 0, on: false, hits: 0, mode: 'idle', tintK: 0, troll0: false, nextHunt: 0, trackT: 0, sndT: 3,
@@ -18754,7 +18757,7 @@ const PHAN = {
     playSfx('mann_rattle', { pos: p, ref: 1.0, gain: 0.7, dur: 1.6 }); SND.breath(0, 1.3);
   },
   // 2026-11-15 3枚目：その場で止まって叫ぶ → 足元に血だまり → オフタリサマの赤い手が何本も伸びてつかみ → もがきながら3秒かけて沈む → 手も戻り、血だまりは10秒で消える
-  //   （オフタリサマは仲間を作るために化け物どうしを合体させている。幻の怪異はその仲間で、連れ戻しに来た）
+  //   （オフタリサマは仲間を作るために化け物どうしを合体させている。ナカヨシはその仲間で、連れ戻しに来た）
   die() {
     this.mode = 'dead'; this.dead = { t: 0, y0: WD.pos.y, h0: WD.heading, x: WD.pos.x, z: WD.pos.z, ah: false, sunk: false };
     const fl = $('#itemFlash'); if (fl) { fl.style.transition = 'none'; fl.style.opacity = '1'; void fl.offsetWidth; fl.style.transition = 'opacity 1.8s'; fl.style.opacity = '0'; }
@@ -18918,13 +18921,13 @@ const PHAN = {
       document.body.appendChild(el);
     }
     const d = this.load(), nm = { 0: '0 ふつう', 1: '1', 2: '2', 3: '3 化け物', 9: '済' };
-    el.innerHTML = `<b>幻の怪異（確認用）</b><br>段階：${nm[d.st] ?? d.st}${d.st === 1 ? `（BAN ${d.bans || 0}/3）` : d.st === 2 ? `（BAN ${d.bans || 0}/20）` : ''}<br>この周：${this.runSt}${this.on ? `・お札${ITEM.have && ITEM.have.ofuda | 0}枚・貼った${this.hits}` : ''}<br>`
+    el.innerHTML = `<b>継ぎ接ぎのナカヨシ（確認用）</b><br>段階：${nm[d.st] ?? d.st}${d.st === 1 ? `（BAN ${d.bans || 0}/3）` : d.st === 2 ? `（BAN ${d.bans || 0}/20）` : ''}<br>この周：${this.runSt}${this.on ? `・お札${ITEM.have && ITEM.have.ofuda | 0}枚・貼った${this.hits}` : ''}<br>`
       + [0, 1, 2, 3, 9].map(v => `<button data-a="st" data-v="${v}" style="margin:2px;padding:3px 7px">${v === 9 ? '済' : v}</button>`).join('')
       + `<br><button data-a="hunt" style="margin:2px;padding:3px 7px">化け物を呼ぶ</button><button data-a="fuda" style="margin:2px;padding:3px 7px">お札+1</button><br><small>段階の変更は次の周から</small>`;
   },
 };
-Object.assign(EN, { '幻の怪異を倒す': 'Defeat the Phantom Horror', '？？？（幻）': '??? (Phantom)', '幻': 'Phantom' });
-CHIP_DESC.phantom = ['荒らしコメントの向こうから現れた、合体した怪異を封じた。', 'You sealed away the merged horror that came through the spam.'];
+Object.assign(EN, { '人知れぬ怪異「継ぎ接ぎのナカヨシ」を倒す': 'Defeat the Unknown Horror "Nakayoshi the Patchwork"', '？？？（幻）': '??? (Phantom)', '幻': 'Phantom' });
+CHIP_DESC.phantom = ['荒らしコメントの向こうから現れた人知れぬ怪異「継ぎ接ぎのナカヨシ」を封じ、赤い手が連れ去っていった。', 'You sealed away Nakayoshi the Patchwork, the unknown horror that came through the spam, and red hands dragged it away.'];
 AW_TABLE.phantom = ['PH', 550];
 RANK_COL.PH = '#e9c35b';
 ENDCARD.ORD.PH = -1;
@@ -18939,7 +18942,7 @@ if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, 
    ・音量・言語・キー操作・チャンネル名などの設定は残す。撮った映像は端末に保存していない（読み込み直しで消える）
    ========================================================= */
 const RESET = {
-  keys() { return [COL.KEY, ACH.KEY, PERM.KEY, 'yt_mann_unlock', 'yt_tut', PHAN.KEY, 'yt_wing_open', 'yt_bar1_open', 'yt_bar2_open', 'yt_start']; },   // 2026-11-15 幻の怪異の段階も0に
+  keys() { return [COL.KEY, ACH.KEY, PERM.KEY, 'yt_mann_unlock', 'yt_tut', PHAN.KEY, 'yt_wing_open', 'yt_bar1_open', 'yt_bar2_open', 'yt_start']; },   // 2026-11-15 ナカヨシの段階も0に
   ask() { $('#resetAsk').classList.add('show'); },
   no() { $('#resetAsk').classList.remove('show'); },
   yes() {
