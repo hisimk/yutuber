@@ -208,7 +208,8 @@
   .gearBtn{display:flex;align-items:center;gap:6px;height:38px;min-width:38px;justify-content:center;padding:0 8px;border-radius:19px;background:rgba(0,0,0,.45);border:1.5px solid rgba(255,255,255,.55);color:#fff;font-size:13px}
   #gearBtn{width:38px;padding:0}
   #startGear{position:absolute;left:14px;top:calc(var(--sat) + 14px);padding:0 12px 0 9px;z-index:2}
-  #start{padding-top:calc(var(--sat) + 66px);justify-content:flex-start}   /* 設定ボタンとタイトルロゴが重ならないように */
+  #start{padding-top:calc(var(--sat) + 66px);justify-content:flex-start;background:linear-gradient(180deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,.12) 18%,rgba(0,0,0,.3) 34%,rgba(0,0,0,.55) 52%,rgba(0,0,0,.72) 100%);text-shadow:0 1px 3px #000,0 0 10px rgba(0,0,0,.85)}
+  #start .opts,#start .howto{padding:10px 14px;background:rgba(5,5,6,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);border-radius:14px}   /* 2026-11-15 背景は校舎の紹介映像。文字の後ろは黒いぼかしの帯で読みやすく */   /* 設定ボタンとタイトルロゴが重ならないように */
   #start .logoTitle{margin-top:auto!important}#start .howto{margin-bottom:auto}   /* 2026-11-14 画面に収まる時は上下中央、収まらない時は上から並べる（中央寄せで上にはみ出して設定ボタンと重なっていた） */
   #yomiRow{display:none}
   #yomiRow.show{display:flex}
@@ -1132,8 +1133,9 @@ function resize() {
   if (recSizeLock) { resize.pending = true; return; }   /* 2026-11-14 録画中は大きさを変えない（終わってからまとめて合わせる） */
   resize.pending = false;
   const vw = vpW(), vh = vpH();
-  W = Math.max(2, Math.round(vw * CONFIG.renderScale / 2) * 2);
-  H = Math.max(2, Math.round(vh * CONFIG.renderScale / 2) * 2);
+  const sc = CONFIG.renderScale * (resize.low ? 0.5 : 1);   // 2026-11-15 タイトルの背景は粗く
+  W = Math.max(2, Math.round(vw * sc / 2) * 2);
+  H = Math.max(2, Math.round(vh * sc / 2) * 2);
   renderer.setSize(W, H, false);
   rt.setSize(W, H);
   postMat.uniforms.res.value.set(W, H);
@@ -6174,14 +6176,14 @@ const AMB = {
     const L = [];
     for (const R of ['R3', 'R2']) {
       const z0 = R === 'R3' ? -28.5 : -16.5, z1 = R === 'R3' ? -19.5 : -9.5;
-      L.push({ room: R, p: V(rnd(3, 12.5), 0.8, rnd(z0, z1)), kinds: ['laughFar', 'marble', 'books', 'chair', 'chalk'] });
+      L.push({ room: R, p: V(rnd(3, 12.5), 0.8, rnd(z0, z1)), kinds: ['laughFar', 'marble', 'books', 'chair'] });   // 2026-11-15 床のチョークは廃止
       const b = brooms.find(x => x.room === R); if (b && !b.fallen) L.push({ room: R, p: b.pos.clone(), broom: b, kinds: ['broom'] });
     }
     for (const st of stalls) if (!st.occupied) L.push({ room: 'T', p: V(11.2, 1.0, st.zc), kinds: ['laughStall', 'stallDoor'] });   // 水滴の音は廃止
     const tb = brooms.find(x => x.room === 'T'); if (tb && !tb.fallen) L.push({ room: 'T', p: tb.pos.clone(), broom: tb, kinds: ['broom'] });
     L.push({ room: 'W', p: V(20.5, 0.4, rnd(-28, -10)), kinds: ['marble', 'bucket'] });
     L.push({ room: 'B', p: V(rnd(14, 25), 0.4, -31.5), kinds: ['marble', 'bucket', 'laughFar'] });
-    L.push({ room: 'A', p: V(0, 0.4, rnd(-30, -16)), kinds: ['marble', 'bucket', 'chalk'] });
+    L.push({ room: 'A', p: V(0, 0.4, rnd(-30, -16)), kinds: ['marble', 'bucket'] });
     // 原則：主人公が察知できる範囲だけ。見通せる場所なら13mまで、壁越しなら9mまで
     return L.filter(a => { const d = camera.position.distanceTo(a.p); if (d < 5 || a.room === playerZone()) return false; return d < 9 || d < 13 && clearLine(a.p); });
   },
@@ -6213,8 +6215,7 @@ const AMB = {
         }
       }
     }
-    if (AMB.chalk && AMB.chalk.visible && !AMB.chalkSeen && seen(AMB.chalk.position, { maxD: 4, light: true })) { AMB.chalkSeen = true; award('chalk', '床に落ちていたチョーク', 10); }
-    for (const b of brooms) if (b.fallen && !b.awarded && seen(b.g.localToWorld(V(0, 0.05, 0.5)), { maxD: 5 })) { b.awarded = true; award('broom' + b.room, '倒れていたほうき', 10); }
+    /* 2026-11-15 倒れたほうきは撮れ高から外した（倒れる演出は残す） */
     if (!this.quiet()) { this.next = Math.max(this.next, 6); return; }
     this.next -= dt; if (this.next > 0) return;
     this.next = rnd(22, 46);
@@ -12434,14 +12435,16 @@ function tick(now) {
   requestAnimationFrame(tick);
   const rawDt = Math.min(0.5, Math.max(0, (now - lastT) / 1000)); PAD.poll(Math.min(0.05, rawDt)); /* 2026-11-14 コントローラー（一時停止中も読む） */ let dt = Math.min(TEST && window.__dtMax || 0.05, rawDt); lastT = now;
   if (world.state === 'piano') { PIANO.tick(rawDt); return; }   // ピアノを弾いている間は時間が止まる
-  if (world.state !== 'play') { if (world.state === 'title') { idleCam(now); render(); } return; }
+  { const low = world.state === 'title' && !world.tutPreview; if (low !== !!resize.low) { resize.low = low; resize(); } }   // 2026-11-15 タイトルの背景は解像度を下げる
+  if (TOUR.amb && TOUR.amb.intensity && (world.state !== 'title' || world.tutPreview)) TOUR.amb.intensity = 0;
+  if (world.state !== 'play') { if (world.state === 'title') { if (document.hidden) return; if (!world.tutPreview && now - (TOUR.lastR || 0) < 32) return; TOUR.lastR = now; idleCam(now); render(); } return; }   // タイトルは1秒に30回くらい
   world.t += dt; if (world.tutLive) world.t -= dt;   // 遊び方の説明で動かしている間は、時間を進めない
   // ズーム（倍率ボタンのみ）
   zoom = lerp(zoom, zoomTarget, 1 - Math.exp(-14 * dt)); if (Math.abs(zoom - zoomTarget) < 0.003) zoom = zoomTarget;
   if (Math.abs(zoom - prevZoom) > 0.0015) focus.lastZoomMove = world.t; prevZoom = zoom;
   camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(CONFIG.fov1x / 2)) / zoom)); camera.updateProjectionMatrix();
   // 視点
-  if (KB.down('lookL')) look.yaw += 1.8 * dt; if (KB.down('lookR')) look.yaw -= 1.8 * dt; PCLOOK.tick(dt); FIXCAM.tick(dt); LID.tick(dt); UNDER.update(dt); KOK.update(dt); MYNAME.update(dt); NEWEV.update(dt); CALL.update(dt); FDET.update(dt); CROUCH.tick(dt);
+  if (KB.down('lookL')) look.yaw += 1.8 * dt; if (KB.down('lookR')) look.yaw -= 1.8 * dt; PCLOOK.tick(dt); FIXCAM.tick(dt); LID.tick(dt); UNDER.update(dt); KOK.update(dt); MYNAME.update(dt); NEWEV.update(dt); POSTER.update(dt); CALL.update(dt); FDET.update(dt); CROUCH.tick(dt);
   if (KB.down('lookU')) look.pitch = clamp(look.pitch + 1.2 * dt, -1.54, 1.54); if (KB.down('lookD')) look.pitch = clamp(look.pitch - 1.2 * dt, -1.54, 1.54);
   if (gyro.on && gyro.got) { player.yaw = look.yaw + (gyro.acc - gyro.ref); player.pitch = clamp(gyro.pitch + look.pitch, -1.55, 1.55); }
   else { player.yaw = look.yaw; player.pitch = look.pitch; }
@@ -12774,10 +12777,53 @@ function render() {
   GEAR.after();   // 2026-11-14 ワイプカメラ・定点カメラの小窓
   CALL.after();   // 2026-11-15 着信の画面（録画にも入る）
 }
+/* 2026-11-15 タイトル画面の背景：校舎の紹介映像（ゲームの3Dの校舎をそのまま撮る。動画ファイルは使わない）
+   ・決めた場所を、1か所6〜8秒ずつ、ゆっくりパン／前進。次の場所へは暗転でつなぎ、最後まで行ったら最初から
+   ・手持ちのごく小さな揺れ。録画画面と同じノイズ・暗さ・にじみ（後処理はそのまま使う）。全体の明るさは6〜7割
+   ・怪異は出さない。数周に1回だけ、廊下の奥に人影が一瞬映る
+   ・描画は1秒に30回くらい・解像度も下げる（resize と tick 側）。タブが裏に回ったら止める */
+const TOUR = {
+  i: -1, t0: 0, dur: 7, fig: null,
+  SHOTS: [   // [始めの位置, 終わりの位置, 始めの向き(yaw), 終わりの向き, 上下(pitch), 秒]
+    [[0, 1.5, 4.1], [0, 1.48, 2.3], 0.0, 0.0, -0.04, 7],                 // 玄関
+    [[0.3, 1.4, 2.6], [0.2, 1.4, 0.9], 1.25, 0.55, -0.16, 7.5],        // 下駄箱
+    [[0, 1.5, -1.6], [0, 1.5, -7.4], 0.0, 0.0, -0.02, 7],                // 1階の廊下
+    [[12.6, 1.55, -9.1], [11.4, 1.55, -9.4], 0.62, 1.05, -0.12, 7.5],    // 教室（2-2）
+    [[20.5, 1.5, -8.8], [20.5, 1.5, -15.5], 0.0, 0.0, -0.03, 7],         // 渡り廊下
+    [[0.9, 1.5, -4.6], [-0.5, 1.55, -4.6], 1.5708, 1.5708, 0.06, 6.5],  // 階段
+    [[-2.0, 4.7, -21.5], [-2.9, 4.7, -21.3], 1.25, 1.85, -0.1, 7.5],     // 音楽室
+    [[-2.1, 4.7, -13.0], [-3.9, 4.7, -13.0], 1.5708, 1.5708, -0.04, 7],  // 図書室
+  ],
+  hide() {   // 怪異・自分の姿は映さない
+    for (const o of [SG.root, avatar.root, MANN.root, SP.wrap]) if (o) o.visible = false;
+    if (woman.ready && !this.figOn) setOpacity(woman, 0);
+  },
+  update(now) {
+    const t = now / 1000; if (this.i < 0) { const q = (TEST || BETA) && new URLSearchParams(location.search).get('tour'); this.i = q !== null && q !== false ? +q % this.SHOTS.length : Math.floor(Math.random() * this.SHOTS.length); this.t0 = t; this.figAt = chance(0.25) ? rnd(2, 5) : -1; }
+    let S = this.SHOTS[this.i], u = t - this.t0; if ((TEST || BETA) && /[?&]tourhold\b/.test(location.search)) { u = S[5] * 0.5; this.t0 = t - u; }   // 確認用：場面を止める
+    if (u > S[5]) { this.i = (this.i + 1) % this.SHOTS.length; this.t0 = t; u = 0; S = this.SHOTS[this.i]; this.figAt = (this.i === 2 || this.i === 4) && chance(0.15) ? rnd(2.5, 4.5) : -1; this.figOn = false; }
+    const k = smooth(0, S[5], u) * 0.85 + (u / S[5]) * 0.15, a = S[0], b = S[1];
+    const sh = (f, s2) => Math.sin(t * f) * 0.6 + Math.sin(t * f * 2.31 + s2) * 0.4;   // 手持ちの揺れ
+    camera.position.set(lerp(a[0], b[0], k) + sh(0.9, 1) * 0.008, lerp(a[1], b[1], k) + sh(1.3, 2) * 0.006, lerp(a[2], b[2], k) + sh(0.7, 3) * 0.008);
+    camera.rotation.set(S[4] + sh(0.8, 4) * 0.006, lerp(S[2], S[3], k) + sh(0.6, 5) * 0.008, sh(0.5, 6) * 0.004);
+    camera.fov = CONFIG.fovScene; camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+    const fade = Math.max(1 - smooth(0, 0.7, u), smooth(S[5] - 0.7, S[5], u));   // 暗転でつなぐ
+    const U = postMat.uniforms; U.black.value = 0.3 + 0.7 * fade; U.exposure.value = 1.5; U.focus.value = 6; U.time.value = t;
+    if (!this.amb) { this.amb = new THREE.AmbientLight(0x9aa2b4, 0); scene.add(this.amb); } this.amb.intensity = 0.7;   // 紹介映像の間だけ、うっすら全体を見せる明かり
+    this.hide();
+    // ごくまれに、廊下の奥に人影が一瞬だけ
+    if (this.figAt > 0 && woman.ready) {
+      const on = u > this.figAt && u < this.figAt + 0.45;
+      if (on && !this.figOn) { this.figOn = true; const z = this.i === 2 ? -15.5 : -24; woman.root.position.set(this.i === 2 ? 0.3 : 20.6, 0, z); woman.root.rotation.set(0, 0, 0); Object.assign(woman.c, { pose: 'stand', speed: 0 }); animHuman(woman, 0.016); setOpacity(woman, 0.85); }
+      if (!on && this.figOn) { this.figOn = false; setOpacity(woman, 0); this.figAt = -1; }
+    }
+    if (typeof updateFloorVis === 'function') updateFloorVis();
+    updateGlints();
+  },
+};
 function idleCam(now) {
   if (world.tutPreview) { camera.position.set(0, CONFIG.eyeHeight, 3.4); camera.rotation.set(0, 0, 0); camera.fov = CONFIG.fov1x; camera.updateProjectionMatrix(); postMat.uniforms.black.value = 0.3; postMat.uniforms.exposure.value = 1.2; postMat.uniforms.focus.value = 8; updateGlints(); return; }   // 遊び方の説明の背景（ゲーム開始の位置から見た廊下）
-  const t = now / 1000; camera.position.set(0, 1.5, 3.2); camera.rotation.set(-0.02 + Math.sin(t * 0.3) * 0.02, Math.sin(t * 0.13) * 0.08, 0); camera.fov = CONFIG.fovScene; camera.updateProjectionMatrix(); camera.updateMatrixWorld();
-  postMat.uniforms.black.value = 0.55; postMat.uniforms.exposure.value = 1.2; postMat.uniforms.focus.value = 8; updateGlints();
+  TOUR.update(now);
 }
 let lastBatTxt = '';
 function updateHUD() {
@@ -14120,7 +14166,7 @@ $('#goBtn').addEventListener('click', () => {
   INTRO.run(beginPlay);
 });
 function beginPlay() {
-  $('#hud').classList.remove('off'); PHAN.place(); KOK.reset(); MYNAME.reset(); NEWEV.reset();   // 2026-11-15 化け物の周だけ、お札5枚
+  $('#hud').classList.remove('off'); PHAN.place(); KOK.reset(); MYNAME.reset(); NEWEV.reset(); POSTER.reset();   // 2026-11-15 化け物の周だけ、お札5枚
   world.state = 'play';
   postMat.uniforms.black.value = 1; postMat.uniforms.grain.value = 1;
   if (DEV) $('#dev').classList.add('show'), $('#devInfo').style.display = 'block';
@@ -14431,7 +14477,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.15.19';
+const VERSION = '0.15.20';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16407,6 +16453,88 @@ Object.assign(CHAT_DICT.t, {
 });
 if (CHAT_DICT.ev) Object.assign(CHAT_DICT.ev, { '宙を漂うランドセル': ['nv.rand.01', 'nv.rand.02', 'nv.rand.03'], '落ちて転がる薬瓶': ['nv.bot.01', 'nv.bot.02', 'nv.bot.03'], '倒れる譜面台': ['nv.std.01', 'nv.std.02', 'nv.std.03'], '向こう側へ倒れる本棚': ['nv.lib.01', 'nv.lib.02', 'nv.lib.03'], '本を開いて立つ女子高生': ['nv.girl.01', 'nv.girl.02', 'nv.girl.03', 'nv.girl.04'] });
 /* =========================================================
+   2026-11-15 目が描かれた防犯ポスター（1階の廊下・下駄箱の近くの西の壁）
+   ・「ドロボーは犯罪です」。真ん中に大きな目が2つ。少し色あせ、右下の角がめくれている
+   ・20%の周だけ、黒目がずっとカメラを追う（白目からはみ出さない）。残りはただのポスター
+   ・撮れ高「目で追ってくる防犯ポスター」（B40）：録画中・画面の中心から幅の2割以内・1.5秒以上・1.5m以内（2倍で2.5m、3倍で3.5m）・ライトの輪の中・正面から60度以内、
+     その間に黒目が実際に動いて追いかけていること（止まったままでは入らない）
+   ・確認用：?eyeposter で必ず追う周に
+   ========================================================= */
+const POSTER = {
+  g: null, pupils: [], track: false, t: 0, mv: 0, W: 0.46, H: 0.64,
+  EYES: [[-0.095, 0.02], [0.095, 0.02]], RX: 0.072, RY: 0.046, PR: 0.026,   // 白目（楕円）と黒目の大きさ（ポスターの上の長さ）
+  build() {
+    if (this.g) return; const { W, H } = this;
+    const c = document.createElement('canvas'); c.width = 368; c.height = 512; const x = c.getContext('2d'), sx = 368 / W, sy = 512 / H;
+    x.fillStyle = '#efe6c8'; x.fillRect(0, 0, 368, 512);
+    x.fillStyle = 'rgba(160,120,60,.13)'; for (let i = 0; i < 10; i++) { x.beginPath(); x.arc(Math.random() * 368, Math.random() * 512, 20 + Math.random() * 60, 0, 7); x.fill(); }   // 色あせ・しみ
+    x.fillStyle = '#b8261e'; x.fillRect(0, 0, 368, 104); x.fillStyle = '#f6efe0'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.font = 'bold 50px "Hiragino Kaku Gothic StdN","Yu Gothic",sans-serif'; x.fillText('ドロボーは', 184, 34); x.fillText('犯罪です', 184, 78);
+    // 目のまわり（まゆ・まつ毛・影）
+    x.strokeStyle = '#2a2018'; x.lineCap = 'round';
+    for (const [ex, ey] of this.EYES) {
+      const cx = 184 + ex * sx, cy = 256 - ey * sy, rx = this.RX * sx, ry = this.RY * sy;
+      x.fillStyle = 'rgba(80,60,40,.25)'; x.beginPath(); x.ellipse(cx, cy + 4, rx + 14, ry + 14, 0, 0, 7); x.fill();
+      x.fillStyle = '#fbf8f0'; x.beginPath(); x.ellipse(cx, cy, rx, ry, 0, 0, 7); x.fill();
+      x.lineWidth = 6; x.beginPath(); x.ellipse(cx, cy, rx, ry, 0, Math.PI * 1.05, Math.PI * 1.95); x.stroke(); x.lineWidth = 3; x.beginPath(); x.ellipse(cx, cy, rx, ry, 0, 0, Math.PI); x.stroke();
+      x.lineWidth = 9; x.beginPath(); x.moveTo(cx - rx * 1.1, cy - ry - 26 + (ex > 0 ? 6 : 0)); x.quadraticCurveTo(cx, cy - ry - 44, cx + rx * 1.1, cy - ry - 26 + (ex < 0 ? 6 : 0)); x.stroke();   // 怒ったまゆ
+      x.lineWidth = 3; for (let i = 0; i < 6; i++) { const a = Math.PI * (1.12 + i * 0.15); x.beginPath(); x.moveTo(cx + Math.cos(a) * rx, cy + Math.sin(a) * ry); x.lineTo(cx + Math.cos(a) * (rx + 12), cy + Math.sin(a) * (ry + 12)); x.stroke(); }
+    }
+    x.fillStyle = '#2a2018'; x.font = 'bold 26px "Yu Gothic",sans-serif'; x.fillText('見ているぞ！', 184, 372);
+    x.font = '19px "Yu Gothic",sans-serif'; x.fillText('戸じまり・声かけで 犯罪のない町に', 184, 420);
+    x.fillStyle = '#1d3d6e'; x.fillRect(0, 456, 368, 56); x.fillStyle = '#efe6c8'; x.font = 'bold 20px "Yu Gothic",sans-serif'; x.fillText('ゆうれい町 防犯協会', 184, 485);
+    x.globalCompositeOperation = 'destination-out'; x.beginPath(); x.moveTo(368, 512); x.lineTo(368 - 46, 512); x.lineTo(368, 512 - 46); x.closePath(); x.fill(); x.globalCompositeOperation = 'source-over';   // めくれた角は抜く
+    x.fillStyle = 'rgba(255,250,235,.16)'; x.fillRect(0, 0, 368, 512);   // 全体を少し色あせ
+    const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 4;
+    const g = new THREE.Group(); g.position.set(-1.385, 1.5, -2.35); g.rotation.y = Math.PI / 2; scene.add(g); this.g = g;   // 西の壁（廊下側を向く）
+    g.add(new THREE.Mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshLambertMaterial({ map: tx, transparent: true, alphaTest: 0.5 })));
+    { const k = 46 / sx, s = new THREE.Shape(); s.moveTo(-k, 0); s.lineTo(0, k); s.lineTo(-k, k); s.closePath(); const m = new THREE.Mesh(new THREE.ShapeGeometry(s), new THREE.MeshLambertMaterial({ color: 0xd2c7a8, side: THREE.DoubleSide })); m.position.set(W / 2, -H / 2, 0.008); m.rotation.set(0.12, -0.12, 0); g.add(m); }   // めくれた角（裏の紙が少し浮いている）
+    // 鋲
+    for (const [px, py] of [[-W / 2 + 0.02, H / 2 - 0.02], [W / 2 - 0.02, H / 2 - 0.02], [-W / 2 + 0.02, -H / 2 + 0.02]]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, 0.006, 8), L({ color: 0x8a2a24 })); p.rotation.x = Math.PI / 2; p.position.set(px, py, 0.004); g.add(p); }
+    const pm = new THREE.MeshBasicMaterial({ color: 0x120e0c });
+    for (const [ex, ey] of this.EYES) { const p = new THREE.Mesh(new THREE.CircleGeometry(this.PR, 20), pm); p.position.set(ex, ey, 0.002); g.add(p); const hl = new THREE.Mesh(new THREE.CircleGeometry(this.PR * 0.28, 10), new THREE.MeshBasicMaterial({ color: 0xffffff })); hl.position.set(0.007, 0.008, 0.0005); p.add(hl); this.pupils.push({ p, ex, ey, ox: 0, oy: 0 }); }
+    occluders;   // （ポスターは視線をさえぎらない）
+  },
+  reset() {
+    this.build(); this.track = ((TEST || BETA) && /[?&]eyeposter\b/.test(location.search)) || chance(0.2); this.t = 0; this.mv = 0; this.cm = 0;
+    for (const P of this.pupils) { P.ox = 0; P.oy = 0; P.p.position.set(P.ex, P.ey, 0.002); }
+    if (TEST || DEV) console.log('POSTER', this.track);
+  },
+  care() {   // 「ちゃんと撮った」条件（名前の撮れ高と同じ考え方。距離だけ1.5m）
+    if (!rec.active || world.state !== 'play' || player.lv !== 0) return false;
+    const C = viewCam(), p = this.g.localToWorld(V(0, 0.02, 0)), d = C.position.distanceTo(p), z = world.selfie ? 1 : zoom, maxD = z >= 2.9 ? 3.5 : z >= 1.9 ? 2.5 : 1.5;
+    this.why = 'dist'; if (d > maxD) return false;
+    this.why = 'center'; const q = p.clone().project(C); if (!(q.z < 1 && q.z > -1 && Math.abs(q.x) <= 0.4 && Math.abs(q.y) <= 0.6)) return false;   // 画面の中心から幅の2割以内
+    this.why = 'angle'; if (C.position.clone().sub(p).normalize().x < 0.5) return false;   // 正面（+x）から60度以内
+    if (!world.selfie && !inFlash(p)) { this.why = 'flash'; return false; } if (LUM.dark(p)) { this.why = 'dark'; return false; }
+    this.why = 'line'; return clearLine(p, [], C.position);
+  },
+  update(dt) {
+    if (!this.g) return;
+    if (this.track && player.lv === 0) {   // 黒目がカメラを追う（白目の楕円からはみ出さない）
+      const cl = this.g.worldToLocal(viewCam().position.clone()); let moved = 0;
+      for (const P of this.pupils) {
+        const dx = cl.x - P.ex, dy = cl.y - P.ey, dz = Math.max(0.05, cl.z), l = Math.hypot(dx, dy, dz);
+        let tx = dx / l * (this.RX - this.PR) * 1.6, ty = dy / l * (this.RY - this.PR) * 1.6; const e = Math.hypot(tx / (this.RX - this.PR), ty / (this.RY - this.PR)); if (e > 1) { tx /= e; ty /= e; }
+        const k = 1 - Math.exp(-6 * dt), nx = P.ox + (tx - P.ox) * k, ny = P.oy + (ty - P.oy) * k; moved += Math.hypot(nx - P.ox, ny - P.oy); P.ox = nx; P.oy = ny; P.p.position.set(P.ex + P.ox, P.ey + P.oy, 0.002);
+      }
+      if (awarded.has('eyePoster')) return;
+      const cp = viewCam().position, cm = this.lastC ? cp.distanceTo(this.lastC) : 0; this.lastC = cp.clone();
+      if (this.care()) { this.t += dt; this.mv += moved / 2; this.cm = (this.cm || 0) + Math.min(cm, 0.2); if (this.t >= 1.5 && this.mv > 0.006 && this.cm > 0.15) award('eyePoster', '目で追ってくる防犯ポスター', 40); } else { this.t = 0; this.mv = 0; this.cm = 0; }   // カメラが動いて、黒目が実際に追った時だけ
+    }
+  },
+};
+// 2026-11-15 気づきにくくなった撮れ高を2つ外す（床のチョーク・倒れたほうき）。すでに取った記録は、一覧から外れるだけ
+for (const k of ['chalk', 'broom']) { delete AW_TABLE[k]; delete CHIP_DESC[k]; }
+COL.LIST = COL.LIST.filter(x => x[0] !== 'chalk' && x[0] !== 'broom');
+for (const n of ['床に落ちていたチョーク', '倒れていたほうき']) { delete EN[n]; if (CHAT_DICT.ev) delete CHAT_DICT.ev[n]; }
+Object.assign(AW_TABLE, { eyePoster: ['B', 40] });
+COL.LIST.push(['eyePoster', '目で追ってくる防犯ポスター', 40]);
+Object.assign(CHIP_DESC, { eyePoster: ['防犯ポスターの目が、ずっとこちらを追っていた。', 'The eyes on the crime-prevention poster kept following you.'] });
+Object.assign(EN, { '目で追ってくる防犯ポスター': 'The poster eyes that follow you' });
+Object.assign(CHAT_DICT.t, { 'eye.01': ['ポスターの目、動いてない？', "did the poster's eyes just move?"], 'eye.02': ['こっち見てる', "it's looking at us"], 'eye.03': ['ドロボー扱いされてるw', 'it thinks you’re the thief lol'], 'eye.04': ['目が合った', 'we made eye contact'], 'eye.05': ['動いてるって', "they're moving, I swear"] });
+if (CHAT_DICT.ev) CHAT_DICT.ev['目で追ってくる防犯ポスター'] = ['eye.01', 'eye.02', 'eye.03', 'eye.04', 'eye.05'];
+/* =========================================================
    2026-11-15 隠しイベント「幻の怪異」（151種類目の撮れ高）
    ・チャットに混ざる荒らしコメントをBANしていくと段階が進む（この端末に記録。データをリセットで0に戻す）
      0 ふつう（数周に1回、荒らしが1つだけ）→ BANで1 → 荒らしを合計3回BANで2 → 段階2で通算20件BANで3 → 倒したら「済」
@@ -16707,7 +16835,7 @@ ENDCARD.ORD.PH = -1;
 CHAT_CFG.coef.PH = 1.2;
 setInterval(() => { if (PHAN.el && world.state === 'play') PHAN.panel(); }, 1000);
 PHAN.load(); PHAN.panel();
-if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, WD, CH, SP, MANN, NAV, RED: typeof RED !== 'undefined' ? RED : null, postMat, CHAT, RES_CHAT, COL, ENDCARD, makeResultImage, KOK, MYNAME, awarded, NEWEV, CORR, MAZE, RANDFLY, NBOT, MSTAND, LIBFALL, LIBGIRL, NAVX, NAV, NAV_ADJ, wdScreamLong, screamCut, MOZ, PIANO, F2, SELF, avatar, selfCam, STAIRS, groundAt, escapeRun: escape, evid: () => evidence, recS: () => rec, world });
+if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, WD, CH, SP, MANN, NAV, RED: typeof RED !== 'undefined' ? RED : null, postMat, CHAT, RES_CHAT, COL, ENDCARD, makeResultImage, KOK, MYNAME, awarded, POSTER, TOUR, NEWEV, CORR, MAZE, RANDFLY, NBOT, MSTAND, LIBFALL, LIBGIRL, NAVX, NAV, NAV_ADJ, wdScreamLong, screamCut, MOZ, PIANO, F2, SELF, avatar, selfCam, STAIRS, groundAt, escapeRun: escape, evid: () => evidence, recS: () => rec, world });
 
 /* =========================================================
    2026-11-14 データをリセット（スタート画面・設定の「撮れ高コレクション」の直下）
