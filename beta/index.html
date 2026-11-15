@@ -351,6 +351,18 @@
   .resetBtn{margin-top:10px;background:none;border:1px solid rgba(255,255,255,.22);border-radius:22px;color:#a9a49b;font-size:12.5px;padding:8px 20px;letter-spacing:.06em}
   #resetAsk{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:24px}
   #resetAsk.show{display:flex}
+  #xfer{position:fixed;inset:0;z-index:71;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:24px}
+  #xfer.show{display:flex}
+  #xfer .raBox{width:100%;max-width:340px;background:#151517;border:1px solid #333338;border-radius:16px;padding:20px 18px 14px;text-align:center}
+  #xfer .raT{font-size:17px;font-weight:800;color:#fff;letter-spacing:.04em}
+  #xfer p{font-size:13px;color:#bdb8ae;line-height:1.7;margin:10px 0 12px;text-align:left}
+  #xfer .xfN{font-size:12px;color:#8f8a82;margin-top:-6px}
+  #xfer .xfE{color:#ff7a70;min-height:1em;text-align:center;margin:8px 0 0}
+  #xfer textarea{width:100%;height:96px;box-sizing:border-box;background:#0d0d0f;color:#e8e3d8;border:1px solid #333338;border-radius:10px;padding:8px;font-size:11px;font-family:monospace;word-break:break-all;margin-bottom:10px;resize:none}
+  #xfer .raBtns{display:flex;gap:10px}
+  #xfer .raBtns button{flex:1;padding:12px 6px;border-radius:12px;font-size:15px;font-weight:700;border:1px solid #3a3a3e;background:#202024;color:#fff}
+  #xfer .xfRed{background:#e0332f!important;border-color:#e0332f!important}
+  #xfer .xfC{margin-top:10px;background:none;border:0;color:#8f8a82;font-size:13px;padding:6px 10px}
   #resetAsk .raBox{width:100%;max-width:330px;background:#151517;border:1px solid #333338;border-radius:16px;padding:22px 20px 18px;text-align:center}
   #resetAsk .raT{font-size:17px;font-weight:800;color:#fff;letter-spacing:.04em}
   #resetAsk .raD{font-size:13px;color:#bdb8ae;line-height:1.7;margin:12px 0 18px;text-align:left}
@@ -846,6 +858,7 @@
       <button class="setLink" id="setTut">遊び方を見る</button>
       <button class="setLink" id="setCol">心霊アーカイブ</button>
       <button class="setLink" id="setNotice">注意事項・プライバシー</button>
+      <button class="setLink" id="setXfer">引き継ぎコード</button>
       <button class="setLink" id="setReset">データをリセット</button>
       <div class="verTag" id="verSet"></div>
       <button class="setLink" id="setHome">スタート画面にもどる</button>
@@ -934,6 +947,7 @@
 </div>
 <div id="chipPop"><div id="chipBox"><button id="chipX" class="mX" type="button" aria-label="閉じる">×</button><div id="chipRk"></div><div id="chipT"></div><p id="chipD"></p><button id="chipOk" type="button">閉じる</button></div></div>
 <div id="ttlPop"><div id="ttlBox"><div id="ttlH">動画タイトルを編集</div><input id="ttlIn" type="text" maxlength="80" placeholder="動画タイトルを入力" enterkeyhint="done"><div id="ttlCnt"></div><div class="ttlBtns"><button id="ttlNo" type="button">キャンセル</button><button id="ttlOk" class="go" type="button">保存</button></div></div></div>
+<div id="xfer"><div class="raBox"><div class="raT" id="xfT"></div><div id="xfB"></div></div></div>
 <div id="saveNote"><div id="snBox"><button id="snX" class="mX" type="button" aria-label="閉じる">×</button><div id="snT"></div><p id="snB"></p><p id="snH"></p><p id="snN"></p><button id="snOk"></button></div></div>
 <div id="loading"><div>LOADING</div><div class="ghL" aria-hidden="true"></div></div>
 
@@ -13559,6 +13573,7 @@ const SAVENOTE = {
   ok() { try { localStorage.setItem('yt_saveTest', '1'); const ok = localStorage.getItem('yt_saveTest') === '1'; localStorage.removeItem('yt_saveTest'); return ok && !!localStorage.getItem(ACH.KEY); } catch (e) { return false; } },
   seen() { try { return localStorage.getItem(this.KEY) === '1'; } catch (e) { return true; } },
   go() {
+    if (!DEMO && this.seen() && this.ok() && XFNOTE.go()) return;   /* 2026-11-16 5回目の再撮影で、引き継ぎコードのお知らせ */
     if (DEMO || this.seen() || !this.ok()) { location.reload(); return; }
     const en = LANG === 'en', el = $('#saveNote');
     $('#snX').setAttribute('aria-label', en ? 'Close' : '閉じる');
@@ -13570,8 +13585,8 @@ const SAVENOTE = {
     el.classList.add('show'); $('#snBox').scrollTop = 0;
   },
 };
-$('#snOk').addEventListener('click', e => { e.stopPropagation(); try { localStorage.setItem(SAVENOTE.KEY, '1'); } catch (er) { } location.reload(); });   // 押した時点で確認済み
-$('#snX').addEventListener('click', e => { e.stopPropagation(); $('#saveNote').classList.remove('show'); });   // 閉じたらリザルトへ（確認済みにしない）
+$('#snOk').addEventListener('click', e => { e.stopPropagation(); try { localStorage.setItem(XFNOTE.on ? XFNOTE.KEY : SAVENOTE.KEY, '1'); } catch (er) { } location.reload(); });   // 押した時点で確認済み
+$('#snX').addEventListener('click', e => { e.stopPropagation(); $('#saveNote').classList.remove('show'); XFNOTE.on = false; });   // 閉じたらリザルトへ（確認済みにしない）
 $('#saveNote').addEventListener('click', e => { if (e.target.id === 'saveNote') $('#saveNote').classList.remove('show'); });
 for (const t of ['pointerdown', 'touchstart', 'touchmove']) $('#saveNote').addEventListener(t, e => e.stopPropagation(), { passive: true });
 $('#againBtn').addEventListener('click', () => SAVENOTE.go());
@@ -13620,7 +13635,7 @@ const SET = {
     }
     $('#setLang').style.display = this.paused ? 'none' : '';
     $('#setTut').style.display = this.paused ? 'none' : '';   // 2026-11-13 遊び方はスタート画面の設定からだけ（ゲーム中の設定には出さない）   // 言語はスタート画面の設定でだけ変えられる
-    $('#setReset').style.display = this.paused ? 'none' : '';   // 2026-11-14 ゲーム中の設定にはデータのリセットを出さない
+    $('#setReset').style.display = this.paused ? 'none' : ''; $('#setXfer').style.display = this.paused ? 'none' : '';   // 2026-11-14 ゲーム中の設定にはデータのリセットを出さない
     $('#setPaused').style.display = this.paused ? '' : 'none'; $('#setHome').style.display = this.paused ? '' : 'none';
     $('#setClose').textContent = TR(this.paused ? 'ゲームにもどる' : '閉じる');
     this.homeArm = 0; $('#setHome').classList.remove('warn'); $('#setHome').textContent = TR('スタート画面にもどる');
@@ -14952,7 +14967,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.18';
+const VERSION = '0.16.19';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -19683,7 +19698,7 @@ const RESET = {
     try { resultUrls.forEach(u => URL.revokeObjectURL(u)); } catch (e) { }
     COL.data = null; ACH.d = null; PERM.d = null; PHAN.d = null;
     const go = () => { const u = new URL(location.href); u.searchParams.delete('perm'); location.replace(u.toString()); };   // スタート画面から（初めて遊ぶ時と同じ状態）
-    VDB.wipe().then(go, go); setTimeout(go, 1500);   // 神回ランキングの保存映像も消す
+    XFER.wipe().finally(() => VDB.wipe().then(go, go)); setTimeout(go, 1500);   // 神回ランキングの保存映像も消す（2026-11-16 引き継ぎの予備も）
   },
 };
 for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'touchmove']) $('#resetAsk').addEventListener(ev, e => e.stopPropagation(), { passive: true });
@@ -19692,6 +19707,77 @@ $('#setReset').addEventListener('click', e => { e.stopPropagation(); RESET.ask()
 $('#resetNo').addEventListener('click', e => { e.stopPropagation(); RESET.no(); });
 $('#resetYes').addEventListener('click', e => { e.stopPropagation(); RESET.yes(); });
 
+/* =========================================================
+   2026-11-16 引き継ぎコード（セーブデータを文字列にして書き出す・読み込む）
+   ・中身：この版（本番／試し版）のセーブデータ全部（ランク・累計いいね・撮れ高コレクション・実績・永続アイテム・バリケード・名前・設定など）。神回の動画は入れない
+   ・形：YTSAVE1.<中身>.<確認用の印>。書き換えや壊れたコードは「このコードは使えません」
+   ・予備：セーブデータをIndexedDBにも保存し、いつもの場所から消えていたら戻す（データをリセットした時は予備も消す）
+   ========================================================= */
+const XFER = {
+  PFX: 'YTSAVE1',
+  mine(k) { return /^(yt|yutuber|gekou)/.test(k) && k !== 'yt_saveTest'; },
+  /* この版のキー（試し版は 'beta:' が付いた物）を、付ける前の名前で */
+  keys() { const out = []; const raw = Storage.prototype.key; for (let i = 0; i < localStorage.length; i++) { const k0 = raw.call(localStorage, i); if (!k0) continue; const k = BETA ? (k0.startsWith('beta:') ? k0.slice(5) : null) : (k0.startsWith('beta:') ? null : k0); if (k && this.mine(k)) out.push(k); } return out; },
+  snap() { const d = {}; for (const k of this.keys()) { const v = localStorage.getItem(k); if (v !== null) d[k] = v; } return d; },
+  sum(s) { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16).padStart(8, '0'); },
+  b64e(s) { return btoa(String.fromCharCode(...new TextEncoder().encode(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); },
+  b64d(s) { const b = atob(s.replace(/-/g, '+').replace(/_/g, '/')); return new TextDecoder().decode(Uint8Array.from(b, c => c.charCodeAt(0))); },
+  code() { const body = this.b64e(JSON.stringify({ v: 1, t: Date.now(), beta: !!BETA, d: this.snap() })); return this.PFX + '.' + body + '.' + this.sum(body); },
+  parse(code) { try { const s = String(code || '').replace(/\s+/g, ''); const [p, body, sm] = s.split('.'); if (p !== this.PFX || !body || this.sum(body) !== sm) return null; const o = JSON.parse(this.b64d(body)); return o && o.v === 1 && o.d && typeof o.d === 'object' ? o : null; } catch (e) { return null; } },
+  apply(o) { for (const k of this.keys()) localStorage.removeItem(k); for (const k in o.d) if (this.mine(k)) localStorage.setItem(k, String(o.d[k])); this.backup(); },
+  /* ── 予備（IndexedDB） */
+  db() { return new Promise((ok, ng) => { try { const r = indexedDB.open('yt_backup', 1); r.onupgradeneeded = () => r.result.createObjectStore('b'); r.onsuccess = () => ok(r.result); r.onerror = () => ng(r.error); } catch (e) { ng(e); } }); },
+  slot() { return BETA ? 'beta' : 'main'; },
+  prog(d) { const j = k => { try { return JSON.parse(d[k] || 'null'); } catch (e) { return null; } }; const c = j(COL.KEY), a = j(ACH.KEY); return !!((c && c.items && Object.keys(c.items).length) || (a && (a.total > 0 || (a.best && a.best.length))) || (c && c.runs > 0)); },   /* 遊んだ記録が入っているか */
+  backup() { const d = this.snap(); if (!this.prog(d)) return; this.db().then(db => { const tx = db.transaction('b', 'readwrite'); tx.objectStore('b').put({ t: Date.now(), d }, this.slot()); }).catch(() => { }); },
+  wipe() { return this.db().then(db => new Promise(ok => { const tx = db.transaction('b', 'readwrite'); tx.objectStore('b').delete(this.slot()); tx.oncomplete = ok; tx.onerror = ok; })).catch(() => { }); },
+  restore() {   /* いつもの場所から消えていたら、予備から戻して読み込み直す（1回だけ） */
+    let have = false; try { have = this.prog(this.snap()); } catch (e) { return; }
+    if (have) { this.backup(); return; } try { if (sessionStorage.getItem('yt_restored')) return; } catch (e) { }
+    this.db().then(db => new Promise(ok => { const r = db.transaction('b').objectStore('b').get(this.slot()); r.onsuccess = () => ok(r.result); r.onerror = () => ok(null); })).then(B => {
+      if (!B || !B.d || !this.prog(B.d)) return; for (const k in B.d) localStorage.setItem(k, B.d[k]); try { sessionStorage.setItem('yt_restored', '1'); } catch (e) { } console.log('セーブデータを予備から戻しました'); location.reload();
+    }).catch(() => { });
+  },
+  /* ── 画面 */
+  T(ja, en) { return LANG === 'en' ? en : ja; },
+  open() { const el = $('#xfer'); el.classList.add('show'); this.view('top'); },
+  close() { $('#xfer').classList.remove('show'); },
+  view(v) {
+    const T = this.T.bind(this), b = $('#xfB');
+    $('#xfT').textContent = T('引き継ぎコード', 'Save transfer code');
+    if (v === 'top') b.innerHTML = `<p>${T('セーブデータ（ランク・累計いいね数・撮れ高コレクション・実績・設定など）を、コードとして書き出したり、読み込んで戻したりできます。別の端末・ブラウザに移す時にも使えます。', 'Export your save data (rank, total likes, footage collection, achievements, settings…) as a code, or load a code to restore it. You can also use it to move to another device or browser.')}</p><p class="xfN">${T('※神回の動画はコードに入りません。', '* Saved best-run videos are not included.')}</p><div class="raBtns"><button id="xfOut">${T('書き出す', 'Export')}</button><button id="xfIn">${T('読み込む', 'Import')}</button></div><button class="xfC" id="xfClose">${T('閉じる', 'Close')}</button>`;
+    else if (v === 'out') { const c = this.code(); b.innerHTML = `<p>${T('このコードを、メモ帳などに保存しておいてください。', 'Keep this code somewhere safe, such as a notes app.')}</p><textarea id="xfTx" readonly>${c}</textarea><div class="raBtns"><button id="xfCopy">${T('コピー', 'Copy')}</button><button id="xfFile">${T('ファイルに保存', 'Save as file')}</button></div><button class="xfC" id="xfBack">${T('もどる', 'Back')}</button>`; }
+    else if (v === 'in') b.innerHTML = `<p>${T('書き出したコードを貼り付けてください。', 'Paste your exported code.')}</p><textarea id="xfTx" placeholder="YTSAVE1..."></textarea><input type="file" id="xfPick" accept=".txt,text/plain" style="display:none"><div class="raBtns"><button id="xfPickB">${T('ファイルから', 'From file')}</button><button id="xfLoad">${T('読み込む', 'Import')}</button></div><p class="xfE" id="xfErr"></p><button class="xfC" id="xfBack">${T('もどる', 'Back')}</button>`;
+    else if (v === 'ask') b.innerHTML = `<p>${T('今のセーブデータを、コードの中身で上書きします。今のセーブデータは消えます。よろしいですか？', 'Your current save data will be overwritten by the code. Your current progress will be lost. Continue?')}</p><div class="raBtns"><button id="xfNo">${T('やめる', 'Cancel')}</button><button id="xfYes" class="xfRed">${T('上書きする', 'Overwrite')}</button></div>`;
+    const on = (id, f) => { const e = $('#' + id); if (e) e.onclick = ev => { ev.stopPropagation(); f(); }; };
+    on('xfOut', () => this.view('out')); on('xfIn', () => this.view('in')); on('xfClose', () => this.close()); on('xfBack', () => this.view('top'));
+    on('xfCopy', () => { const t = $('#xfTx'); t.select(); (navigator.clipboard ? navigator.clipboard.writeText(t.value) : Promise.reject()).catch(() => document.execCommand('copy')).finally(() => toast(T('コピーしました', 'Copied'), 1500)); });
+    on('xfFile', () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([$('#xfTx').value], { type: 'text/plain' })); a.download = 'yutuber_save_' + new Date().toISOString().slice(0, 10) + '.txt'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000); });
+    on('xfPickB', () => $('#xfPick').click());
+    if (v === 'in') $('#xfPick').onchange = e => { const f = e.target.files && e.target.files[0]; if (f) f.text().then(t => { $('#xfTx').value = t.trim(); }); };
+    on('xfLoad', () => { const o = this.parse($('#xfTx').value); if (!o) { $('#xfErr').textContent = T('このコードは使えません', 'This code cannot be used.'); return; } this.pending = o; this.view('ask'); });
+    on('xfNo', () => this.view('in')); on('xfYes', () => { try { this.apply(this.pending); } catch (e) { } toast(T('セーブデータを読み込みました', 'Save data loaded'), 1500); setTimeout(() => location.reload(), 600); });
+  },
+};
+for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'touchmove']) $('#xfer').addEventListener(ev, e => e.stopPropagation(), { passive: true });
+$('#xfer').addEventListener('click', e => { e.stopPropagation(); if (e.target.id === 'xfer') XFER.close(); });
+$('#setXfer').addEventListener('click', e => { e.stopPropagation(); XFER.open(); });
+$('#setXfer').textContent = LANG === 'en' ? 'Save transfer code' : '引き継ぎコード';
+XFER.restore(); setInterval(() => XFER.backup(), 30000); addEventListener('pagehide', () => XFER.backup()); document.addEventListener('visibilitychange', () => { if (document.hidden) XFER.backup(); });
+/* 5回目の再撮影で一度だけ：引き継ぎコードのお知らせ（「わかった」で確認済み。×なら次の再撮影でまた出す） */
+const XFNOTE = {
+  KEY: 'yt_xferNote', NKEY: 'yt_retakeN',
+  go() {
+    let n = 0; try { n = (+localStorage.getItem(this.NKEY) || 0) + 1; localStorage.setItem(this.NKEY, String(n)); if (localStorage.getItem(this.KEY) === '1') return false; } catch (e) { return false; }
+    if (n < 5 && !/[?&]xfnote\b/.test(location.search)) return false;
+    const en = LANG === 'en', el = $('#saveNote'); $('#snX').setAttribute('aria-label', en ? 'Close' : '閉じる'); this.on = true;
+    $('#snT').textContent = en ? "If you never want to lose your save data" : 'どうしてもセーブデータを失いたくない時は';
+    $('#snB').textContent = en ? 'From "Save transfer code" in the settings on the start screen, you can export your save data (rank, total likes, footage collection, etc.) as a code. If it is ever lost, or when you play on another device or browser, load the code to restore it.' : 'スタート画面の設定にある『引き継ぎコード』から、セーブデータ（ランク・累計いいね数・撮れ高コレクションなど）をコードとして書き出しておけます。消えてしまった時や、別の端末・ブラウザで遊ぶ時に、読み込めば元に戻せます。';
+    $('#snH').textContent = en ? 'On iPhone, Safari and the game added to your home screen keep separate save data. Use a transfer code to move it.' : 'iPhoneでは、Safariとホーム画面に追加したゲームのセーブデータは別々です。移したい時も引き継ぎコードを使ってください。';
+    $('#snN').textContent = ''; $('#snOk').textContent = en ? 'Got it' : 'わかった'; el.classList.add('show'); $('#snBox').scrollTop = 0; return true;
+  },
+};
+if (TEST && window.__G) Object.assign(window.__G, { XFER, XFNOTE });
 /* =========================================================
    2026-11-14 声の聞き比べ（試し版・確認モードだけ：URLの後ろに ?vtest）
    ・録音した声をゲームと同じ鳴らし方（校内スピーカー・天井のクモ女・耳元・壁越し）で、1つずつ聞ける
