@@ -2095,7 +2095,7 @@ function updateReflectors() {
 const NAV = {
   E1: [0, 3.5, 'E'], E0: [0, 0, 'E'], Aa: [0, -3, 'A'], Ab: [0, -6.5, 'A'], Ac: [0, -12, 'A'], Ad: [0, -16.8, 'A'], Ae: [0, -19.9, 'A'], Af: [0, -24, 'A'], Ag: [0, -31.5, 'A'],
   B1: [6, -31.5, 'B'], B2: [12.15, -31.5, 'B'], B3: [17, -31.5, 'B'], B4: [24.5, -31.5, 'B'], W4: [20.5, -31.5, 'B'],
-  W3: [20.5, -27, 'W'], W2: [20.5, -20, 'W'], W1: [20.5, -12, 'W'], L4: [20.5, -6.5, 'L'],
+  W3: [20.5, -27, 'W'], W2: [20.5, -20, 'W'], W1: [21.3, -12, 'W'], L4: [20.5, -6.5, 'L'],
   L3: [16, -6.5, 'L'], Lb: [12, -6.5, 'L'], L2: [8, -6.5, 'L'], Lt: [4.7, -6.5, 'L'], L1: [2.5, -6.5, 'L'],
   r3a: [2.7, -19.9, 'R3'], r3c: [2.7, -28.8, 'R3'], r3b: [12.15, -28.8, 'R3'], r3e: [12.5, -20.5, 'R3'], r3m: [6.5, -20.4, 'R3'],
   r2a: [2.7, -16.4, 'R2'], r2c: [2.7, -9.3, 'R2'], r2b: [12, -9.3, 'R2'], r2e: [12.5, -16.2, 'R2'], r2m: [8.5, -16.2, 'R2'],
@@ -8469,7 +8469,7 @@ SP.breakWindow = function (x, z) {
   const n = 26, geo = new THREE.BufferGeometry(); const pos = new Float32Array(n * 9);
   for (let i = 0; i < n; i++) { const c = [rnd(-0.6, 0.6), rnd(-S.h / 2, S.h / 2), rnd(-0.03, 0.03)]; for (let k = 0; k < 3; k++) { pos[i * 9 + k * 3] = c[0] + rnd(-0.06, 0.06); pos[i * 9 + k * 3 + 1] = c[1] + rnd(-0.06, 0.06); pos[i * 9 + k * 3 + 2] = c[2]; } }
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xc8d2d8, transparent: true, opacity: 0.7, side: THREE.DoubleSide, depthWrite: false }));
+  const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0x56636a, transparent: true, opacity: 0.4, side: THREE.DoubleSide, depthWrite: false })   /* 2026-11-17 白く光らない色に */);
   m.position.copy(p); m.quaternion.copy(best.getWorldQuaternion(new THREE.Quaternion())); scene.add(m);
   const v = []; for (let i = 0; i < n; i++) v.push([rnd(-0.8, 0.8), rnd(-0.5, 0.6), rnd(-1.2, 1.2)]);
   this.shards = (this.shards || []).concat([{ m, v, t: 0, n, lv: S.lv === 1 ? 1 : 0 }]);
@@ -11925,7 +11925,7 @@ const PREBROKEN = (() => {
   edge.onBeforeRender = (r, sc, cam) => { const d = cam.position.distanceTo(edge.position); edge.material.opacity = 0.3 * Math.min(1, Math.max(0, (6 - d) / 3.5)); };
   // 床の破片（窓際に少しだけ・固定）
   const W = DECO.group(); let s = 7; const rr = () => (s = (s * 9301 + 49297) % 233280) / 233280;
-  for (let i = 0; i < 9; i++) { const side = i < 6 ? -1 : 1; DECO.add(W, 'tri', cx + (rr() - 0.5) * w * 0.9, 0.004 + i * 0.0004, S.c + side * (0.12 + rr() * 0.35), { s: [0.02 + rr() * 0.04, 0.015 + rr() * 0.03, 1], rx: -Math.PI / 2, ry: rr() * 6, c: 0xb8c8ce }); }
+  for (let i = 0; i < 9; i++) { const side = i < 6 ? -1 : 1; DECO.add(W, 'tri', cx + (rr() - 0.5) * w * 0.9, 0.004 + i * 0.0004, S.c + side * (0.12 + rr() * 0.35), { s: [0.02 + rr() * 0.04, 0.015 + rr() * 0.03, 1], rx: -Math.PI / 2, ry: rr() * 6, c: 0x76858a }); }
   DECO.build(W, F1G, 'deco_shards');
   return { pane, glass, edge, pos: V(cx, S.y, S.c) };
 })();
@@ -15149,7 +15149,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.73';
+const VERSION = '0.16.74';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -21004,12 +21004,12 @@ const FWEB = {
   /* 縦の糸（通り道をふさぐ）：c＝中心、nrm＝通り道の向き（'x'か'z'）、w＝幅の半分、h＝高さの半分 */
   addV(c, axis, w, h) {
     if (!this.mat) this.mat = new THREE.MeshBasicMaterial({ color: 0xe2ded2, transparent: true, opacity: 0.7, depthWrite: false, side: THREE.DoubleSide, fog: true });
-    const m = new THREE.Mesh(this.geo(w, h / w), this.mat); m.rotation.order = 'YXZ'; m.rotation.set(Math.PI / 2, axis === 'x' ? Math.PI / 2 : 0, 0); m.position.copy(c); m.renderOrder = 3; scene.add(m);
+    const m = new THREE.Mesh(this.geo(w, h / w), this.mat); m.rotation.order = 'YXZ'; m.rotation.set(Math.PI / 2, axis === 'x' ? Math.PI / 2 : 0, 0); m.position.copy(c); m.renderOrder = 3; F2G.add(m);   /* 2026-11-17 2階の物：1階から見上げても見えないように */
     this.list.push({ m, p: c.clone(), axis, w, h, lv: c.y > 2.9 ? 1 : 0, cool: 0, jig: 0 });
   },
   addH(c, w, h) {   /* 横の糸（吹き抜けに張る） */
     if (!this.mat) this.mat = new THREE.MeshBasicMaterial({ color: 0xe2ded2, transparent: true, opacity: 0.7, depthWrite: false, side: THREE.DoubleSide, fog: true });
-    const m = new THREE.Mesh(this.geo(w, h / w), this.mat); m.position.copy(c); m.renderOrder = 3; scene.add(m);
+    const m = new THREE.Mesh(this.geo(w, h / w), this.mat); m.position.copy(c); m.renderOrder = 3; F2G.add(m);   /* 2026-11-17 2階の物：1階から見上げても見えないように */
     this.list.push({ m, p: c.clone(), axis: 'y', w, h, lv: 0, cool: 0, jig: 0, es: true });
   },
   place() {
@@ -21021,7 +21021,7 @@ const FWEB = {
   touch(w) {
     if (world.t < w.cool) return; w.cool = world.t + 20; w.jig = 1.2;
     SND.rustle && SND.rustle(w.p.clone(), 1.1); playSfx('kehai_whoosh', { pos: w.p.clone(), ref: 0.8, gain: 0.25, rate: 1.7, dur: 0.5 });
-    toast(TR('体に蜘蛛の糸がからみついた…'), 1800); try { XCHAT.log('fweb'); } catch (e) { }
+    try { XCHAT.log('fweb'); } catch (e) { }   /* 2026-11-17 文字の補足は出さない */
     SP.emergeFloor && SP.emergeFloor(w);
     if (TEST || DEV) console.log('FWEB touch', w.p.x.toFixed(1), w.p.z.toFixed(1));
   },
@@ -21320,6 +21320,26 @@ const XEXT2 = {
   const R0 = CMX.reset.bind(CMX); CMX.reset = function () { R0(); this.mkW = 0; }; }
 const SHOPFX = { update(dt) { IDLEC.update(dt); if (world.state !== 'play') return; BUZZ.update(dt); CANDLE.update(dt); DRINK.update(); STICK.update(dt); } };
 /* =========================================================
+   2026-11-17 不具合の手直し
+   ・1階から見上げた時（東階段の穴など）に、2階の物（蜘蛛の巣・ロッカー・照明など）が宙に見えないよう、2階の止まっている物を2階のまとまり（F2G）に入れる
+   ・迷路の日：机の上の小物が、あとから表示に戻って宙に浮いていた → 周の始まりにもう一度隠す
+   ・逆さ女が同じ場所で20秒動けなくなったら、血溜まりのワープで別の場所へ（東側の廊下の途中で、置き物に通り道の点がふさがれていた所は点をずらした）
+   ========================================================= */
+{ const r0 = scene.remove.bind(scene); scene.remove = function (...os) { for (const o of os) { if (o && o.parent && o.parent !== scene) o.parent.remove(o); else r0(o); } return scene; }; }
+const FLOORFIX = {
+  skip() { const s = new Set(); try { for (const o of [SG.root, woman.root, MANN.root, SP.wrap, URAH.root, avatar.root, camera]) if (o) s.add(o); for (const it of ITEM.list) if (it.s) s.add(it.s); } catch (e) { } return s; },
+  run() { const sk = this.skip(), v = new THREE.Vector3(), mv = [];
+    for (const o of scene.children) { if (o === F1G || o === F2G || o.isLight || sk.has(o) || o.userData.f2fix === false) continue; let mn = 1e9, n = 0, skin = false; o.traverse(m => { if (m.isSkinnedMesh || m.isLight) skin = true; if (m.isMesh || m.isSprite) { m.getWorldPosition(v); mn = Math.min(mn, v.y); n++; } }); if (!n || skin) continue; if (mn > LH + 0.05) mv.push(o); }
+    for (const o of mv) F2G.attach(o); if ((TEST || DEV) && mv.length) console.log('FLOORFIX moved', mv.length); },
+};
+{ const S0 = ITEM.shown.bind(ITEM); ITEM.shown = function (it) { const r = S0(it); if (!r) return r; if (it.lv === 1 && !F2G.visible) return false; if (it.lv === 0 && !F1G.visible) return false; return r; }; }
+{ const R0 = CMX.reset.bind(CMX); CMX.reset = function () { R0(); try { FLOORFIX.run(); } catch (e) { console.warn('FLOORFIX', e); } try { if (world.maze) for (const k in FURN.items) for (const g of FURN.items[k]) if (g.userData.mz) g.visible = false; } catch (e) { } this.wdP = null; this.wdStuck = 0; }; }
+{ const T0 = WARP.tick.bind(WARP); WARP.tick = function (W, dt) {
+    if (!this.on && world.state === 'play' && CH.state === 'off' && !W.scripted && !W.borrowed && !world.capture && !(typeof PHAN !== 'undefined' && PHAN.on) && womanOn()) { const C = CMX; C.wdAcc = (C.wdAcc || 0) + dt; if (C.wdAcc >= 1) { C.wdAcc = 0; const p = W.pos; if (C.wdP && Math.hypot(p.x - C.wdP.x, p.z - C.wdP.z) < 0.25) C.wdStuck = (C.wdStuck || 0) + 1; else C.wdStuck = 0; C.wdP = p.clone(); }
+      if ((C.wdStuck || 0) >= 20) { C.wdStuck = 0; const k = this.dest(W.pos); if (k) { const to = nodePos(k); this.on = { t: 0, ph: 'sink', from: W.pos.clone(), to, k }; this.spawn(W.pos); this.spawn(to); try { SND.splat ? SND.splat(W.pos) : SND.thud(V(W.pos.x, W.pos.y + 0.1, W.pos.z), 0.35); } catch (e) { } if (TEST || DEV) console.log('WARP stuck', k); } } }
+    else if (CMX) CMX.wdStuck = 0;
+    return T0(W, dt); }; }
+/* =========================================================
    2026-11-17 だいじなもの「小さいラジカセ」：ONにすると、少し音質を落とした「月の光」チップチューン版が小さく流れる（BGM程度）
    ・最初の4拍（9/8・付点4分＝0.818秒×4）はループから外す。流している間は、音で怪異が寄ってきやすい（10秒前後ごとに、自分の場所が音で知られる）
    ・初めて1本の動画で500いいね以上をとったあと、スタート画面で「500いいね おめでとうございます！」と一緒に渡す（初期はOFF）
@@ -21577,14 +21597,14 @@ const LOCKX = {
       lk.group.traverse(o => { if (o.isMesh && o.material) { o.material = o.material.clone(); o.material.color = new THREE.Color(o.material.map ? 0xa0544a : 0x7a3e36); } }); }
   },
   /* 割れた窓：枠のまわりにギザギザのガラスが残る */
-  remTex() { if (this.rt) return this.rt; const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'); g.fillStyle = 'rgba(190,205,215,.42)'; g.strokeStyle = 'rgba(235,242,248,.75)'; g.lineWidth = 1.5;
+  remTex() { if (this.rt) return this.rt; const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'); g.fillStyle = 'rgba(120,135,140,.26)'; g.strokeStyle = 'rgba(170,180,185,.35)'; g.lineWidth = 1.2;
     const edge = (pts) => { g.beginPath(); g.moveTo(...pts[0]); for (const p of pts.slice(1)) g.lineTo(...p); g.closePath(); g.fill(); g.stroke(); };
     for (let side = 0; side < 4; side++) { let t = 0; while (t < 256) { const w = 18 + Math.random() * 40, d = 10 + Math.random() * (Math.random() < 0.25 ? 95 : 40), m = t + w * (0.3 + Math.random() * 0.4); const P = side === 0 ? [[t, 0], [t + w, 0], [m, d]] : side === 1 ? [[256, t], [256, t + w], [256 - d, m]] : side === 2 ? [[t, 256], [t + w, 256], [m, 256 - d]] : [[0, t], [0, t + w], [d, m]]; edge(P); t += w; } }
-    g.strokeStyle = 'rgba(240,245,250,.5)'; g.lineWidth = 1; for (let i = 0; i < 10; i++) { g.beginPath(); const a = Math.random() * 256; g.moveTo(Math.random() < 0.5 ? 0 : 256, a); g.lineTo(60 + Math.random() * 136, 60 + Math.random() * 136); g.stroke(); }
+    g.strokeStyle = 'rgba(170,180,185,.25)'; g.lineWidth = 1; for (let i = 0; i < 10; i++) { g.beginPath(); const a = Math.random() * 256; g.moveTo(Math.random() < 0.5 ? 0 : 256, a); g.lineTo(60 + Math.random() * 136, 60 + Math.random() * 136); g.stroke(); }
     this.rt = new THREE.CanvasTexture(c); this.rt.colorSpace = THREE.SRGBColorSpace; return this.rt; },
   rems: [],
   remnant(pane) { try { if (pane.userData.rem) return; pane.geometry.computeBoundingBox(); const bb = pane.geometry.boundingBox, w = bb.max.x - bb.min.x, h = bb.max.y - bb.min.y; if (!(w > 0.05 && h > 0.05)) return;
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: this.remTex(), transparent: true, depthWrite: false, side: THREE.DoubleSide })); m.renderOrder = 3;
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshLambertMaterial({ map: this.remTex(), transparent: true, depthWrite: false, side: THREE.DoubleSide, color: 0x8a959a }));   /* 2026-11-17 光らない・白すぎない */ m.renderOrder = 3;
       pane.getWorldPosition(m.position); pane.getWorldQuaternion(m.quaternion); m.position.add(V((bb.min.x + bb.max.x) / 2, (bb.min.y + bb.max.y) / 2, 0).applyQuaternion(m.quaternion)); scene.add(m); pane.userData.rem = m; this.rems.push([pane, m]); } catch (e) { } },
   update() { for (const [p, m] of this.rems) m.visible = !p.visible; },
 };
