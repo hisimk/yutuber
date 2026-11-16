@@ -15131,7 +15131,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.62';
+const VERSION = '0.16.63';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -21183,6 +21183,120 @@ for (const w of Object.keys(XEXT.SEQ).concat(Object.keys(XEXT.NAME))) XCHAT.LIST
   const ids = Z.map((x, i) => { const id = 'cmx.zoom.' + i; CHAT_DICT.t[id] = x; return id; }); if (CHAT_DICT.c.bh_zoom_spam) CHAT_DICT.c.bh_zoom_spam.push(...ids); }
 /* 1分以上止まっていて戻った時の「おかえり」 */
 CHAT_DICT.c.still_back_long = ['おかえり', 'おかえりｗ', '待ってた'].map((x, i) => { const id = 'cmx.okaeri.' + i; CHAT_DICT.t[id] = [x, ['welcome back', 'welcome back lol', 'we were waiting'][i]]; return id; });
+/* =========================================================
+   2026-11-16 コメントの追加（3）：雑談・遊び方の記録・仕込み疑惑・1コメ争い・海外ニキ・考察班
+   ・遊んだ日時と結果はこの端末に残す（yt_plog_v1：直近20周）
+   ========================================================= */
+const PLOG = {
+  KEY: 'yt_plog_v1',
+  load() { try { const a = JSON.parse(localStorage.getItem(this.KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } },
+  add(e) { const a = this.load().filter(x => x.id !== e.id); a.push(e); try { localStorage.setItem(this.KEY, JSON.stringify(a.slice(-20))); } catch (er) { } },
+};
+const XEXT2 = {
+  MON: { woman: ['逆さ女', 'the Upside-down Woman'], spider: ['クモ女', 'Spider Woman'], mann: ['人体模型', 'the Anatomy Model'], urah: ['オフタリサマ', 'Ofutarisama'], naka: ['ナカヨシ', 'Nakayoshi'] },
+  L: {
+    anken: [['これ案件？', 'is this sponsored?']],
+    burst: [['怖い時ほどコメ増えるの草', 'the scarier it gets, the more comments lol'], ['怖くなるとコメ欄うるさくなるの草', 'chat gets so loud when it’s scary lol'], ['ビビるとみんな喋りだすｗ', 'everyone starts talking when scared lol'], ['怖い場面だけコメ速いｗ', 'chat only speeds up at the scary parts lol']],
+    prevCap: [['前回病院送りだったけど大丈夫そ？', 'you got sent to the hospital last time, you okay?'], ['前回の怪我もう治った？', 'healed up from last time?'], ['退院おめでとう', 'congrats on getting discharged'], ['また病院行きにならないでね', "don't end up in the hospital again"]],
+    prevHit: [['前回バズってたね', 'last one went viral'], ['前回の動画伸びてたね', 'last video did really well'], ['前回の神回から来ました', 'came here from your last banger'], ['前の動画おすすめに出てきた', 'your last video was in my recommendations']],
+    mon: [['月曜から心霊は重い', 'ghosts on a Monday is heavy'], ['週の始まりにこれ見てる', 'watching this to start the week']],
+    fri: [['花金に心霊スポット', 'haunted spot on a Friday night'], ['華の金曜日に何してんの', 'what are you doing on a Friday night']],
+    sun: [['明日仕事なのに見ちゃう', 'work tomorrow and I’m still watching'], ['日曜の夜に見るもんじゃない', 'not a Sunday night video'], ['明日が憂鬱すぎる', 'dreading tomorrow']],
+    late: [['何時だと思ってるの', 'do you know what time it is'], ['丑三つ時に見る動画じゃない', 'not a video for the witching hour']],
+    morn: [['朝から見るもんじゃない', 'not a morning video'], ['通勤中に見てる', 'watching on my commute']],
+    noon: [['お昼休みに見てる', 'watching on my lunch break'], ['ご飯食べながら見るな', "don't watch this while eating"]],
+    away: [['久しぶり！生きてた？', 'long time! you alive?'], ['待ってたよ', 'we were waiting'], ['失踪したかと思った', 'thought you disappeared'], ['更新止まってて心配した', 'got worried when uploads stopped']],
+    many: [['1日に何本投稿するんだよｗ', 'how many uploads a day lol'], ['投稿ペースえぐい', 'insane upload pace'], ['今日だけで何本目？', 'how many is this today?'], ['寝てる？', 'do you sleep?']],
+    regN: [['また{m}ｗ', '{m} again lol'], ['{name}、{m}と仲良しじゃん', '{name} and {m} are besties now'], ['{m}に好かれすぎ', '{m} really likes you'], ['{m}の常連', 'a regular of {m}']],
+    /* 仕込み疑惑 */
+    doubt: [['仕込みだろ', "that's staged"], ['ヤラセっぽい', 'looks scripted'], ['演出うますぎない？', 'isn’t the production too good?']],
+    defend: [['仕込みでこれは無理', "you can't stage that"], ['このクオリティで仕込みは逆にすごい', 'if that’s staged, it’s impressive'], ['この反応は本物', 'that reaction is real']],
+    sum: [['どっちでもいいから黙って見よ', 'whatever, just watch'], ['どっちでも怖いもんは怖い', 'scary is scary either way'], ['議論は後でやって', 'argue later']],
+    kaD: [['俺もそう思った', 'thought so too'], ['照明の位置おかしくない？', 'isn’t the lighting suspicious?']],
+    kaF: [['いつも見てたらわかる', 'you’d know if you watched every video'], ['アンチ乙', 'ok hater']],
+    yaji: [['コメ欄荒れてて草', 'chat is a warzone lol'], ['レスバ会場はここですか', 'is this the debate venue?'], ['本編より面白い', 'better than the video']],
+    shime: [['みんな仲良くしよ', 'everyone get along'], ['怪異よりコメ欄が怖い', 'chat is scarier than the ghosts']],
+    /* 1コメ争い */
+    c1: [['1コメ', 'first'], ['1', '1'], ['いちばん乗り', 'first!'], ['1get', '1get']],
+    c1ok: [['おめ', 'gz'], ['早すぎｗ', 'too fast lol']],
+    c1ng: [['1コメじゃなくて草', 'not first lol'], ['惜しい', 'so close']], c1ng2: [['残念2コメｗ', 'unlucky, 2nd lol']], c1self: [['くそっ', 'dang']],
+    c1all: [['全員1コメｗ', 'everyone is first lol']],
+  },
+  /* 海外ニキ：[外国語のコメント, 返し…]（英語版では日本語のコメントが海外の視聴者） */
+  INTL: {
+    woman: [['Is she upside down??', '逆さまじゃない？？'], [['翻訳：逆さじゃない？', 'Translation: is she upside down?'], ['英語ニキ助かる', 'thanks, Japanese viewer']]],
+    run: [['RUN!!!', '逃げて！！！'], [['海外勢も逃げろって言ってる', 'even the Japanese viewers are saying run']]],
+    squat: [["LOL they're doing squats", '屈伸してるｗｗ'], [['海外にも屈伸バレてるｗ', 'even Japan noticed the squats lol']]],
+    school: [['Japanese schools are scary', '海外の学校もこんな感じなの？'], [['日本の学校はみんなこうじゃないぞｗ', 'not every school is like this lol']]],
+    hello: [['Hello from Brazil', '日本から見てます'], [['地球の裏から見てる', 'watching from the other side of the planet'], ['ようこそ', 'welcome']]],
+    what: [['???', '？？？'], [['海外ニキも困惑してる', 'even the overseas viewers are confused']]],
+  },
+  ks1: [['あのバリケード、中のものを出さないためだったんじゃ', 'was that barricade meant to keep something in?'], ['守るためじゃなかったのか', 'so it wasn’t there to protect us?'], ['考察が怖い方向に行ってる', 'the theories are getting scary']],
+  ks2: [['最近、変なコメントの人いるよね', 'there’s been a weird commenter lately'], ['BANしても来る', 'they come back even after bans'], ['あのアカウント、人間？', 'is that account even human?']],
+  chat(d) {
+    if (!d || !d.items || !d.end) return; const E = d.end.R || 0; if (E < 6) return;
+    const R = chatRng((d.seed ^ 0x3c6ef372) >>> 0), U = Math.max(6, (d.users || []).length || 12), maxR = E + (d.end.ec ? 3 : -0.2), ev = CHATLOG.ev || [], nm = d.name || '', rk = d.rk || 0, L = this.L, out = [];
+    const pk = a => a[Math.floor(R() * a.length)], users = n => { const a = []; n = Math.min(n, U); while (a.length < n) { const u = Math.floor(R() * U); if (!a.includes(u)) a.push(u); } return a; };
+    const push = (t, l, u, rep) => { if (t <= 0.3 || t > maxR || !l) return false; let ja = l[0], en = l[1]; if (rep) for (const k in rep) { ja = ja.split('{' + k + '}').join(rep[k][0]); en = en.split('{' + k + '}').join(rep[k][1]); } out.push([Math.round(t * 100) / 100, u ?? Math.floor(R() * U), 'xe2', ja, en]); return true; };
+    const seq = (t, ls, us) => { us = us || users(ls.length); ls.forEach((l, i) => { push(t, l, us[i]); t += 2 + R() * 2; }); };
+    const all = () => d.items.concat(out).map(x => x[0]);
+    /* 静かな所：前後2.5秒のコメントがいちばん少ない時刻 */
+    const quiet = (a, b) => { a = Math.max(1, a); b = Math.min(maxR - 1, b); if (b <= a) return null; const ts = all(); let best = null, bn = 1e9; for (let i = 0; i < 14; i++) { const t = a + R() * (b - a), n = ts.filter(x => Math.abs(x - t) < 2.5).length; if (n < bn) { bn = n; best = t; } } return best; };
+    const early = () => quiet(4, Math.max(14, Math.min(45, E * 0.4)));
+    const ORD = { PH: 7, SS: 6, S: 5, A: 4, B: 3, C: 2, D: 1 }, END = ['alive', 'chaseOut', 'battery1', 'urahEscape', 'memoHint'];
+    const scary = evidence.filter(a => !END.includes(a.key) && !/^mic|^chase|^eq/.test(a.key || '') && (ORD[rankOf(a)] || 0) >= 5 && a.t > 2 && a.t < E - 2);
+    /* 遊び方の記録（今の周を除く） */
+    const id = world.runId || 'x', now = new Date(), log = PLOG.load().filter(x => x.id !== id), prev = log[log.length - 1];
+    const cap = world.state === 'over' && world.capBy ? (world.capBy === 'woman' && PHAN.on ? 'naka' : world.capBy) : null;
+    try { PLOG.add({ id, at: now.getTime(), cap, likes: d.P | 0 }); } catch (e) { }
+    /* ① 1コメ争い（ランクが高いほど人数が多い） */
+    if (R() < 0.5 + rk * 0.07) {
+      const n = [1, 2, 2, 3, 4, 6][rk] + (rk >= 5 ? Math.floor(R() * 3) : 0), us = users(n + 3), ts0 = d.items.map(x => x[0]).sort((a, b) => a - b); let t = 0.4 + R() * 0.6; const cl = [];
+      for (let i = 0; i < n; i++) { const l = rk >= 5 && R() < 0.75 ? L.c1[1] : pk(L.c1); push(t, l, us[i]); cl.push({ t, u: us[i], r: ts0.filter(x => x < t).length + cl.length + 1 }); t += 0.15 + R() * 0.5; }
+      let rt = t + 1 + R() * 0.8, ri = n; const w = cl.find(c => c.r === 1);
+      if (rk >= 5 && n >= 6) push(rt + 0.6, L.c1all[0], us[ri++]);
+      else { if (w) { push(rt, pk(L.c1ok), us[ri++]); rt += 1 + R(); } let k = 0; for (const c of cl) { if (c.r < 2 || c.r > 3 || k >= 2) continue; k++; if (R() < 0.3) push(rt, L.c1self[0], c.u); else push(rt, pk(c.r === 2 ? L.c1ng.concat(L.c1ng2) : L.c1ng), us[ri++ % us.length]); rt += 0.9 + R() * 1.2; } }
+    }
+    /* ② 遊び方の記録：久しぶり・1日に何周も・同じ怪異に何度も（それぞれ1周1回まで） */
+    if (prev && now.getTime() - prev.at >= 7 * 864e5) push(early(), pk(L.away));
+    const day = x => new Date(x).toDateString(); if (log.filter(x => day(x.at) === now.toDateString()).length + 1 >= 5 && R() < 0.6) push(early(), pk(L.many));
+    { const last5 = log.slice(-4).map(x => x.cap).concat([cap]), cnt = {}; for (const c of last5) if (c) cnt[c] = (cnt[c] || 0) + 1; const c0 = cap && cnt[cap] >= 3 ? cap : null;
+      const cP = c0 || Object.keys(cnt).find(k => log.slice(-5).filter(x => x.cap === k).length >= 3);
+      if (cP && this.MON[cP] && R() < 0.6) { const ls = L.regN.filter(l => nm || !l[0].includes('{name}')), rep = { m: this.MON[cP], name: [nm, nm] }; push(c0 ? E + 0.6 + R() * 1.2 : early(), pk(ls), null, rep); } }
+    /* ③ 前の周の結果 */
+    if (prev) { const pr = log.slice(-6, -1).map(x => x.likes || 0), avg = pr.length ? pr.reduce((a, b) => a + b, 0) / pr.length : 0;
+      if (prev.cap && R() < 0.5) push(early(), pk(L.prevCap));
+      else if ((pr.length ? prev.likes >= Math.max(400, avg * 1.5) : prev.likes >= 700) && R() < 0.5) push(early(), pk(L.prevHit)); }
+    /* ④ 曜日・時間帯（実際の時計） */
+    if (R() < 0.35) { const h = now.getHours(), w = now.getDay(); const g = h < 5 ? 'late' : (w === 0 && h >= 18) ? 'sun' : (w === 5 && h >= 18) ? 'fri' : h < 10 ? 'morn' : h === 12 ? 'noon' : w === 1 ? 'mon' : null; if (g) push(early(), pk(L[g])); }
+    /* ⑤ これ案件？（100周に1回くらい・特に意味はない） */
+    if (R() < 0.01) push(quiet(8, E - 3), L.anken[0]);
+    /* ⑥ 怖い場面でコメントが増えた（5秒の間に、ふだんの2.5倍以上） */
+    { const ts = d.items.filter(x => x[1] !== -1).map(x => x[0]).sort((a, b) => a - b), mean = ts.length / E * 5; let bt = null, bc = 0; for (let i = 0; i < ts.length; i++) { let j = i; while (j < ts.length && ts[j] - ts[i] < 5) j++; if (j - i > bc) { bc = j - i; bt = ts[j - 1]; } }
+      if (bt !== null && bc >= Math.max(8, mean * 2.5) && R() < 0.6) push(bt + 1 + R() * 1.5, pk(L.burst)); }
+    /* ⑦ 仕込み疑惑（ランクの高い撮れ高のあと・数周に1回。電話の「しこみ？w」が出た周はなし） */
+    if (scary.length && R() < 0.3 && !d.items.some(x => x[3] === 'しこみ？w' || x[3] === 'ヤラセ乙')) {
+      const a = pk(scary), t0 = a.t + 2.5 + R() * 1.5, busy = d.items.filter(x => x[0] > a.t && x[0] < a.t + 8).length >= 8;
+      let n = [3, 3, 4, 4, 6, 6][rk] + (rk >= 2 ? Math.floor(R() * (rk >= 4 ? 3 : 2)) : 0) + (busy ? 1 + Math.floor(R() * 2) : 0);
+      const ls = [pk(L.doubt), pk(L.defend)], ex = [L.kaD, L.kaF, L.yaji, L.kaD, L.kaF, L.yaji], used = new Set();
+      for (let i = 0; i < n - 3; i++) { const g = ex[i % ex.length]; let l = pk(g), k = 0; while (used.has(l) && k++ < 5) l = pk(g); used.add(l); ls.push(l); }
+      ls.push(pk(n >= 5 && R() < 0.5 ? L.shime : L.sum)); seq(t0, ls);
+    }
+    /* ⑧ 海外ニキ（大物・伝説の時にたまに） */
+    if (rk >= 4 && R() < 0.3) { const c = []; const sq = ev.find(e => e.k === 'squat'), mw = ev.find(e => e.k === 'mk' && e.w === 'W'), ch = evidence.find(e => e.key === 'chaseRec');
+      if (sq) c.push(['squat', sq.t + 1]); if (mw) c.push(['woman', mw.t + 1.5]); if (ch) c.push(['run', ch.t + 1]);
+      if (!c.length || R() < 0.3) c.push([pk(['school', 'hello', 'what']), quiet(8, E - 4)]);
+      const [k, t] = pk(c); if (t !== null) { const P = this.INTL[k], us = users(2); push(t, P[0], us[0]); push(t + 2 + R() * 1.5, pk(P[1]), us[1]); } }
+    /* ⑨ 考察班：バリケードを壊した周（最初の1回だけ）・荒らしコメントが出た周（数周に1回） */
+    { const b = evidence.find(e => e.key === 'barBreak'); let v = null; try { v = localStorage.getItem('yt_ks_bar'); } catch (e) { }
+      if (b && (!v || v === id)) { seq(b.t + 9 + R() * 4, this.ks1); try { localStorage.setItem('yt_ks_bar', id); } catch (e) { } } }
+    if ((PHAN.runSt === 1 || PHAN.runSt === 2) && R() < 0.3) { const tr = d.items.filter(x => x[2] === 'troll').sort((a, b) => a[0] - b[0])[0]; if (tr) seq(tr[0] + 5 + R() * 4, this.ks2); }
+    if (out.length) d.items = d.items.concat(out).sort((a, b) => a[0] - b[0]);
+  },
+};
+{ const C0 = CHAT.build.bind(CHAT); CHAT.build = function (P) { const d = C0(P); try { XEXT2.chat(d); } catch (e) { console.warn('追加のコメント3', e); } return d; }; }
+{ const U0 = CMX.update.bind(CMX); CMX.update = function (dt) { U0(dt); if (world.state === 'play' && rec.active && !this.mkW && typeof CH !== 'undefined' && CH.state !== 'off') { this.mkW = 1; CHATLOG.add('mk', { w: 'W' }); } };
+  const R0 = CMX.reset.bind(CMX); CMX.reset = function () { R0(); this.mkW = 0; }; }
 const SHOPFX = { update(dt) { IDLEC.update(dt); if (world.state !== 'play') return; BUZZ.update(dt); CANDLE.update(dt); DRINK.update(); STICK.update(dt); } };
 /* =========================================================
    2026-11-16 投げ銭（第2弾）：中堅から。コメントなしで、色の帯に「名前 ¥金額」だけ
