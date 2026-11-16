@@ -9158,6 +9158,7 @@ const ITEM = {
     let sp = pick(spots); const f = TEST && new URLSearchParams(location.search).get('key'); if (f) sp = spots.find(x => x[0] === f) || sp;
     this.keyAt = sp[0];
     for (const it of this.list) { it.taken = false; it.near = false; this.skin(it); }
+    for (const [id, p] of [['battery', 0.4], ['ofuda', 0.5]]) { const it = this.get(id); if (it && !(Math.random() < p || WF('fix' + id))) { it.taken = true; it.s.visible = false; } }   /* 2026-11-16 毎回あった物は出る確率を下げる（放送室のバッテリー40%・音楽室のお札50%）。鍵・おまもり・楽譜はそのまま */
     const k = this.get('key'); k.lv = sp[2];
     if (sp[0] === 'bed') { const b = F2.ready && F2.beds.find(x => x.i === F2.plan.bedClosed); if (b) k.pos.set(b.top.x - 0.25, b.top.y + 0.1, b.top.z); else { this.keyAt = 'desk'; k.pos.copy(spots[2][1]); k.lv = 0; } }
     else k.pos.copy(sp[1]);
@@ -9175,7 +9176,7 @@ const ITEM = {
       if (this.keyAt !== 'lib') pool.lib.push({ type: 'lib', p: V(-8.75, LH + 0.14, -10.45) }); pool.lib.push({ type: 'lib', p: V(-8.75, LH + 0.14, -15.55) });
       pool.stairs.push({ type: 'stairs', p: V(-3.25, 0.13, -6.85) });
       const W = { locker: 4, bed: 1.5, desk: 2, lib: 1.5, stairs: 1 };
-      const ids = this.LK_IDS.filter(id => !(id === 'memcard' && PERM.has('fixcam'))).sort(() => Math.random() - 0.5), n = all ? ids.length : (chance(0.5) ? 3 : 4);   // 2026-11-14 定点カメラを持っていたらメモリーカードは出ない（録画できるのは合計135秒まで）
+      const ids = this.LK_IDS.filter(id => !(id === 'memcard' && PERM.has('fixcam'))).sort(() => Math.random() - 0.5), n = all ? ids.length : pickW([[1, 0.45], [2, 0.35], [3, 0.2]]);   /* 2026-11-16 隠れて出てくる道具は1周1〜3個（3〜4個から減らした） */   // 2026-11-14 定点カメラを持っていたらメモリーカードは出ない（録画できるのは合計135秒まで）
       for (const id of this.LK_IDS) { const it = this.get(id); it.lk = null; it.spot = null; it.taken = true; }
       for (const id of ids.slice(0, n)) {
         const types = Object.keys(pool).filter(t => pool[t].length && (!force || t === force || (all && t === 'locker'))); if (!types.length) break;
@@ -15071,7 +15072,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.44';
+const VERSION = '0.16.45';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -15114,7 +15115,7 @@ const NOTE = {
   q: [], cur: null,
   el() { let el = $('#notePop'); if (!el) { el = document.createElement('div'); el.id = 'notePop'; document.body.appendChild(el); for (const t of ['pointerdown', 'touchstart', 'touchmove', 'click']) el.addEventListener(t, e => e.stopPropagation(), { passive: t !== 'click' }); } return el; },
   /* o: { sub（小見出し・HTML）, body（段落の配列・HTML。大事な所は <b class="nY">黄</b> <b class="nR">赤</b>）, note（小さな注意書き）, ok（わかった）, x（×で閉じる。無ければ×は出さない） } */
-  show(o) { this.q.push(typeof o === 'string' ? { body: [o] } : o); if (!this.cur) this.next(); },
+  show(o) { this.q.push(typeof o === 'string' ? { body: [o] } : o); if (!this.cur || !this.el().classList.contains('show')) { if (this.cur) this.q.unshift(this.cur); this.cur = null; this.next(); } },
   next() {
     const el = this.el(), o = this.q.shift(); this.cur = o || null; if (!o) { el.classList.remove('show'); return; }
     const en = LANG === 'en', body = (o.body || []).map(p => `<p>${p}</p>`).join(''), long = (o.body || []).join('').replace(/<[^>]+>/g, '').length > 48;
@@ -19155,10 +19156,10 @@ const WINDAMB = {
 };
 const NEWWING = {
   reset() { TALLY.reset(); BROOMEV.reset(); CHBLOOD.reset(); NWX.reset(); ROOMDECO.build(); SCIRM.reset(); ARTRM.reset(); PROPS3D.apply(); PMASK.reset(); DUCT.reset(); BCAST.reset(); URAH.reset(); KEHAI.reset(); this.items(); },
-  items() {   /* 予備バッテリー（80%）と石膏のお面（毎回） */
+  items() {   /* 予備バッテリー（35%）と石膏のお面（35%）。2026-11-16 下げた */
     for (const [id, p] of [['sparebat', V(0, -50, 0)], ['pmask', V(0, -50, 0)]]) if (!ITEM.get(id)) ITEM.add(id, p, 1);
-    const sb = ITEM.get('sparebat'); sb.lk = null; sb.spot = null; if (WF('sparebat') || chance(0.8)) { sb.taken = false; sb.lv = 1; sb.pos.copy(pick(SCIRM.spots())); } else { sb.taken = true; sb.pos.set(0, -50, 0); }
-    const mk = ITEM.get('pmask'); mk.taken = false; mk.lv = 1; mk.pos.copy(ARTRM.maskP); ITEM.have.pmask = false; ITEM.skin(sb); ITEM.skin(mk);
+    const sb = ITEM.get('sparebat'); sb.lk = null; sb.spot = null; if (WF('sparebat') || chance(0.35)) { sb.taken = false; sb.lv = 1; sb.pos.copy(pick(SCIRM.spots())); } else { sb.taken = true; sb.pos.set(0, -50, 0); }
+    const mk = ITEM.get('pmask'); mk.taken = !(WF('maskspot') || chance(0.35)); mk.lv = 1; mk.pos.copy(ARTRM.maskP); if (mk.taken) mk.s.visible = false;   /* 2026-11-16 石膏のお面は毎回→35% */ ITEM.have.pmask = false; ITEM.skin(sb); ITEM.skin(mk);
     if (WF('mask') || (SHOP.carried || []).includes('pmask')) ITEM.have.pmask = true; SHOP.placePicks();   /* 2026-11-16 持ち込んだお面／理科室のケミカルライト・ろうそく */
   },
   update(dt) { WOFF = []; LASTSEC.update(); TALLY.update(dt); BROOMEV.update(dt); ENEMY.update(dt); CHBLOOD.update(dt); NWX.update(dt); WING.update(dt); SCIRM.update(dt); ARTRM.update(dt); PMASK.update(dt); DUCT.update(dt); BCAST.update(dt); },
@@ -20272,7 +20273,9 @@ const SHOP = {
   endRun(likes) {
     if (this.ended === world.runId) return this.last; this.ended = world.runId; const d = this.load(), r = this.runRank ?? this.rank(), cap = world.state === 'over';
     for (const id of this.carried || []) { const used = id === 'bell' || (id === 'recorder' && (ITEM.tootN | 0) > 0) || (id === 'ofuda' ? !(ITEM.have.ofuda > 0) : !ITEM.have[id]) || ['spray', 'beads'].includes(id); if (used) this.useOne(id); }
-    for (const id of ['chem', 'candle']) if (ITEM.have[id] && !(this.carried || []).includes(id)) d.own[id] = (d.own[id] | 0) + 1;
+    /* 2026-11-16 校舎で拾ったショップの道具は持ち帰れる：使い切りは使わずに帰れば持ち物に足す（お札は枚数ぶん）、見た目の物は自分の物になる */
+    const got = []; for (const it of ECON.items) { const id = it[0], h = ITEM.have[id]; if (!h || (this.carried || []).includes(id)) continue; if (it[3] === 'look') { if (!d.look[id]) { d.look[id] = true; got.push(id); } } else { const n = typeof h === 'number' ? h : 1; d.own[id] = (d.own[id] | 0) + n; got.push(id); } }
+    this.brought = got;
     const k = cap ? ECON.capture : 1, tipRe = /^¥[\d,]+$/, cm = (typeof CHAT !== 'undefined' && CHAT.cur && CHAT.cur.items || []).filter(x => !x.some(v => typeof v === 'string' && tipRe.test(v))).length;   /* 投げ銭の帯は数えない */
     const likeY = Math.round(Math.max(0, likes) * ECON.like * ECON.mul[r]), cmtY = Math.round(cm * ECON.cmt[r] * ECON.mul[r]), base = likeY + cmtY, tips = typeof TIPS !== 'undefined' ? TIPS.sum() : 0, gross = base + tips, fee = cap ? Math.round(base * (1 - k)) : 0, yen = gross - fee;   /* 2026-11-16 襲われた時は「医療費」として、いいねとコメントの分の半分を引く（投げ銭は対象外） */
     d.yen += yen; this.save(); this.last = { yen, likes, mul: ECON.mul[r], cap, tips, base, likeY, cmtY, cm, per: ECON.cmt[r], fee }; if (TEST || DEV) console.log('SHOP run', JSON.stringify(this.last)); return this.last;
@@ -20281,7 +20284,8 @@ const SHOP = {
   used(id) { },
   /* ── 結果画面の左上：収益（2行）。タップで内訳 */
   showRes(likes) {
-    const L = this.endRun(likes), el = $('#permIcons'), en = LANG === 'en'; el.innerHTML = `<div id="resYen"><div class="ryL">${en ? 'Revenue' : '収益'}</div><div class="ryV">+0${en ? ' yen' : '円'}</div></div><div id="resCm"><div class="ryL">${en ? 'Comments' : 'コメント'}</div><div class="ryV">${L.cm.toLocaleString()}${en ? '' : '件'}</div></div>`;   /* 2026-11-16 コメント数も左上に */
+    const L = this.endRun(likes), el = $('#permIcons'), en = LANG === 'en';
+    if ((this.brought || []).length && this.broughtRun !== world.runId) { this.broughtRun = world.runId; const B = this.brought; setTimeout(() => NOTE.show({ sub: en ? 'Brought back' : '持ち帰った物', body: [B.map(id => `<b class="nY">${TR(ITEM.defs[id] ? ITEM.defs[id].name : id)}</b>${YTAG.tag(id)}`).join('<br>'), en ? 'Added to your bag.' : '持ち物に入りました。'] }), 1200); }   /* 2026-11-16 校舎で拾って持ち帰った物を知らせる */ el.innerHTML = `<div id="resYen"><div class="ryL">${en ? 'Revenue' : '収益'}</div><div class="ryV">+0${en ? ' yen' : '円'}</div></div><div id="resCm"><div class="ryL">${en ? 'Comments' : 'コメント'}</div><div class="ryV">${L.cm.toLocaleString()}${en ? '' : '件'}</div></div>`;   /* 2026-11-16 コメント数も左上に */
     const v = el.querySelector('.ryV'), t0 = performance.now(), dur = 900, f = () => { const k = Math.min(1, (performance.now() - t0) / dur); v.textContent = '+' + Math.round(L.yen * k * (2 - k)).toLocaleString() + (en ? ' yen' : '円'); if (k < 1) requestAnimationFrame(f); }; requestAnimationFrame(f);
     el.onclick = e => { e.stopPropagation(); const c = '', f = n => n.toLocaleString(); { const b0 = $('#resBrk'); if (b0 && b0.classList.contains('show')) { b0.classList.remove('show'); return; } }   /* 2026-11-16 もう一度タップで閉じる */   /* 2026-11-16 内訳にコメントの分も */
       const brk = $('#resBrk') || (() => { const b = document.createElement('div'); b.id = 'resBrk'; document.body.appendChild(b); return b; })(), say = (m, ms) => { brk.innerHTML = m; brk.classList.add('show'); brk.onclick = ev => { ev.stopPropagation(); brk.classList.remove('show'); }; };   /* 結果画面の上に出す（toast は結果画面の下に隠れていた） */
