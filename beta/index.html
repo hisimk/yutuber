@@ -360,6 +360,7 @@
   .ytag{display:inline-block;font-size:10px;font-weight:700;line-height:1.5;border:1px solid;border-radius:5px;padding:0 5px;margin-left:6px;vertical-align:1px;white-space:nowrap;font-style:normal}.ytag.use{color:#c4a56c;border-color:rgba(196,165,108,.5);background:rgba(196,165,108,.1)}.ytag.perm{color:#8db0c0;border-color:rgba(141,176,192,.5);background:rgba(141,176,192,.1)}.ytag.in{color:#bdb8ae;border-color:rgba(189,184,174,.45)}#imTitle .ytag{font-size:12px;vertical-align:3px;letter-spacing:0}.yhow{font-style:normal;color:#d6d0c4;font-weight:700}
   .uiIc{width:15px;height:15px;vertical-align:-2px;margin-right:5px;opacity:.74}
   #shopRow{display:flex;gap:8px;margin:12px auto 0;max-width:100%}#shopRow #shopBtn{flex:1;margin:0;padding:0 8px;white-space:nowrap;display:flex;align-items:center;justify-content:center}#shopRow #bagBtn{flex:none;width:44px;height:44px;padding:0;margin:0;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .bagTabs{display:flex;gap:6px;padding:8px 12px 2px}.bagTabs button{flex:1;padding:8px 6px;border-radius:9px;background:#26262a;color:#bbb;border:1px solid #3a3a40;font-weight:700;font-size:13px}.bagTabs button.on{background:#ffd34d;color:#1a1a1a;border-color:#ffd34d}#invTabs{padding:4px 0 8px}
   #bagUI{position:fixed;inset:0;z-index:72;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:16px}#bagUI.show{display:flex}
   #shopAsk{position:fixed;inset:0;z-index:74;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:24px}#shopAsk.show{display:flex}
   #shopAsk .raBox{width:100%;max-width:300px;background:#151517;border:1px solid #333338;border-radius:16px;padding:18px;text-align:center;color:#fff}#shopAsk img{width:64px;height:64px;object-fit:contain}
@@ -15134,7 +15135,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.68';
+const VERSION = '0.16.69';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -21304,6 +21305,60 @@ const XEXT2 = {
 { const U0 = CMX.update.bind(CMX); CMX.update = function (dt) { U0(dt); if (world.state === 'play' && rec.active && !this.mkW && typeof CH !== 'undefined' && CH.state !== 'off') { this.mkW = 1; CHATLOG.add('mk', { w: 'W' }); } };
   const R0 = CMX.reset.bind(CMX); CMX.reset = function () { R0(); this.mkW = 0; }; }
 const SHOPFX = { update(dt) { IDLEC.update(dt); if (world.state !== 'play') return; BUZZ.update(dt); CANDLE.update(dt); DRINK.update(); STICK.update(dt); } };
+/* =========================================================
+   2026-11-17 捕まった周は道具を失う／持ち物を「もちもの」「だいじなもの」のタブに／銀の盾・金の盾
+   ・捕まった周：その周に持ち込んだ道具と、校舎で拾った道具をすべて失う（招き猫の白・黒も）。結果画面で失った物を知らせる
+   ・だいじなもの（ランクの機材・シュン足・スパイダーセンス・赤いマント・見た目の物）は失わない
+   ・銀の盾（中堅：持ち込み2つ）／金の盾（大物：持ち込み3つ）：持ち込むと、一緒に持ち込んだ道具を1つ／2つ守る。盾は失わない。拾った道具は守れない
+   ・すでにそのランクの人には、次にスタート画面を開いた時に渡す（お知らせ）
+   ========================================================= */
+const SHIELD = {
+  ids: ['shieldS', 'shieldG'], N: { shieldS: 1, shieldG: 2 },
+  icon(gold) { const c = document.createElement('canvas'); c.width = c.height = 192; const g = c.getContext('2d'); const gr = g.createLinearGradient(40, 20, 150, 180);
+    if (gold) { gr.addColorStop(0, '#fff2b0'); gr.addColorStop(0.45, '#e2b23a'); gr.addColorStop(1, '#8a5a12'); } else { gr.addColorStop(0, '#ffffff'); gr.addColorStop(0.45, '#c4c8cc'); gr.addColorStop(1, '#6c7176'); }
+    const sh = (s) => { g.beginPath(); g.moveTo(96, 18 + s); g.lineTo(162 - s, 40 + s); g.bezierCurveTo(160 - s, 112, 132, 152 - s, 96, 176 - s); g.bezierCurveTo(60, 152 - s, 32 + s, 112, 30 + s, 40 + s); g.closePath(); };
+    g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowBlur = 10; sh(0); g.fillStyle = gr; g.fill(); g.shadowBlur = 0; g.lineWidth = 5; g.strokeStyle = gold ? '#6e4708' : '#4c5054'; g.stroke(); sh(14); g.lineWidth = 3; g.strokeStyle = gold ? 'rgba(255,240,180,.8)' : 'rgba(255,255,255,.8)'; g.stroke();
+    g.fillStyle = gold ? '#7a4e0a' : '#50555a'; g.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 13 : 30; g.lineTo(96 + Math.cos(a) * r, 92 + Math.sin(a) * r); } g.closePath(); g.fill(); return c.toDataURL(); },
+  /* ランクに届いていたら渡す（1回だけ・お知らせ） */
+  grant() { try { const d = SHOP.load(), r = SHOP.rank(), got = [];
+      if (r >= 2 && !d.shS) { d.shS = 1; d.own.shieldS = 1; got.push('shieldS'); } if (r >= 4 && !d.shG) { d.shG = 1; d.own.shieldG = 1; got.push('shieldG'); }
+      if (!got.length) return; SHOP.save(); const en = LANG === 'en';
+      NOTE.show({ sub: en ? 'You got a shield' : '盾をもらいました', body: [got.map(id => `<b class="nY">${TR(ITEM.defs[id].name)}</b>`).join('<br>'), en ? 'If you get caught, you lose the tools you brought in and the ones you picked up. Bring a shield to protect the tools you brought with it (it uses one slot). The shield itself is never lost. Tools picked up in the school are not protected.' : '怪異に捕まると、持ち込んだ道具と校舎で拾った道具を失います。盾を持ち込むと、一緒に持ち込んだ道具を守れます（持ち込み枠を1つ使います）。盾そのものはなくなりません。校舎で拾った道具は守れません。'] }); } catch (e) { console.warn('SHIELD', e); } },
+};
+ECON.items.push(['shieldS', 0, 2, 'use'], ['shieldG', 0, 4, 'use']); YTAG.KEEP.push('shieldS', 'shieldG'); INV.ids.push('shieldS', 'shieldG');
+ITEM.defs.shieldS = { name: '銀の盾', desc: '持ち込むと、怪異に捕まっても、一緒に持ち込んだ道具1つを失わない。盾はなくならない（校舎で拾った道具は守れない）。', size: 0.2 };
+ITEM.defs.shieldG = { name: '金の盾', desc: '持ち込むと、怪異に捕まっても、一緒に持ち込んだ道具2つを失わない。盾はなくならない（校舎で拾った道具は守れない）。', size: 0.2 };
+ITEM_ICON2.shieldS = ITEM_IMG.shieldS = SHIELD.icon(false); ITEM_ICON2.shieldG = ITEM_IMG.shieldG = SHIELD.icon(true);
+Object.assign(EN, { '銀の盾': 'Silver Shield', '金の盾': 'Gold Shield', 'もちもの': 'Items', 'だいじなもの': 'Key items', '持ち込むと、怪異に捕まっても、一緒に持ち込んだ道具1つを失わない。盾はなくならない（校舎で拾った道具は守れない）。': 'Bring it in and, even if caught, you keep 1 tool you brought with it. The shield is never lost (it can’t protect tools picked up in the school).', '持ち込むと、怪異に捕まっても、一緒に持ち込んだ道具2つを失わない。盾はなくならない（校舎で拾った道具は守れない）。': 'Bring it in and, even if caught, you keep 2 tools you brought with it. The shield is never lost (it can’t protect tools picked up in the school).', 'ここにはまだ何もない': 'Nothing here yet' });
+/* 捕まった周：失う物を決めてから、いつもの終わりの処理（拾った物は持ち帰らない） */
+{ const E0 = SHOP.endRun.bind(SHOP); SHOP.endRun = function (likes) {
+    if (this.ended === world.runId) return E0(likes); const cap = world.state === 'over'; this.lost = []; this.kept = [];
+    if (cap) { const car = (this.carried || []).slice(), n = car.reduce((a, id) => a + (SHIELD.N[id] || 0), 0); let prot = n;
+      const lose = []; for (const id of car) { if (SHIELD.ids.includes(id)) continue; const usedUp = id === 'bell' || (id === 'recorder' && (ITEM.tootN | 0) > 0) || (id === 'ofuda' ? !(ITEM.have.ofuda > 0) : !ITEM.have[id]) || ['spray', 'beads'].includes(id); if (usedUp) continue; if (prot > 0) { prot--; this.kept.push(id); continue; } lose.push(id); }
+      const dd = this.load(); for (const it0 of ECON.items) { const id = it0[0], h = ITEM.have[id]; if (!h || SHIELD.ids.includes(id) || (it0[3] === 'look' && dd.look[id])) continue; const inC = car.includes(id); const extra = inC ? (id === 'ofuda' ? (h | 0) - 1 : 0) : (typeof h === 'number' ? h : 1); if (extra > 0) { this.lost.push(id); if (id === 'ofuda') ITEM.have.ofuda = inC ? 1 : 0; else ITEM.have[id] = false; } }   /* 拾った物：持ち帰らない */
+      const r = E0(likes); for (const id of lose) { this.useOne(id); if (!this.lost.includes(id)) this.lost.push(id); } this.brought = []; this.save(); if (TEST || DEV) console.log('LOSS lost', this.lost.join(','), 'kept', this.kept.join(',')); return r; }
+    return E0(likes); }; }
+{ const S0 = SHOP.showRes.bind(SHOP); SHOP.showRes = function (likes) { const r = S0(likes); const L = this.lost || [];
+    if (world.state === 'over' && this.lostRun !== world.runId) { this.lostRun = world.runId; const en = LANG === 'en', K = this.kept || [];
+      setTimeout(() => NOTE.show({ sub: en ? 'Lost items' : '失った道具', body: [L.length ? L.map(id => `<b class="nR">${TR(ITEM.defs[id] ? ITEM.defs[id].name : id)}</b>`).join('<br>') : (en ? 'Nothing was lost.' : '失った道具はありません。'), ...(K.length ? [(en ? 'Protected by the shield: ' : '盾で守った道具：') + K.map(id => `<b class="nY">${TR(ITEM.defs[id].name)}</b>`).join('・')] : []), en ? 'When you get caught, you lose the tools you brought in and the ones you picked up. Key items are never lost.' : '捕まると、持ち込んだ道具と校舎で拾った道具を失います。だいじなものは失いません。'] }), 1300); }
+    return r; }; }
+/* スタート画面を開いた時に盾を渡す */
+{ const T0 = SHOP.title.bind(SHOP); SHOP.title = function () { const r = T0(); if (world.state === 'title') setTimeout(() => SHIELD.grant(), 400); return r; }; }
+/* 持ち物（スタート画面）：「もちもの」「だいじなもの」のタブ */
+{ const B0 = SHOP.openBag.bind(SHOP); SHOP.openBag = function () { B0(); const el = $('#bagUI'), list = el.querySelector('.shList'); if (!list) return; const en = LANG === 'en'; this.bagTab = this.bagTab || 'm';
+    const secs = [...list.children]; let cur = 'm'; const groups = { m: [], d: [] }; for (const c of secs) { if (c.classList.contains('shSec')) cur = groups.m.length ? 'd' : 'm'; groups[cur].push(c); }
+    for (const c of groups.m) if (c.classList.contains('shSec')) c.querySelector('small') && (c.querySelector('small').textContent += en ? ' If you get caught, you lose what you brought in (a shield protects it).' : '捕まると、持ち込んだ道具はなくなります（盾で守れます）。');
+    const bar = document.createElement('div'); bar.className = 'bagTabs'; bar.innerHTML = `<button data-t="m">${TR('もちもの')}</button><button data-t="d">${TR('だいじなもの')}</button>`; list.before(bar);
+    const show = t => { this.bagTab = t; for (const k of ['m', 'd']) for (const c of groups[k]) c.style.display = k === t ? '' : 'none'; bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === t)); list.scrollTop = 0; };
+    bar.querySelectorAll('button').forEach(b => b.onclick = e => { e.stopPropagation(); show(b.dataset.t); }); show(this.bagTab); }; }
+/* 持ち物（遊んでいる時）：同じ2つのタブ */
+{ const S0 = INV.show.bind(INV); INV.show = function () { S0(); if (!this.open) return; const L = $('#invList'); const own = this.owned(), kids = [...L.children], d = SHOP.load();
+    const isD = id => { const it = ECON.items.find(x => x[0] === id); return !!(it && it[3] === 'look' && d.look[id]); };
+    kids.forEach((c, i) => { c.dataset.tab = i < own.length ? (isD(own[i]) ? 'd' : 'm') : 'd'; });
+    let bar = $('#invTabs'); if (!bar) { bar = document.createElement('div'); bar.id = 'invTabs'; bar.className = 'bagTabs'; L.before(bar); }
+    bar.innerHTML = `<button data-t="m">${TR('もちもの')}</button><button data-t="d">${TR('だいじなもの')}</button>`; this.tab = this.tab || 'm';
+    const show = t => { this.tab = t; let n = 0; for (const c of L.children) { const on = c.dataset.tab === t; c.style.display = on ? '' : 'none'; if (on) n++; } bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === t)); $('#invEmpty').style.display = n ? 'none' : 'block'; $('#invEmpty').textContent = TR(kids.length ? 'ここにはまだ何もない' : 'まだ何も持っていない'); };
+    bar.querySelectorAll('button').forEach(b => b.onclick = e => { e.stopPropagation(); show(b.dataset.t); }); show(this.tab); }; }
 /* 2026-11-16 オフタリサマ：ふだんの周にも出る（ふだんの怪異と一緒に）
    ・バリケードが壊れた後の周から。壊れた次の周は必ず（初登場）。ふだんは15%・逢魔が時は25%。ナカヨシの周には出ない
    ・出られる周で10周続けて出なかったら、次の周は必ず出る
