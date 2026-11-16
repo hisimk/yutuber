@@ -14993,7 +14993,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.23';
+const VERSION = '0.16.24';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -20195,6 +20195,8 @@ const beadsK = () => ITEM.have.beads ? 0.7 : 1;   /* 数珠：見失うまでの
     return use0(id);
   }; }
 /* フレームごと（DIR のあとで） */
+try { SHOP.title(); } catch (e) { console.warn('ショップの表示', e); }   /* 2026-11-16 スタート画面に、最初からショップのボタンと所持金を出す（RANKTAG が先に呼ばれていても） */
+setTimeout(() => { try { SHOP.title(); RANKPOP.check(); } catch (e) { } }, 1500);
 const SHOPFX = { update(dt) { if (world.state !== 'play') return; BUZZ.update(dt); CANDLE.update(dt); DRINK.update(); STICK.update(dt); } };
 /* =========================================================
    2026-11-16 投げ銭（第2弾）：中堅から。コメントなしで、色の帯に「名前 ¥金額」だけ
