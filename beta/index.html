@@ -349,7 +349,7 @@
   #resBrk{position:fixed;left:50%;top:calc(var(--sat, 0px) + 64px);transform:translateX(-50%);z-index:90;background:rgba(10,10,12,.9);border:1px solid #333338;border-radius:10px;padding:10px 14px;font-size:13px;line-height:1.7;color:#fff;white-space:pre-line;opacity:0;transition:opacity .3s;pointer-events:none;width:max-content;max-width:92vw}#resBrk.show{opacity:1}
   .ytag{display:inline-block;font-size:10px;font-weight:700;line-height:1.5;border:1px solid;border-radius:5px;padding:0 5px;margin-left:6px;vertical-align:1px;white-space:nowrap;font-style:normal}.ytag.use{color:#c4a56c;border-color:rgba(196,165,108,.5);background:rgba(196,165,108,.1)}.ytag.perm{color:#8db0c0;border-color:rgba(141,176,192,.5);background:rgba(141,176,192,.1)}.ytag.in{color:#bdb8ae;border-color:rgba(189,184,174,.45)}#imTitle .ytag{font-size:12px;vertical-align:3px;letter-spacing:0}.yhow{font-style:normal;color:#d6d0c4;font-weight:700}
   .uiIc{width:15px;height:15px;vertical-align:-2px;margin-right:5px;opacity:.74}
-  #shopRow{display:flex;gap:8px;margin:12px auto 0;max-width:100%}#shopRow #shopBtn{flex:1;margin:0}#shopRow #bagBtn{flex:none;width:44px;height:44px;padding:0;margin:0;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  #shopRow{display:flex;gap:8px;margin:12px auto 0;max-width:100%}#shopRow #shopBtn{flex:1;margin:0;padding:0 8px;white-space:nowrap;display:flex;align-items:center;justify-content:center}#shopRow #bagBtn{flex:none;width:44px;height:44px;padding:0;margin:0;border-radius:50%;display:flex;align-items:center;justify-content:center}
   #bagUI{position:fixed;inset:0;z-index:72;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:16px}#bagUI.show{display:flex}
   #shopAsk{position:fixed;inset:0;z-index:74;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:24px}#shopAsk.show{display:flex}
   #shopAsk .raBox{width:100%;max-width:300px;background:#151517;border:1px solid #333338;border-radius:16px;padding:18px;text-align:center;color:#fff}#shopAsk img{width:64px;height:64px;object-fit:contain}
@@ -494,7 +494,7 @@
   #resChatHost .chatBox{height:100%;margin-top:0}
   #resChatHost .chatBox .cm{font-size:12px;gap:5px}#resChatHost .chatHead{flex-wrap:wrap;row-gap:0;padding:5px 8px 4px}#resChatHost .chatHead span{font-size:9.5px}#resChatHost .chatList{padding:3px 6px 6px}
   .chatBox{position:relative;height:200px;display:flex;flex-direction:column;margin-top:8px;background:#0d0d0f;border:1px solid #2b2a28;border-radius:10px;overflow:hidden;text-align:left}
-  .chatHead{display:flex;align-items:baseline;gap:8px;padding:6px 10px 5px;border-bottom:1px solid #222;flex:none}.chatHead b{font-size:13px;color:#e9e4da}.chatHead span{font-size:10.5px;color:#8a867f}.chatHead .chatCnt{font-style:normal;font-size:11px;color:#8f8a83;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .chatHead{display:flex;align-items:baseline;gap:8px;padding:6px 10px 5px;border-bottom:1px solid #222;flex:none}.chatHead b{font-size:13px;color:#e9e4da}.chatHead span{font-size:10.5px;color:#8a867f}.chatHead span.banHint{margin-left:auto;color:#ffd34d;font-weight:700;white-space:nowrap}.chatHead .chatCnt{font-style:normal;font-size:11px;color:#8f8a83;font-variant-numeric:tabular-nums;white-space:nowrap}
   .chatList{flex:1;overflow-y:auto;padding:4px 8px 8px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
   .chatBox .cm{display:flex;align-items:flex-start;gap:7px;padding:3px 0;font-size:13px;line-height:1.4;color:#ece7dd}
   .chatBox .cm.tip{background:var(--tc);color:#fff;font-weight:800;border-radius:6px;padding:3px 6px;margin:2px 0;text-shadow:0 1px 1px rgba(0,0,0,.35)}
@@ -15029,7 +15029,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.29';
+const VERSION = '0.16.30';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -15804,7 +15804,7 @@ class ChatView {
     this.video = video; this.segOf = segOf;
     const el = document.createElement('div'); el.className = 'chatBox';
     el.innerHTML = '<div class="chatHead"><b></b><em class="chatCnt"></em><span></span></div><div class="chatList" role="log" aria-live="off"></div><div class="chatMsg"></div><button class="chatNew" type="button"></button>';
-    el.querySelector('.chatHead b').textContent = cui('title');   // 2026-11-14 補足の文は出さない el.querySelector('.chatNew').textContent = cui('latest');
+    el.querySelector('.chatHead b').textContent = cui('title'); { const sp = el.querySelector('.chatHead span'); sp.textContent = TR('タップでBAN！'); sp.className = 'banHint'; }   // 2026-11-14 補足の文は出さない el.querySelector('.chatNew').textContent = cui('latest');
     host.appendChild(el); this.el = el; this.list = el.querySelector('.chatList'); this.msg = el.querySelector('.chatMsg'); this.btn = el.querySelector('.chatNew');
     this.data = null; this.starts = []; this.shown = 0; this.lastG = 0; this.follow = true; this.raf = 0; this.anim = 0;
     this.reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -15824,7 +15824,7 @@ class ChatView {
     if (!this.urls.length) return this.say(cui('novid'));
     if (!data || !data.items) return this.say(cui('nosync'));
     this.legacy = LANG === 'en' && data.items.length && data.items[0].length < 5;   // 英語が入っていない古い保存チャット
-    this.el.querySelector('.chatHead span').textContent = this.legacy ? cui('legacy') : '';   /* 2026-11-15 「タップでBAN」は出さない（自分で気づけるように） */
+    { const sp = this.el.querySelector('.chatHead span'); sp.textContent = this.legacy ? cui('legacy') : TR('タップでBAN！'); sp.classList.toggle('banHint', !this.legacy); }   /* 2026-11-16 見出しの右に「タップでBAN！」 */   /* 2026-11-15 「タップでBAN」は出さない（自分で気づけるように） */
     const ds = []; for (const u of this.urls) ds.push(await chatDur(u)); if (this.data !== data) return;
     this.ds = ds; this.map = this.mapper(data, ds); this.starts = []; let acc = 0; for (let i = 0; i < this.urls.length; i++) { this.starts.push(acc); acc += ds[i] || this.segLenR(data, i); }
     this.items = data.items.map((x, i) => [this.map(x[0]), x[1], x.length >= 5 ? (LANG === 'en' ? x[4] : x[3]) : x[2], i]).sort((a, b) => a[0] - b[0]);
@@ -20382,6 +20382,7 @@ const TIPS = {
 };
 TIPS.reset();
 /* 2026-11-16 コメントの追加：配信終わりの「ひん」（低確率）・捕まった時の「目と目が合う…」（まれ）・ありえない現象に「そうはならんやろ」→あとで必ず「↑なっとるやろがい」 */
+Object.assign(EN, { 'タップでBAN！': 'Tap to BAN!' });
 Object.assign(CHAT_DICT.t, { 'x.hello.yaa': ['やあ', 'hey'], 'x.hello.konchas': ['こんちゃーす！', 'heyyy!'], 'x.eete.1': ['ええて', 'enough'], 'x.eete.2': ['もうええてw', 'ok enough lol'], 'x.eete.3': ['ええてw', 'enough lol'] });
 CHAT_DICT.c.hello.push('x.hello.yaa', 'x.hello.konchas');
 for (const c of ['bh_piano_repeat', 'bh_zoom_spam', 'bh_spin', 'bh_room_reentry', 'squat20', 'squat30', 'nag_static', 'nag_selfie', 'nag_flute']) if (CHAT_DICT.c[c]) CHAT_DICT.c[c].push('x.eete.1', 'x.eete.2', 'x.eete.3');   /* しつこい時に（1本の動画で1回まで） */
