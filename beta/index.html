@@ -15029,7 +15029,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.28';
+const VERSION = '0.16.29';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -15562,8 +15562,8 @@ const CHATGEN = {
       if (opt.t !== undefined && !catOK(cat, opt.t)) return null;
       L = L.filter(id => (!CALM.has(id) || (opt.t !== undefined && calmAt(opt.t, 20, 8))) && (!HALL.has(id) || (opt.t !== undefined && HALLZ.has(zoneAt(opt.t)) && HALLZ.has(zoneAt(opt.t - 4)))) && (!AWL.has(id) || (opt.t !== undefined && awT.some(x => x < opt.t - 0.5))));
       const rep = isShort && !/^(idle_|name_idle|quiet_|hello|start|bored_|view_|zoom|selfie_|mic_|still_q|look_|heard_|bh_|odd_|nag_|reply_)/.test(cat);   // 群衆の短い反応だけ同じ文を許す（雑談は重ねない）
-      const ok = L.filter(id => { const j = T[id][0]; if (cat === 'kuru') return true; return rep && isShort(j) ? !recent.slice(-3).includes(j) : !used.has(j); }); if (!ok.length) return null;
-      const id = pickR(ok), j = T[id][0]; used.add(j); recent.push(j); return mk(id);
+      const ok = L.filter(id => { const j = T[id][0]; if (CHATX.EETE.includes(j) && used.has('__eete')) return false; if (cat === 'kuru') return true; return rep && isShort(j) ? !recent.slice(-3).includes(j) : !used.has(j); }); if (!ok.length) return null;
+      const id = pickR(ok), j = T[id][0]; used.add(j); recent.push(j); if (CHATX.EETE.includes(j)) used.add('__eete'); return mk(id);   /* 2026-11-16 「ええて」系は1本の動画で1回まで */
     };
     const specLines = label => { const k = String(label || '').replace(/（\d+秒）$/, ''); return (CHAT_DICT.ev[k] || []).filter(id => T[id] && !used.has(T[id][0])); };
     const useSpec = id => { used.add(T[id][0]); return mk(id); };
@@ -15779,9 +15779,9 @@ const CHAT = {
     // 話者の名前と色（生成と同じシードで並べ直す）
     d.users = CHAT.usersOf(d.seed, d.lang);
     try { KOK.chat(d); } catch (e) { console.warn('こっくりさんのコメント', e); }
-    try { PHAN.chat(d); } catch (e) { console.warn('荒らしコメント', e); }
+    const pre = new Set(d.items || []); try { PHAN.chat(d); } catch (e) { console.warn('荒らしコメント', e); } const phSet = new Set((d.items || []).filter(x => !pre.has(x)));
     try { XCHAT.chat(d); } catch (e) { console.warn('追加のコメント', e); }
-    try { TIPS.chat(d); } catch (e) { console.warn('投げ銭', e); } try { IDLEC.chat(d); } catch (e) { console.warn('放置のコメント', e); }   /* 2026-11-16 投げ銭 */   // 2026-11-15 段階に合わせて荒らし・反応を混ぜる   // 話者の名前と色はこの動画で固定（英語で始めた撮影は英語の名前）
+    try { TIPS.chat(d); } catch (e) { console.warn('投げ銭', e); } try { IDLEC.chat(d); } catch (e) { console.warn('放置のコメント', e); } try { CHATX.chat(d); } catch (e) { console.warn('追加のコメント', e); } try { CBAN.apply(d, phSet); } catch (e) { console.warn('BAN', e); }   /* 2026-11-16 投げ銭 */   // 2026-11-15 段階に合わせて荒らし・反応を混ぜる   // 話者の名前と色はこの動画で固定（英語で始めた撮影は英語の名前）
     this.cur = d; return d;
   },
   usersOf(seed, lang) {   // 話者は別の決まったシードで作る
@@ -15850,7 +15850,7 @@ class ChatView {
   reset() { this.list.textContent = ''; this.shown = 0; this.lastG = 0; this.items = []; this.follow = true; this.btn.classList.remove('show'); cancelAnimationFrame(this.raf); this.raf = 0; }
   loop() { if (this.raf) return; const f = () => { this.raf = 0; this.sync(); if (!this.video.paused && !this.video.ended && this.el.isConnected) this.raf = requestAnimationFrame(f); }; this.raf = requestAnimationFrame(f); }
   ban(i, d) {
-    const D = this.data, B = D.ban || (D.ban = []); if (!B.includes(i)) { B.push(i); const x = D.items && D.items[i]; if (x && x[1] === -1 && x[2] === 'troll') PHAN.onBan(); }   // 2026-11-15 荒らしをBANするとナカヨシの段階が進む
+    const D = this.data, B = D.ban || (D.ban = []); if (!B.includes(i)) { B.push(i); const x = D.items && D.items[i]; if (x && x[1] === -1 && x[2] === 'troll') PHAN.onBan(); if (x && !(D.phIdx || []).includes(i)) CBAN.add(x); }   // 2026-11-15 荒らしをBANするとナカヨシの段階が進む
     this.shown = Math.max(0, this.shown - 1);   // 一覧を作り直さず、この行だけ「BANされました」と見せてから消す
     d.classList.add('ban'); d.querySelector('.tx').textContent = cui('banned'); setTimeout(() => { d.remove(); }, 900);
     try { if (typeof PAD !== 'undefined' && PAD.rumble) PAD.rumble(0.3, 0.3, 80); } catch (e) { }
@@ -20217,8 +20217,8 @@ const SHOP = {
     for (const k of ECON.sponsor) if (r >= k && !d.seen['sp' + k]) { d.seen['sp' + k] = 1; const c = ECON.items.filter(it => it[3] === 'use' && it[2] !== 'wing' && it[2] <= r && !this.has(it[0])); if (c.length) { const it = c.sort((a, b) => b[1] - a[1])[Math.floor(Math.random() * Math.min(3, c.length))]; this.give(it[0]); msgs.push((en ? 'A gift from a sponsor: ' : 'スポンサーから届きました：') + TR(ITEM.defs[it[0]].name) + YTAG.tag(it[0])); } }
     this.save(); if (msgs.length) this.pop(msgs);
   },
-  pop(msgs) { const el = $('#shopPop') || (() => { const e = document.createElement('div'); e.id = 'shopPop'; e.innerHTML = '<div class="raBox"><div class="raT"></div><div class="raD"></div><div class="raBtns"><button></button></div></div>'; document.body.appendChild(e); e.querySelector('button').onclick = ev => { ev.stopPropagation(); e.classList.remove('show'); }; for (const t of ['pointerdown', 'touchstart']) e.addEventListener(t, ev => ev.stopPropagation(), { passive: true }); return e; })();
-    el.querySelector('.raT').textContent = LANG === 'en' ? 'Shop' : 'ショップ'; el.querySelector('.raD').innerHTML = msgs.map(m => `<p>${m}</p>`).join(''); el.querySelector('button').textContent = LANG === 'en' ? 'OK' : 'わかった'; el.classList.add('show'); },
+  pop(msgs, title) { const el = $('#shopPop') || (() => { const e = document.createElement('div'); e.id = 'shopPop'; e.innerHTML = '<div class="raBox"><div class="raT"></div><div class="raD"></div><div class="raBtns"><button></button></div></div>'; document.body.appendChild(e); e.querySelector('button').onclick = ev => { ev.stopPropagation(); e.classList.remove('show'); }; for (const t of ['pointerdown', 'touchstart']) e.addEventListener(t, ev => ev.stopPropagation(), { passive: true }); return e; })();
+    el.querySelector('.raT').textContent = title || (LANG === 'en' ? 'Shop' : 'ショップ'); el.querySelector('.raT').style.color = title ? '#ffd34d' : ''; el.querySelector('.raD').innerHTML = msgs.map(m => `<p>${m}</p>`).join(''); el.querySelector('button').textContent = LANG === 'en' ? 'OK' : 'わかった'; el.classList.add('show'); },
   /* ── ショップの画面 */
   openUI() {
     const en = LANG === 'en', d = this.load(), r = this.rank(); let el = $('#shopUI');
@@ -20381,6 +20381,32 @@ const TIPS = {
   },
 };
 TIPS.reset();
+/* 2026-11-16 コメントの追加：配信終わりの「ひん」（低確率）・捕まった時の「目と目が合う…」（まれ）・ありえない現象に「そうはならんやろ」→あとで必ず「↑なっとるやろがい」 */
+Object.assign(CHAT_DICT.t, { 'x.hello.yaa': ['やあ', 'hey'], 'x.hello.konchas': ['こんちゃーす！', 'heyyy!'], 'x.eete.1': ['ええて', 'enough'], 'x.eete.2': ['もうええてw', 'ok enough lol'], 'x.eete.3': ['ええてw', 'enough lol'] });
+CHAT_DICT.c.hello.push('x.hello.yaa', 'x.hello.konchas');
+for (const c of ['bh_piano_repeat', 'bh_zoom_spam', 'bh_spin', 'bh_room_reentry', 'squat20', 'squat30', 'nag_static', 'nag_selfie', 'nag_flute']) if (CHAT_DICT.c[c]) CHAT_DICT.c[c].push('x.eete.1', 'x.eete.2', 'x.eete.3');   /* しつこい時に（1本の動画で1回まで） */
+const CHATX = {
+  EETE: ['ええて', 'もうええてw', 'ええてw'],
+  chat(d) {
+    if (!d || !d.items || !d.end) return; const R = chatRng((d.seed ^ 0x6e7a) >>> 0), U = Math.max(6, (d.users || []).length || 12), end = d.end, maxR = end.R + (end.ec ? 3 : -0.2), out = [], ev = CHATLOG.ev || [], T = t => Math.round(t * 100) / 100;
+    if (end.ec && R() < 0.12) { const t = end.R + 0.8 + R() * 1.6; if (t <= maxR) out.push([T(t), Math.floor(R() * U), 'x.hin', 'ひん', 'hin']); }
+    for (const e of ev) if ((e.k === 'aw' || e.k === 'awc') && e.key === 'capture' && R() < 0.1) { const t = e.t + 1 + R(); if (t <= maxR) out.push([T(t), Math.floor(R() * U), 'x.meme', '目と目が合う瞬間好きだと気づいた', 'the moment our eyes met, I knew it was love']); }
+    let n = 0; for (const e of ev) { if (n >= 2 || !(e.k === 'aw' || e.k === 'awc') || /^(mic|eq|capture)/.test(e.key) || CHATGEN.END.has(e.key) || R() > 0.13) continue;
+      const t1 = e.t + 1 + R() * 1.5, t2 = t1 + 1.8 + R() * 2.4, u1 = Math.floor(R() * U); let u2 = Math.floor(R() * U); if (u2 === u1) u2 = (u2 + 1) % U; if (t2 > maxR) continue; n++;
+      out.push([T(t1), u1, 'x.sona', 'そうはならんやろ', "that can't happen"], [T(t2), u2, 'x.natto', '↑なっとるやろがい', '↑well it just did']); }
+    if (out.length) d.items = d.items.concat(out).sort((a, b) => a[0] - b[0]);
+  },
+};
+/* 2026-11-16 BANしたコメントは、これからの動画でも流れない（ナカヨシの周のコメントは別） */
+const CBAN = {
+  KEY: 'yt_ban_v1', d: null,
+  load() { if (!this.d) { try { this.d = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) { } if (!this.d || !Array.isArray(this.d.t)) this.d = { t: [], seen: 0 }; } return this.d; },
+  txt(x) { return x.length >= 5 ? x[3] : x[2]; },
+  add(x) { const t = this.txt(x); if (typeof t !== 'string' || /^¥[\d,]+$/.test(t) || x[1] === -1) return; const d = this.load(); if (!d.t.includes(t)) { d.t.push(t); if (d.t.length > 600) d.t.shift(); }
+    if (!d.seen) { d.seen = 1; const en = LANG === 'en'; setTimeout(() => SHOP.pop(en ? ["Banned comments won't show up in future videos.", 'Clear out the annoying ones and make the chat your own.'] : ['BANしたコメントは今後流れなくなります。', '目障りなコメントは消して、自分の快適なコメント欄にしていきましょう。'], en ? 'Comment BAN' : 'コメントのBAN'), 950); }
+    try { localStorage.setItem(this.KEY, JSON.stringify(d)); } catch (e) { } },
+  apply(d, ph) { const B = new Set(this.load().t); if (B.size) d.items = d.items.filter(x => ph.has(x) || !B.has(this.txt(x))); d.phIdx = d.items.map((x, i) => ph.has(x) ? i : -1).filter(i => i >= 0); },
+};
 /* 2026-11-16 1分間ほとんど動かない映像だと、コメントがつっこむ（動くまでに1回） */
 const IDLEC = {
   L: [['定点カメラだっけ？', 'is this a fixed camera?'], ['何待ち？', 'what are we waiting for?'], ['もしもしー！', 'hello?!'], ['放置プレイで草', 'lol just leaving it running'], ['何が起きてるのw', "what's going on lol"], ['斬新な心霊動画', 'a bold new kind of ghost video']],
