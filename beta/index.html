@@ -13127,7 +13127,7 @@ function tick(now) {
   }
   // インカメラで逃走中：誰に追われていても、インカメラで撮りながら逃げている間は1秒2点（追ってくる姿が映っていなくてよい）
   if (rec.active && world.selfie && world.state === 'play' && !CAP.on && ((CH.state === 'chase' || CH.state === 'hunt') || SP.st === 'chase' || (world.mannRun && ['spot', 'windup', 'dash', 'skid', 'hunt', 'stun', 'turn'].includes(MANN.st)))) awardCont('selfieRun', 'インカメラで逃走中', 2, dt);
-  DIR.update(dt); SHOPFX.update(dt); OUMA.update(dt); FWEB.update(dt); DARKK.update(dt); TIPS.update(dt); AMB.update(dt); MINOR.update(dt); SELF.update(dt); ACC.update(dt); MD.update(dt); MF.update(dt); POLT.update(dt); STREETFIG.update(dt); EXITF.update(dt); RED.update(dt); MG.update(dt); raspUpdate(dt); cbgmUpdate(dt); chaseHead(dt); LIP.update(dt); DOORS2.update(dt); TAP.update(dt); F2.update(dt); SP.update(dt); TEN.update(dt); GG.update(dt); NEKO.update(dt); ITEM.update(dt); SNAKE.update(dt); UWA.update(dt); MISS.update(); SPV.update(dt); OFUDA.update(dt); OFUDA.updFall(dt);
+  DIR.update(dt); SHOPFX.update(dt); OUMA.update(dt); FWEB.update(dt); CMX.update(dt); DARKK.update(dt); TIPS.update(dt); AMB.update(dt); MINOR.update(dt); SELF.update(dt); ACC.update(dt); MD.update(dt); MF.update(dt); POLT.update(dt); STREETFIG.update(dt); EXITF.update(dt); RED.update(dt); MG.update(dt); raspUpdate(dt); cbgmUpdate(dt); chaseHead(dt); LIP.update(dt); DOORS2.update(dt); TAP.update(dt); F2.update(dt); SP.update(dt); TEN.update(dt); GG.update(dt); NEKO.update(dt); ITEM.update(dt); SNAKE.update(dt); UWA.update(dt); MISS.update(); SPV.update(dt); OFUDA.update(dt); OFUDA.updFall(dt);
   updateDrops(dt);
   animHuman(woman, dt);
   // 環境音
@@ -13431,6 +13431,7 @@ function escape() {
   if (world.state !== 'play') return;
   const chased = (CH.state === 'chase' || CH.state === 'search' || CH.state === 'hunt') || (typeof SP !== 'undefined' && SP.st === 'chase') || (world.mannRun && ['spot', 'windup', 'dash', 'skid', 'hunt', 'stun', 'turn'].includes(MANN.st));
   world.state = 'end'; if (DIR.active) DIR.end(DIR.active);
+  if (rec.active && rec.time > 20 && !evidence.some(e => (e.pts || 0) > 0)) CMX.log('cmZero');   /* 2026-11-16 撮れ高ゼロで帰る */
   if (rec.active) award('alive', 'いのちだいじに', 10);
   if (rec.time > 0.5 && (world.battery ?? 100) <= 1) award('battery1', '電池1%の帰還', 120);   /* 2026-11-16 電池1%以下で、録画を持ったまま帰る */   /* 2026-11-13：脱出の瞬間を録画しているときだけ */
   if (chased && rec.active) award('chaseOut', '追われながら生還', 50);
@@ -14778,7 +14779,7 @@ $('#goBtn').addEventListener('click', () => {
 });
 function beginPlay() {
   $('#hud').classList.remove('off'); PHAN.place(); KOK.reset(); MYNAME.reset(); NEWEV.reset(); POSTER.reset(); HOMAGE.reset(); RAP.reset(); NEWWING.reset();   // 2026-11-15 化け物の周だけ、お札5枚
-  world.state = 'play'; world.playT0 = world.t; OUMA.begin(); FWEB.place();
+  world.state = 'play'; world.playT0 = world.t; OUMA.begin(); FWEB.place(); CMX.reset();
   postMat.uniforms.black.value = 1; postMat.uniforms.grain.value = 1;
   if (DEV) $('#dev').classList.add('show'), $('#devInfo').style.display = 'block';
   if (TUT.need()) setTimeout(() => { if (world.state === 'play') TUT.show(); }, 400);   // 2026-11-13 はじめての人には、画面を指しながら遊び方を説明（その間は止める）
@@ -15129,7 +15130,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.60';
+const VERSION = '0.16.61';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -17941,7 +17942,7 @@ const BCAST = {
   lamp(on) { mic.lamp.material.color.setHex(on ? 0xff2020 : 0x300808); mic.lampGlow.material.opacity = on ? 0.9 : 0; },
   start() {
     if (!rec.mic || !MIC.src || !A.ctx) { toast(TR('マイクがオンになっていないので放送できません'), 2200); return; }
-    this.on = true; this.t = 0; this.talk = 0; SND.pingpong(true); this.lamp(true); XCHAT.log('pa'); URINT.noise('pa');
+    this.on = true; this.t = 0; this.talk = 0; SND.pingpong(true); this.lamp(true);   /* 2026-11-16 放送のコメントは、声を出した時に（CMX） */ URINT.noise('pa');
     const c = A.ctx, hp = c.createBiquadFilter(), lp = c.createBiquadFilter(), ws = c.createWaveShaper(), g = c.createGain(), dl = c.createDelay(1), fb = c.createGain(), dg = c.createGain(), lp2 = c.createBiquadFilter();
     hp.type = 'highpass'; hp.frequency.value = 380; lp.type = 'lowpass'; lp.frequency.value = 3200; lp2.type = 'lowpass'; lp2.frequency.value = 1800;
     const cv = new Float32Array(256); for (let i = 0; i < 256; i++) { const x = i / 128 - 1; cv[i] = Math.tanh(x * 3.2) * 0.9; } ws.curve = cv;
@@ -21020,6 +21021,88 @@ SP.investigate = function (p) {
 Object.assign(EN, { '足に蜘蛛の糸がからみついた…': 'Spider silk clings to your feet...' });
 XCHAT.LIST.fweb = ['fw.01', 'fw.02', 'fw.03', 'fw.04', 'fw.05'];
 Object.assign(CHAT_DICT.t, { 'fw.01': ['蜘蛛の巣踏んだ', 'stepped on a web'], 'fw.02': ['気づかれたかも', 'she might have noticed'], 'fw.03': ['糸ふるえてる…', 'the threads are shaking...'], 'fw.04': ['来るぞ来るぞ', "she's coming she's coming"], 'fw.05': ['そこ罠じゃん', "that's a trap"] });
+/* =========================================================
+   2026-11-16 行動に反応するコメント（録画中だけ。1周に同じ種類は1〜2回まで）
+   ・頭のいいプレイ：見つかって3秒以内にロッカー／隠れている間に怪異があきらめた／8秒以上追われて振り切った／1.3m以内まで迫られて逃げ切った／
+     追われながら怪異を5秒撮り続けた／お札で封じた
+   ・謎な行動：その場でぐるぐる回る／しゃがむ・立つの連打／ロッカーの出入りを繰り返す／トイレに45秒／黒板を8秒見つめる／外の窓を8秒見つめる／
+     しゃがんだまま12m歩く／追われている最中に拾う／撮れ高ゼロで帰る
+   ・放送：放送中に声を出した時／10秒以上しゃべった時
+   ========================================================= */
+const CMX = {
+  reset() { this.n = {}; this.ch = false; this.chT0 = 0; this.minD = 99; this.film = 0; this.hidAtEnd = false; this.yaw0 = null; this.spin = []; this.cr = []; this.lk = []; this.tT = 0; this.bT = 0; this.wT = 0; this.crD = 0; this.lastCr = false; this.lastHid = false; this.px = null; this.paV = 0; this.paSaid = 0; this.wCool = -99; },
+  log(w, max = 1) { if (!rec.active) return false; this.n = this.n || {}; if ((this.n[w] | 0) >= max) return false; this.n[w] = (this.n[w] | 0) + 1; try { XCHAT.log(w); } catch (e) { } if (TEST || DEV) console.log('CMX', w); return true; },
+  weird() { if (world.t - this.wCool < 40) return; if (this.log('cmWeird', 3)) this.wCool = world.t; },
+  /* 追ってきている怪異（いちばん近いもの）の位置と顔 */
+  chasers() { const L = [];
+    if (CH.state && CH.state !== 'off' && typeof WD !== 'undefined' && WD.pos) L.push([WD.pos, () => sgHead(V())]);
+    if (SP.st === 'chase' && SP.pos) L.push([SP.pos, () => spFacePos(V())]);
+    if (world.mannRun && ['spot', 'windup', 'dash', 'skid', 'hunt'].includes(MANN.st)) L.push([MANN.pos, () => MANN.head()]);
+    if (typeof URAH !== 'undefined' && URAH.on && URAH.chasing && URAH.chasing()) L.push([URAH.pos, () => URAH.head(URAH.face)]);
+    return L; },
+  update(dt) {
+    if (world.state !== 'play') return; if (!this.n) this.reset();
+    const L = this.chasers(), ch = L.length > 0, hid = !!(player.hidden || HIDE.lk);
+    /* ── 追跡のはじまりと終わり */
+    if (ch && !this.ch) { this.chT0 = world.t; this.minD = 99; this.film = 0; this.filmed = false; }
+    if (ch) { for (const [p, hf] of L) { const d = Math.hypot(p.x - player.x, p.z - player.z); if (Math.abs((p.y || 0) - player.y) < 2.5) this.minD = Math.min(this.minD, d); }
+      const on = !hid && L.some(([, hf]) => { const h = hf(); return onScreen(h, 0.9) && clearLine(h); }); this.film = on ? this.film + dt : Math.max(0, this.film - dt * 2);
+      if (this.film > 5 && !this.filmed) { this.filmed = true; this.log('cmCalm'); } }
+    if (!ch && this.ch && !world.capture && !CAP.on && world.state === 'play') { const dur = world.t - this.chT0;
+      if (hid && dur > 3) this.log('cmHidePass');
+      else if (!hid && this.minD < 1.3 && dur > 3) this.log('cmNearMiss');
+      else if (!hid && dur > 8) this.log('cmShake'); }
+    /* 見つかって3秒以内にロッカーへ */
+    if (HIDE.lk && !this.lastHid && ch && world.t - this.chT0 < 3) this.log('cmQuickHide');
+    /* ロッカーの出入りを繰り返す（追われていない時、20秒で3回入る） */
+    if (HIDE.lk && !this.lastHid && !ch) { this.lk.push(world.t); this.lk = this.lk.filter(t => world.t - t < 20); if (this.lk.length >= 3) { this.lk = []; this.weird(); } }
+    this.ch = ch; this.lastHid = hid;
+    /* その場でぐるぐる（5秒で2周以上・ほとんど歩いていない） */
+    if (this.yaw0 !== null && !ch) { const d = Math.atan2(Math.sin(player.yaw - this.yaw0), Math.cos(player.yaw - this.yaw0)); this.spin.push([world.t, Math.abs(d), player.x, player.z]); this.spin = this.spin.filter(s => world.t - s[0] < 5);
+      const tot = this.spin.reduce((a, s) => a + s[1], 0), s0 = this.spin[0]; if (tot > Math.PI * 4 && s0 && Math.hypot(player.x - s0[2], player.z - s0[3]) < 1.5) { this.spin = []; this.weird(); } }
+    this.yaw0 = player.yaw;
+    /* しゃがむ・立つの連打（5秒で6回） */
+    if (CROUCH.on !== this.lastCr) { this.cr.push(world.t); this.cr = this.cr.filter(t => world.t - t < 5); if (this.cr.length >= 6) { this.cr = []; this.weird(); } }
+    /* しゃがんだまま12m歩く */
+    if (this.px) { const mv = Math.hypot(player.x - this.px[0], player.z - this.px[1]); if (CROUCH.on && mv < 1) { this.crD += mv; if (this.crD > 12) { this.crD = -999; this.log('cmCrouchWalk'); } } else if (!CROUCH.on && this.crD > 0) this.crD = 0; }
+    this.px = [player.x, player.z]; this.lastCr = CROUCH.on;
+    if (ch || hid) { this.tT = 0; this.bT = 0; this.wT = 0; } else {
+      /* トイレに45秒 */
+      this.tT = playerZone() === 'T' ? this.tT + dt : 0; if (this.tT > 45) { this.tT = -1e9; this.log('cmToilet'); }
+      /* 黒板を8秒見つめる（4m以内・画面の真ん中） */
+      const bd = CLASS_BOARDS.some(b => { if (b.lv !== player.lv || b.mesh.visible === false) return false; const c = b.mesh.getWorldPosition(_cmxV); c.x = clamp(camera.position.x, c.x - 1.8, c.x + 1.8); return camera.position.distanceTo(c) < 4.5 && onScreen(c, 0.5); });   /* 黒板（横に長い）のいちばん近い所が画面の真ん中あたり */ this.bT = bd ? this.bT + dt : Math.max(0, this.bT - dt * 2); if (this.bT > 8) { this.bT = -1e9; this.log('cmBoard'); }
+      /* 外の窓を8秒見つめる（2.5m以内・画面の真ん中） */
+      let wd = false; if (typeof WINDAMB !== 'undefined') for (const g of glassPanes) { if (!g.visible) continue; const p = g.getWorldPosition(_cmxV); if (Math.abs(p.y - (player.lv ? LH : 0) - 1.5) > 1.2 || Math.hypot(p.x - player.x, p.z - player.z) > 2.5) continue; if (onScreen(p, 0.4) && WINDAMB.isOut(g)) { wd = true; break; } }
+      this.wT = wd ? this.wT + dt : Math.max(0, this.wT - dt * 2); if (this.wT > 8) { this.wT = -1e9; this.log('cmWindow'); } }
+    /* 放送：放送中に声を出した／10秒以上しゃべった */
+    if (typeof BCAST !== 'undefined' && BCAST.on) { const sp = (VOICE.ok && VOICE.sp) || MICLV.lv > 0.35; if (sp) this.paV += dt;
+      if (this.paV > 0.8 && this.paSaid < 1) { this.paSaid = 1; this.log('pa'); }
+      if (this.paV > 10 && this.paSaid < 2) { this.paSaid = 2; this.log('paLong'); } } else { this.paV = 0; this.paSaid = 0; }
+  },
+};
+const _cmxV = V();
+/* 追われている最中に拾う／お札で封じた／撮れ高ゼロで帰る */
+{ const P = ITEM.pick; ITEM.pick = function (it) { const was = it.taken, r = P.call(this, it); if (!was && it.taken && CMX.chasers().length) CMX.log('cmGreedy'); return r; }; }
+{ const S = OFUDA.start.bind(OFUDA); OFUDA.start = function (k) { S(k); CMX.log('cmSeal'); }; }
+{ const T = URFUDA.try.bind(URFUDA); URFUDA.try = function (s) { const r = T(s); if (r) CMX.log('cmSeal'); return r; }; }
+/* コメント（順当／面白／ツッコミ。確実に言える条件だけにつないだ） */
+{ const J = {
+    cmQuickHide: [['判断が早い', 'quick thinking'], ['頭いいな', 'smart'], ['読んでたな', 'saw that coming'], ['プロの動き', 'pro moves'], ['慣れてる人だ', "you've done this before"]],
+    cmHidePass: [['完全に把握してる', 'you know exactly what you are doing'], ['怪異が悔しがってる', 'the ghost is so mad'], ['息止めてた', 'I was holding my breath'], ['あきらめて行った…', 'it gave up...']],
+    cmShake: [['逃げ方うますぎ', 'such good escaping'], ['見事な撒き方', 'beautifully shaken off'], ['怪異が悔しがってる', 'the ghost is so mad'], ['プロになれる', 'go pro'], ['慣れてる人だ', "you've done this before"]],
+    cmNearMiss: [['ギリギリで草', 'so close lol'], ['今のは危なかった', 'that was close'], ['寿命縮んだ', 'took years off my life'], ['紙一重', 'by a hair']],
+    cmCalm: [['冷静に撮ってて草', 'calmly filming lol'], ['撮影優先なの強い', 'filming first, respect'], ['上手すぎて逆に怖い', 'so good it’s scary'], ['カメラマンの鑑', 'a true cameraman']],
+    cmSeal: [['これは天才', 'genius'], ['上手すぎて逆に怖い', 'so good it’s scary'], ['プロの動き', 'pro moves'], ['完全に把握してる', 'you know exactly what you are doing']],
+    cmWeird: [['奇行種', 'absolute weirdo'], ['謎ムーブ', 'mystery move'], ['何してんのw', 'what are you doing lol'], ['何を四天王', 'the four kings of "what"'], ['俺たちは何を見せられてるんだ', 'what are we watching'], ['天才か？', 'a genius?']],
+    cmToilet: [['トイレ長くない？', "long bathroom break?"], ['お腹大丈夫？', 'stomach ok?'], ['個室こもり配信', 'stall stream']],
+    cmBoard: [['授業始まった', 'class has started'], ['板書してる？', 'taking notes?'], ['先生いないよ', "there's no teacher"]],
+    cmWindow: [['外に何かいる？', 'something outside?'], ['帰りたいの伝わる', 'you can feel them wanting to go home'], ['脱出ルート探してる？', 'looking for an exit?']],
+    cmCrouchWalk: [['忍者かな', 'ninja?'], ['腰やるぞ', "you'll hurt your back"], ['低空飛行', 'low altitude flight']],
+    cmGreedy: [['今拾う！？', 'NOW you pick it up!?'], ['欲張りｗ', 'greedy lol'], ['命より物', 'loot over life']],
+    cmZero: [['何しに来たんｗ', 'what did you even come for lol'], ['散歩動画', 'a walking video'], ['ただの夜の学校見学', 'just a night school tour']],
+    pa: [['放送ジャックｗ', 'PA hijack lol'], ['全校に聞こえてる', 'the whole school can hear'], ['いや敵きちゃうよ！？ww', "they'll come for you!? lol"], ['来る来る来る', "they're coming"]],
+    paLong: [['どんだけ喋るのw', 'how long are you going to talk lol'], ['演説始まった', 'a speech started'], ['校長先生の話より長い', "longer than the principal's speech"], ['全校集会かな？', 'school assembly?'], ['ラジオ始まってて草', "it's a radio show now lol"], ['放送部入った？', 'joined the broadcast club?'], ['怪異も聞き入ってる', 'even the ghosts are listening']] };
+  for (const w in J) { XCHAT.LIST[w] = J[w].map((x, i) => 'cmx.' + w + '.' + i); J[w].forEach((x, i) => { CHAT_DICT.t['cmx.' + w + '.' + i] = x; }); } }
 const SHOPFX = { update(dt) { IDLEC.update(dt); if (world.state !== 'play') return; BUZZ.update(dt); CANDLE.update(dt); DRINK.update(); STICK.update(dt); } };
 /* =========================================================
    2026-11-16 投げ銭（第2弾）：中堅から。コメントなしで、色の帯に「名前 ¥金額」だけ
