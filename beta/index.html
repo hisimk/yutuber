@@ -338,6 +338,29 @@
   #resR{display:flex;justify-content:flex-end}
   #retakeBtn{padding:0 16px!important;height:34px}
   #permIcons{display:flex;gap:3px;justify-content:flex-start;flex-wrap:wrap}
+  #resYen{text-align:left;cursor:pointer;line-height:1.25;min-width:0}
+  #resYen .ryL{font-size:11px;color:#8a867f}
+  #resYen .ryV{font:700 14px system-ui,-apple-system,"Hiragino Sans",sans-serif;color:#fff;letter-spacing:.02em;white-space:nowrap}
+  #result.goldF video{outline:2px solid #d4af37;outline-offset:-2px}
+  html.goldPhone body::after{content:'';position:fixed;inset:0;border:3px solid rgba(212,175,55,.85);border-radius:18px;pointer-events:none;z-index:5}
+  #yenLine{font-size:13px;color:#bdb8ae;margin-top:4px;text-align:center}#yenLine b{color:#ffd34d;margin-left:6px}#yenLine small{display:block;font-size:11px;color:#8a867f;margin-top:2px}
+  #shopUI,#shopPop{position:fixed;inset:0;z-index:72;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:16px}
+  #shopUI.show,#shopPop.show{display:flex}
+  #shopPop .raBox{width:100%;max-width:330px;background:#151517;border:1px solid #333338;border-radius:16px;padding:20px 18px 16px;text-align:center}
+  #shopPop .raT{font-size:17px;font-weight:800;color:#ffd34d}#shopPop .raD p{font-size:13px;color:#e0dbd0;line-height:1.7;text-align:left;margin:10px 0}
+  #shopPop .raBtns button{width:100%;padding:12px;border-radius:12px;font-size:15px;font-weight:700;border:0;background:#fff;color:#111}
+  #shopUI .shBox{width:100%;max-width:380px;max-height:86vh;display:flex;flex-direction:column;background:#151517;border:1px solid #333338;border-radius:16px;overflow:hidden}
+  #shopUI .shHead{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #2a2a2e;color:#fff}#shopUI .shHead>b{font-size:17px}#shopUI .shHead span{flex:1;text-align:right;font-size:13px;color:#bdb8ae}#shopUI .shHead span b{color:#ffd34d}
+  #shopUI .shX{background:none;border:0;color:#bdb8ae;font-size:22px;padding:0 4px}
+  #shopUI .shNote{font-size:11px;color:#8f8a82;padding:8px 14px;line-height:1.6}
+  #shopUI .shList{overflow-y:auto;padding:0 10px 12px}
+  #shopUI .shIt{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #222226}
+  #shopUI .shIt img,#shopUI .shIc{width:44px;height:44px;flex:none;border-radius:10px;background:rgba(255,255,255,.06);object-fit:contain}
+  #shopUI .shIc{display:flex;align-items:center;justify-content:center;color:#555;font-size:22px;font-weight:800}
+  #shopUI .shTx{flex:1;min-width:0}#shopUI .shTx b{display:block;font-size:14px;color:#fff}#shopUI .shTx small{display:block;font-size:11px;color:#8f8a82;line-height:1.5}
+  #shopUI .lock .shTx b{color:#666}
+  #shopUI button.shBuy,#shopUI button.shCar{flex:none;padding:8px 10px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid #ffd34d;background:none;color:#ffd34d;white-space:nowrap}
+  #shopUI button.shBuy:disabled{opacity:.35}#shopUI button.shCar.on{background:#ffd34d;color:#111}#shopUI .shOwn{font-size:11px;color:#8f8a82;white-space:nowrap}
   #permIcons img{width:30px;height:30px;object-fit:contain;border-radius:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);padding:2px;box-sizing:border-box;filter:drop-shadow(0 0 4px rgba(255,255,255,.25))}
   #recBtn.sense{animation:senseGlow .42s ease-in-out infinite alternate;border-color:#ff5a4f}
   @keyframes senseGlow{from{box-shadow:0 0 6px 2px rgba(255,40,30,.55),0 0 0 0 rgba(255,40,30,.4)}to{box-shadow:0 0 22px 9px rgba(255,40,30,.95),0 0 46px 18px rgba(255,20,10,.45)}}
@@ -4904,7 +4927,7 @@ const WD = {
       const want = this.interest === 1 ? 11 : 6;
       const cs = this.dests.filter(k => k !== this.node).sort((a, b) => Math.abs(distTo(NAV[a][0], NAV[a][1]) - want) - Math.abs(distTo(NAV[b][0], NAV[b][1]) - want));
       d = pick(cs.slice(0, 3));
-    } else { const ds = URAV.far(this.dests, k => nodePos(k)); let g = 0; do d = pick(ds); while (d === this.node && g++ < 10); }   /* 2026-11-16 オフタリサマから12m以上離れた所へ */
+    } else { const ds0 = URAV.far(this.dests, k => nodePos(k)), ds1 = ds0.filter(k => !saltNear(nodePos(k))), ds = ds1.length ? ds1 : ds0; let g = 0; do d = pick(ds); while (d === this.node && g++ < 10); }   /* 2026-11-16 オフタリサマから12m以上離れた所へ */
     this.path = navPath(this.node, d).slice(1);
   },
   goTo(p) { const n = nearestNode(p.x, p.z, undefined, p.y || 0); this.path = navPath(nearestNode(this.pos.x, this.pos.z, undefined, this.pos.y), n).slice(1).map(k => k); this.extra = p.clone(); },
@@ -5075,7 +5098,7 @@ const CH = {
     if (direct && ((los && dP < 8) || (this.state === 'hunt' && dP < 6 && clearLine(V(WD.pos.x, WD.pos.y + 1.5, WD.pos.z))))) { WD.path = []; WD.extra = target.clone(); }
     else if (this.repath <= 0) { this.repath = 0.5; WD.goTo(target); }
     if (this.state === 'search') { this.searchT -= dt; WD.heading += dt * 1.6; if (this.searchT <= 0) { this.stop(); return; } }
-    else { const arrived = WD.stepAlong(dt, speed); if (arrived && this.state === 'chase' && !los && world.t - this.seenAt > 0.5) { this.state = 'search'; this.searchT = rnd(3, 4.5); } }
+    else { const arrived = WD.stepAlong(dt, speed); if (arrived && this.state === 'chase' && !los && world.t - this.seenAt > 0.5) { this.state = 'search'; this.searchT = rnd(3, 4.5) * beadsK(); } }
     stuckWatch(this, WD.pos, this.state !== 'search' && !WD.freeze && !doorStallBusy(WD), dt, () => { const q = nodePos(nearestNode(WD.pos.x, WD.pos.z, undefined, WD.pos.y)); WD.pos.set(q.x, q.y || 0, q.z); WD.path = []; WD.extra = null; this.noDirect = world.t + 3; this.repath = 0; });
     // 姿が見えなくても、衣擦れと息で距離がわかる
     this.sndT -= dt;
@@ -6416,7 +6439,8 @@ const SELF = {
       const tgt = eye.clone().addScaledVector(f, -3); tgt.y = eye.y - 0.1 - player.pitch * 1.2;
       selfCam.up.set(0, 1, 0); selfCam.lookAt(tgt); selfCam.rotation.z += camera.rotation.z;
     }
-    selfCam.near = SELF.back + 0.05; selfCam.far = camera.far; selfCam.fov = CONFIG.fov1x * 1.3; /* インカメラらしい広角 */ selfCam.aspect = camera.aspect; selfCam.updateProjectionMatrix(); selfCam.updateMatrixWorld();
+    if (typeof STICK !== 'undefined' && STICK.k()) { const bk = V(); selfCam.getWorldDirection(bk); selfCam.position.addScaledVector(bk, -0.45); }   /* 2026-11-16 自撮り棒：少し遠く・広く */
+    selfCam.near = SELF.back + 0.05; selfCam.far = camera.far; selfCam.fov = CONFIG.fov1x * 1.3 * (typeof STICK !== 'undefined' && STICK.k() ? 1.15 : 1); /* インカメラらしい広角 */ selfCam.aspect = camera.aspect; selfCam.updateProjectionMatrix(); selfCam.updateMatrixWorld();
     selfLight.position.copy(selfCam.position).add(V(0, 0.25, 0));
     return { f, r };
   },
@@ -8143,7 +8167,7 @@ SP.newTarget = function () {
 };
 SP.warp = function () {
   // ワープの主体は蜘蛛女：同じ個体の位置と所属階を同じ更新で切り替える（補間・非表示フレームなし）
-  const from = this.web; const others = this.webs.filter(w => w !== from); const to = URAV.on() ? others.reduce((a, b) => Math.hypot(a.touch.x - URAH.pos.x, a.touch.z - URAH.pos.z) > Math.hypot(b.touch.x - URAH.pos.x, b.touch.z - URAH.pos.z) ? a : b) : pick(others);   /* 2026-11-16 オフタリサマがいれば、遠い巣へ */
+  const from = this.web; const others = this.webs.filter(w => w !== from); const others2 = world.spray ? others.filter(w => Math.hypot(w.touch.x - player.x, w.touch.z - player.z) > 8) : others; if (others2.length) others.splice(0, others.length, ...others2); const to = URAV.on() ? others.reduce((a, b) => Math.hypot(a.touch.x - URAH.pos.x, a.touch.z - URAH.pos.z) > Math.hypot(b.touch.x - URAH.pos.x, b.touch.z - URAH.pos.z) ? a : b) : pick(others);   /* 2026-11-16 オフタリサマがいれば、遠い巣へ */
   from.jig = 0.6; to.jig = 0.6;
   this.web = to; this.lv = to.def.lv; this.pos.copy(to.touch); this.yaw = Math.atan2(to.inward.x, to.inward.z); this.apply();
   this.emergeT = world.t; this.apply();   /* 2026-11-15 巣ワープの撮れ高はなし。移った先では天井からにじみ出る */
@@ -8151,7 +8175,7 @@ SP.warp = function () {
   if (TEST || DEV) console.log('SPIDER warp', from.def.id, '->', to.def.id);
 };
 SP.canDrop = function () {
-  return !world.noCatch && world.t - this.lastDrop > 22 && world.t - this.spawnT > 6 && CH.state === 'off' && !player.hidden && !HIDE.lk && !CAP.on && !DIR.active && !F2.busy && !WD.borrowed && !world.selfie && world.outro <= 0 && this.lv === player.lv && !stairZone(player.x, player.z);
+  return !world.noCatch && !world.spray && world.t - this.lastDrop > 22 && world.t - this.spawnT > 6 && CH.state === 'off' && !player.hidden && !HIDE.lk && !CAP.on && !DIR.active && !F2.busy && !WD.borrowed && !world.selfie && world.outro <= 0 && this.lv === player.lv && !stairZone(player.x, player.z);
 };
 
 SP.update = function (dt) {
@@ -8462,7 +8486,7 @@ SP.updChase = function (dt, fp) {
     const see = !hid && Math.abs(sp3.y - camera.position.y) < 3.2 && enemySees(sp3, [this.wrap]);
     this.lostT = see ? 0 : this.lostT + dt; if (see) this.seenAt = world.t;
     const darkHunt = world.dark && world.huntStarted && typeof ENEMY !== 'undefined' && ENEMY.darkChaser() === 'spider';   /* 2026-11-15 真っ暗になってからは見失わない */
-    if (hid ? this.lostT > 2.5 : (this.lostT > 6 && !darkHunt)) { this.lv = this.gy > 1.6 ? 1 : 0; this.endChase(); return; }
+    if (hid ? this.lostT > 2.5 : (this.lostT > 6 * beadsK() && !darkHunt)) { this.lv = this.gy > 1.6 ? 1 : 0; this.endChase(); return; }
     if (dH > CONFIG.loseDist && !darkHunt && !stairZone(player.x, player.z) && !inStair) { this.lv = this.gy > 1.6 ? 1 : 0; this.endChase(); return; }   // 離れすぎると見失う
   }
   if (doorStallTick(this, dt)) { this.apply(); this.stepUpdate(dt, false); return; }   // 閉まった引き戸で足止め
@@ -10861,7 +10885,7 @@ const MANN = {
           if (d > 0.01) this.face(Math.atan2(dx, dz), dt, 4);
           if (d <= move) { this.pos.copy(t); move -= d; this.path.shift(); } else { const k = move / d; this.pos.x += dx * k; this.pos.z += dz * k; this.pos.y += ((t.y || 0) - this.pos.y) * k; move = 0; }
         }
-        if (!this.path.length) this.walkTo(pick(URAV.far(WD.dests, k => nodePos(k))));
+        if (!this.path.length) { const ds0 = URAV.far(WD.dests, k => nodePos(k)), ds1 = ds0.filter(k => !saltNear(nodePos(k))); this.walkTo(pick(ds1.length ? ds1 : ds0)); }
         this.stepTick(dt, 1.7); this.apply();
         this.seeT = this.seesPlayer(world.dark ? 20 : 14) ? (this.seeT || 0) + dt : 0;
         if (this.seeT > 0.4) { this.seeT = 0; this.spot(); }
@@ -12880,7 +12904,7 @@ function tick(now) {
   if (KB.down('up')) my = -1; if (KB.down('down')) my = 1; if (KB.down('left')) mx = -1; if (KB.down('right')) mx = 1;
   if (world.outro > 0 || world.capture || player.hidden || REVIVE.on || KOK.k > 0) { mx = 0; my = 0; }
   const fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw), rx = Math.cos(player.yaw), rz = -Math.sin(player.yaw);
-  const wsp = CONFIG.walkSpeed * PERM.speedMul() * CROUCH.spd() * (typeof CHBLOOD !== 'undefined' ? CHBLOOD.slow() * NWX.stag() : 1) * (typeof REDHAND !== 'undefined' ? REDHAND.slow() : 1);   /* 2026-11-15 赤い手に触れると一瞬遅くなる */   // シュン足：1.08倍。しゃがむと半分
+  const wsp = CONFIG.walkSpeed * PERM.speedMul() * CROUCH.spd() * (typeof CHBLOOD !== 'undefined' ? CHBLOOD.slow() * NWX.stag() : 1) * (typeof REDHAND !== 'undefined' ? REDHAND.slow() : 1) * (typeof DRINK !== 'undefined' ? DRINK.k() : 1);   /* 2026-11-15 赤い手に触れると一瞬遅くなる */   // シュン足：1.08倍。しゃがむと半分
   /* 2026-11-15 斜めでも前より速くならない（入力の大きさは1まで）。後ろへ歩く時は CONFIG.backMul 倍（前・横は1。間はなめらかに） */
   { const m = Math.hypot(mx, my); if (m > 1) { mx /= m; my /= m; } }
   const dirMul = 1 - (1 - CONFIG.backMul) * Math.max(0, my) / Math.max(1e-6, Math.hypot(mx, my));
@@ -12985,7 +13009,7 @@ function tick(now) {
   }
   // インカメラで逃走中：誰に追われていても、インカメラで撮りながら逃げている間は1秒2点（追ってくる姿が映っていなくてよい）
   if (rec.active && world.selfie && world.state === 'play' && !CAP.on && ((CH.state === 'chase' || CH.state === 'hunt') || SP.st === 'chase' || (world.mannRun && ['spot', 'windup', 'dash', 'skid', 'hunt', 'stun', 'turn'].includes(MANN.st)))) awardCont('selfieRun', 'インカメラで逃走中', 2, dt);
-  DIR.update(dt); AMB.update(dt); MINOR.update(dt); SELF.update(dt); ACC.update(dt); MD.update(dt); MF.update(dt); POLT.update(dt); STREETFIG.update(dt); EXITF.update(dt); RED.update(dt); MG.update(dt); raspUpdate(dt); cbgmUpdate(dt); chaseHead(dt); LIP.update(dt); DOORS2.update(dt); TAP.update(dt); F2.update(dt); SP.update(dt); TEN.update(dt); GG.update(dt); NEKO.update(dt); ITEM.update(dt); SNAKE.update(dt); UWA.update(dt); MISS.update(); SPV.update(dt); OFUDA.update(dt); OFUDA.updFall(dt);
+  DIR.update(dt); SHOPFX.update(dt); AMB.update(dt); MINOR.update(dt); SELF.update(dt); ACC.update(dt); MD.update(dt); MF.update(dt); POLT.update(dt); STREETFIG.update(dt); EXITF.update(dt); RED.update(dt); MG.update(dt); raspUpdate(dt); cbgmUpdate(dt); chaseHead(dt); LIP.update(dt); DOORS2.update(dt); TAP.update(dt); F2.update(dt); SP.update(dt); TEN.update(dt); GG.update(dt); NEKO.update(dt); ITEM.update(dt); SNAKE.update(dt); UWA.update(dt); MISS.update(); SPV.update(dt); OFUDA.update(dt); OFUDA.updFall(dt);
   updateDrops(dt);
   animHuman(woman, dt);
   // 環境音
@@ -13354,7 +13378,7 @@ function showResult(blobs) {
   const list = $('#evList'); list.innerHTML = '';
   const fresh = DEMO ? new Set() : COL.record(evidence);
   if (!DEMO) { CHAT.build(total); PHAN.onResult(); ACH.pendVid = ACH.record(total, world.runId, evidence); }   // 2026-11-14 累計いいね・歴代の神回ランキング（同じ周は二度足さない。上位3位なら動画も残す）
-  { const pi = $('#permIcons'); pi.innerHTML = ''; for (const id of PERM.owned()) if (PERM.active(id)) { const im = document.createElement('img'); im.src = PERM_IMG[id]; im.alt = im.title = TR(PERM.DEFS[id].name); pi.appendChild(im); } }   // 撮れ高コレクションに記録（初めて撮れたものにNEW）。リザルト確認用のデモでは記録しない
+  if (!DEMO) { SHOP.showRes(total); $('#result').classList.toggle('goldF', !!SHOP.load().look.goldframe); } else { const pi = $('#permIcons'); pi.innerHTML = ''; for (const id of PERM.owned()) if (PERM.active(id)) { const im = document.createElement('img'); im.src = PERM_IMG[id]; im.alt = im.title = TR(PERM.DEFS[id].name); pi.appendChild(im); } }   // 撮れ高コレクションに記録（初めて撮れたものにNEW）。リザルト確認用のデモでは記録しない
   const evs = evidence.slice().sort((a, b) => a.t - b.t);
   if (!evs.length) list.innerHTML = '<div class="ev none">撮れ高なし。次は仕込みをするべき？</div>';
   for (const e of evs) { const r = rankOf(e), d = document.createElement('div'); d.className = 'ev r-' + r.toLowerCase(); d.style.setProperty('--rc', RANK_COL[r]);
@@ -14607,7 +14631,7 @@ $('#goBtn').addEventListener('click', () => {
   world.channel = ($('#chName').value || '').trim() || '心霊チャンネル';
   world.chRaw = ($('#chName').value || '').trim(); world.yomi = world.chRaw ? ($('#chYomi').value || '').trim() : '';
   CHATLOG.reset(); world.chatRk = yrankIdx(ACH.load().total); world.chatM = YRANK[world.chatRk][3]; world.chatName = chatCallName(); world.chatNick = NICK.of(world.chRaw, world.yomi); world.chatLang = LANG;   // 2026-11-14 チャット：撮影開始時のランク倍率と呼び名をこの動画に固定
-  NEWEV.decide(); PHAN.begin(); ENEMY.decide(); MANN.reset(); WD.init(); WARP.reset(); VO.stopAll(); FIXCAM.reset(); CROUCH.reset(); UNDER.reset(); CALL.reset(); FDET.reset(); if (LID.list.length) LID.reset(); DIR.planRun(); MINOR.reset(); SELF.reset(); MD.reset(); DOORS2.reset(); TAP.reset(); F2.reset(); SP.reset(); NEKO.reset(); OFUDA.reset(); ITEM.reset(); MAZE.after(); SNAKE.reset(); UWA.reset(); TEN.reset(); GG.reset(); POLT.reset(); MF.reset(); STREETFIG.reset(); EXITF.reset(); STAY.reset(); RED.reset(); MG.reset();
+  NEWEV.decide(); PHAN.begin(); ENEMY.decide(); MANN.reset(); WD.init(); WARP.reset(); VO.stopAll(); FIXCAM.reset(); CROUCH.reset(); UNDER.reset(); CALL.reset(); FDET.reset(); if (LID.list.length) LID.reset(); DIR.planRun(); MINOR.reset(); SELF.reset(); MD.reset(); DOORS2.reset(); TAP.reset(); F2.reset(); SP.reset(); NEKO.reset(); OFUDA.reset(); ITEM.reset(); MAZE.after(); SNAKE.reset(); UWA.reset(); TEN.reset(); SHOP.beginRun(); GG.reset(); POLT.reset(); MF.reset(); STREETFIG.reset(); EXITF.reset(); STAY.reset(); RED.reset(); MG.reset();
   if (MIC30) CONFIG.recMaxSec = 30;   // 2026-11-14 開発用の30秒テスト（本番の120秒は変えない）
   $('#start').classList.remove('show');
   world.state = 'intro'; world.battery = CONFIG.battery.start; world.batUsed = Math.max(0, 100 - CONFIG.battery.start); world.sgShowUsed = rnd(50, 70);   /* 2026-11-14 逆さ女が見えるようになる時（電池の残り50〜30%のどこか。検証版から） */
@@ -14967,7 +14991,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.20';
+const VERSION = '0.16.21';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16221,7 +16245,7 @@ if (TEST && window.__G) Object.assign(window.__G, { VOICE, CONFIG, player, rende
 /* ---------- ランク昇格のお知らせ（タイトルに戻った時に1回） ---------- */
 const RANKPOP = {
   check() {
-    const d = ACH.load(); if (d.rkPend === undefined || d.rkPend <= (d.rk || 0)) return;
+    const d = ACH.load(); if (d.rkPend === undefined || d.rkPend <= (d.rk || 0)) { if ($('#start').classList.contains('show')) setTimeout(() => { try { SHOP.notify(); } catch (e) { } }, 300); return; }
     if (!$('#start').classList.contains('show') || $('#resetAsk').classList.contains('show') || $('#tut').classList.contains('show') || (typeof SET !== 'undefined' && SET.open)) { setTimeout(() => this.check(), 800); return; }
     const r = YRANK[d.rkPend], el = $('#rankPop'), en = LANG === 'en';   // 保留はランクIDで持ち、いまの言語で出す
     $('#rpT').innerHTML = ''; $('#rpT').append(cui('congrats'), document.createElement('br'), en ? r[5] : `${r[1]}になりました！`);
@@ -16233,10 +16257,10 @@ const RANKPOP = {
   },
   close() { const d = ACH.load(); if (d.rkPend !== undefined) { d.rk = Math.max(d.rk || 0, d.rkPend); delete d.rkPend; ACH.save(); } $('#rankPop').classList.remove('show'); RANKTAG(); },
 };
-$('#rpOk').addEventListener('click', e => { e.stopPropagation(); RANKPOP.close(); });
+$('#rpOk').addEventListener('click', e => { e.stopPropagation(); RANKPOP.close(); setTimeout(() => { try { SHOP.notify(); } catch (er) { } }, 250); });
 for (const t of ['pointerdown', 'touchstart']) $('#rankPop').addEventListener(t, e => e.stopPropagation(), { passive: true });
 try { PERM.rankSync(Math.min(ACH.load().rk || 0, yrankIdx(ACH.load().total))); } catch (e) { }   // 2026-11-14 すでにランクが上がっている人にも機材を渡す
-function RANKTAG() { const el = $('#rankTag'); if (!el) return; const d = ACH.load(); el.textContent = yrankName(Math.min(d.rk || 0, yrankIdx(d.total))); }
+function RANKTAG() { try { SHOP.title(); } catch (e) { } const el = $('#rankTag'); if (!el) return; const d = ACH.load(); el.textContent = yrankName(Math.min(d.rk || 0, yrankIdx(d.total))); }
 RANKTAG();
 // コメントでの呼び名（任意）：空欄ならチャンネル名
 { const c = $('#callName'); if (c) { c.placeholder = cui('nick'); $('#callSum').textContent = cui('nick') + ' ›'; $('#callHint').textContent = cui('nickHint'); try { c.value = localStorage.getItem('yt_callName') || ''; } catch (e) { } c.addEventListener('input', () => { try { localStorage.setItem('yt_callName', c.value); } catch (e) { } }); } }
@@ -18523,7 +18547,7 @@ const URAH = {
     if (this.st === 'squeeze') { this.updSqueeze(dt); this.apply(); return; }
     switch (this.st) {
       case 'walk': {
-        if (!this.route.length) { this.wk = rnd(URAH_CFG.walkK[0], URAH_CFG.walkK[1]); } if (!this.route.length) this.goTo(this.npos(pick(Object.keys(this.N).filter(k => !/^ue/.test(k) && !(this.TIGHT[this.N[k][2]] && !/^S/.test(this.N[k][2]))))));   /* 徘徊の行き先：狭い部屋（階段以外）は選ばない */
+        if (!this.route.length) { this.wk = rnd(URAH_CFG.walkK[0], URAH_CFG.walkK[1]); } if (!this.route.length) { const ks0 = Object.keys(this.N).filter(k => !/^ue/.test(k) && !(this.TIGHT[this.N[k][2]] && !/^S/.test(this.N[k][2]))), ks1 = ks0.filter(k => !saltNear(this.npos(k))); this.goTo(this.npos(pick(ks1.length ? ks1 : ks0))); }   /* 2026-11-16 盛り塩のまわりは選ばない */   /* 徘徊の行き先：狭い部屋（階段以外）は選ばない */
         { const ws = this.sp('walk'); this.play('Noh_Walk', ws / 0.85 * 0.8); this.move(dt, ws * (URGAIT.on ? URGAIT.surge || 1 : 1)); }
         if (world.t > this.swapAt) { this.swapAt = world.t + rnd(URAH_CFG.swapMin, URAH_CFG.swapMax); this.swap(this.face === 'noh' ? 'hannya' : 'noh', false); }   /* ふとした時に顔が入れ替わる */
         this.seeT = this.sees() ? this.seeT + dt : 0;
@@ -18582,7 +18606,7 @@ const URAH = {
     if (!this.frozen && dist < reachD && dist > C.catchR && Math.abs(player.y - this.pos.y) < 0.6 && clearLine(camera.position.clone(), [], this.pos.clone().setY(this.pos.y + 1.0)) && this.stall > 0.35) { this.st = 'reach'; this.rt = 0; return; }   /* 2026-11-15 本当に進めない時だけ（立ち止まらない） */
     if (this.stall > 0.6) { this.stall = 0; if (this.route.length > 1) this.route.shift(); this.rep = 0; this.goTo(V(player.x, player.y, player.z)); }   /* 進めなくなったら、すぐ道を選び直す */
     if (this.slip && this.lostT > C.slipLost && dist > 8) { if (rec.active) award('urahSlip', '反対側の扉から逃げ切る', 70); this.slip = null; }
-    if (this.lostT > (room ? 25 : C.lostT)) { this.slip = null; const f = this.face; this.toWalk(); if (f === 'hannya') URAHV.say('hanLost', 'hannya'); }
+    if (this.lostT > (room ? 25 : C.lostT) * beadsK()) { this.slip = null; const f = this.face; this.toWalk(); if (f === 'hannya') URAHV.say('hanLost', 'hannya'); }
   },
   updReach(dt, dist) {   /* その場で、主人公の方へ腕を伸ばしてまさぐる */
     this.rt += dt; this.by += clamp(uAng(Math.atan2(player.x - this.pos.x, player.z - this.pos.z) - (this.reachA || 0), this.by), -5 * dt, 5 * dt); this.reachPose(this.rt, true); this.grabCheck(); if (this.st === 'cap') return;
@@ -18999,7 +19023,7 @@ const NEWWING = {
     for (const [id, p] of [['sparebat', V(0, -50, 0)], ['pmask', V(0, -50, 0)]]) if (!ITEM.get(id)) ITEM.add(id, p, 1);
     const sb = ITEM.get('sparebat'); sb.lk = null; sb.spot = null; if (WF('sparebat') || chance(0.8)) { sb.taken = false; sb.lv = 1; sb.pos.copy(pick(SCIRM.spots())); } else { sb.taken = true; sb.pos.set(0, -50, 0); }
     const mk = ITEM.get('pmask'); mk.taken = false; mk.lv = 1; mk.pos.copy(ARTRM.maskP); ITEM.have.pmask = false; ITEM.skin(sb); ITEM.skin(mk);
-    if (WF('mask')) ITEM.have.pmask = true;
+    if (WF('mask') || (SHOP.carried || []).includes('pmask')) ITEM.have.pmask = true; SHOP.placePicks();   /* 2026-11-16 持ち込んだお面／理科室のケミカルライト・ろうそく */
   },
   update(dt) { WOFF = []; LASTSEC.update(); TALLY.update(dt); BROOMEV.update(dt); ENEMY.update(dt); CHBLOOD.update(dt); NWX.update(dt); WING.update(dt); SCIRM.update(dt); ARTRM.update(dt); PMASK.update(dt); DUCT.update(dt); BCAST.update(dt); },
   offer() { for (const [l, f] of WOFF) { offerAction(l, f); return; } },
@@ -20014,7 +20038,155 @@ Object.assign(AW_HINT, { paintDone: ['美術室のキャンバスを調べる', 
 Object.assign(EN, { '画伯の誕生': 'A master is born', '命をかけた芸術家': 'Art worth dying for', 'キャンバスに描く': 'Paint on the canvas' });
 Object.assign(CHAT_DICT.t, { 'pt.d1': ['画伯じゃん', "we've got an artist"], 'pt.d2': ['なに描いてんのｗ', 'what are you drawing lol'], 'pt.d3': ['今それやる！？', 'NOW of all times!?'], 'pt.d4': ['命がけの芸術', 'art on the line'] });
 if (CHAT_DICT.ev) Object.assign(CHAT_DICT.ev, { '画伯の誕生': ['pt.d1', 'pt.d2'], '命をかけた芸術家': ['pt.d3', 'pt.d4'] });
-if (TEST && window.__G) Object.assign(window.__G, { PAINT, WING, CH, WD, SP, nodePos, clearLine, segBlocked, MINOR, HP, EV, DIR, URINT, URPREY, URAV, HANDS, HAND_SPOTS, POLT, MOVERS, UWA, GG_SPOTS, ABYSS, BUSTX, DOLLX, nearLook, setZoom(z) { zoom = zoomTarget = z; }, SCIRM, ARTRM, PMASK, COL, NAKA, TALLY, BROOMEV, AW_TABLE, CHIP_DESC, AW_HINT, GEAR, FIXCAM, RING, PERM, KANA, VO, PACALL, SPV, EV, seen, A, CH, HEART, CVOICE, wdScream, WARP, WD, ITEM, F2, PAD, QUALITY, opt, MP4FIX, rec, resultBlobs: () => resultBlobs, LOGOANIM, CHIP, VTITLE, NOISE, SNAKE, ACC, ACC_ICON, ACC_VIEW, award, CHATLOG, CHAT, CHATGEN, RES_CHAT, RANKPOP, yrankIdx, GOD, VDB, ACH, PERM, REVIVE, RESET, COL, escape, caught, DIR, SP, OFUDA, LUM, TRACE, HAZURE, seen, SFX_CREDITS, AW_TABLE, RANK_FIX, rankOf, MICLV, MIC, rec, opt, VED, RES_CHAT_: () => RES_CHAT, _attach: b => attachVideo(b), GODV: GOD, _blobs: () => resultBlobs, EVENTS: () => EV });
+/* =========================================================
+   2026-11-16 お金（円）とショップ（第1弾）
+   ・数字はすべて ECON の表にまとめた（倍率・値段・持ち込み数など。あとでここだけ変えればよい）
+   ・収益＝その周のいいね×ランクの倍率（周を始めた時のランク）。捕まって「スマホだけ回収」は半分
+   ・ショップは駆け出しから。使い切りの道具は1種類1つまで・持ち込みはランクで1〜3つ。見た目だけの物はずっと使える
+   ・確認用：?yen=数字（所持金）／?rank=0〜5（その周の倍率とショップの解放）／?carry=id,id（持ち込み）／?shopall（全部解放）
+   ========================================================= */
+const ECON = {
+  mul: [1, 2, 4, 8, 15, 25],                 /* ランク（新人〜伝説）ごとの、いいね1つあたりの円 */
+  capture: 0.5,                              /* 捕まった時の割合 */
+  carry: [1, 1, 2, 2, 3, 3],                 /* 1周に持って入れる道具の数 */
+  sponsor: [2, 3, 4, 5],                     /* スポンサーから1つ届くランク */
+  pickWing: 0.1,                             /* 新しい棟が開いた周に、理科室でケミカルライト・ろうそくを拾える確率 */
+  /* [id, 値段, 解放（ランクの番号 か 'wing'）, 種類（use＝使い切り / look＝見た目だけ）] */
+  items: [
+    ['battery2', 400, 1, 'use'], ['buzzer', 400, 1, 'use'], ['recorder', 300, 1, 'use'],
+    ['shades', 200, 1, 'look'], ['party', 200, 1, 'look'], ['ears', 200, 1, 'look'], ['hood', 200, 1, 'look'],
+    ['chem', 300, 'wing', 'use'], ['candle', 400, 'wing', 'use'],
+    ['battery', 5000, 2, 'use'], ['bell', 5000, 2, 'use'], ['spray', 6000, 2, 'use'], ['drink', 6000, 2, 'use'], ['stick', 5000, 2, 'use'],
+    ['omamori', 15000, 3, 'use'], ['sparebat', 12000, 3, 'use'], ['pmask', 15000, 3, 'use'],
+    ['ofuda', 50000, 4, 'use'], ['salt', 25000, 4, 'use'], ['beads', 30000, 4, 'use'],
+    ['goldphone', 300000, 5, 'look'], ['goldframe', 500000, 5, 'look'],
+  ],
+};
+/* 新しい道具（アイコンは仮。ITEM_ICON2[id] に画像を入れれば差し替わる） */
+Object.assign(ITEM.defs, {
+  buzzer: { name: '防犯ブザー', desc: '投げると、その場で20秒鳴り続ける。近くの怪異はそちらへ向かう。', size: 0.18, act: '投げる' },
+  chem: { name: 'ケミカルライト', desc: '折ると緑に光る棒。少し先へ放って、まわりをぼんやり照らす。落ちた音に怪異が少し気を取られる。', size: 0.18, act: '折って置く' },
+  candle: { name: 'ろうそく', desc: '手に持って歩ける小さな明かり。怪異が近づくと炎がゆらぎ、とても近いとふっと消える。約3分で燃え尽きる。', size: 0.18, act: '火をつける' },
+  spray: { name: '虫よけスプレー', desc: 'その周の間、クモ女が自分のまわりに降りてきにくくなる。ほかの怪異には効かない。', size: 0.18, act: '使う' },
+  drink: { name: '栄養ドリンク', desc: '20秒間、歩く速さが上がる。切れたあと少し息が上がる。', size: 0.18, act: '飲む' },
+  stick: { name: 'こわれかけの自撮り棒', desc: '持っていると、インカメラが少し遠く・広く映る。インカメラで合計60秒使うと折れる。', size: 0.2 },
+  salt: { name: '盛り塩', desc: '足もとに置くと、まわり6mに怪異が寄りにくくなる。追ってきた怪異には効かない。', size: 0.18, act: '置く' },
+  beads: { name: '数珠', desc: '持って入った周の間、追われている時に見失ってもらいやすくなる。', size: 0.18 },
+  goldphone: { name: '金色のスマホ', desc: '伝説の記念品。見た目だけ。', size: 0.18 },
+  goldframe: { name: '伝説のサムネイル枠', desc: '伝説の記念品。見た目だけ。', size: 0.18 },
+});
+if (!ITEM.defs.battery.act) ITEM.defs.battery.act = '充電する'; if (ITEM.defs.sparebat && !ITEM.defs.sparebat.act) ITEM.defs.sparebat.act = '充電する';
+INV.ids.push('battery', 'sparebat', 'buzzer', 'chem', 'candle', 'spray', 'drink', 'stick', 'salt', 'beads');
+for (const id of ['buzzer', 'chem', 'candle', 'spray', 'drink', 'stick', 'salt', 'beads', 'goldphone', 'goldframe']) ITEM_IMG[id] = ITEM_ICON2[id] || ITEM.fallbackIcon(id);
+Object.assign(EN, { '防犯ブザー': 'Safety buzzer', 'ケミカルライト': 'Glow stick', 'ろうそく': 'Candle', '虫よけスプレー': 'Bug spray', '栄養ドリンク': 'Energy drink', 'こわれかけの自撮り棒': 'Rickety selfie stick', '盛り塩': 'Salt mound', '数珠': 'Prayer beads', '金色のスマホ': 'Golden phone', '伝説のサムネイル枠': 'Legendary thumbnail frame', '投げる': 'Throw', '折って置く': 'Snap & drop', '火をつける': 'Light', '飲む': 'Drink', '置く': 'Place', 'ショップ': 'Shop' });
+const SHOP = {
+  KEY: 'yt_shop_v1',
+  load() { if (this.d) return this.d; let d = null; try { d = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) { } this.d = d && typeof d.yen === 'number' ? d : { yen: 0, own: {}, look: {}, carry: [], seen: {}, stickT: 0 }; const q = (TEST || BETA || DEV) && location.search.match(/[?&]yen=(\d+)/); if (q) this.d.yen = +q[1]; return this.d; },
+  save() { try { localStorage.setItem(this.KEY, JSON.stringify(this.d)); } catch (e) { } },
+  rank() { const q = (TEST || BETA || DEV) && location.search.match(/[?&]rank=(\d)/); return q ? +q[1] : yrankIdx(ACH.load().total); },
+  wing() { try { return localStorage.getItem('yt_bar1_open') === '1' || localStorage.getItem('yt_bar2_open') === '1' || localStorage.getItem('yt_wing_open') === '1'; } catch (e) { return false; } },
+  open_() { return this.rank() >= 1 || /[?&]shopall\b/.test(location.search); },
+  def(id) { return ECON.items.find(x => x[0] === id); },
+  unlocked(it) { if (/[?&]shopall\b/.test(location.search)) return true; return it[2] === 'wing' ? this.rank() >= 1 && this.wing() : this.rank() >= it[2]; },
+  has(id) { const d = this.load(), it = this.def(id); return it && (it[3] === 'look' ? !!d.look[id] : (d.own[id] | 0) > 0); },
+  buy(id) { const d = this.load(), it = this.def(id); if (!it || !this.unlocked(it) || this.has(id) || d.yen < it[1]) return false; d.yen -= it[1]; if (it[3] === 'look') d.look[id] = true; else { d.own[id] = 1; if (d.carry.length < ECON.carry[this.rank()] && !d.carry.includes(id)) d.carry.push(id); } this.save(); return true; },
+  give(id) { const d = this.load(), it = this.def(id); if (!it) return; if (it[3] === 'look') d.look[id] = true; else d.own[id] = 1; this.save(); },
+  toggleCarry(id) { const d = this.load(); const i = d.carry.indexOf(id); if (i >= 0) d.carry.splice(i, 1); else if (this.has(id) && d.carry.length < ECON.carry[this.rank()]) d.carry.push(id); else return false; this.save(); return true; },
+  /* ── 周の始まり：倍率を決め、持ち込みと見た目の物を持たせる */
+  beginRun() {
+    const d = this.load(); this.runRank = this.rank(); this.carried = []; world.spray = false; world.salts = []; DRINK.reset(); CANDLE.reset(); CHEM.reset(); BUZZ.reset();
+    const q = (TEST || BETA || DEV) && location.search.match(/[?&]carry=([\w,]+)/); const list = q ? q[1].split(',') : d.carry.filter(id => this.has(id)).slice(0, ECON.carry[this.runRank]);
+    for (const id of list) { if (!ITEM.defs[id]) continue; if (id === 'ofuda') ITEM.have.ofuda = (ITEM.have.ofuda | 0) + 1; else ITEM.have[id] = true; this.carried.push(id); if (id === 'bell') ITEM.bellT = 1; }
+    for (const id in d.look) if (d.look[id] && ITEM.defs[id] && !['goldphone', 'goldframe'].includes(id)) ITEM.have[id] = true;
+    document.documentElement.classList.toggle('goldPhone', !!d.look.goldphone);
+  },
+  placePicks() {   /* 新しい棟が開いた周は、理科室でケミカルライト・ろうそくを拾えることがある */
+    for (const id of ['chem', 'candle']) { const it0 = ITEM.get(id); if (it0) { it0.taken = true; it0.pos.set(0, -50, 0); } }
+    if (world.wingOpen) for (const id of ['chem', 'candle']) if (Math.random() < ECON.pickWing || WF('pick' + id)) { if (!ITEM.get(id)) ITEM.add(id, V(0, -50, 0), 1); const it = ITEM.get(id); it.lk = null; it.spot = null; it.taken = false; it.lv = 1; it.pos.copy(pick(SCIRM.spots())); ITEM.skin(it); }
+  },
+  /* ── 周の終わり：使った物をなくし、拾ったケミカルライト・ろうそくは持ち帰る。収益を足す */
+  endRun(likes) {
+    if (this.ended === world.runId) return this.last; this.ended = world.runId; const d = this.load(), r = this.runRank ?? this.rank(), cap = world.state === 'over';
+    for (const id of this.carried || []) { const used = id === 'bell' || (id === 'recorder' && (ITEM.tootN | 0) > 0) || (id === 'ofuda' ? !(ITEM.have.ofuda > 0) : !ITEM.have[id]) || ['spray', 'beads'].includes(id); if (used) { d.own[id] = 0; d.carry = d.carry.filter(x => x !== id); } }
+    for (const id of ['chem', 'candle']) if (ITEM.have[id] && !(this.carried || []).includes(id)) d.own[id] = 1;
+    const base = Math.round(Math.max(0, likes) * ECON.mul[r] * (cap ? ECON.capture : 1)), tips = typeof TIPS !== 'undefined' ? TIPS.sum() : 0, yen = base + tips;
+    d.yen += yen; this.save(); this.last = { yen, likes, mul: ECON.mul[r], cap, tips, base }; if (TEST || DEV) console.log('SHOP run', JSON.stringify(this.last)); return this.last;
+  },
+  /* 使い切りの道具を使った時（その周の持ち込みなら、なくなる） */
+  used(id) { },
+  /* ── 結果画面の左上：収益（2行）。タップで内訳 */
+  showRes(likes) {
+    const L = this.endRun(likes), el = $('#permIcons'), en = LANG === 'en'; el.innerHTML = `<div id="resYen"><div class="ryL">${en ? 'Revenue' : '収益'}</div><div class="ryV">+0${en ? ' yen' : '円'}</div></div>`;
+    const v = el.querySelector('.ryV'), t0 = performance.now(), dur = 900, f = () => { const k = Math.min(1, (performance.now() - t0) / dur); v.textContent = '+' + Math.round(L.yen * k * (2 - k)).toLocaleString() + (en ? ' yen' : '円'); if (k < 1) requestAnimationFrame(f); }; requestAnimationFrame(f);
+    el.onclick = e => { e.stopPropagation(); toast((en ? `${L.likes} likes × ${L.mul}` : `いいね ${L.likes} × ${L.mul}倍`) + (L.cap ? (en ? ' × 1/2 (caught)' : ' × 1/2（回収）') : '') + (L.tips ? (en ? ` + tips ¥${L.tips}` : ` ＋ 投げ銭 ${L.tips}円`) : '') + (en ? ` = ${L.yen} yen` : ` ＝ ${L.yen.toLocaleString()}円`), 3200); };
+  },
+  /* ── スタート画面：所持金とショップのボタン */
+  title() {
+    const d = this.load(), en = LANG === 'en'; let b = $('#shopBtn');
+    if (!b) { b = document.createElement('button'); b.id = 'shopBtn'; b.className = 'colBtn'; $('#colBtn').after(b); b.addEventListener('click', e => { e.stopPropagation(); this.openUI(); }); const y = document.createElement('div'); y.id = 'yenLine'; $('.rankLine').after(y); }
+    b.style.display = this.open_() ? '' : 'none'; b.textContent = en ? 'Shop' : 'ショップ';
+    $('#yenLine').innerHTML = this.open_() || d.yen ? `<span>${en ? 'Money' : '所持金'}</span><b>${d.yen.toLocaleString()}${en ? ' yen' : '円'}</b>` + (d.carry.filter(id => this.has(id)).length ? `<small>${en ? 'Bringing: ' : '持ち込み：'}${d.carry.filter(id => this.has(id)).map(id => TR(ITEM.defs[id].name)).join('・')}</small>` : '') : '';
+  },
+  /* お知らせ（ランクが上がったお知らせのあとに） */
+  notify() {
+    const d = this.load(), r = this.rank(), msgs = [], en = LANG === 'en';
+    if (r >= 1 && !d.seen.open) { d.seen.open = 1; msgs.push(en ? 'The shop is now open! Spend the money you earn on tools for your next run.' : 'ショップが解放されました。稼いだお金で、探索に持って入る道具を買えます。'); }
+    if (r >= 1 && this.wing() && !d.seen.wing) { d.seen.wing = 1; msgs.push(en ? 'New items are in the shop.' : 'ショップに新しい品物が並びました。'); }
+    for (const k of ECON.sponsor) if (r >= k && !d.seen['sp' + k]) { d.seen['sp' + k] = 1; const c = ECON.items.filter(it => it[3] === 'use' && it[2] !== 'wing' && it[2] <= r && !this.has(it[0])); if (c.length) { const it = c.sort((a, b) => b[1] - a[1])[Math.floor(Math.random() * Math.min(3, c.length))]; this.give(it[0]); msgs.push((en ? 'A gift from a sponsor: ' : 'スポンサーから届きました：') + TR(ITEM.defs[it[0]].name)); } }
+    this.save(); if (msgs.length) this.pop(msgs);
+  },
+  pop(msgs) { const el = $('#shopPop') || (() => { const e = document.createElement('div'); e.id = 'shopPop'; e.innerHTML = '<div class="raBox"><div class="raT"></div><div class="raD"></div><div class="raBtns"><button></button></div></div>'; document.body.appendChild(e); e.querySelector('button').onclick = ev => { ev.stopPropagation(); e.classList.remove('show'); }; for (const t of ['pointerdown', 'touchstart']) e.addEventListener(t, ev => ev.stopPropagation(), { passive: true }); return e; })();
+    el.querySelector('.raT').textContent = LANG === 'en' ? 'Shop' : 'ショップ'; el.querySelector('.raD').innerHTML = msgs.map(m => `<p>${m}</p>`).join(''); el.querySelector('button').textContent = LANG === 'en' ? 'OK' : 'わかった'; el.classList.add('show'); },
+  /* ── ショップの画面 */
+  openUI() {
+    const en = LANG === 'en', d = this.load(), r = this.rank(); let el = $('#shopUI');
+    if (!el) { el = document.createElement('div'); el.id = 'shopUI'; document.body.appendChild(el); el.addEventListener('click', e => { e.stopPropagation(); if (e.target.id === 'shopUI') el.classList.remove('show'); }); for (const t of ['pointerdown', 'touchstart', 'touchmove']) el.addEventListener(t, e => e.stopPropagation(), { passive: true }); }
+    const lockTxt = it => it[2] === 'wing' ? (en ? 'Unlocks after breaking a barricade' : 'バリケードを壊すと解放') : (en ? `Unlocks at ${YRANK[it[2]][4]}` : `${YRANK[it[2]][1]}で解放`);
+    const row = it => { const id = it[0], D = ITEM.defs[id], ok = this.unlocked(it), own = this.has(id), carry = d.carry.includes(id) && own;
+      if (!ok) return `<div class="shIt lock"><div class="shIc">？</div><div class="shTx"><b>？？？</b><small>${lockTxt(it)}</small></div></div>`;
+      const btn = own ? (it[3] === 'look' ? `<span class="shOwn">${en ? 'Owned' : '持っている'}</span>` : `<button class="shCar${carry ? ' on' : ''}" data-c="${id}">${carry ? (en ? 'Bringing' : '持ち込む') : (en ? 'Leave' : '置いていく')}</button>`) : `<button class="shBuy" data-b="${id}"${d.yen < it[1] ? ' disabled' : ''}>${it[1].toLocaleString()}${en ? ' yen' : '円'}</button>`;
+      return `<div class="shIt"><img src="${ITEM_IMG[id] || (ITEM_IMG[id] = ITEM.fallbackIcon(id))}"><div class="shTx"><b>${TR(D.name)}</b><small>${TR(D.desc)}</small></div>${btn}</div>`; };
+    el.innerHTML = `<div class="shBox"><div class="shHead"><b>${en ? 'Shop' : 'ショップ'}</b><span>${en ? 'Money' : '所持金'} <b>${d.yen.toLocaleString()}${en ? ' yen' : '円'}</b></span><button class="shX">×</button></div><div class="shNote">${en ? `You can bring ${ECON.carry[r]} tool(s) per run (${d.carry.filter(id => this.has(id)).length} chosen). Unused tools carry over. Looks-only items are always yours.` : `1周に持って入れる道具：${ECON.carry[r]}つ（選んでいる数 ${d.carry.filter(id => this.has(id)).length}）。使わなければ次の周に持ち越せます。見た目だけの物は、ずっと使えます。`}</div><div class="shList">${ECON.items.map(row).join('')}</div></div>`;
+    el.querySelector('.shX').onclick = e => { e.stopPropagation(); el.classList.remove('show'); this.title(); };
+    el.querySelectorAll('[data-b]').forEach(b => b.onclick = e => { e.stopPropagation(); if (this.buy(b.dataset.b)) { toast(en ? 'Purchased' : '買いました', 1200); this.openUI(); } });
+    el.querySelectorAll('[data-c]').forEach(b => b.onclick = e => { e.stopPropagation(); if (!this.toggleCarry(b.dataset.c)) toast(en ? 'You cannot bring more' : 'これ以上は持って入れません', 1500); this.openUI(); });
+    el.classList.add('show');
+  },
+};
+/* ── 新しい道具の働き */
+const DRINK = { reset() { this.until = 0; this.after = 0; }, use() { this.until = world.t + 20; this.after = world.t + 30; SND.breath && SND.breath(0, 0.6); }, k() { return world.t < this.until ? 1.15 : 1; }, tired() { return world.t >= this.until && world.t < this.after; },
+  update() { if (this.tired() && (this.bt = (this.bt || 0) - 1 / 30) <= 0) { this.bt = 1.4; SND.breath && SND.breath(0, 1.5); } } };
+const BUZZ = { reset() { this.on = null; }, use() { const f = camFwd(); f.y = 0; f.normalize(); const p = V(player.x + f.x * 3, player.y, player.z + f.z * 3); const [x, z] = collide(p.x, p.z, 0.2, player.lv); p.x = x; p.z = z; this.on = { p: p.setY(player.y + 0.05), t: 0, nx: 0 }; SND.knock(this.on.p, 0.6); this.lure(); },
+  lure() { const p = this.on.p; try { if (CH.state === 'off' && !WD.borrowed && Math.abs((WD.pos.y || 0) - p.y) < 1.5 && WD.pos.distanceTo(p) < 30) WD.goTo(p); } catch (e) { } try { if (URAH.on && !URAH.chasing() && Math.abs(URAH.pos.y - p.y) < 1.5) URAH.alertAt(p); } catch (e) { } try { if (world.mannRun && MANN.st === 'walk' && Math.abs(MANN.pos.y - p.y) < 1.5) MANN.walkTo(nearestNode(p.x, p.z, undefined, p.y)); } catch (e) { } URINT.noise('buzzer'); },
+  update(dt) { const B = this.on; if (!B || !A.ctx) return; B.t += dt; B.nx -= dt; if (B.nx <= 0) { B.nx = 0.5; tn(panAt(B.p, 2.2, 0.9, undefined, 1), { t: A.ctx.currentTime, type: 'square', f0: 3100, f1: 3100, dur: 0.22, peak: 0.08 }); } if (Math.floor(B.t) % 5 === 0 && Math.floor(B.t - dt) % 5 !== 0) this.lure(); if (B.t > 20) this.on = null; } };
+const CHEM = { list: [], reset() { for (const c of this.list) scene.remove(c); this.list = []; },
+  use() { const f = camFwd(); f.y = 0; f.normalize(); const [x, z] = collide(player.x + f.x * 1.6, player.z + f.z * 1.6, 0.2, player.lv); const g = new THREE.Group(); g.position.set(x, player.y + 0.03, z); const m = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.15, 6), new THREE.MeshBasicMaterial({ color: 0x7cff70 })); m.rotation.z = Math.PI / 2; m.rotation.y = rnd(0, 3); g.add(m); const L = new THREE.PointLight(0x5cff60, 0.9, 4.5, 2); L.position.y = 0.15; g.add(L); scene.add(g); this.list.push(g); SND.kata && SND.kata(g.position.clone(), 0.4); NOISE.make(5); } };
+const CANDLE = { reset() { if (this.g) { camera.remove(this.g); this.g = null; } this.t = 0; },
+  use() { this.reset(); const g = new THREE.Group(); g.position.set(0.16, -0.2, -0.32); const w = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.09, 8), new THREE.MeshLambertMaterial({ color: 0xf2ead8 })); g.add(w); const fl = new THREE.Mesh(new THREE.SphereGeometry(0.009, 6, 5), new THREE.MeshBasicMaterial({ color: 0xffc860 })); fl.scale.y = 1.8; fl.position.y = 0.06; g.add(fl); const L = new THREE.PointLight(0xffa850, 0.8, 5, 2); L.position.y = 0.08; g.add(L); camera.add(g); Object.assign(this, { g, fl, L, t: 180 }); },
+  update(dt) { if (!this.g) return; this.t -= dt; let near = 99; try { near = Math.min(near, ...[WD.pos, SP.pos, MANN.pos, URAH.on && URAH.pos].filter(p => p && Math.abs((p.y || 0) - player.y) < 2 && (p !== WD.pos || (SG.opacity ?? 0) > 0.2 || CH.state !== 'off')).map(p => Math.hypot(p.x - player.x, p.z - player.z))); } catch (e) { }
+    const sway = near < 7 ? (7 - near) / 7 : 0; this.fl.rotation.z = Math.sin(world.t * (8 + sway * 30)) * (0.1 + sway * 0.9); this.L.intensity = 0.8 * (0.85 + Math.random() * 0.15) * (1 - sway * 0.4);
+    if (near < 2.2 || this.t <= 0) { if (near < 2.2) toast(LANG === 'en' ? 'The candle went out' : 'ろうそくの火が、ふっと消えた', 1600); this.reset(); } } };
+const STICK = { k() { return ITEM.have.stick && world.selfie ? 1 : 0; },
+  update(dt) { if (!this.k()) return; const d = SHOP.load(); d.stickT = (d.stickT || 0) + dt; if (d.stickT >= 60) { d.stickT = 0; ITEM.have.stick = false; d.own.stick = 0; d.carry = d.carry.filter(x => x !== 'stick'); SND.knock(camera.position.clone(), 0.8); toast(LANG === 'en' ? 'The selfie stick snapped' : '自撮り棒がポキッと折れた', 1800); XCHAT.log('stick'); } if ((this.sv = (this.sv || 0) + dt) > 5) { this.sv = 0; SHOP.save(); } } };
+XCHAT.LIST.stick = ['sk.01', 'sk.02']; Object.assign(CHAT_DICT.t, { 'sk.01': ['折れたｗ', 'it snapped lol'], 'sk.02': ['安物だから…', 'cheap stuff...'] });
+const saltNear = p => (world.salts || []).some(s => Math.abs((p.y || 0) - s.y) < 1.6 && Math.hypot(p.x - s.x, p.z - s.z) < 6);
+const beadsK = () => ITEM.have.beads ? 0.7 : 1;   /* 数珠：見失うまでの時間が7割に */
+/* 使う（持ち物から） */
+{ const use0 = ITEM.use.bind(ITEM);
+  ITEM.use = function (id) {
+    if (!this.have[id]) return false; const T = (ja, en) => LANG === 'en' ? en : ja;
+    if (id === 'battery' || id === 'sparebat') { if (world.battery >= 99.5) { toast(TR('電池はもう満タン'), 1600); return false; } world.battery = Math.min(100, world.battery + (id === 'battery' ? 30 : 20)); this.have[id] = false; this.seCharge(); return true; }
+    if (id === 'buzzer') { BUZZ.use(); this.have.buzzer = false; return true; }
+    if (id === 'chem') { CHEM.use(); this.have.chem = false; return true; }
+    if (id === 'candle') { CANDLE.use(); this.have.candle = false; return true; }
+    if (id === 'spray') { world.spray = true; this.have.spray = false; playSfx('kehai_whoosh', { ear: 0, gain: 0.3, rate: 1.6 }); toast(T('まわりにスプレーをまいた', 'You sprayed around'), 1500); return true; }
+    if (id === 'drink') { DRINK.use(); this.have.drink = false; toast(T('体が軽くなった', 'You feel lighter'), 1500); return true; }
+    if (id === 'salt') { if (world.salts && world.salts.length) { toast(T('盛り塩は1周に1つまで', 'One salt mound per run'), 1500); return false; } const g = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.08, 10), new THREE.MeshLambertMaterial({ color: 0xf4f2ec })); g.position.set(player.x, player.y + 0.04, player.z); scene.add(g); (world.salts = world.salts || []).push(g.position.clone().setY(player.y)); CHEM.list.push(g); this.have.salt = false; return true; }
+    return use0(id);
+  }; }
+/* フレームごと（DIR のあとで） */
+const SHOPFX = { update(dt) { if (world.state !== 'play') return; BUZZ.update(dt); CANDLE.update(dt); DRINK.update(); STICK.update(dt); } };
+if (TEST && window.__G) Object.assign(window.__G, { escape, evidence, award, SHOP, ECON, ACH, ITEM, INV, BUZZ, CHEM, CANDLE, DRINK, STICK, PAINT, WING, CH, WD, SP, nodePos, clearLine, segBlocked, MINOR, HP, EV, DIR, URINT, URPREY, URAV, HANDS, HAND_SPOTS, POLT, MOVERS, UWA, GG_SPOTS, ABYSS, BUSTX, DOLLX, nearLook, setZoom(z) { zoom = zoomTarget = z; }, SCIRM, ARTRM, PMASK, COL, NAKA, TALLY, BROOMEV, AW_TABLE, CHIP_DESC, AW_HINT, GEAR, FIXCAM, RING, PERM, KANA, VO, PACALL, SPV, EV, seen, A, CH, HEART, CVOICE, wdScream, WARP, WD, ITEM, F2, PAD, QUALITY, opt, MP4FIX, rec, resultBlobs: () => resultBlobs, LOGOANIM, CHIP, VTITLE, NOISE, SNAKE, ACC, ACC_ICON, ACC_VIEW, award, CHATLOG, CHAT, CHATGEN, RES_CHAT, RANKPOP, yrankIdx, GOD, VDB, ACH, PERM, REVIVE, RESET, COL, escape, caught, DIR, SP, OFUDA, LUM, TRACE, HAZURE, seen, SFX_CREDITS, AW_TABLE, RANK_FIX, rankOf, MICLV, MIC, rec, opt, VED, RES_CHAT_: () => RES_CHAT, _attach: b => attachVideo(b), GODV: GOD, _blobs: () => resultBlobs, EVENTS: () => EV });
 /* 2026-11-14 PC：ウィンドウ／全画面（全画面はボタンを押した時と、旧校舎に入る時に切り替える。Escで戻したらウィンドウに） */
 const SCREEN = {
   isFull() { return !!(document.fullscreenElement || document.webkitFullscreenElement); },
