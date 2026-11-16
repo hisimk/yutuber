@@ -690,7 +690,7 @@
   #itemModal.tRare #imImg{filter:drop-shadow(0 0 10px rgba(255,211,77,.75))}
   #itemModal.tUltra #imImg{animation:imRb 2.4s linear infinite}
   @keyframes imRb{0%{filter:drop-shadow(0 0 12px #ff5a5a)}25%{filter:drop-shadow(0 0 12px #ffd34d)}50%{filter:drop-shadow(0 0 12px #4fb3ff)}75%{filter:drop-shadow(0 0 12px #b07cff)}100%{filter:drop-shadow(0 0 12px #ff5a5a)}}
-  body>.heroSp{position:fixed;z-index:60}
+  body>.heroSp{position:fixed;z-index:70}
   #itemModal{position:fixed;inset:0;z-index:45;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.66);color:#fff;text-align:center;padding:0 24px;-webkit-user-select:none;user-select:none}
   /* 2026-11-14 持ち物の操作ボタン・鈴の確認 */
   .invAct{margin-left:auto;flex:none;min-width:72px;height:36px;padding:0 12px;border-radius:10px;border:1px solid #55524c;background:#1e1e21;color:#e9e4da;font:700 13px system-ui,-apple-system,"Hiragino Sans",sans-serif;cursor:pointer}.invAct.on{background:#e9e4da;color:#111;border-color:#e9e4da}
@@ -9346,7 +9346,7 @@ const ITEM = {
     this.modal = { it: { id }, wasRec: rec.active, masterV: A.ctx ? (A.master.gain.value || 0.9) : 0.9, at: performance.now() };
     if (rec.active) stopRec('pause');
     if (A.ctx) { A.master.gain.cancelScheduledValues(A.ctx.currentTime); A.master.gain.setTargetAtTime(0.12, A.ctx.currentTime, 0.08); }
-    $('#actBtn').classList.remove('show'); el.classList.add('show'); this.seGet();
+    $('#actBtn').classList.remove('show'); el.classList.add('show'); if (typeof ITEMFX !== 'undefined' && A.ctx) ITEMFX.modal(id, 'ultra'); else this.seGet();   /* 2026-11-16 シュン足・機材など、ずっと持つ物は激レアの演出と音 */
   },
   // ロッカーに隠れた時、そのロッカーに紙切れがあれば読む
   checkMemo(lk) {
@@ -15120,7 +15120,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.50';
+const VERSION = '0.16.51';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16421,6 +16421,7 @@ const RANKPOP = {
     { const got = PERM.rankSync(d.rkPend); let gb = $('#rpGear'); if (!gb) { gb = document.createElement('div'); gb.id = 'rpGear'; $('#rpNote').after(gb); }   // 2026-11-14 ランクで配信機材を入手
       gb.innerHTML = got.map(id => `<div class="rpG"><img src="${PERM_IMG[id]}" alt=""><div><b>${LANG === 'en' ? 'Got: ' + TR(PERM.DEFS[id].name) + '!' : '「' + PERM.DEFS[id].name + '」を入手しました！'}${YTAG.tag(id)}</b><small>${LANG === 'en' ? 'Streaming gear — toggle it in your items.' : '配信機材。持ち物でオン・オフできます'}</small></div></div>`).join(''); gb.style.display = got.length ? '' : 'none'; }
     el.classList.add('show');
+    const gb = $('#rpGear'); if (gb && gb.querySelector('img') && typeof ITEMFX !== 'undefined') { try { if (!A.ctx) initAudio(); } catch (e) { } ITEMFX.se('ultra'); let k = 0; const iv = setInterval(() => { if (!el.classList.contains('show') || ++k > 40) return clearInterval(iv); for (const im of gb.querySelectorAll('img')) { const r = im.getBoundingClientRect(); if (r.width) ITEMFX.spark(document.body, r.left + r.width / 2, r.top + r.height / 2, 'ultra', k === 1 ? 12 : 2, k === 1); } }, 380); }   /* 2026-11-16 ランクで機材を手に入れた時も激レアの演出と音 */
   },
   close() { const d = ACH.load(); if (d.rkPend !== undefined) { d.rk = Math.max(d.rk || 0, d.rkPend); delete d.rkPend; ACH.save(); } $('#rankPop').classList.remove('show'); RANKTAG(); },
 };
@@ -20666,13 +20667,13 @@ const ITEMFX = {
     const cols = this.cols(t);
     for (let i = 0; i < n; i++) { const sp = document.createElement('span'); sp.className = 'heroSp'; sp.textContent = Math.random() < 0.7 ? '✦' : '✧';
       const a = Math.random() * Math.PI * 2, r = burst ? rnd(70, 130) : rnd(55, 105), c = pick(cols);
-      sp.style.cssText = `left:${cx}px;top:${cy}px;z-index:2;--dx:${(Math.cos(a) * r).toFixed(0)}px;--dy:${(Math.sin(a) * r * 0.8).toFixed(0)}px;--d:${rnd(0.7, 1.3).toFixed(2)}s;color:${c};text-shadow:0 0 8px ${c};font-size:${rnd(10, burst ? 24 : 17).toFixed(0)}px;animation-delay:${burst ? 0 : rnd(0, 0.3).toFixed(2)}s`;
+      sp.style.cssText = `left:${cx}px;top:${cy}px;z-index:${host === document.body ? 70 : 2};--dx:${(Math.cos(a) * r).toFixed(0)}px;--dy:${(Math.sin(a) * r * 0.8).toFixed(0)}px;--d:${rnd(0.7, 1.3).toFixed(2)}s;color:${c};text-shadow:0 0 8px ${c};font-size:${rnd(10, burst ? 24 : 17).toFixed(0)}px;animation-delay:${burst ? 0 : rnd(0, 0.3).toFixed(2)}s`;
       host.appendChild(sp); setTimeout(() => sp.remove(), 1800); }
   },
   se(t) { const id = this.SE[t]; if (!id) return; try { (hasSfx(id) ? Promise.resolve() : sfxDecode(id)).then(() => playSfx(id, { ear: 0, gain: 0.85, dest: typeof uiOut === 'function' ? uiOut() : undefined })); } catch (e) { } },
   /* 説明の画面（道具の絵のまわり） */
-  modal(id) {
-    const t = this.tier(id); const el = $('#itemModal'), img = $('#imImg'); el.classList.remove('tRare', 'tUltra'); clearInterval(this.iv); if (!t) return;
+  modal(id, force) {
+    const t = force || this.tier(id); const el = $('#itemModal'), img = $('#imImg'); el.classList.remove('tRare', 'tUltra'); clearInterval(this.iv); if (!t) return;
     el.classList.add(t === 'ultra' ? 'tUltra' : 'tRare'); this.se(t);
     const at = () => { const r = img.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
     requestAnimationFrame(() => { const [x, y] = at(); this.spark(el, x, y, t, t === 'ultra' ? 20 : 13, true); });
