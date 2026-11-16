@@ -15134,7 +15134,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.67';
+const VERSION = '0.16.68';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -18776,8 +18776,8 @@ const URAH = {
     for (const c of colliders) if (c.urOff) { c.urOff = false; c.on = !!c.pat && c.pat.includes(CORR.pat); }
     this.fly = []; for (const g of this.broken) g.visible = true; this.broken = []; REDHAND.reset(); URAHV.reset();
     const q = new URLSearchParams(location.search), any = TEST || BETA || DEV;
-    this.on = any && q.has('urah') && !!world.wingOpen && !world.phanRun;   /* 出る周の確率と出てくる場所は、あとで決める（今は確認用のURLだけ） */
-    this.st = this.on ? 'wait' : 'off'; this.at = q.get('urahat') !== null ? +q.get('urahat') || 0 : 3;
+    this.on = URDEC.decide(q, any);   /* 2026-11-16 ふだんの周にも出る（URDEC） */
+    this.st = this.on ? 'wait' : 'off'; this.at = q.get('urahat') !== null ? +q.get('urahat') || 0 : (any && q.has('urah') ? 3 : rnd(45, 110));
     this.cap = null; this.route = []; this.lostT = 0; this.slip = null; this.D = null; this.cy = 0; this.pitch = 0; this.roll = 0; this.hop = null; this.face = 'noh'; this.headA = this.headT = this.headV = 0; this.pos = V(); this.by = 0; this.seeT = 0;
     this.inside = {}; this.sq = null; this.spd = 0; this.rep = 0; this.dest = null; this.frozen = false; this.rw = null; this.push = 0; this.gN = this.gH = 0; this.swapAt = rnd(URAH_CFG.swapMin, URAH_CFG.swapMax); this.lastSeen = -99; this.hideT = null; this.chantT = -99;
     this.root.visible = false; this.play(null); this.restPose(); this.mouthSet(0.15);
@@ -20448,7 +20448,7 @@ const SHOP = {
     const wnk = (this.carried || []).includes('wneko');   /* 白い招き猫：持ち込んだ周は収益が少し増える */
     for (const id of this.carried || []) { const used = id === 'bell' || (id === 'recorder' && (ITEM.tootN | 0) > 0) || (id === 'ofuda' ? !(ITEM.have.ofuda > 0) : !ITEM.have[id]) || ['spray', 'beads'].includes(id); if (used) this.useOne(id); }
     /* 2026-11-16 校舎で拾ったショップの道具は持ち帰れる：使い切りは使わずに帰れば持ち物に足す（お札は枚数ぶん）、見た目の物は自分の物になる */
-    const got = []; for (const it of ECON.items) { const id = it[0], h = ITEM.have[id]; if (!h || (this.carried || []).includes(id)) continue; if (YTAG.KEEP.includes(id)) { if (!d.own[id]) { d.own[id] = 1; got.push(id); } continue; } if (it[3] === 'look') { if (!d.look[id]) { d.look[id] = true; got.push(id); } } else { const n = typeof h === 'number' ? h : 1; d.own[id] = (d.own[id] | 0) + n; got.push(id); } }
+    const got = []; for (const it of ECON.items) { const id = it[0], h = ITEM.have[id]; if (!h) continue; if ((this.carried || []).includes(id)) { if (id === 'ofuda' && h > 1) { d.own.ofuda = (d.own.ofuda | 0) + h - 1; got.push(id); } continue; }   /* 2026-11-16 持ち込んだお札のほかに拾った分も持ち帰る */ if (YTAG.KEEP.includes(id)) { if (!d.own[id]) { d.own[id] = 1; got.push(id); } continue; } if (it[3] === 'look') { if (!d.look[id]) { d.look[id] = true; got.push(id); } } else { const n = typeof h === 'number' ? h : 1; d.own[id] = (d.own[id] | 0) + n; got.push(id); } }
     this.brought = got;
     const k = cap ? ECON.capture : 1, tipRe = /^¥[\d,]+$/, cm = (typeof CHAT !== 'undefined' && CHAT.cur && CHAT.cur.items || []).filter(x => !x.some(v => typeof v === 'string' && tipRe.test(v))).length;   /* 投げ銭の帯は数えない */
     const likeY = Math.round(Math.max(0, likes) * ECON.like * ECON.mul[r]), cmtY = Math.round(cm * ECON.cmt[r] * ECON.mul[r]), base = likeY + cmtY, tips = typeof TIPS !== 'undefined' ? TIPS.sum() : 0, gross = base + tips, fee0 = cap ? Math.round(base * (1 - k)) : 0, fee = ins ? Math.round(fee0 / 2) : fee0, neko = wnk ? Math.round(base * 0.05) : 0, yen = gross - fee + neko;   /* 2026-11-16 襲われた時は「医療費」として、いいねとコメントの分の半分を引く（投げ銭は対象外） */
@@ -21304,6 +21304,38 @@ const XEXT2 = {
 { const U0 = CMX.update.bind(CMX); CMX.update = function (dt) { U0(dt); if (world.state === 'play' && rec.active && !this.mkW && typeof CH !== 'undefined' && CH.state !== 'off') { this.mkW = 1; CHATLOG.add('mk', { w: 'W' }); } };
   const R0 = CMX.reset.bind(CMX); CMX.reset = function () { R0(); this.mkW = 0; }; }
 const SHOPFX = { update(dt) { IDLEC.update(dt); if (world.state !== 'play') return; BUZZ.update(dt); CANDLE.update(dt); DRINK.update(); STICK.update(dt); } };
+/* 2026-11-16 オフタリサマ：ふだんの周にも出る（ふだんの怪異と一緒に）
+   ・バリケードが壊れた後の周から。壊れた次の周は必ず（初登場）。ふだんは15%・逢魔が時は25%。ナカヨシの周には出ない
+   ・出られる周で10周続けて出なかったら、次の周は必ず出る
+   ・出る周は、校舎のどこか（ロッカー・机の上）に封印のお札が必ず1枚（持ち帰れる）
+   ・確認用：?urah（必ず出る・3秒後）／?nourah（出ない） */
+const URDEC = {
+  KEY: 'yt_urah_v1',
+  load() { try { return JSON.parse(localStorage.getItem(this.KEY) || 'null') || { debut: 0, miss: 0 }; } catch (e) { return { debut: 0, miss: 0 }; } },
+  save(d) { try { localStorage.setItem(this.KEY, JSON.stringify(d)); } catch (e) { } },
+  decide(q, any) {
+    if (any && q.has('nourah')) return false; if (any && q.has('urah')) return !!world.wingOpen && !world.phanRun;
+    if (!world.wingOpen || world.phanRun) return false;
+    const d = this.load(); if (d.id && d.id === world.runId) return !!d.on;
+    let on; if (!d.debut) on = true; else if ((d.miss | 0) >= 10) on = true; else on = chance(world.ouma ? 0.25 : 0.15);
+    if (on) { d.debut = 1; d.miss = 0; } else d.miss = (d.miss | 0) + 1; d.id = world.runId; d.on = on; this.save(d);
+    if (TEST || DEV) console.log('URDEC', on, d.miss); return on;
+  },
+  /* お札を1枚：ロッカー（6割）か教室の机の上 */
+  fuda() {
+    if (this.it) { this.it.taken = true; this.it.s.visible = false; this.it.urah = false; }
+    if (!URAH.on) return; const I = ITEM; if (!this.it) { this.it = I.add('ofuda', V(0, -50, 0), 0); } const it = this.it; it.urah = true; it.taken = false;
+    const busy = new Set(I.list.filter(x => !x.taken && x.lk).map(x => x.lk));
+    const lks = lockers.filter(l => l.hinge && !l.noHide && !l.locked && l !== I.lockLk && l !== I.memoLk && !busy.has(l) && LOCKX.reach(l));
+    const desks = []; for (const rk of ['R2', 'R3', '2A', '2B']) { const ds = rooms[rk] && rooms[rk].desks; if (ds && ds.length) desks.push({ type: 'desk', desk: pick(ds), lv: rk[0] === '2' ? 1 : 0 }); }
+    if (lks.length && (Math.random() < 0.6 || !desks.length)) { const lk = pick(lks); it.spot = { type: 'locker' }; it.lk = lk; it.lv = lk.lv; it.pos.copy(lkP(lk, rnd(-0.08, 0.08), 0.62 + 0.13, -0.2)); it.s.rotation.set(0, lk.yaw + Math.PI, 0); }
+    else if (desks.length) { const sp = pick(desks); it.spot = sp; it.lk = null; it.lv = sp.lv; I.deskPos(it); it.pos.y -= I.defs.ofuda.size * 0.4; it.s.rotation.set(-Math.PI / 2, 0, rnd(-0.5, 0.5)); }
+    else { it.taken = true; return; }
+    if (TEST || DEV) console.log('URDEC fuda', it.spot.type, it.pos.toArray().map(v => v.toFixed(1)).join(','));
+  },
+};
+{ const S0 = ITEM.shown.bind(ITEM); ITEM.shown = function (it) { if (it.urah) { if (it.taken) return false; if (it.spot && it.spot.type === 'locker') return !!it.lk && !HIDE.lk && it.lk.hinge.rotation.y > 0.6; return true; } return S0(it); }; }
+{ const R0 = CMX.reset.bind(CMX); CMX.reset = function () { R0(); try { URDEC.fuda(); } catch (e) { console.warn('URDEC', e); } }; }
 /* 2026-11-16 音楽室の額縁の裏（「運命」で落ちる）：初めて落とした時は封印のお札が必ず出る（記録する）。2回目からはお札は出ず、10%でおまもり（逢魔が時は15%）、おまもりでなければ25%でかすれたメモ（逢魔が時は35%）
    確認用：?fatefirst（記録を無視して初回あつかい）／?fateom（おまもりを必ず）／?fatememo（メモを必ず） */
 const FATE = {
