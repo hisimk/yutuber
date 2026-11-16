@@ -55,7 +55,7 @@
   #battery.low{color:#ff3b30}
   #battery.mid #batFill{background:#ffd60a}
   #battery.mid{color:#ffd60a}
-  #camBtn{position:absolute;right:12px;top:calc(var(--sat) + 44px);width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.38);border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;padding:0}
+  #camBtn{position:absolute;right:12px;top:calc(var(--sat) + 104px);width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.38);border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;padding:0}
   #camBtn.on{background:rgba(255,204,0,.35);border-color:#ffcc00}
   #rec{position:absolute;left:50%;top:calc(var(--sat) + 12px);transform:translateX(-50%);display:none;align-items:center;gap:7px;background:rgba(0,0,0,.35);padding:5px 12px;border-radius:7px;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.04em}
   #rec.on{display:flex}
@@ -255,7 +255,9 @@
   #settings .setBox,#inv .setBox{margin:auto}
   .opt input.rng{width:100%;padding:0;border:none;background:none}
   #invTitle{font-family:"Shippori Mincho",serif;font-size:22px;letter-spacing:.2em}
-  #invBtn{position:absolute;left:14px;top:calc(var(--sat) + 58px);width:38px;padding:0}
+  #invBtn{position:absolute;left:auto;right:12px;top:calc(var(--sat) + 44px);width:42px;height:42px;min-width:0;border-radius:50%;padding:0;background:rgba(0,0,0,.38);border:1px solid rgba(255,255,255,.25)}   /* 2026-11-16 右上・インカメラの上（同じ大きさ） */
+  #centerBtn{position:absolute;top:calc(var(--sat) + 50px);height:25px;padding:0 10px;font-size:12px;margin:0;display:flex;align-items:center}   /* 正面：残容量の右（位置はJSで） */
+  #hud.gy #cap{transform:translateX(calc(-50% - 28px))}   /* 正面ボタンがある時は、残容量を少し左へ（右の持ち物ボタンと離す） */
   #invCnt{position:absolute;right:-4px;top:-4px;min-width:16px;height:16px;border-radius:8px;background:#ffd60a;color:#111;font-size:10px;line-height:16px;text-align:center;display:none}
   #invCnt.on{display:block}
   #inv{position:fixed;inset:0;z-index:40;display:none;background:rgba(4,4,6,.86);padding:calc(var(--sat) + 16px) 16px calc(var(--sab) + 16px);overflow-y:auto}
@@ -826,8 +828,8 @@
   <div id="topL">
     <button class="btn gearBtn" id="gearBtn" aria-label="設定"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     <button class="chip btn" id="gyroBtn" style="display:none">ジャイロ</button>
-    <button class="chip btn" id="centerBtn" style="display:none">正面</button>
   </div>
+  <button class="chip btn" id="centerBtn" style="display:none">正面</button>
   <button class="btn gearBtn" id="invBtn" aria-label="持ち物"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><b id="invCnt"></b></button>
   <div id="rec"><span class="dot"></span><span class="lbl">REC</span><span id="recTime">00:00</span></div>
   <div id="cap"><span>残容量</span><span id="capBar"><span id="capFill"></span></span><span id="capTxt">2:00</span></div>
@@ -4234,7 +4236,7 @@ function enableGyro() {
 }
 function disableGyro() { if (gyro.on && gyro.got) { look.yaw = player.yaw; look.pitch = player.pitch; } gyro.on = false; gyro.got = false; removeEventListener('deviceorientation', onOri); syncGyroUI(); }
 function recenter() { if (!gyro.got) return; look.yaw = player.yaw; gyro.ref = gyro.acc; look.pitch = 0; toast('いま向いている方向を正面にしました'); }
-function syncGyroUI() { $('#gyroBtn').classList.toggle('on', gyro.on); $('#centerBtn').style.display = gyro.on ? '' : 'none'; }
+function syncGyroUI() { $('#gyroBtn').classList.toggle('on', gyro.on); const b = $('#centerBtn'); b.style.display = gyro.on ? '' : 'none'; $('#hud').classList.toggle('gy', gyro.on); if (gyro.on) requestAnimationFrame(() => { const c = $('#cap'), w = (c && c.offsetWidth) || 150; b.style.left = `calc(50% - 28px + ${Math.round(w / 2) + 8}px)`; }); }   /* 2026-11-16 正面ボタンは残容量の右 */
 $('#gyroBtn').addEventListener('click', e => { e.stopPropagation(); gyro.on ? disableGyro() : enableGyro(); });
 $('#centerBtn').addEventListener('click', e => { e.stopPropagation(); recenter(); });
 
@@ -14112,8 +14114,9 @@ const TUT = {
       ['cap', '', '録画の残容量', '録画できるのは全部で2分。録画中に減っていき、0になるともう撮れません。ここぞという時に回そう！'],
       ['battery', '', 'スマホの電池', '時間とともに減り、録画中は早く減ります。電池が切れると明かりも消えて、真っ暗な中で怪異が近づいてきます。'],
       ['zoomRow', '', 'ズーム', '遠くの怪異は2倍・3倍で大きく撮ろう。' + (pc ? `\n${KB.of('z1')}・${KB.of('z2')}・${KB.of('z3')} キーでも切り替えられます。` : '')],
+      ['invBtn', '', '持ち物', '右上のカバンが持ち物です。開いている間はゲームが止まります。' + (pc ? `\n${K('inv')}でも開けます。` : '')],
       ['camBtn', '', 'インカメラ', '自分を映すカメラに切り替えます。背後に何かが映ることも……。' + (pc ? `\n${K('selfie')}でも切り替えられます。` : '')],
-      ['topL', '', '設定と持ち物', '上の歯車が設定、その下のカバンが持ち物です。開いている間はゲームが止まります。' + (pc ? `\n設定は Esc キー、持ち物は ${K('inv')}、調べる・開けるは ${K('act')}。キーは設定で組み換えられます。` : '')],
+      ['topL', '', '設定', '左上の歯車が設定です。開いている間はゲームが止まります。' + (pc ? `\n設定は Esc キー、調べる・開けるは ${K('act')}。キーは設定で組み換えられます。` : '')],
       [null, '', '逃げて、帰る', '怪異に追われたら距離をとるか隠れよう。しゃがむと窓の下や机の陰に隠れられます。' + (PAD.using ? '右スティック押し込みでしゃがめます。' : pc ? `${KB.of('crouch')} キーでもしゃがめます。` : '') + '捕まるとゲームオーバー。撮り終えたら玄関から外へ出れば帰還できます。'],
     ];
   },
@@ -14130,7 +14133,7 @@ const TUT = {
         ab._tutWas = on ? 1 : undefined;
         const g = $('#tGif'); if (on && !g.src) g.src = TUT_GIF; g.classList.toggle('on', on); $('#tBox').classList.toggle('act', on); }
       let r = null;
-      if (typeof tg === 'string') { const e = $('#' + tg); if (e && e.getBoundingClientRect().width) { const q = frameRect(e); r = { x: q.left - 8, y: q.top - 8, w: q.width + 16, h: q.height + 16 }; if (tg === 'topL') { const v = frameRect($('#invBtn')); r.h = v.bottom - q.top + 16; r.w = Math.max(r.w, v.width + 16); } } }
+      if (typeof tg === 'string') { const e = $('#' + tg); if (e && e.getBoundingClientRect().width) { const q = frameRect(e); r = { x: q.left - 8, y: q.top - 8, w: q.width + 16, h: q.height + 16 };  } }
       else if (tg) r = tg;
       hole.classList.toggle('on', !!r); el.classList.toggle('dim', !r);
       if (r) Object.assign(hole.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: (r.full ? vpH() - r.y - 8 : r.h) + 'px' });   // 2026-11-14 見回す範囲は画面の下まで
@@ -15029,7 +15032,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.30';
+const VERSION = '0.16.31';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -20282,8 +20285,11 @@ Object.assign(SHOP, {
   toggleCarry(id) { const d = this.load(); if (this.favs().includes(id)) return false; const i = d.carry.indexOf(id); if (i >= 0) d.carry.splice(i, 1); else if (this.has(id) && this.carryList().length < ECON.carry[this.rank()]) d.carry.push(id); else return false; this.save(); return true; },
   toggleFav(id) { const f = this.favs(), i = f.indexOf(id); if (i >= 0) f.splice(i, 1); else { if (!this.has(id) || (this.carryList().length >= ECON.carry[this.rank()] && !this.carryList().includes(id))) return false; f.push(id); } this.save(); return true; },
   useOne(id) { const d = this.load(); d.own[id] = Math.max(0, (d.own[id] | 0) - 1); if (!d.own[id]) d.carry = d.carry.filter(x => x !== id); },
+  /* 2026-11-16 提供アイコンを、ゲームを始める前からショップ・持ち物で使えるように（今までは探索を始めた時に読み込んでいた） */
+  icons() { for (const it of ECON.items) { const id = it[0], best = ITEM_ICON2[id] || (typeof ACC_ICON !== 'undefined' && ACC_ICON[id]); if (best) ITEM_IMG[id] = best; else if (!ITEM_IMG[id]) ITEM_IMG[id] = ITEM.fallbackIcon(id); } },
   /* ── ショップの画面 */
   openUI() {
+    this.icons();
     const en = LANG === 'en', d = this.load(); let el = $('#shopUI');
     if (!el) { el = document.createElement('div'); el.id = 'shopUI'; document.body.appendChild(el); el.addEventListener('click', e => { e.stopPropagation(); if (e.target.id === 'shopUI') { el.classList.remove('show'); this.title(); } }); for (const t of ['pointerdown', 'touchstart', 'touchmove']) el.addEventListener(t, e => e.stopPropagation(), { passive: true }); }
     const Y = n => n.toLocaleString() + (en ? ' yen' : '円'), lockTxt = it => it[2] === 'wing' ? (en ? 'Unlocks after breaking a barricade' : 'バリケードを壊すと解放') : (en ? `Unlocks at ${YRANK[it[2]][4]}` : `${YRANK[it[2]][1]}で解放`);
@@ -20299,6 +20305,7 @@ Object.assign(SHOP, {
   },
   /* 買いますか？（数を選ぶ） */
   ask(id) {
+    this.icons();
     const en = LANG === 'en', it = this.def(id), D = ITEM.defs[id], d = this.load(), look = it[3] === 'look', max = look ? 1 : Math.max(1, Math.min(9, Math.floor(d.yen / it[1]))); let n = 1;
     let el = $('#shopAsk'); if (!el) { el = document.createElement('div'); el.id = 'shopAsk'; document.body.appendChild(el); for (const t of ['pointerdown', 'touchstart', 'touchmove', 'click']) el.addEventListener(t, e => e.stopPropagation(), { passive: t !== 'click' }); }
     const draw = () => { el.innerHTML = `<div class="raBox"><img src="${ITEM_IMG[id]}"><div class="raT">${TR(D.name)}</div><div class="raD">${en ? 'Buy this?' : '買いますか？'}</div>${look ? '' : `<div class="qty"><button data-q="-1"${n <= 1 ? ' disabled' : ''}>−</button><b>${n}</b><button data-q="1"${n >= max ? ' disabled' : ''}>＋</button></div>`}<div class="raSum">${(it[1] * n).toLocaleString()}${en ? ' yen' : '円'}<small>${en ? 'Money after' : '買ったあとの所持金'} ${(d.yen - it[1] * n).toLocaleString()}${en ? ' yen' : '円'}</small></div><div class="raBtns"><button class="no">${en ? 'Cancel' : 'やめる'}</button><button class="yes">${en ? 'Buy' : '買う'}</button></div></div>`;
@@ -20309,6 +20316,7 @@ Object.assign(SHOP, {
   },
   /* ── 持ち物（持ち込む道具を選ぶ） */
   openBag() {
+    this.icons();
     const en = LANG === 'en', d = this.load(), lim = ECON.carry[this.rank()], cl = this.carryList(); let el = $('#bagUI');
     if (!el) { el = document.createElement('div'); el.id = 'bagUI'; el.className = 'shopLike'; document.body.appendChild(el); el.addEventListener('click', e => { e.stopPropagation(); if (e.target.id === 'bagUI') { el.classList.remove('show'); this.title(); } }); for (const t of ['pointerdown', 'touchstart', 'touchmove']) el.addEventListener(t, e => e.stopPropagation(), { passive: true }); }
     const perm = PERM.owned().map(id => `<div class="shIt"><img src="${PERM_IMG[id]}"><div class="shTx"><b>${TR(PERM.DEFS[id].name)}${YTAG.tag(id)}</b><small>${YTAG.desc(id, TR(PERM.DEFS[id].desc || ''))}</small></div></div>`);
