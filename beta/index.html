@@ -3164,7 +3164,7 @@ function sgvAt(d) {
 }
 function sgvApplyLook(v) {   // 彩度・明るさ・足元・発光
   SGU.uSat.value = v.sat; SGU.uBright.value = v.bright; SGU.uFootK.value = v.footK; SGU.uFootLo.value = SGV.footLo; SGU.uFootHi.value = SGV.footHi;
-  _sgvE.set(SGV.emis).multiplyScalar(v.emisK); for (const m of SG.mats) m.emissive.copy(_sgvE);
+  _sgvE.set(SGV.emis).multiplyScalar(v.emisK * (typeof DARKK !== 'undefined' ? DARKK.sgK() : 1)); for (const m of SG.mats) m.emissive.copy(_sgvE);
 }
 function sgEmissive(hex) { for (const m of SG.mats) m.emissive.setHex(hex); }
 function sgScareLook(hex = 0x9a8a8a, foot = 0) {   /* 2026-11-14 インカメラの背後・階段の角：足元まで透けさせず、模様の色で顔を浮かせる */
@@ -12890,6 +12890,7 @@ function tick(now) {
   if (gyro.on && gyro.got) { player.yaw = look.yaw + (gyro.acc - gyro.ref); player.pitch = clamp(gyro.pitch + look.pitch, -1.55, 1.55); }
   else { player.yaw = look.yaw; player.pitch = look.pitch; }
   if (CAP.on) { player.yaw = CAP.camYaw; player.pitch = CAP.camPitch; }   // 捕まったら強制的に振り向かされる
+  if (typeof URAH !== 'undefined' && URAH.st === 'cap' && URAH.camYaw !== undefined) { player.yaw = URAH.camYaw; player.pitch = URAH.camPitch; }
   if (REVIVE.on) { player.yaw = REVIVE.yaw; player.pitch = REVIVE.pitch; }   // 赤いマント：はっと顔を上げて、左右を見回す
   if (player.hidden && UNDER.on) {   // 2026-11-15 ベッド・ピアノの下：ほぼ横だけ（左右は外向きから±1.2、上下は少し）
     const b0 = UNDER.yaw0, rel = y => b0 + clamp(Math.atan2(Math.sin(y - b0), Math.cos(y - b0)), -1.2, 1.2);
@@ -13010,7 +13011,7 @@ function tick(now) {
   }
   // インカメラで逃走中：誰に追われていても、インカメラで撮りながら逃げている間は1秒2点（追ってくる姿が映っていなくてよい）
   if (rec.active && world.selfie && world.state === 'play' && !CAP.on && ((CH.state === 'chase' || CH.state === 'hunt') || SP.st === 'chase' || (world.mannRun && ['spot', 'windup', 'dash', 'skid', 'hunt', 'stun', 'turn'].includes(MANN.st)))) awardCont('selfieRun', 'インカメラで逃走中', 2, dt);
-  DIR.update(dt); SHOPFX.update(dt); TIPS.update(dt); AMB.update(dt); MINOR.update(dt); SELF.update(dt); ACC.update(dt); MD.update(dt); MF.update(dt); POLT.update(dt); STREETFIG.update(dt); EXITF.update(dt); RED.update(dt); MG.update(dt); raspUpdate(dt); cbgmUpdate(dt); chaseHead(dt); LIP.update(dt); DOORS2.update(dt); TAP.update(dt); F2.update(dt); SP.update(dt); TEN.update(dt); GG.update(dt); NEKO.update(dt); ITEM.update(dt); SNAKE.update(dt); UWA.update(dt); MISS.update(); SPV.update(dt); OFUDA.update(dt); OFUDA.updFall(dt);
+  DIR.update(dt); SHOPFX.update(dt); DARKK.update(dt); TIPS.update(dt); AMB.update(dt); MINOR.update(dt); SELF.update(dt); ACC.update(dt); MD.update(dt); MF.update(dt); POLT.update(dt); STREETFIG.update(dt); EXITF.update(dt); RED.update(dt); MG.update(dt); raspUpdate(dt); cbgmUpdate(dt); chaseHead(dt); LIP.update(dt); DOORS2.update(dt); TAP.update(dt); F2.update(dt); SP.update(dt); TEN.update(dt); GG.update(dt); NEKO.update(dt); ITEM.update(dt); SNAKE.update(dt); UWA.update(dt); MISS.update(); SPV.update(dt); OFUDA.update(dt); OFUDA.updFall(dt);
   updateDrops(dt);
   animHuman(woman, dt);
   // 環境音
@@ -14992,7 +14993,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.22';
+const VERSION = '0.16.23';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16263,7 +16264,7 @@ const RANKPOP = {
 $('#rpOk').addEventListener('click', e => { e.stopPropagation(); RANKPOP.close(); setTimeout(() => { try { SHOP.notify(); } catch (er) { } }, 250); });
 for (const t of ['pointerdown', 'touchstart']) $('#rankPop').addEventListener(t, e => e.stopPropagation(), { passive: true });
 try { PERM.rankSync(Math.min(ACH.load().rk || 0, yrankIdx(ACH.load().total))); } catch (e) { }   // 2026-11-14 すでにランクが上がっている人にも機材を渡す
-function RANKTAG() { try { SHOP.title(); } catch (e) { } const el = $('#rankTag'); if (!el) return; const d = ACH.load(); el.textContent = yrankName(Math.min(d.rk || 0, yrankIdx(d.total))); }
+function RANKTAG() { try { SHOP.title(); } catch (e) { } const el = $('#rankTag'); if (!el) return; const d = ACH.load(), q = (TEST || BETA || DEV) && location.search.match(/[?&]rank=(\d)/); el.textContent = yrankName(q ? Math.min(5, +q[1]) : Math.min(d.rk || 0, yrankIdx(d.total))); }   /* 確認用 ?rank= の時は表示もそのランクに */
 RANKTAG();
 // コメントでの呼び名（任意）：空欄ならチャンネル名
 { const c = $('#callName'); if (c) { c.placeholder = cui('nick'); $('#callSum').textContent = cui('nick') + ' ›'; $('#callHint').textContent = cui('nickHint'); try { c.value = localStorage.getItem('yt_callName') || ''; } catch (e) { } c.addEventListener('input', () => { try { localStorage.setItem('yt_callName', c.value); } catch (e) { } }); } }
@@ -18070,7 +18071,7 @@ const URINT = {
   },
   omen(dt) {   /* 前兆：重い足音・ぶつかって壊れる音（出てくる場所から。立体音響）・あちこちの蛍光灯がチカチカ */
     const O = this.om; if (!O || !A.ctx) return; O.t += dt; const p = URAH.npos(URAH.spawnK); p.y += 0.3; const k = clamp(O.t / 10, 0.35, 1);
-    O.st -= dt; if (O.st <= 0) { O.st = rnd(0.55, 0.85); try { URSTEP.play(p, 1.4 * k); } catch (e) { SND.thud(p, 1.2 * k); } }
+    O.st -= dt; if (O.st <= 0) { O.st = rnd(0.55, 0.85); try { URSTEP.play(p, 1.4 * k, true); } catch (e) { SND.thud(p, 1.2 * k); } }
     O.cr -= dt; if (O.cr <= 0) { O.cr = rnd(1.6, 3.2); const pn = panAt(p, 3.0, 0.7, undefined, 1); SND.thud(p, 2.4 * k); SND.knock(p, 1.8 * k); if (Math.random() < 0.5) playSfx('vase_break', { pos: p, ref: 3.0, roll: 0.7, gain: 0.8 * k, rate: 0.6 }); else nb(pn, { t: A.ctx.currentTime, f: 420, q: 1.2, peak: 0.5 * k, d: 0.25 }); }
     O.fl -= dt; if (O.fl <= 0) { O.fl = rnd(0.6, 1.4); const L = pick(tubes.filter(t => t.on && !t.manual)); if (L) FL.play(L); }
   },
@@ -18329,7 +18330,7 @@ const URAH = {
   },
   /* ── 音 */
   gigi(dur) { const p = this.head(); SND.creak(p, dur, 1.6); playSfx('swivel_creak', { pos: p, ref: 1.8, gain: 2.4, rate: 0.55, lowpass: 2600, dur: Math.min(dur + 0.3, 3) }) || SND.creak(p, dur, 1.4); },   /* 2026-11-16 ギィーとはっきり聞こえるように大きく */
-  scream(side, ear, delay = 0) { if (!A.ctx) return; const out = ear ? earDest(0, 6 + delay) : panAt(this.head(side), side === 'hannya' ? 2.2 : 0.9, 1.1, undefined, 6 + delay); urahVoice(A.ctx, id => A.buf[id], out, side, A.ctx.currentTime + delay); this.scrUntil = world.t + delay + 2.7; URAHV.busy = Math.max(URAHV.busy, A.ctx.currentTime + delay + 2.7);   /* 叫び声とセリフは重ねない */ if (side === 'hannya') world.vhs = Math.max(world.vhs || 0, 0.5); },
+  scream(side, ear, delay = 0) { if (!A.ctx) return; const vs = side === 'hannya' ? 'noh' : 'hannya'; /* 2026-11-16 般若の時は後ろの能面が高い声で叫ぶ（逆も） */ const out = ear ? earDest(0, 6 + delay) : panAt(this.head(vs), vs === 'hannya' ? 2.2 : 0.9, 1.1, undefined, 6 + delay); urahVoice(A.ctx, id => A.buf[id], out, vs, A.ctx.currentTime + delay); this.scrUntil = world.t + delay + 2.7; URAHV.busy = Math.max(URAHV.busy, A.ctx.currentTime + delay + 2.7);   /* 叫び声とセリフは重ねない */ if (side === 'hannya') world.vhs = Math.max(world.vhs || 0, 0.5); },
   chant() { if (world.t < (this.chantT || -99)) return; this.chantT = world.t + 40; playSfx('chant_found', { ear: 0, gain: 0.3, lowpass: 3200 }); },   /* 見つかった時、お経がうっすら */
   /* 2026-11-15 足音：4本の腕（足）が床に着くたびに1回。能面の歩きは4本が順番に、般若は対角の2本ずつ同時に着く（動きに合わせるので、速く歩けば足音も速い） */
   HANDS: ['FrontRHand', 'FrontLHand', 'BackRHand', 'BackLHand'],
@@ -18346,7 +18347,7 @@ const URAH = {
     const k = 70, c = 7.5; this.headV += (k * (this.headT - this.headA) - c * this.headV) * dt; this.headA += this.headV * dt;
     /* 2026-11-16 顔だけは、ずっと主人公の方を見続ける（前を向いている顔で） */
     const cp = camera.position, dx = cp.x - this.pos.x, dz = cp.z - this.pos.z, dh = Math.hypot(dx, dz), base = this.by;   /* 前を向いている顔は、首の回転ですでに体の前にある */
-    const on = this.st !== 'cap' && dh < 22 && this.st !== 'door', ty = on ? clamp(uAng(Math.atan2(dx, dz), base), -1.25, 1.25) : 0, tp = on ? clamp(Math.atan2(cp.y - (this.pos.y + 1.45 * this.root.scale.x), dh), -0.55, 0.55) : 0;
+    const on = this.st !== 'cap' && dh < 22 && this.st !== 'door', ty = 0 * base,   /* 2026-11-16 上から見て顔が斜めにならないように、左右の向きは追わない（上下だけ） */ tp = on ? clamp(Math.atan2(cp.y - (this.pos.y + 1.45 * this.root.scale.x), dh), -0.55, 0.55) : 0;
     this.trkY = (this.trkY || 0) + (ty - (this.trkY || 0)) * Math.min(1, dt * 7); this.trkP = (this.trkP || 0) + (tp - (this.trkP || 0)) * Math.min(1, dt * 7);
     /* たまにカマキリのように首をかしげる：機械みたいに一瞬で曲げて止まり、またすぐ戻す（能面で止まっている時はしない） */
     this.tiltT = (this.tiltT ?? rnd(3, 8)) - dt;
@@ -18672,7 +18673,7 @@ const URAH = {
     this.root.scale.setScalar(this.sc()); this.sq = null;
     this.restArm(); this.st = 'cap'; this.cap = { t: 0, side, next: 0 }; this.play(null); this.restPose(); this.cy = 0; this.pitch = 0; this.roll = 0; this.frozen = false;
     for (const k of ['NohThroat', 'HannyaThroat']) if (this.bones[k]) this.bones[k].scale.setScalar(0.001);
-    look.yaw = Math.atan2(-(this.pos.x - player.x), -(this.pos.z - player.z)); look.pitch = -0.25;
+    look.yaw = Math.atan2(-(this.pos.x - player.x), -(this.pos.z - player.z)); look.pitch = -0.25; this.camYaw = look.yaw; this.camPitch = -0.25;   /* 2026-11-16 ジャイロ・スワイプでも、必ずこちらを向かせる */
     const f = V(-Math.sin(look.yaw), 0, -Math.cos(look.yaw)); this.by = Math.atan2(f.x, f.z) + Math.PI;   /* 体の前（+Z）をこちらへ */
     this.root.rotation.set(0, this.by, 0); this.root.position.set(player.x, player.y, player.z); this.root.updateMatrixWorld(true);
     const mp = this.mouth.sides[0].m.getWorldPosition(V()), want = camera.position.clone().addScaledVector(f, 0.75); want.y = camera.position.y - 0.35;
@@ -18703,11 +18704,17 @@ Object.assign(SFX_B64, { urah_step: 'SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjE
 SFX_CREDITS.push({ id: 'urah_step', title: 'Body Fall Heavy Rhythmic Hits Thud（Body_Fall_Heavy_Rhythmic_Hits_Thud_OCP-1733-43.wav）', author: '提供素材', license: '提供素材', edit: 'モノラル・64kbps・音量をそろえた。中の重い音を1つずつ切り出し、オフタリサマの手が床に着くたびに鳴らす' });
 const URSTEP = {
   CUT: [[0.07, 0.13], [0.31, 0.18], [0.545, 0.13], [0.985, 0.09], [1.225, 0.1]],
-  play(p, vol) {
+  /* 2026-11-16 距離で小さくなる早さを強めた：4m以内は今のまま、15mで1割、25m以上はほぼ聞こえない。
+     違う階は3割の大きさでこもらせる（のどを鳴らす音と同じ）。壁の向こうも少し小さく、こもらせる。前兆の足音（far）は遠くても聞こえる */
+  fall(p) { const cp = camera.position, d = cp.distanceTo(p), other = Math.abs(p.y - cp.y) > 2.2 && !stairZone(cp.x, cp.z), wall = !other && !clearLine(p);
+    const m = d <= 4 ? 1 : d <= 15 ? Math.pow(10, -(d - 4) / 11) : Math.pow(10, -1 - (d - 15) / 4);
+    return { m: m * (other ? 0.3 : wall ? 0.65 : 1), lp: other ? 600 : wall ? 1600 : 0, d }; },
+  play(p, vol, far) {
     this.n = (this.n || 0) + 1;
-    const c = this.CUT[Math.floor(Math.random() * this.CUT.length)], K = URAH_CFG.stepGain ?? 2.5, H = URAH.face === 'hannya' && URAH.chasing(), d = camera.position.distanceTo(p);
-    playSfx('urah_step', { pos: p, ref: 1.6, roll: 1.1, gain: vol * 0.55 * K, rate: (H ? 0.84 : 1) * rnd(0.95, 1.05), offset: c[0] + 0.02, dur: c[1] + 0.06, lowpass: H ? 2600 : 5200 }) || (SND.knock(p, vol * 0.42 * K), SND.thud(p, vol * 0.3 * K));
-    if (d < 7) SND.thud(p, vol * (H ? 0.55 : 0.4) * K * (1 - d / 7));   // 近くでは床が響く（低い音を少し足す）
+    const c = this.CUT[Math.floor(Math.random() * this.CUT.length)], K = URAH_CFG.stepGain ?? 2.5, H = URAH.face === 'hannya' && URAH.chasing(), F = far ? { m: 1, lp: 1200, d: 20 } : this.fall(p), d = F.d;
+    if (F.m < 0.004) return; const g = vol * F.m * (H ? 0.42 : 0.55) * K;   /* 般若はもっと低く・重く（ドスッ）。音は小さめ */
+    playSfx('urah_step', { pos: p, ref: 1.6, roll: 1.1, gain: g, rate: (H ? 0.6 : 1) * rnd(0.95, 1.05), offset: c[0] + 0.02, dur: c[1] + 0.08, lowpass: F.lp || (H ? 1100 : 5200) }) || (SND.knock(p, g * 0.75), SND.thud(p, g * 0.55));
+    if (d < 7 || H) SND.thud(p, vol * F.m * (H ? 0.75 : 0.4) * K * (d < 7 ? 1 - d / 9 : 0.25));   // 床が響く低い音（般若は遠めでも少し）
   },
 };
 const URASP = {
@@ -18718,13 +18725,13 @@ const URASP = {
   update(dt) {
     if (!A.ctx) return; if (!URAH.ready || !URAH.on || world.state !== 'play' || URAH.st === 'cap' || URAH.st === 'wait' || URAH.st === 'off' || !URAH.root.visible) { this.stop(); return; }
     if (!this.on) this.start(); if (!this.on) return;
-    const t = A.ctx.currentTime, pos = URAH.head(URAH.face); setP(this.p, pos);
+    const t = A.ctx.currentTime, pos = URAH.head(URAH.face === 'noh' ? 'hannya' : 'noh'); setP(this.p, pos);   /* 2026-11-16 叫んでいるのは後ろ側の顔 */
     const other = Math.abs(pos.y - camera.position.y) > 2.2 && !stairZone(camera.position.x, camera.position.z), clear = !other && clearLine(pos), chase = URAH.chasing();
     this.lp.frequency.setTargetAtTime(other ? 600 : clear ? 6500 : 1600, t, 0.15);   // 壁の向こうでは、こもった音に
     const talk = URAHV.cur ? 0.45 : 1;   // セリフの間は少し小さく
-    this.g.gain.setTargetAtTime((chase ? 0.4 : 0.13) * (other ? 0.35 : 1) * talk * (SFX_GAIN.throat_rasp || 1), t, 0.3);
+    this.g.gain.setTargetAtTime((chase ? 0.85 : 0.3) * (other ? 0.3 : 1) * (URAHV.cur ? 0.35 : 1) * (SFX_GAIN.throat_rasp || 1), t, 0.3);   /* 2026-11-16 ちゃんと聞こえる大きさに（セリフの間は小さく） */
     /* 音の高さ：ゆっくり不規則に上げ下げ（能面が前＝高め、般若が前＝低め）。ときどき0.3秒くらい急に高く／低くなって戻る */
-    const lo = URAH.face === 'noh' ? 0.9 : 0.6, hi = URAH.face === 'noh' ? 1.4 : 1.0;
+    const lo = URAH.face === 'hannya' ? 1.05 : 0.6, hi = URAH.face === 'hannya' ? 1.5 : 0.95;   /* 2026-11-16 般若が前＝後ろの能面が叫ぶので高い声、能面が前＝低い声 */
     this.chT -= dt; if (this.chT <= 0) { this.chT = rnd(1, 3); this.tr = rnd(lo, hi); }
     this.r += (this.tr - this.r) * Math.min(1, dt * 1.2);
     this.jT -= dt; if (this.jT <= 0) { this.jT = rnd(5, 10); this.j = { t: 0.3, k: Math.random() < 0.5 ? 1.35 : 0.68 }; }
@@ -20230,7 +20237,28 @@ const TIPS = {
   },
 };
 TIPS.reset();
-if (TEST && window.__G) Object.assign(window.__G, { TIPS, CHAT, escape, evidence, award, SHOP, ECON, ACH, ITEM, INV, BUZZ, CHEM, CANDLE, DRINK, STICK, PAINT, WING, CH, WD, SP, nodePos, clearLine, segBlocked, MINOR, HP, EV, DIR, URINT, URPREY, URAV, HANDS, HAND_SPOTS, POLT, MOVERS, UWA, GG_SPOTS, ABYSS, BUSTX, DOLLX, nearLook, setZoom(z) { zoom = zoomTarget = z; }, SCIRM, ARTRM, PMASK, COL, NAKA, TALLY, BROOMEV, AW_TABLE, CHIP_DESC, AW_HINT, GEAR, FIXCAM, RING, PERM, KANA, VO, PACALL, SPV, EV, seen, A, CH, HEART, CVOICE, wdScream, WARP, WD, ITEM, F2, PAD, QUALITY, opt, MP4FIX, rec, resultBlobs: () => resultBlobs, LOGOANIM, CHIP, VTITLE, NOISE, SNAKE, ACC, ACC_ICON, ACC_VIEW, award, CHATLOG, CHAT, CHATGEN, RES_CHAT, RANKPOP, yrankIdx, GOD, VDB, ACH, PERM, REVIVE, RESET, COL, escape, caught, DIR, SP, OFUDA, LUM, TRACE, HAZURE, seen, SFX_CREDITS, AW_TABLE, RANK_FIX, rankOf, MICLV, MIC, rec, opt, VED, RES_CHAT_: () => RES_CHAT, _attach: b => attachVideo(b), GODV: GOD, _blobs: () => resultBlobs, EVENTS: () => EV });
+/* =========================================================
+   2026-11-16 暗がりにいる怪異は、白く浮かび上がらない（ライトか、点いている蛍光灯の下でだけ見える）
+   ・逆さ女・クモ女・人体模型・オフタリサマの体の色と発光を、暗がりでは落とす（目の光などの発光する部分はそのまま）
+   ・驚かしの演出で体を借りている時は、今まで通り
+   ========================================================= */
+const DARKK = {
+  T: {}, sgk: 1,
+  lit(p) { if (inFlash(p, 10)) return true; for (const L of LIGHTS) if (Math.hypot(L.pos.x - p.x, L.pos.z - p.z) < L.r && Math.abs(L.pos.y - HT - (p.y || 0)) < 1.6 && !lightDark(L)) return true; return false; },
+  reg(name, root, noE) { const mats = []; root.traverse(o => { if (!o.isMesh) return; for (const m of [].concat(o.material)) { if (!m || !m.color || m.isMeshBasicMaterial || m.blending === THREE.AdditiveBlending || mats.includes(m)) continue; m.userData.dk0 = { c: m.color.clone(), e: m.emissive ? m.emissive.clone() : null }; mats.push(m); } }); this.T[name] = { root, mats, k: 1, noE }; },
+  sgK() { return WD.borrowed ? 1 : this.sgk; },
+  update(dt) {
+    if (!this.T.urah && typeof URAH !== 'undefined' && URAH.ready) this.reg('urah', URAH.root);
+    if (!this.T.sp && SP.ready && SP.wrap) this.reg('sp', SP.wrap);
+    if (!this.T.mann && MANN.ready && MANN.root) this.reg('mann', MANN.root);
+    if (!this.T.sg && SG.ready && SG.root) this.reg('sg', SG.root, true);
+    const pos = { urah: () => typeof URAH !== 'undefined' && URAH.pos.clone().setY(URAH.pos.y + 1), sp: () => SP.pos, mann: () => MANN.pos.clone().setY(MANN.pos.y + 1), sg: () => V(WD.pos.x, (WD.pos.y || 0) + 1.2, WD.pos.z) };
+    for (const n in this.T) { const T = this.T[n]; if (!T.root.visible) continue; let P0 = null; try { P0 = pos[n](); } catch (e) { } if (!P0 || P0.x === undefined) continue; const forced = n === 'sg' ? WD.borrowed : n === 'urah' ? URAH.st === 'cap' : n === 'mann' ? !!MANN.cap : ['drop', 'latch', 'peel'].includes(SP.st);
+      const want = forced || world.state !== 'play' || this.lit(P0) ? 1 : 0; T.k += (want - T.k) * Math.min(1, dt * (want ? 6 : 3)); if (n === 'sg') this.sgk = T.k;
+      const f = 0.22 + 0.78 * T.k; for (const m of T.mats) { const b = m.userData.dk0; m.color.copy(b.c).multiplyScalar(f); if (!T.noE && b.e && m.emissive) m.emissive.copy(b.e).multiplyScalar(T.k); } }
+  },
+};
+if (TEST && window.__G) Object.assign(window.__G, { DARKK, TIPS, CHAT, escape, evidence, award, SHOP, ECON, ACH, ITEM, INV, BUZZ, CHEM, CANDLE, DRINK, STICK, PAINT, WING, CH, WD, SP, nodePos, clearLine, segBlocked, MINOR, HP, EV, DIR, URINT, URPREY, URAV, HANDS, HAND_SPOTS, POLT, MOVERS, UWA, GG_SPOTS, ABYSS, BUSTX, DOLLX, nearLook, setZoom(z) { zoom = zoomTarget = z; }, SCIRM, ARTRM, PMASK, COL, NAKA, TALLY, BROOMEV, AW_TABLE, CHIP_DESC, AW_HINT, GEAR, FIXCAM, RING, PERM, KANA, VO, PACALL, SPV, EV, seen, A, CH, HEART, CVOICE, wdScream, WARP, WD, ITEM, F2, PAD, QUALITY, opt, MP4FIX, rec, resultBlobs: () => resultBlobs, LOGOANIM, CHIP, VTITLE, NOISE, SNAKE, ACC, ACC_ICON, ACC_VIEW, award, CHATLOG, CHAT, CHATGEN, RES_CHAT, RANKPOP, yrankIdx, GOD, VDB, ACH, PERM, REVIVE, RESET, COL, escape, caught, DIR, SP, OFUDA, LUM, TRACE, HAZURE, seen, SFX_CREDITS, AW_TABLE, RANK_FIX, rankOf, MICLV, MIC, rec, opt, VED, RES_CHAT_: () => RES_CHAT, _attach: b => attachVideo(b), GODV: GOD, _blobs: () => resultBlobs, EVENTS: () => EV });
 /* 2026-11-14 PC：ウィンドウ／全画面（全画面はボタンを押した時と、旧校舎に入る時に切り替える。Escで戻したらウィンドウに） */
 const SCREEN = {
   isFull() { return !!(document.fullscreenElement || document.webkitFullscreenElement); },
