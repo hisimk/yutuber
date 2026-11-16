@@ -13431,7 +13431,8 @@ function escape() {
   if (world.state !== 'play') return;
   const chased = (CH.state === 'chase' || CH.state === 'search' || CH.state === 'hunt') || (typeof SP !== 'undefined' && SP.st === 'chase') || (world.mannRun && ['spot', 'windup', 'dash', 'skid', 'hunt', 'stun', 'turn'].includes(MANN.st));
   world.state = 'end'; if (DIR.active) DIR.end(DIR.active);
-  if (rec.active && rec.time > 20 && !evidence.some(e => (e.pts || 0) > 0)) CMX.log('cmZero');   /* 2026-11-16 撮れ高ゼロで帰る */
+  if (rec.active && rec.time > 20 && !evidence.some(e => (e.pts || 0) > 0)) CMX.log('cmZero');
+  if (rec.active && world.t - (world.playT0 || 0) < 20) CMX.log('cmRTA');   /* 2026-11-16 20秒で帰還 */   /* 2026-11-16 撮れ高ゼロで帰る */
   if (rec.active) award('alive', 'いのちだいじに', 10);
   if (rec.time > 0.5 && (world.battery ?? 100) <= 1) award('battery1', '電池1%の帰還', 120);   /* 2026-11-16 電池1%以下で、録画を持ったまま帰る */   /* 2026-11-13：脱出の瞬間を録画しているときだけ */
   if (chased && rec.active) award('chaseOut', '追われながら生還', 50);
@@ -15130,7 +15131,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.61';
+const VERSION = '0.16.62';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -15742,7 +15743,8 @@ const CHATGEN = {
     { const at = aws.filter(a => !this.END.has(a.key)).map(a => a.t).sort((x, y) => x - y); let run = 1, done = 0;
       for (let k = 1; k < at.length && done < 3; k++) { if (at[k] - at[k - 1] <= 3.5) run++; else run = 1; if (run === 4) { const x = line('aw_speedrun'); if (x) out.push([at[k] + rnd2(1.0, 1.8), 'g', x, 13, at[k]]); done++; run = 0; } } }
     // 止まっていたのが動き出した：ランクが高いほどたくさん（ほっとした反応）
-    for (const e of ev) if (e.k === 'move') { const n = Math.min(6, 1 + Math.round(rk * 0.9)); for (let k = 0; k < n; k++) { const x = line('still_back'); if (x) out.push([e.t + 0.4 + k * rnd2(0.35, 0.8), 'g', x, 9, e.t]); } }
+    for (const e of ev) if (e.k === 'move') { const st0 = ev.filter(x => x.k === 'still' && x.t < e.t).pop(), lng = st0 && e.t - (st0.t - 20) >= 60;   /* 2026-11-16 1分以上止まっていた時は「おかえり」 */
+      const n = lng ? 2 : Math.min(6, 1 + Math.round(rk * 0.9)); for (let k = 0; k < n; k++) { const x = line(lng ? 'still_back_long' : 'still_back'); if (x) out.push([e.t + 0.4 + k * rnd2(0.35, 0.8), 'g', x, 9, e.t]); } }
     // 2026-11-14 プレイヤーの行動へのツッコミ：120秒に10件まで（細かい行動は3件まで）、5秒以上あけ、見せ場の反応とは重ねない
     { const CAT = { quick: 'bh_quick_return', exitBack: 'bh_exit_turnback', reenter: 'bh_room_reentry', retreat: 'bh_retreat', approach: 'bh_approach', scan: 'bh_scan_fast', lookBack: 'bh_look_back', spin: 'bh_spin', zoomSpam: 'bh_zoom_spam', camSpam: 'bh_camera_switch', dangerSelfie: 'bh_danger_selfie', floorWalk: 'bh_floor_walk', ceiling: 'bh_ceiling_watch', wallWalk: 'bh_wall_walk', lockerStay: 'bh_locker_stay', lockerShort: 'bh_locker_short', pianoRepeat: 'bh_piano_repeat', freeze: 'bh_freeze' };
       const capB = Math.max(len >= 20 ? 1 : 0, Math.round(BHV.per120 * len / 120)), capO = Math.min(capB, Math.max(len >= 30 ? 1 : 0, Math.round(BHV.odd120 * len / 120)));
@@ -16877,7 +16879,7 @@ const MAZE = {
   teardown() {
     if (this.g) { this.g.traverse(o => { if (o.geometry) o.geometry.dispose(); }); this.g.parent && this.g.parent.remove(this.g); this.g = null; }
     for (const c of this.cols) { c.on = false; const i = colliders.indexOf(c); if (i >= 0) colliders.splice(i, 1); } this.cols = [];
-    for (const m of this.occ) { const i = occluders.indexOf(m); if (i >= 0) occluders.splice(i, 1); } this.occ = []; this.goal = null; this.itemP = null; this.webP = null;
+    for (const m of this.occ) { const i = occluders.indexOf(m); if (i >= 0) occluders.splice(i, 1); } this.occ = []; this.goal = null; this.itemP = null; this.webG = null;
   },
   build() {
     const { X0, X1, Z0, Z1, NX, NZ } = this, cw = (X1 - X0) / NX, ch = (Z1 - Z0) / NZ, cx = i => X0 + (i + 0.5) * cw, cz = j => Z1 - (j + 0.5) * ch;
@@ -16912,7 +16914,8 @@ const MAZE = {
     F.bake(g); for (const w of g.children.slice()) if (w.isGroup) F.bake(w);
     g.traverse(o => { if (o.isMesh && (o.material === card || o.material === cloth)) { occluders.push(o); this.occ.push(o); } });
     this.goal = V(gx, LH + 0.25, gz);
-    { const ks = []; for (let k = 2; k < NX * NZ; k++) if (k !== gi) ks.push(k); this.webP = []; for (let n = 0; n < 2 && ks.length; n++) { const k = ks.splice(Math.floor(Math.random() * ks.length), 1)[0]; this.webP.push(V(cx(k % NX), LH, cz(Math.floor(k / NX)))); } }   /* 2026-11-16 迷路の床の蜘蛛の巣 */
+    { const cand = []; for (let k = 1; k < NX * NZ; k++) { const i2 = k % NX, j2 = Math.floor(k / NX); if (i2 < NX - 1 && isOpen(k, k + 1) && k + 1 !== gi) cand.push([k, k + 1, 'x']); if (j2 < NZ - 1 && isOpen(k, k + NX) && k + NX !== gi) cand.push([k, k + NX, 'z']); }   /* 2026-11-16 迷路の通り道をふさぐ蜘蛛の糸（2か所） */
+      this.webG = []; for (let n = 0; n < 2 && cand.length; n++) { const [a, b, ax] = cand.splice(Math.floor(Math.random() * cand.length), 1)[0]; const x = (cx(a % NX) + cx(b % NX)) / 2, z = (cz(Math.floor(a / NX)) + cz(Math.floor(b / NX))) / 2; this.webG.push({ x, z, axis: ax, w: (ax === 'x' ? (Z1 - Z0) / NZ : (X1 - X0) / NX) * 0.48 }); } }
     { const ks = []; for (let k = 1; k < NX * NZ; k++) if (dist[k] >= 3) ks.push(k); const k = ks.length ? pick(ks) : gi; this.itemP = V(cx(k % NX) + rnd(-0.2, 0.2), LH + 0.1, cz(Math.floor(k / NX)) + rnd(-0.2, 0.2)); }   // 2026-11-16 迷路の中のどこかに落ちている物
     // 怪異の通り道：マスの真ん中どうしを、開いている所だけつなぐ。入口のマスは戸の前（b20）へ
     const nodes = {}, edges = [['b20', 'mz0']];
@@ -20960,66 +20963,74 @@ if (CHAT_DICT.ev) { const A = {
     lk10: [['まだ開けるのｗｗ', 'still opening lol'], ['ロッカーマスター', 'locker master'], ['執念がすごい', 'the dedication'], ['そろそろ中から何か出るよ', 'something will come out soon'], ['怪異より怖い', 'scarier than the ghosts'], ['全制覇いけ', 'go clear them all']] };
   for (const w in J) { XCHAT.LIST[w] = J[w].map((x, i) => 'lkc.' + w + '.' + i); J[w].forEach((x, i) => { CHAT_DICT.t['lkc.' + w + '.' + i] = x; }); } }
 /* =========================================================
-   2026-11-16 床の蜘蛛の巣（迷路の中に2つ・壊れた東階段の下に1つ。壊れない）
-   ・踏むと糸がふるえ、クモ女が気づいて「様子を見に」来る（追跡ではない。最短の道で。遠ければ巣ワープで近くの巣へ移ってから）
-   ・東階段の下の巣は階段室の床いっぱい。2階から飛び降りると必ず触れる
-   ・確認用：?maze で迷路、?enemy=spider&enemyat=0 でクモ女をすぐ出す
+   2026-11-16 道をふさぐ蜘蛛の糸（迷路の通り道に2つ・壊れた東階段の吹き抜けに1つ。壊れない・通り抜けられる）
+   ・糸に触れると、糸がふるえ、クモ女がその糸からワープして床に現れる（そこから床を這う。近くで見つかると跳び上がって追ってくる）
+   ・東階段の糸は吹き抜けの途中に横に張ってあり、2階から飛び降りると必ず触れる
+   ・確認用：?maze&enemy=spider（クモ女の周で迷路）
    ========================================================= */
 const FWEB = {
   list: [], mat: null,
-  geo(R) {   /* 放射状の糸と、らせんの糸（細い帯）。床に平らに置く */
-    const P = [], I = [], W = 0.011, seg = (a, b) => { const dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz) || 1, nx = -dz / L * W, nz = dx / L * W, o = P.length / 3; P.push(a.x + nx, 0, a.z + nz, a.x - nx, 0, a.z - nz, b.x + nx, 0, b.z + nz, b.x - nx, 0, b.z - nz); I.push(o, o + 2, o + 1, o + 1, o + 2, o + 3); };
-    let sd = 7; const r = () => (sd = (sd * 9301 + 49297) % 233280) / 233280; const N = 14, ang = Array.from({ length: N }, (_, i) => (i + r() * 0.5) / N * Math.PI * 2), len = ang.map(() => R * (0.8 + r() * 0.25));
-    for (let i = 0; i < N; i++) seg({ x: 0, z: 0 }, { x: Math.cos(ang[i]) * len[i], z: Math.sin(ang[i]) * len[i] });
-    for (let ring = 1; ring <= 9; ring++) { const f = ring / 9.6; for (let i = 0; i < N; i++) { const j = (i + 1) % N, a = ang[i], b = ang[j] + (j === 0 ? Math.PI * 2 : 0), ra = Math.min(len[i], R) * f, rb = Math.min(len[j], R) * f, sag = 0.88 + r() * 0.06, mid = (a + b) / 2; if (r() < 0.06) continue;
-      const pa = { x: Math.cos(a) * ra, z: Math.sin(a) * ra }, pb = { x: Math.cos(b) * rb, z: Math.sin(b) * rb }, pm = { x: Math.cos(mid) * (ra + rb) / 2 * sag, z: Math.sin(mid) * (ra + rb) / 2 * sag }; seg(pa, pm); seg(pm, pb); } }
-    for (let k = 0; k < 6; k++) { const a = r() * 6.28, b = a + (r() - 0.5) * 1.5, ra = R * r(), rb = R * r(); seg({ x: Math.cos(a) * ra, z: Math.sin(a) * ra }, { x: Math.cos(b) * rb, z: Math.sin(b) * rb }); }   /* 切れて垂れた糸 */
+  geo(R, ny) {   /* 放射状の糸と、らせんの糸（細い帯）。XZ平面に作る */
+    const P = [], I = [], W = 0.012, seg = (a, b) => { const dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz) || 1, nx = -dz / L * W, nz = dx / L * W, o = P.length / 3; P.push(a.x + nx, 0, a.z + nz, a.x - nx, 0, a.z - nz, b.x + nx, 0, b.z + nz, b.x - nx, 0, b.z - nz); I.push(o, o + 2, o + 1, o + 1, o + 2, o + 3); };
+    let sd = 7; const r = () => (sd = (sd * 9301 + 49297) % 233280) / 233280; const N = 12, ang = Array.from({ length: N }, (_, i) => (i + r() * 0.5) / N * Math.PI * 2);
+    const ex = a => { const c = Math.cos(a), s = Math.sin(a), k = Math.min(1 / Math.max(1e-3, Math.abs(c)), (ny || 1) / Math.max(1e-3, Math.abs(s))); return { x: c * R * k, z: s * R * k }; };   /* 糸の端は四角い枠（通り道の幅・高さ）まで */
+    const end = ang.map(ex);
+    for (let i = 0; i < N; i++) seg({ x: 0, z: 0 }, end[i]);
+    for (let ring = 1; ring <= 8; ring++) { const f = ring / 8.4; for (let i = 0; i < N; i++) { const j = (i + 1) % N; if (r() < 0.07) continue; const pa = { x: end[i].x * f, z: end[i].z * f }, pb = { x: end[j].x * f, z: end[j].z * f }, pm = { x: (pa.x + pb.x) / 2 * 0.92, z: (pa.z + pb.z) / 2 * 0.92 }; seg(pa, pm); seg(pm, pb); } }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setIndex(I); g.computeVertexNormals(); return g;
   },
   clear() { for (const w of this.list) { w.m.parent && w.m.parent.remove(w.m); w.m.geometry.dispose(); } this.list = []; },
-  add(x, y, z, R, opt = {}) {
-    if (!this.mat) this.mat = new THREE.MeshBasicMaterial({ color: 0xd8d4c8, transparent: true, opacity: 0.62, depthWrite: false, side: THREE.DoubleSide, fog: true });
-    const m = new THREE.Mesh(this.geo(R), this.mat); m.position.set(x, y + 0.012, z); m.rotation.y = rnd(0, 6.28); m.renderOrder = 3; scene.add(m);
-    this.list.push({ m, p: V(x, y, z), R, lv: y > 1.6 ? 1 : 0, cool: 0, jig: 0, es: !!opt.es });
+  /* 縦の糸（通り道をふさぐ）：c＝中心、nrm＝通り道の向き（'x'か'z'）、w＝幅の半分、h＝高さの半分 */
+  addV(c, axis, w, h) {
+    if (!this.mat) this.mat = new THREE.MeshBasicMaterial({ color: 0xe2ded2, transparent: true, opacity: 0.7, depthWrite: false, side: THREE.DoubleSide, fog: true });
+    const m = new THREE.Mesh(this.geo(w, h / w), this.mat); m.rotation.order = 'YXZ'; m.rotation.set(Math.PI / 2, axis === 'x' ? Math.PI / 2 : 0, 0); m.position.copy(c); m.renderOrder = 3; scene.add(m);
+    this.list.push({ m, p: c.clone(), axis, w, h, lv: c.y > 2.9 ? 1 : 0, cool: 0, jig: 0 });
+  },
+  addH(c, w, h) {   /* 横の糸（吹き抜けに張る） */
+    if (!this.mat) this.mat = new THREE.MeshBasicMaterial({ color: 0xe2ded2, transparent: true, opacity: 0.7, depthWrite: false, side: THREE.DoubleSide, fog: true });
+    const m = new THREE.Mesh(this.geo(w, h / w), this.mat); m.position.copy(c); m.renderOrder = 3; scene.add(m);
+    this.list.push({ m, p: c.clone(), axis: 'y', w, h, lv: 0, cool: 0, jig: 0, es: true });
   },
   place() {
     this.clear(); if (!SP.ready) return;
-    if (world.maze && MAZE.webP) for (const p of MAZE.webP) this.add(p.x, p.y, p.z, 0.55);
-    this.add(24.0, 0, -27.7, 1.75, { es: true });   /* 壊れた東階段の下（1階）：階段室の床いっぱい */
+    if (world.maze && MAZE.webG) for (const q of MAZE.webG) this.addV(V(q.x, LH + 1.05, q.z), q.axis, q.w, 1.05);
+    this.addH(V(24.0, 2.3, -27.62), 1.7, 2.1);   /* 壊れた東階段の吹き抜け（1階と2階のあいだ） */
     if (TEST || DEV) console.log('FWEB', this.list.length);
   },
-  /* 踏んだ */
   touch(w) {
-    if (world.t < w.cool) return; w.cool = world.t + 18; w.jig = 1;
-    SND.rustle && SND.rustle(w.p.clone().setY(w.p.y + 0.2), 1.1); playSfx('kehai_whoosh', { pos: w.p.clone(), ref: 0.8, gain: 0.25, rate: 1.7, dur: 0.5 });
-    toast(TR('足に蜘蛛の糸がからみついた…'), 1800); try { XCHAT.log('fweb'); } catch (e) { }
-    SP.investigate && SP.investigate(w.p.clone());
+    if (world.t < w.cool) return; w.cool = world.t + 20; w.jig = 1.2;
+    SND.rustle && SND.rustle(w.p.clone(), 1.1); playSfx('kehai_whoosh', { pos: w.p.clone(), ref: 0.8, gain: 0.25, rate: 1.7, dur: 0.5 });
+    toast(TR('体に蜘蛛の糸がからみついた…'), 1800); try { XCHAT.log('fweb'); } catch (e) { }
+    SP.emergeFloor && SP.emergeFloor(w);
     if (TEST || DEV) console.log('FWEB touch', w.p.x.toFixed(1), w.p.z.toFixed(1));
   },
   update(dt) {
-    for (const w of this.list) { if (w.jig > 0) { w.jig -= dt; const k = Math.max(0, w.jig); w.m.scale.set(1 + Math.sin(world.t * 40) * 0.03 * k, 1, 1 + Math.cos(world.t * 33) * 0.03 * k); } }
+    for (const w of this.list) { if (w.jig > 0) { w.jig -= dt; const k = Math.max(0, w.jig); w.m.scale.set(1 + Math.sin(world.t * 40) * 0.04 * k, 1 + Math.cos(world.t * 33) * 0.04 * k, 1); } }
     if (world.state !== 'play' || player.hidden) return;
-    for (const w of this.list) if (w.lv === player.lv && Math.abs(player.y - w.p.y) < 0.8 && Math.hypot(player.x - w.p.x, player.z - w.p.z) < w.R * 0.95) this.touch(w);
+    for (const w of this.list) { if (w.es || w.lv !== player.lv) continue; const dx = player.x - w.p.x, dz = player.z - w.p.z, a = w.axis === 'x' ? Math.abs(dx) : Math.abs(dz), b = w.axis === 'x' ? Math.abs(dz) : Math.abs(dx); if (a < 0.3 && b < w.w) this.touch(w); }
   },
-  /* 2階から飛び降りた時（東階段）：着地した場所に関係なく、下の巣に触れる */
   landed() { const w = this.list.find(x => x.es); if (w) { w.cool = 0; this.touch(w); } },
 };
-/* クモ女：触れた場所へ様子を見に来る（見つけた状態ではない）。着いたら少し様子をうかがって、見つからなければ巣へ戻る */
-SP.investigate = function (p) {
-  if (!this.ready || world.phanRun || world.sealedSpider || world.mannRun) return;
+/* クモ女：触れた糸からワープして、床に現れる（その周にクモ女がいる時だけ。追っている最中などは何もしない） */
+SP.emergeFloor = function (w) {
+  if (!this.ready || world.phanRun || world.sealedSpider || world.mannRun || CAP.on) return;
   const inRun = world.enemy1 === 'spider' || world.enemy2 === 'spider' || this.flag;
-  if (this.st === 'none') { if (!inRun || !this.webSrc) return; if (!this.webs.length) this.reset(); if (!this.webs.length) return; this.flag = true; this.decided = true; this.spawn(); }   /* まだ出ていなくても、巣に触れると来る */
-  if (!['crawl', 'hang', 'ret', 'inv'].includes(this.st)) return;
-  const lv = p.y > 1.6 ? 1 : 0;
-  /* 遠く・別の階で、見られていなければ、触れた場所にいちばん近い巣へ移ってから来る */
-  const far = this.lv !== lv || Math.hypot(this.pos.x - p.x, this.pos.z - p.z) > 10, near = this.webs.filter(w => w.def.lv === lv).sort((a, b) => Math.hypot(a.touch.x - p.x, a.touch.z - p.z) - Math.hypot(b.touch.x - p.x, b.touch.z - p.z))[0];
-  if (far && near && near !== this.web && !onScreen(spFacePos(V()), 1.1)) { const o = this.webs; this.webs = [this.web, near]; this.warp(); this.webs = o; }
-  this.st = 'inv'; this.invGoal = p.clone(); this.invGoal.y = lv ? LH : 0; this.invT = 0; this.invWait = 0; this.t = 0; this.cpath = []; this.repath = 0; this.pNode = null; this.gy = this.lv ? LH : 0;
-  playSfx('throat_rasp', { pos: this.pos.clone(), ref: 1.0, roll: 1.1, gain: 0.5, dur: 0.7 });
-  if (TEST || DEV) console.log('SPIDER investigate', p.x.toFixed(1), p.z.toFixed(1));
+  if (!inRun || !this.webSrc) return; if (!this.webs.length) this.reset(); if (!this.webs.length) return;
+  if (!['none', 'crawl', 'hang', 'ret', 'fcrawl'].includes(this.st)) return;
+  this.flag = true; this.decided = true;
+  const lv = player.lv, fy = lv ? LH : 0; let p;
+  if (w.es) { const a = rnd(0, 6.28); p = V(player.x + Math.cos(a) * 1.4, fy, player.z + Math.sin(a) * 1.4); p.x = clamp(p.x, 22.6, 25.4); p.z = clamp(p.z, -29.4, -25.8); }
+  else { const s = (w.axis === 'x' ? Math.sign(w.p.x - player.x) : Math.sign(w.p.z - player.z)) || 1; p = w.p.clone().setY(fy); if (w.axis === 'x') p.x += s * 0.9; else p.z += s * 0.9; }   /* 糸の向こう側の床 */
+  if (this.st === 'none') { this.web = this.webs[0]; this.spawnT = world.t; this.appearUsed = world.batUsed || 0; this.wrap.visible = true; }
+  this.web = { def: { id: 'thread', lv, rect: [p.x - 1.4, p.x + 1.4, p.z - 1.4, p.z + 1.4] }, touch: p.clone().setY(spCeil(lv)), inward: V(1, 0, 0), jig: 0 };   /* その場の仮の巣（這い回る範囲） */
+  this.lv = lv; this.pos = p.clone(); this.onFloor = true; this.yaw = Math.atan2(player.x - p.x, player.z - p.z); this.st = 'fcrawl'; this.t = 0; this.tgt = null; this.floorFor = rnd(8, 14); this.noChaseUntil = world.t + 1.2; this.lastWarp = world.t;
+  this.emergeT = world.t; spPlay('CeilingCrawl', 0); this.apply(); this.stepStop(true);
+  playSfx('throat_rasp', { pos: p.clone().setY(fy + 0.5), ref: 1.0, roll: 1.1, gain: 0.7, dur: 0.9 }); world.vhs = Math.max(world.vhs || 0, 0.4);
+  if (TEST || DEV) console.log('SPIDER emerge floor', p.x.toFixed(1), p.z.toFixed(1));
 };
-Object.assign(EN, { '足に蜘蛛の糸がからみついた…': 'Spider silk clings to your feet...' });
+Object.assign(EN, { '体に蜘蛛の糸がからみついた…': 'Spider silk clings to you...' });
 XCHAT.LIST.fweb = ['fw.01', 'fw.02', 'fw.03', 'fw.04', 'fw.05'];
+Object.assign(CHAT_DICT.t, { 'fw.01': ['蜘蛛の糸ついた', 'you walked into a web'], 'fw.02': ['気づかれたかも', 'she might have noticed'], 'fw.03': ['糸ふるえてる…', 'the threads are shaking...'], 'fw.04': ['来るぞ来るぞ', "she's coming she's coming"], 'fw.05': ['そこ罠じゃん', "that's a trap"] });
 Object.assign(CHAT_DICT.t, { 'fw.01': ['蜘蛛の巣踏んだ', 'stepped on a web'], 'fw.02': ['気づかれたかも', 'she might have noticed'], 'fw.03': ['糸ふるえてる…', 'the threads are shaking...'], 'fw.04': ['来るぞ来るぞ', "she's coming she's coming"], 'fw.05': ['そこ罠じゃん', "that's a trap"] });
 /* =========================================================
    2026-11-16 行動に反応するコメント（録画中だけ。1周に同じ種類は1〜2回まで）
@@ -21103,6 +21114,75 @@ const _cmxV = V();
     pa: [['放送ジャックｗ', 'PA hijack lol'], ['全校に聞こえてる', 'the whole school can hear'], ['いや敵きちゃうよ！？ww', "they'll come for you!? lol"], ['来る来る来る', "they're coming"]],
     paLong: [['どんだけ喋るのw', 'how long are you going to talk lol'], ['演説始まった', 'a speech started'], ['校長先生の話より長い', "longer than the principal's speech"], ['全校集会かな？', 'school assembly?'], ['ラジオ始まってて草', "it's a radio show now lol"], ['放送部入った？', 'joined the broadcast club?'], ['怪異も聞き入ってる', 'even the ghosts are listening']] };
   for (const w in J) { XCHAT.LIST[w] = J[w].map((x, i) => 'cmx.' + w + '.' + i); J[w].forEach((x, i) => { CHAT_DICT.t['cmx.' + w + '.' + i] = x; }); } }
+/* =========================================================
+   2026-11-16 コメントの追加（2）
+   ・撮れ高がないまま1分しゃべり続けた（2段階目）／ズームの切り替えすぎ（候補を追加）／放置30秒でしりとり（動いたら止まる）
+   ・怖い場面で声を出さなかった（名前入り）／同じ録画でロッカーに3回／1分以上の放置から戻った「おかえり」／いちばん怖い場面の1秒前に「ここすき」
+   ・ベッドの下やロッカーに入った「実家のような安心感」／見た目の物を2つ以上つけた／20秒で帰還
+   ========================================================= */
+const XEXT = {
+  /* 順番に流す（別々の視聴者が数秒あけて） */
+  SEQ: { lkParent: [['親の顔より見たロッカー', "I've seen this locker more than my parents' faces"], ['もっと親の顔見ろ', 'go see your parents more']], cmGear: [['そんな装備で大丈夫か？', 'is that gear going to be okay?'], ['大丈夫だ、問題ない', "it's fine, no problem"]] },
+  /* 名前入り（呼び名がない時は名前なしの方） */
+  NAME: { cmNoFlinch: { n: ['全然驚かない{name}', '{name}動じなさすぎ', '{name}肝すわりすぎ'], en: ['{name} is not scared at all', '{name} is way too calm', '{name} has nerves of steel'], x: [['全然驚かないの強い', 'not even flinching'], ['動じなさすぎ', 'way too unfazed'], ['肝すわりすぎ', 'nerves of steel']] } },
+  YAKU: [[['毎回バッテリー少ないの何', 'why is the battery always low'], ['モバイルバッテリー買ってあげたい', 'someone buy them a power bank'], ['充電器持ってないの？', "don't you own a charger?"]],
+    [['毎回容量カツカツで草', 'storage is always full lol'], ['写真フォルダ整理して', 'clean up your photos'], ['ストレージ空けてから来い', 'free up storage first'], ['そろそろスマホ買い替えてw', 'time for a new phone lol']]],
+  SHIRI: [['りんご', 'apple'], ['ゴリラ', 'gorilla'], ['ラッパ', 'trumpet']], SHIRI_END: [['しりとり終わったｗ', 'shiritori is over lol'], ['動いたｗ', 'it moved lol']],
+  chat(d) {
+    if (!d || !d.items || !d.end) return; const ev = CHATLOG.ev || [], R = chatRng((d.seed ^ 0x7a11c3) >>> 0), U = Math.max(6, (d.users || []).length || 12), maxR = d.end.R + (d.end.ec ? 3 : -0.2), out = [], nm = d.name || '';
+    const push = (t, ja, en, u) => { if (t > 0.3 && t <= maxR) out.push([Math.round(t * 100) / 100, u ?? Math.floor(R() * U), 'xe', ja, en]); };
+    const users = n => { const a = []; while (a.length < n) { const u = Math.floor(R() * U); if (!a.includes(u)) a.push(u); } return a; };
+    for (const e of ev) {
+      if (e.k !== 'xc') continue;
+      const S = this.SEQ[e.w]; if (S) { const us = users(S.length); S.forEach((l, i) => push(e.t + 0.8 + i * (1.6 + R() * 1.2), l[0], l[1], us[i])); continue; }
+      const N = this.NAME[e.w]; if (N) { if (nm) { const i = Math.floor(R() * N.n.length); push(e.t + 0.9 + R() * 0.8, N.n[i].split('{name}').join(nm), N.en[i].split('{name}').join(nm)); } else { const l = pick(N.x); push(e.t + 0.9 + R() * 0.8, l[0], l[1]); } continue; }
+    }
+    /* しりとり：止まって30秒（止まった記録は20秒の所）。動いたら、そこで止めて一言 */
+    for (let k = 0; k < ev.length; k++) { const e = ev[k]; if (e.k !== 'still') continue; const t0 = e.t + 10, mv = ev.slice(k + 1).find(x => x.k === 'move'), m = mv ? mv.t : 1e9; if (m <= t0 + 0.3) continue;
+      const us = users(4); let cut = false; this.SHIRI.forEach((l, i) => { const t = t0 + i * (2.6 + R() * 1.6); if (t < m) push(t, l[0], l[1], us[i]); else cut = true; });
+      if (cut && m < 1e9) { const l = pick(this.SHIRI_END); push(m + 0.6, l[0], l[1], us[3]); } }
+    /* ここすき：いちばん怖い場面の1秒前（捕まった時はその瞬間、ほかは一番レア度の高い撮れ高） */
+    { let t = null; if (world.state === 'over') t = d.end.R - 1.6;
+      else { const ORD = { PH: 7, SS: 6, S: 5, A: 4, B: 3, C: 2, D: 1 }, END = ['alive', 'chaseOut', 'battery1', 'urahEscape', 'memoHint']; let best = null; for (const a of evidence) { if (END.includes(a.key) || /^mic|^chase/.test(a.key || '')) continue; const r = ORD[rankOf(a)] || 0; if (!best || r > best.r || (r === best.r && (a.pts || 0) > best.p)) best = { r, p: a.pts || 0, t: a.t }; } if (best && best.r >= 4) t = best.t; }
+      if (t !== null && t > 2) push(t - 1, 'ここすき', 'love this part'); }
+    /* 毎回の「お約束」へのツッコミ：動画の終わりの方で、20回に1回くらい（バッテリーか容量のどちらか・2人） */
+    if (R() < 0.05 && d.end.R > 25) { const G = this.YAKU[Math.floor(R() * this.YAKU.length)], us = users(2), ls = G.slice().sort(() => R() - 0.5), t0 = d.end.R - 7 - R() * 6; ls.slice(0, 2).forEach((l, i) => push(t0 + i * (1.8 + R() * 1.4), l[0], l[1], us[i])); }
+    if (out.length) d.items = d.items.concat(out).sort((a, b) => a[0] - b[0]);
+  },
+};
+{ const C0 = CHAT.build.bind(CHAT); CHAT.build = function (P) { const d = C0(P); try { XEXT.chat(d); } catch (e) { console.warn('追加のコメント2', e); } return d; }; }
+for (const w of Object.keys(XEXT.SEQ).concat(Object.keys(XEXT.NAME))) XCHAT.LIST[w] = [];   /* XCHAT の通常の流し方では出さない */
+/* 行動の見張り（CMX に足す） */
+{ const U0 = CMX.update.bind(CMX), R0 = CMX.reset.bind(CMX);
+  CMX.reset = function () { R0(); this.awN = evidence.length; this.lastAw = world.t; this.talkA = 0; this.flinch = null; this.lkN = 0; this.lastUnder = false; this.gearChk = false; };
+  CMX.update = function (dt) {
+    U0(dt); if (world.state !== 'play' || !rec.active) return; if (this.awN === undefined) this.reset();
+    const spk = VOICE.ok && VOICE.sp;
+    /* 撮れ高がないまま1分しゃべり続けた（しゃべっている時間が45秒以上） */
+    if (evidence.length !== this.awN) { const a = evidence[evidence.length - 1]; this.awN = evidence.length; this.lastAw = world.t; this.talkA = 0;
+      /* 怖い撮れ高（A以上）が出たのに、3.5秒声を出さない（マイクが生きていて声を判定できる時だけ） */
+      if (a && !/^mic|^chase|^alive|^memo/.test(a.key || '') && ['SS', 'S', 'A'].includes(rankOf(a)) && MICLV.live() && VOICE.ok) this.flinch = { t: world.t }; }
+    if (spk) this.talkA += dt; if (world.t - this.lastAw > 60 && this.talkA > 45) { this.talkA = 0; this.lastAw = world.t; this.log('cmTalkNoAw', 2); }
+    if (this.flinch) { if (spk) this.flinch = null; else if (world.t - this.flinch.t > 3.5) { this.flinch = null; this.log('cmNoFlinch', 2); } }
+    /* ロッカー3回（同じ録画）・実家のような安心感 */
+    const inL = !!HIDE.lk, inU = !!(typeof UNDER !== 'undefined' && UNDER.on);
+    if (inL && !this.lastL2) { this.lkN++; if (this.lkN === 3) this.log('lkParent'); else if (chance(0.4)) this.log('cmHome', 2); }
+    if (inU && !this.lastUnder && chance(0.4)) this.log('cmHome', 2);
+    this.lastL2 = inL; this.lastUnder = inU;
+    /* 見た目の物を2つ以上つけた（半分くらいの確率で、1周1回） */
+    if (!this.gearChk && ITEM.eq && Object.values(ITEM.eq).filter(Boolean).length >= 2) { this.gearChk = true; if (chance(0.5)) this.log('cmGear'); }
+  }; }
+/* コメントの候補 */
+{ const J = {
+    cmTalkNoAw: [['心霊要素どこ', 'where are the ghosts'], ['ただの雑談動画', 'just a chatting video'], ['撮れ高をトークで埋めにきてる', 'filling the gap with talk'], ['喋りで持たせるな', "don't carry it with talk"], ['本編まだ？', 'when does the real part start?'], ['前置き長すぎ', 'such a long intro'], ['トーク力で撮れ高作ってて草', 'making content with pure talk lol'], ['喋りだけで成立してる', 'the talk alone works'], ['幽霊いなくても面白い', 'fun even without ghosts'], ['この人ラジオ向いてる', 'made for radio'], ['怪異より話が怖い', 'the talk is scarier than the ghosts']],
+    cmHome: [['実家のような安心感', 'feels like home']],
+    cmRTA: [['帰宅RTA自己ベスト', 'going-home speedrun PB'], ['帰るのはっや', 'that was a fast exit'], ['何しに来たのｗ', 'why did you even come lol']] };
+  for (const w in J) { XCHAT.LIST[w] = J[w].map((x, i) => 'cmx.' + w + '.' + i); J[w].forEach((x, i) => { CHAT_DICT.t['cmx.' + w + '.' + i] = x; }); } }
+/* ズームの切り替えすぎ：候補を足す */
+{ const Z = [['酔うｗ', 'getting motion sick lol'], ['目がチカチカする', 'my eyes hurt'], ['寄るか引くか決めて', 'zoom in or out, pick one'], ['ピント職人', 'focus artisan'], ['ズームで遊ぶな', 'stop playing with zoom'], ['倍率ガチャ回してる？', 'rolling the zoom gacha?'], ['撮影の練習中？', 'practicing camera work?'], ['新しいスマホ買った？', 'new phone?'], ['機能全部試すタイプ', 'tries every feature'], ['寄ったり引いたりで余計怖い', 'the zooming makes it scarier'], ['何か見つけた？', 'find something?'], ['幽霊もピント合わせづらそう', 'even the ghost can’t get in focus'], ['ん？', 'hm?'], ['どこ', 'where'], ['見逃した', 'missed it']];
+  const ids = Z.map((x, i) => { const id = 'cmx.zoom.' + i; CHAT_DICT.t[id] = x; return id; }); if (CHAT_DICT.c.bh_zoom_spam) CHAT_DICT.c.bh_zoom_spam.push(...ids); }
+/* 1分以上止まっていて戻った時の「おかえり」 */
+CHAT_DICT.c.still_back_long = ['おかえり', 'おかえりｗ', '待ってた'].map((x, i) => { const id = 'cmx.okaeri.' + i; CHAT_DICT.t[id] = [x, ['welcome back', 'welcome back lol', 'we were waiting'][i]]; return id; });
 const SHOPFX = { update(dt) { IDLEC.update(dt); if (world.state !== 'play') return; BUZZ.update(dt); CANDLE.update(dt); DRINK.update(); STICK.update(dt); } };
 /* =========================================================
    2026-11-16 投げ銭（第2弾）：中堅から。コメントなしで、色の帯に「名前 ¥金額」だけ
