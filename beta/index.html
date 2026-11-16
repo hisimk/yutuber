@@ -196,9 +196,9 @@
   #intro{position:fixed;inset:0;z-index:25;background:#000;display:none;touch-action:none}
   #intro.show{display:block}
   #intro canvas{position:absolute;inset:0;width:100%;height:100%}
-  #intro .skip{position:absolute;left:0;right:0;bottom:calc(var(--sab) + 28px);text-align:center;font-size:13px;letter-spacing:.2em;color:rgba(255,255,255,.55);opacity:0;transition:opacity .4s}
+  #intro .skip{position:absolute;left:0;right:0;top:calc(50% + 80px);text-align:center;font-size:13px;letter-spacing:.2em;color:rgba(255,255,255,.92);text-shadow:0 0 6px rgba(255,255,255,.75),0 0 14px rgba(255,255,255,.35);opacity:0;transition:opacity .4s}
   #intro .skip.on{opacity:1;animation:introBlink 1.6s ease-in-out infinite}@keyframes introBlink{50%{opacity:.35}}
-  #intro .iGhost{position:absolute;left:50%;top:calc(var(--sat, 0px) + 56px);width:26px;height:29px;margin-left:-13px;animation:introSpin 1.4s linear infinite;opacity:.8}#intro .iGhost svg{width:100%;height:100%}@keyframes introSpin{to{transform:rotate(360deg)}}
+  #intro .iGhost{--s:46px;position:absolute;left:50%;top:calc(50% - 150px);margin-left:-23px;opacity:.9}   /* 2026-11-16 ナウローディングのドット絵おばけ（文字のやや上） */
   .title{font-family:"Shippori Mincho",serif;font-weight:800;font-size:56px;letter-spacing:.18em;margin:0 0 6px;color:#e9e4da;text-shadow:0 0 24px rgba(255,40,40,.25)}
   .sub{font-size:13px;color:#9a958c;margin-bottom:22px;letter-spacing:.08em}
   .opts{width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
@@ -346,6 +346,8 @@
   #result.goldF video{outline:2px solid #d4af37;outline-offset:-2px}
   html.goldPhone body::after{content:'';position:fixed;inset:0;border:3px solid rgba(212,175,55,.85);border-radius:18px;pointer-events:none;z-index:5}
   #yenLine{font-size:13px;color:#bdb8ae;margin-top:4px;text-align:center}#yenLine b{color:#ffd34d;margin-left:6px}#yenLine small{display:block;font-size:11px;color:#8a867f;margin-top:2px}
+  #resBrk{position:fixed;left:50%;top:calc(var(--sat, 0px) + 64px);transform:translateX(-50%);z-index:90;background:rgba(10,10,12,.9);border:1px solid #333338;border-radius:10px;padding:10px 14px;font-size:13px;line-height:1.7;color:#fff;white-space:pre-line;opacity:0;transition:opacity .3s;pointer-events:none;width:max-content;max-width:92vw}#resBrk.show{opacity:1}
+  .ytag{display:inline-block;font-size:10px;font-weight:700;line-height:1.5;border:1px solid;border-radius:5px;padding:0 5px;margin-left:6px;vertical-align:1px;white-space:nowrap;font-style:normal}.ytag.use{color:#c4a56c;border-color:rgba(196,165,108,.5);background:rgba(196,165,108,.1)}.ytag.perm{color:#8db0c0;border-color:rgba(141,176,192,.5);background:rgba(141,176,192,.1)}.ytag.in{color:#bdb8ae;border-color:rgba(189,184,174,.45)}#imTitle .ytag{font-size:12px;vertical-align:3px;letter-spacing:0}.yhow{font-style:normal;color:#d6d0c4;font-weight:700}
   .uiIc{width:15px;height:15px;vertical-align:-2px;margin-right:5px;filter:invert(83%) sepia(60%) saturate(800%) hue-rotate(358deg)}
   #shopRow{display:flex;gap:8px;margin:12px auto 0;max-width:100%}#shopRow #shopBtn{flex:1;margin:0}#shopRow #bagBtn{flex:none;width:44px;height:44px;padding:0;margin:0;border-radius:50%;display:flex;align-items:center;justify-content:center}
   #bagUI{position:fixed;inset:0;z-index:72;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:16px}#bagUI.show{display:flex}
@@ -355,7 +357,7 @@
   #shopAsk .qty{display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:8px}#shopAsk .qty button{width:40px;height:40px;border-radius:50%;border:1px solid #555;background:#202024;color:#fff;font-size:20px}#shopAsk .qty button:disabled{opacity:.3}#shopAsk .qty b{font-size:22px;min-width:24px}
   #shopAsk .raSum{font-size:18px;font-weight:800;color:#ffd34d;margin-bottom:12px}#shopAsk .raSum small{display:block;font-size:11px;color:#8f8a82;font-weight:400;margin-top:2px}
   #shopAsk .raBtns{display:flex;gap:10px}#shopAsk .raBtns button{flex:1;padding:12px;border-radius:12px;font-size:15px;font-weight:700;border:1px solid #3a3a3e;background:#202024;color:#fff}#shopAsk .raBtns .yes{background:#ffd34d;color:#111;border-color:#ffd34d}
-  #shopUI .shN,#bagUI .shN{font-size:11px;color:#ffd34d;margin-left:6px;font-weight:700}#shopUI .shOwn{font-size:11px;color:#8f8a82;margin-left:6px;font-weight:400}
+  #shopUI .shN,#bagUI .shN{font-size:11px;color:#ffd34d;margin-left:6px;font-weight:700;white-space:nowrap}#shopUI .shOwn{font-size:11px;color:#8f8a82;margin-left:6px;font-weight:400}
   #shopUI .lock,#shopUI .shIt:has(.shBuy:disabled){opacity:.5}#shopUI .shBuy:disabled{border-color:#555!important;color:#777!important}
   #bagUI .shBox{width:100%;max-width:380px;max-height:86vh;display:flex;flex-direction:column;background:#151517;border:1px solid #333338;border-radius:16px;overflow:hidden}
   #bagUI .shHead{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #2a2a2e;color:#fff}#bagUI .shHead>b{font-size:17px}#bagUI .shHead span{flex:1;text-align:right;font-size:13px;color:#bdb8ae}#bagUI .shHead span b{color:#ffd34d}#bagUI .shX{background:none;border:0;color:#bdb8ae;font-size:22px;padding:0 4px}
@@ -929,7 +931,7 @@
   <div id="invScore"><img id="invScoreImg" alt=""><div id="invScoreTap">タップで閉じる</div></div>
 </div>
 <div id="tut"><div id="tHole"><b id="tTag"></b></div><div id="tStick"><b></b><i></i></div><div id="tSwipe"><i></i></div><div class="tBox" id="tBox"><button id="tSkipTop">遊び方をとばす ✕</button><div class="tStep" id="tStep"></div><div class="tIco" id="tIco"></div><img id="tGif" alt=""><h3 id="tTitle"></h3><p id="tText"></p><div class="tBtns"><button class="tSkip" id="tBack">もどる</button><button class="go" id="tNext">次へ</button></div></div></div>
-<div id="intro"><canvas id="introCv"></canvas><div class="iGhost"><svg viewBox="0 0 40 44"><path d="M20 3C11 3 5 10 5 19v20l5-4 5 4 5-4 5 4 5-4 5 4V19C35 10 29 3 20 3z" fill="#e9e4da"/><circle cx="14.5" cy="19" r="3" fill="#111"/><circle cx="25.5" cy="19" r="3" fill="#111"/></svg></div><div class="skip"></div></div>
+<div id="intro"><canvas id="introCv"></canvas><div class="iGhost ghL" aria-hidden="true"></div><div class="skip"></div></div>
 <div class="screen" id="result">
   <div id="resTop"><div id="permIcons"></div><div id="resHeadL"><h2 id="resTitle">帰還</h2><div class="meta" id="resMeta"></div></div><div id="resR"><button id="retakeBtn">再撮影</button></div></div>
   <div id="resSum"><div id="resCount">今回の撮れ高 <b id="resCountN">0</b>回</div><div id="likeRow"><div id="likeHero"><i class="like" id="likeIcon"></i><b id="evScore">0</b></div><div id="likeSub">いいね</div></div></div>
@@ -4235,7 +4237,7 @@ $('#gyroBtn').addEventListener('click', e => { e.stopPropagation(); gyro.on ? di
 $('#centerBtn').addEventListener('click', e => { e.stopPropagation(); recenter(); });
 
 let toastT = null;
-function toast(msg, ms = 2600) { const el = $('#toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), ms); }
+function toast(msg, ms = 2600) { const el = $('#toast'); el.textContent = msg; el.style.whiteSpace = String(msg).includes('\n') ? 'pre-line' : ''; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), ms); }
 
 // ── その場の操作ボタン（鍵・ノック・蛇口）
 let actFn = null, actLabel = '', actKey = false, actExit = false;
@@ -9249,7 +9251,8 @@ const ITEM = {
     if (it.taken || world.state !== 'play') return;
     it.taken = true; it.s.visible = false; this.have[it.id] = it.id === 'ofuda' ? (this.have.ofuda | 0) + 1 : true;   /* 2026-11-15 お札は枚数で持つ */ if (it.id === 'omamori' && this.lockLk) this.lockLk.noHide = false;   // 取ったら隠れられる
     const D = this.defs[it.id];
-    const el = $('#itemModal'); el.classList.toggle('score', it.id === 'memo'); $('#imImg').src = it.id === 'memo' ? this.memoScore(this.memoSong) : this.defs[it.id].view && typeof ACC_VIEW !== 'undefined' && ACC_VIEW[it.id] ? ACC_VIEW[it.id]() : ITEM_IMG[it.id]; if (this.defs[it.id].view) el.classList.add('score'); $('#imTitle').textContent = TR(D.name + 'を入手した'); $('#imDesc').textContent = TR(D.desc); $('#imTap').textContent = TR('タップして進める。');
+    const el = $('#itemModal'); el.classList.toggle('score', it.id === 'memo'); $('#imImg').src = it.id === 'memo' ? this.memoScore(this.memoSong) : this.defs[it.id].view && typeof ACC_VIEW !== 'undefined' && ACC_VIEW[it.id] ? ACC_VIEW[it.id]() : ITEM_IMG[it.id]; if (this.defs[it.id].view) el.classList.add('score'); $('#imTitle').textContent = TR(D.name + 'を入手した'); $('#imDesc').textContent = TR(D.desc);
+    try { $('#imTitle').insertAdjacentHTML('beforeend', YTAG.tag(it.id)); $('#imDesc').insertAdjacentHTML('afterbegin', YTAG.desc(it.id, '')); } catch (e) { }   /* 2026-11-16 種類の札と効き方 */ $('#imTap').textContent = TR('タップして進める。');
     world.state = 'paused'; input.sx = input.sy = 0;
     this.modal = { it, wasRec: rec.active, masterV: A.ctx ? (A.master.gain.value || 0.9) : 0.9, at: performance.now() };
     if (rec.active) stopRec('pause');
@@ -9261,7 +9264,8 @@ const ITEM = {
   // 2026-11-14 永続アイテムの入手（拾う時と同じ画面）
   showPerm(id) {
     const D = PERM.DEFS[id]; const el = $('#itemModal'); el.classList.remove('score');
-    $('#imImg').src = PERM_IMG[id]; $('#imTitle').textContent = TR(D.name + 'を入手した'); $('#imDesc').textContent = TR(D.desc) + '\n' + TR('（ずっと持ち続ける。持ち物からオン・オフできる）'); $('#imTap').textContent = TR('タップして進める。');
+    $('#imImg').src = PERM_IMG[id]; $('#imTitle').textContent = TR(D.name + 'を入手した'); $('#imDesc').textContent = TR(D.desc) + '\n' + TR('（ずっと持ち続ける。持ち物からオン・オフできる）');
+    try { $('#imTitle').insertAdjacentHTML('beforeend', YTAG.tag(id)); $('#imDesc').insertAdjacentHTML('afterbegin', YTAG.desc(id, '')); } catch (e) { } $('#imTap').textContent = TR('タップして進める。');
     world.state = 'paused'; input.sx = input.sy = 0;
     this.modal = { it: { id }, wasRec: rec.active, masterV: A.ctx ? (A.master.gain.value || 0.9) : 0.9, at: performance.now() };
     if (rec.active) stopRec('pause');
@@ -11243,7 +11247,7 @@ const OFUDA = {
   },
   end() {
     this.on = false; this.mesh.visible = false;
-    if (this.kind === 'woman') { sgSetOpacity(0); WD.release(true); ITEM.banishWoman(); if (!world.phanRun) world.sealedWoman = true; }   /* 2026-11-15 封じた敵は、その周はもう出ない */
+    if (this.kind === 'woman') { sgSetOpacity(0); WD.release(true); ITEM.banishWoman(); if (!world.phanRun) { world.sealedWoman = true; if (!PERM.has('cape') && (chance(0.1) || /[?&]capedrop\b/.test(location.search))) PERM.later('cape', 900); } }   /* 2026-11-16 逆さ女を封じたら10%で赤いマント（ナカヨシの周は対象外。確認用 ?capedrop） */   /* 2026-11-15 封じた敵は、その周はもう出ない */
     else { SP.wrap.visible = false; SP.st = 'none'; SP.noChaseUntil = world.t + 40; SP.lastDrop = world.t + 30; SP.spawnAt = world.t + rnd(40, 70); if (!world.phanRun) world.sealedSpider = true; if (chance(0.1) || /[?&]spdrop\b/.test(location.search)) PERM.later('spider', 900); }   // 2026-11-14 倒したら10%でスパイダーセンス
   },
   // 運命：ベートーベンの額縁が落ちる
@@ -14337,6 +14341,7 @@ const INV = {
     for (const id of own) {
       const D = ITEM.defs[id], el = document.createElement('div'); el.className = 'invIt' + (id === 'memo' ? ' tap' : '');
       el.innerHTML = `<img alt=""><div><b></b><small></small></div>`; el.querySelector('img').src = ITEM_IMG[id]; el.querySelector('b').textContent = TR(D.name) + (id === 'ofuda' && ITEM.have.ofuda > 1 ? ' ×' + ITEM.have.ofuda : ''); el.querySelector('small').textContent = TR(D.desc);
+      try { el.querySelector('b').insertAdjacentHTML('beforeend', YTAG.tag(id) + ((SHOP.carried || []).includes(id) ? `<span class="ytag in">${TR('持ち込み中')}</span>` : '')); el.querySelector('small').insertAdjacentHTML('afterbegin', YTAG.desc(id, '')); } catch (e) { }   /* 2026-11-16 種類の札・持ち込み中 */
       if (id === 'memo') el.addEventListener('click', e => { e.stopPropagation(); $('#invScoreImg').src = ITEM.memoScore(ITEM.memoSong); $('#invScore').classList.add('show'); });
       this.acts(id, el, D);   // 2026-11-14 使う・着ける・見る
       L.appendChild(el);
@@ -14345,8 +14350,8 @@ const INV = {
       const D = PERM.DEFS[id], el = document.createElement('div'); el.className = 'invIt perm' + (PERM.active(id) ? ' on' : '');
       el.innerHTML = `<img alt=""><div><b></b><small></small></div><div class="pSw"></div>`; el.querySelector('img').src = PERM_IMG[id];
       const txt = v => TR(D.desc) + '　' + TR(v ? '効果：オン' : '効果：オフ');
-      el.querySelector('b').innerHTML = `${TR(D.name)}<span class="pTag">${TR('ずっと')}</span>`; el.querySelector('small').textContent = txt(PERM.active(id));
-      el.addEventListener('click', e => { e.stopPropagation(); const v = !PERM.active(id); PERM.setOn(id, v); el.classList.toggle('on', v); el.querySelector('small').textContent = txt(v); });
+      el.querySelector('b').innerHTML = `${TR(D.name)}<span class="ytag perm">${TR('ずっと')}</span>`; const stx = v => { el.querySelector('small').textContent = txt(v); el.querySelector('small').insertAdjacentHTML('afterbegin', YTAG.desc(id, '')); }; stx(PERM.active(id));
+      el.addEventListener('click', e => { e.stopPropagation(); const v = !PERM.active(id); PERM.setOn(id, v); el.classList.toggle('on', v); stx(v); });
       if (id === 'fixcam' && PERM.active(id)) { const b = document.createElement('button'); b.className = 'invAct'; b.type = 'button'; b.textContent = TR(FIXCAM.placed ? '設置中' : '置く'); b.disabled = FIXCAM.placed; b.addEventListener('click', e => { e.stopPropagation(); if (FIXCAM.placed) return; this.hide(); setTimeout(() => FIXCAM.startFrame(), 60); }); el.appendChild(b); }   // 2026-11-14 定点カメラ：画角を決める画面へ（設置中は、カメラに近づいて回収すると置き直せる）
       L.appendChild(el);
     }
@@ -14716,12 +14721,12 @@ const INTRO = {
       [...'とれだか'].forEach((c, i) => { t.fillText(c, x + cw[i] / 2, y0 - fs * 0.5 - rs * 0.62); x += cw[i]; });
       t.restore();
     }
-    const T_SHOW = 2.0, T_GLITCH = 1.1, T_OUT = 0.35, T_END = T_SHOW + T_GLITCH + T_OUT;
+    const T_SHOW = 2.0, T_GLITCH = 0.32, T_OUT = 0.18, T_END = T_SHOW + T_GLITCH + T_OUT;
     let t0 = performance.now(), fin = false, buzzN = 0, noise = null;
     const noiseStop = () => { if (!noise || !A.ctx) return; const n = noise; noise = null; const c = A.ctx.currentTime; n.g.gain.cancelScheduledValues(c); n.g.gain.setValueAtTime(n.g.gain.value, c); n.g.gain.linearRampToValueAtTime(0.0001, c + 0.12); try { n.s.stop(c + 0.15); } catch (e) { } };
     /* 2026-11-16 文字が出たら、タップ（PCはクリック）するまで進まない（アクセス許可の画面で勝手に進まないように）。上の方で小さなおばけがくるくる回る */
-    let tapped = false; const hint = el.querySelector('.skip'); hint.textContent = TR(matchMedia('(pointer:coarse)').matches ? 'タップで進む' : 'クリックで進む'); hint.classList.remove('on');
-    const finish = () => { if (fin) return; fin = true; noiseStop(); hint.classList.remove('on'); el.classList.remove('show'); el.removeEventListener('pointerdown', skip); done(); };
+    let tapped = false; const hint = el.querySelector('.skip'); { const half = lh * (lines.length - 1) / 2 + fs * 0.6; hint.style.top = (H / 2 + half + 18) + 'px'; const gh = el.querySelector('.iGhost'); gh.style.top = (H / 2 - half - 46 * 7 / 6 - 34) + 'px'; }   /* 文字のすぐ下に「タップで進む」、やや上におばけ */ hint.textContent = TR(matchMedia('(pointer:coarse)').matches ? 'タップで進む' : 'クリックで進む'); hint.classList.remove('on');
+    const finish = () => { if (fin) return; fin = true; noiseStop(); hint.classList.remove('on'); el.removeEventListener('pointerdown', skip); cx.globalAlpha = 1; cx.fillStyle = '#000'; cx.fillRect(0, 0, W, H); try { done(); } catch (e) { console.warn('開始', e); } let n = 0; const off = () => { if (++n < 4) requestAnimationFrame(off); else el.classList.remove('show'); }; requestAnimationFrame(off); };   /* 2026-11-16 ゲームの画面が描かれてから黒を外す（タイトルの背景が一瞬見えないように） */
     const skip = () => { const n = performance.now(); if (n - t0 < 250) return; if (!tapped) { tapped = true; hint.classList.remove('on'); t0 = n - T_SHOW * 1000; return; } finish(); };
     el.addEventListener('pointerdown', skip);
     el.classList.add('show');
@@ -14944,7 +14949,7 @@ const PERM = {
   KEY: 'yt_perm_v1', ORDER: ['shun', 'spider', 'cape', 'light', 'gunmic', 'batt', 'wipe', 'fixcam'], d: null,
   RANK: { 1: 'light', 2: 'gunmic', 3: 'batt', 4: 'wipe', 5: 'fixcam' },   // 2026-11-14 ランクで手に入る配信機材（駆け出し・中堅・人気）
   DEFS: {
-    shun: { name: 'シュン足', desc: 'コーナーとかで差をつけろ！足が少し早くなった気がする。' },
+    shun: { name: 'シュン足', desc: 'コーナーとかで差をつけろ！歩く速さが1.2倍になる。' },
     spider: { name: 'スパイダーセンス', desc: 'クモ女の触覚。第六感が研ぎ澄まされ、何かが起こる気配を感じる時もある。' },
     cape: { name: '赤いマント', desc: '不思議な力が宿る赤いマント。1度だけ何もなかったことにする。' },
     light: { name: 'リングライト', desc: '配信者の必需品。インカメラの明かりが強くなり、暗い所でも自分と背後が映りやすい。' },
@@ -14965,7 +14970,7 @@ const PERM = {
   active(id) { const d = this.load(); return !!d.have[id] && d.on[id] !== false; },
   setOn(id, v) { this.load().on[id] = v; this.save(); },
   owned() { return this.ORDER.filter(id => this.has(id)); },
-  speedMul() { return this.active('shun') ? 1.08 : 1; },
+  speedMul() { return this.active('shun') ? 1.2 : 1; },   /* 2026-11-16 1.08→1.2倍。栄養ドリンクとはそのまま掛け合わせ（上限なし） */
   // 2026-11-14 ランクに応じて配信機材を手に入れる（今のランクまでの分。新しく手に入った物を返す）
   rankSync(ri) { const d = this.load(), got = []; for (const [r, id] of Object.entries(this.RANK)) if (ri >= +r && !d.have[id]) { d.have[id] = true; d.on[id] = true; got.push(id); } if (got.length) this.save(); return got; },
   rankItem(ri) { return this.RANK[ri] || null; },
@@ -15021,7 +15026,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.25';
+const VERSION = '0.16.26';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16284,7 +16289,7 @@ const RANKPOP = {
     $('#rpFrom').textContent = `${yrankName(d.rk || 0)} → ${yrankName(d.rkPend)}`; $('#rpTot').textContent = cui('lifetime', d.total);
     $('#rpNote').textContent = cui('explain'); $('#rpOk').textContent = cui('ok');
     { const got = PERM.rankSync(d.rkPend); let gb = $('#rpGear'); if (!gb) { gb = document.createElement('div'); gb.id = 'rpGear'; $('#rpNote').after(gb); }   // 2026-11-14 ランクで配信機材を入手
-      gb.innerHTML = got.map(id => `<div class="rpG"><img src="${PERM_IMG[id]}" alt=""><div><b>${LANG === 'en' ? 'Got: ' + TR(PERM.DEFS[id].name) + '!' : '「' + PERM.DEFS[id].name + '」を入手しました！'}</b><small>${LANG === 'en' ? 'Streaming gear — toggle it in your items.' : '配信機材。持ち物でオン・オフできます'}</small></div></div>`).join(''); gb.style.display = got.length ? '' : 'none'; }
+      gb.innerHTML = got.map(id => `<div class="rpG"><img src="${PERM_IMG[id]}" alt=""><div><b>${LANG === 'en' ? 'Got: ' + TR(PERM.DEFS[id].name) + '!' : '「' + PERM.DEFS[id].name + '」を入手しました！'}${YTAG.tag(id)}</b><small>${LANG === 'en' ? 'Streaming gear — toggle it in your items.' : '配信機材。持ち物でオン・オフできます'}</small></div></div>`).join(''); gb.style.display = got.length ? '' : 'none'; }
     el.classList.add('show');
   },
   close() { const d = ACH.load(); if (d.rkPend !== undefined) { d.rk = Math.max(d.rk || 0, d.rkPend); delete d.rkPend; ACH.save(); } $('#rankPop').classList.remove('show'); RANKTAG(); },
@@ -20086,7 +20091,12 @@ if (CHAT_DICT.ev) Object.assign(CHAT_DICT.ev, { '画伯の誕生': ['pt.d1', 'pt
    ========================================================= */
 const ECON = {
   mul: [1, 2, 4, 8, 15, 25],                 /* ランク（新人〜伝説）ごとの、いいね1つあたりの円 */
-  capture: 0.5,                              /* 捕まった時の割合 */
+  capture: 0.5,                              /* 捕まった時の割合（いいねの分にも、コメントの分にもかける） */
+  like: 0.8,                                 /* 2026-11-16 いいねの分は 0.8 倍（残りの2割ぶんをコメントの分にした） */
+  /* 1件のコメントの金額（ランクの順。これにランクの倍率をかける）。
+     決め方：1周のいいね350前後・3〜7分の周で、コメント数の平均を測った（新人49・駆け出し57・中堅70・人気78・大物84・伝説96件）。
+     コメントの分が平均で「いいね350×倍率」の2割（＝70×倍率）になるよう、70÷平均件数にした */
+  cmt: [1.43, 1.22, 1.01, 0.90, 0.83, 0.73],
   carry: [1, 1, 2, 2, 3, 3],                 /* 1周に持って入れる道具の数 */
   sponsor: [2, 3, 4, 5],                     /* スポンサーから1つ届くランク */
   pickWing: 0.1,                             /* 新しい棟が開いた周に、理科室でケミカルライト・ろうそくを拾える確率 */
@@ -20101,6 +20111,15 @@ const ECON = {
     ['goldphone', 300000, 5, 'look'], ['goldframe', 500000, 5, 'look'],
   ],
 };
+/* 2026-11-16 道具の種類の札（使い切り／ずっと）と、効き方（使った時だけ／その周の間ずっと／持っているだけで効く） */
+const YTAG = {
+  USE: ['battery2', 'buzzer', 'recorder', 'chem', 'candle', 'battery', 'drink', 'sparebat', 'pmask', 'ofuda', 'salt'], RUN: ['bell', 'spray', 'beads'],
+  kind(id) { if (PERM.DEFS[id]) return 'perm'; const it = ECON.items.find(x => x[0] === id); return it ? (it[3] === 'look' ? 'perm' : 'use') : null; },
+  tag(id) { const k = this.kind(id); return k ? `<span class="ytag ${k}">${TR(k === 'use' ? '使い切り' : 'ずっと')}</span>` : ''; },
+  how(id) { if (!this.kind(id)) return ''; return TR(this.USE.includes(id) ? '使った時だけ' : this.RUN.includes(id) ? 'その周の間ずっと' : '持っているだけで効く'); },
+  desc(id, d) { const h = this.how(id); return (h ? `<em class="yhow">${h}${LANG === 'en' ? ': ' : '：'}</em>` : '') + d; },
+};
+Object.assign(EN, { '使い切り': 'One-use', 'ずっと': 'Permanent', '使った時だけ': 'Only when used', 'その周の間ずっと': 'All run long', '持っているだけで効く': 'Works just by having it', '持ち込み中': 'Brought in', 'コーナーとかで差をつけろ！歩く速さが1.2倍になる。': 'Win the corners! You walk 1.2× faster.', '持っている': 'Owned' });
 /* 新しい道具（アイコンは仮。ITEM_ICON2[id] に画像を入れれば差し替わる） */
 Object.assign(ITEM.defs, {
   buzzer: { name: '防犯ブザー', desc: '投げると、その場で20秒鳴り続ける。近くの怪異はそちらへ向かう。', size: 0.18, act: '投げる' },
@@ -20151,8 +20170,9 @@ const SHOP = {
     if (this.ended === world.runId) return this.last; this.ended = world.runId; const d = this.load(), r = this.runRank ?? this.rank(), cap = world.state === 'over';
     for (const id of this.carried || []) { const used = id === 'bell' || (id === 'recorder' && (ITEM.tootN | 0) > 0) || (id === 'ofuda' ? !(ITEM.have.ofuda > 0) : !ITEM.have[id]) || ['spray', 'beads'].includes(id); if (used) this.useOne(id); }
     for (const id of ['chem', 'candle']) if (ITEM.have[id] && !(this.carried || []).includes(id)) d.own[id] = (d.own[id] | 0) + 1;
-    const base = Math.round(Math.max(0, likes) * ECON.mul[r] * (cap ? ECON.capture : 1)), tips = typeof TIPS !== 'undefined' ? TIPS.sum() : 0, yen = base + tips;
-    d.yen += yen; this.save(); this.last = { yen, likes, mul: ECON.mul[r], cap, tips, base }; if (TEST || DEV) console.log('SHOP run', JSON.stringify(this.last)); return this.last;
+    const k = cap ? ECON.capture : 1, tipRe = /^¥[\d,]+$/, cm = (typeof CHAT !== 'undefined' && CHAT.cur && CHAT.cur.items || []).filter(x => !x.some(v => typeof v === 'string' && tipRe.test(v))).length;   /* 投げ銭の帯は数えない */
+    const likeY = Math.round(Math.max(0, likes) * ECON.like * ECON.mul[r] * k), cmtY = Math.round(cm * ECON.cmt[r] * ECON.mul[r] * k), base = likeY + cmtY, tips = typeof TIPS !== 'undefined' ? TIPS.sum() : 0, yen = base + tips;
+    d.yen += yen; this.save(); this.last = { yen, likes, mul: ECON.mul[r], cap, tips, base, likeY, cmtY, cm, per: ECON.cmt[r] }; if (TEST || DEV) console.log('SHOP run', JSON.stringify(this.last)); return this.last;
   },
   /* 使い切りの道具を使った時（その周の持ち込みなら、なくなる） */
   used(id) { },
@@ -20160,7 +20180,9 @@ const SHOP = {
   showRes(likes) {
     const L = this.endRun(likes), el = $('#permIcons'), en = LANG === 'en'; el.innerHTML = `<div id="resYen"><div class="ryL">${en ? 'Revenue' : '収益'}</div><div class="ryV">+0${en ? ' yen' : '円'}</div></div>`;
     const v = el.querySelector('.ryV'), t0 = performance.now(), dur = 900, f = () => { const k = Math.min(1, (performance.now() - t0) / dur); v.textContent = '+' + Math.round(L.yen * k * (2 - k)).toLocaleString() + (en ? ' yen' : '円'); if (k < 1) requestAnimationFrame(f); }; requestAnimationFrame(f);
-    el.onclick = e => { e.stopPropagation(); toast((en ? `${L.likes} likes × ${L.mul}` : `いいね ${L.likes} × ${L.mul}倍`) + (L.cap ? (en ? ' × 1/2 (caught)' : ' × 1/2（回収）') : '') + (L.tips ? (en ? ` + tips ¥${L.tips}` : ` ＋ 投げ銭 ${L.tips}円`) : '') + (en ? ` = ${L.yen} yen` : ` ＝ ${L.yen.toLocaleString()}円`), 3200); };
+    el.onclick = e => { e.stopPropagation(); const c = L.cap ? ' × 1/2' : '', f = n => n.toLocaleString();   /* 2026-11-16 内訳にコメントの分も */
+      const brk = $('#resBrk') || (() => { const b = document.createElement('div'); b.id = 'resBrk'; document.body.appendChild(b); return b; })(), say = (m, ms) => { brk.textContent = m; brk.classList.add('show'); clearTimeout(this.brkT); this.brkT = setTimeout(() => brk.classList.remove('show'), ms); };   /* 結果画面の上に出す（toast は結果画面の下に隠れていた） */
+      say((en ? `Likes ${f(L.likes)} × 0.8 × ${L.mul}${c} = ${f(L.likeY)} yen\nComments ${f(L.cm)} × ${L.per} × ${L.mul}${c} = ${f(L.cmtY)} yen` : `いいね ${f(L.likes)} × 0.8 × ${L.mul}倍${c} ＝ ${f(L.likeY)}円\nコメント ${f(L.cm)}件 × ${L.per}円 × ${L.mul}倍${c} ＝ ${f(L.cmtY)}円`) + (L.tips ? (en ? `\nTips ${f(L.tips)} yen` : `\n投げ銭 ${f(L.tips)}円`) : '') + (L.cap ? (en ? '\n(caught: half)' : '\n（回収されたので半分）') : '') + (en ? `\nTotal ${f(L.yen)} yen` : `\n合計 ${f(L.yen)}円`), 4200); };
   },
   /* ── スタート画面：所持金とショップのボタン */
   title() {
@@ -20174,7 +20196,7 @@ const SHOP = {
     const d = this.load(), r = this.rank(), msgs = [], en = LANG === 'en';
     if (r >= 1 && !d.seen.open) { d.seen.open = 1; msgs.push(en ? 'The shop is now open! Spend the money you earn on tools for your next run.' : 'ショップが解放されました。稼いだお金で、探索に持って入る道具を買えます。'); }
     if (r >= 1 && this.wing() && !d.seen.wing) { d.seen.wing = 1; msgs.push(en ? 'New items are in the shop.' : 'ショップに新しい品物が並びました。'); }
-    for (const k of ECON.sponsor) if (r >= k && !d.seen['sp' + k]) { d.seen['sp' + k] = 1; const c = ECON.items.filter(it => it[3] === 'use' && it[2] !== 'wing' && it[2] <= r && !this.has(it[0])); if (c.length) { const it = c.sort((a, b) => b[1] - a[1])[Math.floor(Math.random() * Math.min(3, c.length))]; this.give(it[0]); msgs.push((en ? 'A gift from a sponsor: ' : 'スポンサーから届きました：') + TR(ITEM.defs[it[0]].name)); } }
+    for (const k of ECON.sponsor) if (r >= k && !d.seen['sp' + k]) { d.seen['sp' + k] = 1; const c = ECON.items.filter(it => it[3] === 'use' && it[2] !== 'wing' && it[2] <= r && !this.has(it[0])); if (c.length) { const it = c.sort((a, b) => b[1] - a[1])[Math.floor(Math.random() * Math.min(3, c.length))]; this.give(it[0]); msgs.push((en ? 'A gift from a sponsor: ' : 'スポンサーから届きました：') + TR(ITEM.defs[it[0]].name) + YTAG.tag(it[0])); } }
     this.save(); if (msgs.length) this.pop(msgs);
   },
   pop(msgs) { const el = $('#shopPop') || (() => { const e = document.createElement('div'); e.id = 'shopPop'; e.innerHTML = '<div class="raBox"><div class="raT"></div><div class="raD"></div><div class="raBtns"><button></button></div></div>'; document.body.appendChild(e); e.querySelector('button').onclick = ev => { ev.stopPropagation(); e.classList.remove('show'); }; for (const t of ['pointerdown', 'touchstart']) e.addEventListener(t, ev => ev.stopPropagation(), { passive: true }); return e; })();
@@ -20248,9 +20270,9 @@ Object.assign(SHOP, {
     const Y = n => n.toLocaleString() + (en ? ' yen' : '円'), lockTxt = it => it[2] === 'wing' ? (en ? 'Unlocks after breaking a barricade' : 'バリケードを壊すと解放') : (en ? `Unlocks at ${YRANK[it[2]][4]}` : `${YRANK[it[2]][1]}で解放`);
     const row = it => { const id = it[0], D = ITEM.defs[id], ok = this.unlocked(it), n = this.cnt(id);
       if (!ok) return `<div class="shIt lock"><div class="shIc">？</div><div class="shTx"><b>？？？</b><small>${lockTxt(it)}</small></div><button class="shBuy" disabled>${Y(it[1])}</button></div>`;
-      const own = it[3] === 'look' ? (d.look[id] ? `<span class="shOwn">${en ? 'Owned' : '持っている'}</span>` : '') : (n ? `<span class="shN">${en ? 'Have' : '所持'} ×${n}</span>` : '');
+      const own = `<span class="shN">${TR('持っている')} ${it[3] === 'look' ? (d.look[id] ? 1 : 0) + '/1' : n}</span>`;
       const btn = it[3] === 'look' && d.look[id] ? '' : `<button class="shBuy" data-b="${id}"${d.yen < it[1] ? ' disabled' : ''}>${Y(it[1])}</button>`;
-      return `<div class="shIt"><img src="${ITEM_IMG[id] || (ITEM_IMG[id] = ITEM.fallbackIcon(id))}"><div class="shTx"><b>${TR(D.name)}${own}</b><small>${TR(D.desc)}</small></div>${btn}</div>`; };
+      return `<div class="shIt"><img src="${ITEM_IMG[id] || (ITEM_IMG[id] = ITEM.fallbackIcon(id))}"><div class="shTx"><b>${TR(D.name)}${YTAG.tag(id)}${own}</b><small>${YTAG.desc(id, TR(D.desc))}</small></div>${btn}</div>`; };
     el.innerHTML = `<div class="shBox"><div class="shHead"><b>${en ? 'Shop' : 'ショップ'}</b><span><img class="uiIc" src="${UI_ICON.yen}" alt="">${en ? 'Money' : '所持金'} <b>${Y(d.yen)}</b></span><button class="shX">×</button></div><div class="shNote">${en ? 'What to bring into the school is chosen from the bag button next to the shop.' : '持って入る道具は、スタート画面のショップの隣の「持ち物」で選びます。'}</div><div class="shList">${ECON.items.map(row).join('')}</div></div>`;
     el.querySelector('.shX').onclick = e => { e.stopPropagation(); el.classList.remove('show'); this.title(); };
     el.querySelectorAll('[data-b]').forEach(b => b.onclick = e => { e.stopPropagation(); this.ask(b.dataset.b); });
@@ -20270,10 +20292,10 @@ Object.assign(SHOP, {
   openBag() {
     const en = LANG === 'en', d = this.load(), lim = ECON.carry[this.rank()], cl = this.carryList(); let el = $('#bagUI');
     if (!el) { el = document.createElement('div'); el.id = 'bagUI'; el.className = 'shopLike'; document.body.appendChild(el); el.addEventListener('click', e => { e.stopPropagation(); if (e.target.id === 'bagUI') { el.classList.remove('show'); this.title(); } }); for (const t of ['pointerdown', 'touchstart', 'touchmove']) el.addEventListener(t, e => e.stopPropagation(), { passive: true }); }
-    const perm = PERM.owned().map(id => `<div class="shIt"><img src="${PERM_IMG[id]}"><div class="shTx"><b>${TR(PERM.DEFS[id].name)}</b><small>${TR(PERM.DEFS[id].desc || '')}</small></div></div>`);
-    const looks = ECON.items.filter(it => it[3] === 'look' && d.look[it[0]]).map(it => `<div class="shIt"><img src="${ITEM_IMG[it[0]]}"><div class="shTx"><b>${TR(ITEM.defs[it[0]].name)}</b><small>${TR(ITEM.defs[it[0]].desc)}</small></div></div>`);
+    const perm = PERM.owned().map(id => `<div class="shIt"><img src="${PERM_IMG[id]}"><div class="shTx"><b>${TR(PERM.DEFS[id].name)}${YTAG.tag(id)}</b><small>${YTAG.desc(id, TR(PERM.DEFS[id].desc || ''))}</small></div></div>`);
+    const looks = ECON.items.filter(it => it[3] === 'look' && d.look[it[0]]).map(it => `<div class="shIt"><img src="${ITEM_IMG[it[0]]}"><div class="shTx"><b>${TR(ITEM.defs[it[0]].name)}${YTAG.tag(it[0])}</b><small>${YTAG.desc(it[0], TR(ITEM.defs[it[0]].desc))}</small></div></div>`);
     const uses = ECON.items.filter(it => it[3] === 'use' && this.cnt(it[0]) > 0).map(it => { const id = it[0], on = cl.includes(id), fav = this.favs().includes(id), full = !on && cl.length >= lim;
-      return `<div class="shIt${on ? ' sel' : ''}"><img src="${ITEM_IMG[id]}"><div class="shTx"><b>${TR(ITEM.defs[id].name)}<span class="shN">×${this.cnt(id)}</span></b><small>${TR(ITEM.defs[id].desc)}</small></div><button class="fav${fav ? ' on' : ''}" data-f="${id}" aria-label="★">${fav ? '★' : '☆'}</button><button class="shCar${on ? ' on' : ''}" data-c="${id}"${(full || fav) ? ' disabled' : ''}>${on ? (en ? 'Bring' : '持ち込む') : (en ? 'Leave' : '置いていく')}</button></div>`; });
+      return `<div class="shIt${on ? ' sel' : ''}"><img src="${ITEM_IMG[id]}"><div class="shTx"><b>${TR(ITEM.defs[id].name)}${YTAG.tag(id)}<span class="shN">×${this.cnt(id)}</span></b><small>${YTAG.desc(id, TR(ITEM.defs[id].desc))}</small></div><button class="fav${fav ? ' on' : ''}" data-f="${id}" aria-label="★">${fav ? '★' : '☆'}</button><button class="shCar${on ? ' on' : ''}" data-c="${id}"${(full || fav) ? ' disabled' : ''}>${on ? (en ? 'Bring' : '持ち込む') : (en ? 'Leave' : '置いていく')}</button></div>`; });
     el.innerHTML = `<div class="shBox"><div class="shHead"><b>${en ? 'Bag' : '持ち物'}</b><span>${en ? 'Bringing' : '持ち込み'} <b>${cl.length} / ${lim}</b></span><button class="shX">×</button></div><div class="shList">
       <div class="shSec">${en ? 'Tools to bring in' : '持ち込む道具'}<small>${en ? `Up to ${lim} per run. ★ = always bring. Used tools are gone; unused ones stay.` : `1周に${lim}つまで。★お気に入りは、選ばなくても自動で持ち込みます。使った物はなくなり、使わなければ残ります。`}</small></div>${uses.join('') || `<div class="shEmpty">${en ? 'No tools yet. Buy them in the shop.' : 'まだありません。ショップで買えます。'}</div>`}
       <div class="shSec">${en ? 'Always yours' : 'ずっと使える物'}<small>${en ? 'Never used up. Not counted in what you bring.' : 'なくならない物。持ち込む数には入りません。'}</small></div>${[...perm, ...looks].join('') || `<div class="shEmpty">${en ? 'None yet' : 'まだありません'}</div>`}</div></div>`;
