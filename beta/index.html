@@ -2711,7 +2711,7 @@ const FURN = {
     desk(1, -1.04, -17.6, 0.2); chairDown(1, -0.5, -18.6, 1.8); deskDown(1, 1.0, -11.0, Math.PI);
     PATN = [2];
     chairDown(0, -0.9, -19.0, 0.4); desk(0, -1.04, -23.6, 0.15); deskDown(0, 1.0, -12.0, Math.PI + 0.2);
-    deskStack(0, 8.6, -7.5, 0); chairDown(0, 14.6, -5.5, 0.4);
+    deskStack(0, 8.6, -7.5, 0); chairDown(0, 14.6, -6.7, 0.4);   /* 2026-11-16 ロッカーにめり込んでいたので、廊下の中ほどへ */
     chairDown(0, 21.4, -9.8, 0.4); desk(0, 19.48, -17.0, Math.PI / 2); deskDown(0, 21.5, -23.5, Math.PI / 2); chairDown(0, 19.6, -29.0, -1.0);
     deskDown(0, 19.0, -32.6, 0.1); desk(0, 4.6, -30.45, Math.PI);
     chairDown(1, 0.6, -7.0, 2.2); desk(1, -1.04, -19.0, 0.1); deskDown(1, 1.0, -14.0, Math.PI);
@@ -5187,6 +5187,7 @@ const HIDE = {
   open(lk) {   // 2026-11-14 まず扉を開ける（入るのはもう一度押してから）
     if (!this.canEnter() || lk.openAt !== undefined) return;
     if (typeof MANN !== 'undefined' && MANN.onLockerOpen(lk)) { lk.openAt = world.t; if (!playSfx('locker_open', { pos: lk.center, ref: 0.6, gain: 0.9 })) SND.creak(lk.center, 0.6, 0.6); return; }   // 2026-11-14 かくれんぼ2
+    { const C = this.chain || (this.chain = { n: 0, t: -99 }); C.n = world.t - C.t < 25 ? C.n + 1 : 1; C.t = world.t; if (C.n === 5 || C.n === 10) { try { XCHAT.log(C.n === 5 ? 'lk5' : 'lk10'); } catch (e) { } } }   /* 2026-11-16 ロッカーを続けて開けた数 */
     lk.openAt = world.t; lk.handle.rotation.x = 0.5; setTimeout(() => { lk.handle.rotation.x = 0; }, 250);
     if (!playSfx('locker_latch', { pos: lk.center, ref: 0.6, dur: 0.5, gain: 0.8 })) SND.latch(lk.center);
     if (!playSfx('locker_open', { pos: lk.center, ref: 0.6, gain: 0.7, delay: 0.08 })) SND.creak(lk.center, 0.6, 0.6);
@@ -15121,7 +15122,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.58';
+const VERSION = '0.16.59';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -20943,6 +20944,11 @@ if (CHAT_DICT.ev) { const A = {
     '最高の撮れ高': [['最高の撮れ高', 'the greatest shot ever'], ['今世紀最大の撮れ高', 'shot of the century'], ['歴史に残る', 'this goes down in history'], ['これ見るために生きてた', 'I lived to see this'], ['バズ確定', 'going viral for sure'], ['投げ銭させて', 'take my money']],
     'オフタリサマから逃げ切った': [['逃げ切った！！', 'you made it out!!'], ['生還おめ', 'congrats on surviving'], ['よく生きて帰れたな', 'how are you alive'], ['オフタリサマから生還は強い', 'escaping Ofutarisama is huge'], ['無事でよかった', 'glad you’re safe']] };
   for (const k in A) { CHAT_DICT.ev[k] = A[k].map((x, i) => { const id = 'ua.' + k.length + '.' + Object.keys(A).indexOf(k) + '.' + i; CHAT_DICT.t[id] = x; return id; }); } }
+
+/* 2026-11-16 ロッカーを続けて5つ・10こ開けた時のコメント（25秒以内に次を開けると「続けて」） */
+{ const J = { lk5: [['ロッカー全部開ける気？', 'opening every locker?'], ['ロッカー芸', 'the locker bit'], ['ガチャ回してて草', 'gacha rolling lol'], ['何を探してるのｗ', 'what are you looking for lol'], ['開けまくりで草', 'opening them all lol'], ['物色タイム', 'loot time'], ['次こそ何か入ってる', 'something will be in the next one'], ['いつか何か出てきそう', 'something is going to jump out eventually']],
+    lk10: [['まだ開けるのｗｗ', 'still opening lol'], ['ロッカーマスター', 'locker master'], ['執念がすごい', 'the dedication'], ['そろそろ中から何か出るよ', 'something will come out soon'], ['怪異より怖い', 'scarier than the ghosts'], ['全制覇いけ', 'go clear them all']] };
+  for (const w in J) { XCHAT.LIST[w] = J[w].map((x, i) => 'lkc.' + w + '.' + i); J[w].forEach((x, i) => { CHAT_DICT.t['lkc.' + w + '.' + i] = x; }); } }
 const SHOPFX = { update(dt) { IDLEC.update(dt); if (world.state !== 'play') return; BUZZ.update(dt); CANDLE.update(dt); DRINK.update(); STICK.update(dt); } };
 /* =========================================================
    2026-11-16 投げ銭（第2弾）：中堅から。コメントなしで、色の帯に「名前 ¥金額」だけ
