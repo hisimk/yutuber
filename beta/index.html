@@ -15121,7 +15121,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.52';
+const VERSION = '0.16.53';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -17470,8 +17470,8 @@ const XCHAT = {   /* 撮れ高以外のできごとに、コメントを混ぜ�
   chat(d) {
     if (!d || !d.items || !d.end) return; const ev = (CHATLOG.ev || []).filter(e => e.k === 'xc'); if (!ev.length) return;
     const R = chatRng((d.seed ^ 0x51ed27) >>> 0), T = CHAT_DICT.t, U = Math.max(6, (d.users || []).length || 12), maxR = d.end.R + (d.end.ec ? 3 : -0.2), out = [];
-    for (const e of ev) { const ids = (this.LIST[e.w] || []).filter(id => T[id]); const n = Math.min(ids.length, (e.w === 'wingIn' || e.w === 'second' ? 4 : 2) + (R() < 0.4 ? 1 : 0));
-      const pool = ids.slice(); for (let i = 0; i < n; i++) { const id = pool.splice(Math.floor(R() * pool.length), 1)[0]; const t = e.t + 0.6 + i * (0.6 + R() * 0.8); if (!id || t > maxR) continue; out.push([Math.round(t * 100) / 100, Math.floor(R() * U), id, T[id][0], T[id][1]]); } }
+    for (const e of ev) { const ids = (this.LIST[e.w] || []).filter(id => T[id]); const big = this.BIG && this.BIG.includes(e.w), n = Math.min(ids.length, big ? 7 + (R() < 0.5 ? 2 : 0) : (e.w === 'wingIn' || e.w === 'second' ? 4 : 2) + (R() < 0.4 ? 1 : 0));   /* 2026-11-16 大事件はコメントが大盛り上がり */
+      const pool = ids.slice(); for (let i = 0; i < n; i++) { const id = pool.splice(Math.floor(R() * pool.length), 1)[0]; const t = e.t + 0.6 + i * (big ? 0.2 + R() * 0.35 : 0.6 + R() * 0.8); if (!id || t > maxR) continue; out.push([Math.round(t * 100) / 100, Math.floor(R() * U), id, T[id][0], T[id][1]]); } }
     if (out.length) d.items = d.items.concat(out).sort((a, b) => a[0] - b[0]);
   },
 };
@@ -20746,7 +20746,7 @@ const URFUDA = {
       U.tear.value = S.t < 3.4 ? rnd(0.02, 0.2) : 0; world.vhs = Math.max(world.vhs || 0, 0.45);
       if (S.t > 0.4 && !N.sc) { N.sc = 1; wdScreamLong(0, 0.9); }
       if (S.t > 2.2 && !N.sc2) { N.sc2 = 1; URAH.scream('hannya', true); jumpSting('jump_b', 0.8, 3); }
-      if (rec.active && S.t > 1.0 && seen(sgHead(V()), { maxD: 14, margin: 1.15 })) award('urahSummon', 'ナカヨシ召喚の瞬間', 150);
+      if (rec.active && S.t > 1.0) award('urahSummon', 'ナカヨシ召喚の瞬間', 150);   /* 2026-11-16 召喚の瞬間に録画していればよい（映っているかは問わない） */
       if (S.t > 4.5) { if (this.revOk()) this.revStart(); else this.summonEnd(); }
     }
   },
@@ -20778,7 +20778,7 @@ COL.LIST.push(['urahFuda', 'おふたりさまに封印のお札を貼った', 5
 Object.assign(CHIP_DESC, { urahFuda: ['かみつかれる寸前、能面と般若の顔に封印のお札を叩きつけた。倒せはしない。', 'Right before the bite, you slapped a sealing charm on its face. It cannot be defeated.'],
   urahSummon: ['二枚目のお札を貼った瞬間、その場に「継ぎ接ぎのナカヨシ」が呼び出された。', 'The moment the second charm stuck, Nakayoshi the Patchwork was summoned on the spot.'],
   urahEscape: ['オフタリサマが現れた夜に、出口から生きて帰った。', 'You made it out the exit on a night Ofutarisama appeared.'] });
-Object.assign(AW_HINT, { urahFuda: ['お札を持ってオフタリサマに捕まる', 'get caught by Ofutarisama while holding a charm'], urahSummon: ['2枚目のお札のあとを撮る', 'film what happens after the second charm'], urahEscape: ['オフタリサマが出た周に出口から帰る', 'escape on a run where Ofutarisama appeared'] });
+Object.assign(AW_HINT, { urahFuda: ['お札を持ってオフタリサマに捕まる', 'get caught by Ofutarisama while holding a charm'], urahSummon: ['2枚目のお札を貼る時に録画している', 'be recording when the second charm sticks'], urahEscape: ['オフタリサマが出た周に出口から帰る', 'escape on a run where Ofutarisama appeared'] });
 Object.assign(EN, { 'おふたりさまに封印のお札を貼った': 'Sealed Ofutarisama with a charm', 'ナカヨシ召喚の瞬間': 'Nakayoshi summoned', 'オフタリサマから逃げ切った': 'Escaped Ofutarisama', 'お札を貼った！': 'Charm applied!', 'もう片方の顔にもお札を貼った…': 'Charm on the other face too...' });
 XCHAT.LIST.urFuda1 = ['uf.01', 'uf.02', 'uf.03']; XCHAT.LIST.urFuda2 = ['uf.11', 'uf.12']; XCHAT.LIST.urSummon = ['uf.21', 'uf.22', 'uf.23'];
 Object.assign(CHAT_DICT.t, { 'uf.01': ['効いた！？', 'did it work!?'], 'uf.02': ['お札つよ', 'charm OP'], 'uf.03': ['今のうちに逃げて！！', 'run while you can!!'],
@@ -20841,6 +20841,22 @@ Object.assign(AW_HINT, { urahRevenge: ['ナカヨシを倒したことがある�
 Object.assign(EN, { '最高の撮れ高': 'The greatest shot ever' });
 XCHAT.LIST.urRev = ['ur.01', 'ur.02', 'ur.03']; XCHAT.LIST.urRevEnd = ['ur.11', 'ur.12', 'ur.13'];
 Object.assign(CHAT_DICT.t, { 'ur.01': ['え、そっち！？', 'wait, THAT way!?'], 'ur.02': ['仲間割れ？', 'infighting?'], 'ur.03': ['ナカヨシ…お前…', 'Nakayoshi... you...'], 'ur.11': ['復讐を果たした…', 'revenge complete...'], 'ur.12': ['泣いた', "I'm crying"], 'ur.13': ['神回確定', 'legendary episode confirmed'] });
+
+/* 2026-11-16 オフタリサマのお札・ナカヨシ召喚・復讐：コメントが大盛り上がり（1回で7〜9件、間をつめて流れる） */
+XCHAT.BIG = ['urFuda1', 'urFuda2', 'urSummon', 'urRev', 'urRevEnd'];
+{ const J = {
+    urFuda1: [['効いた！？', 'did it work!?'], ['お札つよ', 'charm OP'], ['今のうちに逃げて！！', 'run while you can!!'], ['ひるんでるｗｗ', "it's flinching lol"], ['顔に貼ったｗｗｗ', 'right on the face lol'], ['ナイス判断', 'great call'], ['心臓止まるかと思った', 'my heart almost stopped'], ['逃げろおおお', 'RUUUN'], ['まだ生きてる！', 'still alive!'], ['倒せはしないのか…', "so it can't be beaten..."]],
+    urFuda2: [['え、燃えない…', 'wait, it’s not burning...'], ['2枚目はやばくない？', 'isn’t a second one a bad idea?'], ['両方の顔に貼った！？', 'both faces!?'], ['なんか様子おかしい', 'something feels off'], ['嫌な予感しかしない', 'I have a bad feeling'], ['お札光ってない？', 'is the charm glowing?'], ['やめとけって…', "don't do it..."], ['空気変わった', 'the air changed']],
+    urSummon: [['なんか出てきた', 'something came out'], ['ナカヨシ！？！？', 'NAKAYOSHI!?!?'], ['絶望で草', 'pure despair lol'], ['召喚しちゃった', 'you summoned it'], ['2体はむりｗｗｗ', 'two of them is impossible lol'], ['終わった', "it's over"], ['床から出てきた…', 'it rose from the floor...'], ['ここで来るのかよ', 'NOW of all times'], ['悪夢', 'nightmare'], ['逃げ場ない', 'nowhere to run']],
+    urRev: [['え、そっち！？', 'wait, THAT way!?'], ['仲間割れ？', 'infighting?'], ['ナカヨシ…お前…', 'Nakayoshi... you...'], ['覚えてたんだ', 'it remembered'], ['体当たりｗｗｗ', 'body slam lol'], ['いけええええ', 'GO GO GO'], ['ナカヨシがんばれ', 'you got this Nakayoshi'], ['胸熱すぎる', 'this is so hype'], ['怪獣大決戦', 'kaiju battle'], ['録画回して！！', 'keep recording!!']],
+    urRevEnd: [['復讐を果たした…', 'revenge complete...'], ['泣いた', "I'm crying"], ['神回確定', 'legendary episode confirmed'], ['オフタリサマ沈んだ', 'Ofutarisama sank'], ['ありがとうって言った…', 'it said thank you...'], ['伝説の瞬間', 'a legendary moment'], ['切り抜き確定', 'this is getting clipped'], ['鳥肌やばい', 'goosebumps'], ['ナカヨシ…', 'Nakayoshi...'], ['これは保存版', 'saving this one']] };
+  for (const w in J) { XCHAT.LIST[w] = J[w].map((x, i) => 'ux.' + w + '.' + i); J[w].forEach((x, i) => { CHAT_DICT.t['ux.' + w + '.' + i] = x; }); } }
+if (CHAT_DICT.ev) { const A = {
+    'おふたりさまに封印のお札を貼った': [['お札貼った瞬間えぐい', 'that charm moment was insane'], ['反射神経どうなってんの', 'what reflexes'], ['よく貼れたな', 'how did you even land that'], ['オフタリサマにお札は初めて見た', 'first time seeing a charm on Ofutarisama'], ['神プレイ', 'god-tier play']],
+    'ナカヨシ召喚の瞬間': [['召喚の瞬間撮れてる！', 'you caught the summon!'], ['床から出てくるのこわすぎ', 'rising from the floor is too creepy'], ['これは撮れ高', 'this is content'], ['伝説の召喚シーン', 'legendary summon scene'], ['二度と見たくない', 'never want to see that again']],
+    '最高の撮れ高': [['最高の撮れ高', 'the greatest shot ever'], ['今世紀最大の撮れ高', 'shot of the century'], ['歴史に残る', 'this goes down in history'], ['これ見るために生きてた', 'I lived to see this'], ['バズ確定', 'going viral for sure'], ['投げ銭させて', 'take my money']],
+    'オフタリサマから逃げ切った': [['逃げ切った！！', 'you made it out!!'], ['生還おめ', 'congrats on surviving'], ['よく生きて帰れたな', 'how are you alive'], ['オフタリサマから生還は強い', 'escaping Ofutarisama is huge'], ['無事でよかった', 'glad you’re safe']] };
+  for (const k in A) { CHAT_DICT.ev[k] = A[k].map((x, i) => { const id = 'ua.' + k.length + '.' + Object.keys(A).indexOf(k) + '.' + i; CHAT_DICT.t[id] = x; return id; }); } }
 const SHOPFX = { update(dt) { IDLEC.update(dt); if (world.state !== 'play') return; BUZZ.update(dt); CANDLE.update(dt); DRINK.update(); STICK.update(dt); } };
 /* =========================================================
    2026-11-16 投げ銭（第2弾）：中堅から。コメントなしで、色の帯に「名前 ¥金額」だけ
