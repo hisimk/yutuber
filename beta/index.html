@@ -15121,7 +15121,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.55';
+const VERSION = '0.16.56';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -18405,7 +18405,7 @@ const URMOUTH = (() => {
   const toothG = () => { const g = new THREE.BoxGeometry(1, 1, 0.5, 2, 6, 2), p = g.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i) + 0.5; const sx = 1 - Math.pow(Math.max(0, y - 0.7) / 0.3, 2) * 0.45 + (1 - y) * 0.12; p.setX(i, p.getX(i) * sx); p.setZ(i, p.getZ(i) * (0.8 + 0.4 * (1 - y))); } g.translate(0, 0.5, 0); g.computeVertexNormals(); return g; };
   const fangG = () => { const pts = []; for (let i = 0; i <= 8; i++) { const t = i / 8; pts.push(new THREE.Vector2(0.5 * Math.pow(1 - t, 0.8) + 0.01, t)); } const g = new THREE.LatheGeometry(pts, 7), p = g.attributes.position; for (let i = 0; i < p.count; i++) { const t = p.getY(i); p.setZ(i, p.getZ(i) + t * t * 0.12); } g.computeVertexNormals(); return g; };
   function build() {
-    seed = 11; const g = new THREE.Group(), A = 0.29, B = 0.27, BT = 0.085, Wd = 0.19, MY = -0.1, BB = y => y > 0 ? BT : B;
+    seed = 11; const g = new THREE.Group(), A = 0.31, B = 0.3, BT = 0.085, Wd = 0.23, MY = -0.105, RY = 0.19,   /* 2026-11-16 口を大きく */ BB = y => y > 0 ? BT : B;
     const edge = a => 1 + 0.16 * Math.sin(a * 5 + 1) + 0.1 * Math.sin(a * 11 + 2) + 0.06 * Math.sin(a * 23);
     /* 肉：表面の形を上からなめらかにかぶせる（帯の段差をなぞらない） */
     const N = 30, Z = [], MISS = [];
@@ -18421,7 +18421,7 @@ const URMOUTH = (() => {
       const fg = new THREE.BufferGeometry(); fg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); fg.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); fg.setIndex(idx); fg.computeVertexNormals();
       const m = new THREE.Mesh(fg, STD({ vertexColors: true, roughness: 0.42, side: THREE.DoubleSide })); m.renderOrder = 4; g.add(m); }
     /* 裂けた布：ふちのぎざぎざ（上側は口より手前）・ほつれ糸・下側から長く垂れる切れ端 */
-    const navy = new THREE.Color(0x12141b), clothTop = [], clothLow = [];
+    const navy = new THREE.Color(0x2a0306), clothTop = [], clothLow = [];   /* 裂けた布：着物と同じドス黒い赤 */
     for (let k = 0; k < 120; k++) { const a = k / 120 * Math.PI * 2, e = edge(a), x0 = Math.cos(a) * A * e, y0 = Math.sin(a) * BB(Math.sin(a)) * e, L = R(0.012, 0.04) * (rnd() < 0.12 ? 1.8 : 1), w = R(0.006, 0.014);
       const ix = -Math.cos(a), iy = -Math.sin(a) - 0.4, il = Math.hypot(ix, iy), tx = x0 + ix / il * L, ty = y0 + iy / il * L, px = -iy / il * w, py = ix / il * w;
       const P = [[x0 + px, y0 + py], [x0 - px, y0 - py], [tx + R(-0.01, 0.01), ty]].flatMap(([x, y]) => [x, y, envZ(x, y) + 0.004]); const tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); tg.computeVertexNormals(); (y0 > 0.02 ? clothTop : clothLow).push([tg, navy]);
@@ -18429,9 +18429,9 @@ const URMOUTH = (() => {
     for (let k = 0; k < 22; k++) { const a = Math.PI + 0.25 + (k + rnd() * 0.6) / 22 * (Math.PI - 0.5), e = edge(a), x0 = Math.cos(a) * A * e, y0 = Math.sin(a) * B * e;
       const yEnd = rnd() < 0.45 ? D.floor + 0.01 : y0 - R(0.12, 0.45), w0 = R(0.018, 0.045), n = 12, P = [], C = [], I = []; let lastZ = hit(x0, y0); const sway = R(-0.04, 0.04);
       for (let q = 0; q <= n; q++) { const t = q / n, y = y0 + (yEnd - y0) * t, x = x0 + sway * t * t + Math.sin(t * 7 + k) * 0.006; const hz = hit(x, y), z = (hit.miss ? lastZ + 0.01 * t : Math.max(hz, lastZ - 0.02)) + 0.012 + t * 0.01; lastZ = z - 0.012;
-        const w = w0 * (1 - t * 0.55) * (q === n ? 0.4 : 1) + Math.sin(q * 3.1 + k) * 0.004; P.push(x - w, y, z, x + w, y, z); const sh = 0.075 + 0.025 * Math.sin(q * 1.7 + k); C.push(sh, sh * 1.1, sh * 1.45, sh, sh * 1.1, sh * 1.45); if (q < n) { const b0 = q * 2; I.push(b0, b0 + 2, b0 + 1, b0 + 1, b0 + 2, b0 + 3); } }
+        const w = w0 * (1 - t * 0.55) * (q === n ? 0.4 : 1) + Math.sin(q * 3.1 + k) * 0.004; P.push(x - w, y, z, x + w, y, z); const sh = 0.075 + 0.025 * Math.sin(q * 1.7 + k); C.push(sh * 2.2, sh * 0.15, sh * 0.2, sh * 2.2, sh * 0.15, sh * 0.2); if (q < n) { const b0 = q * 2; I.push(b0, b0 + 2, b0 + 1, b0 + 1, b0 + 2, b0 + 3); } }
       const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); sg.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); sg.setIndex(I); sg.computeVertexNormals(); clothLow.push([sg, navy]); }
-    const clothM = STD({ vertexColors: true, roughness: 0.9, side: THREE.DoubleSide });
+    const clothM = STD({ vertexColors: true, roughness: 0.9, side: THREE.DoubleSide, emissive: 0x1a0002 });
     { const m = new THREE.Mesh(merge(clothLow), clothM); m.renderOrder = 4.5; g.add(m); }
     { const m = new THREE.Mesh(merge(clothTop), clothM); m.renderOrder = 6; g.add(m); }
     /* 血：口の下から垂れる */
@@ -18440,7 +18440,7 @@ const URMOUTH = (() => {
         list.push([tubeG(pts, w, 0, 12), red]); const sp = new THREE.SphereGeometry(w * 1.6, 8, 6); sp.scale(1, 1.3, 0.6); sp.translate(pts[6].x, pts[6].y, pts[6].z); list.push([sp, red]); }
       const m = new THREE.Mesh(merge(list), STD({ color: 0x320003, roughness: 0.1, metalness: 0.15, emissive: 0x080000 })); m.renderOrder = 4.8; g.add(m); }
     /* 穴：手前の面でステンシルに印 → 印の中だけに、奥の暗いくぼみと歯を描く */
-    let cz = hit(0, MY); for (let a = 0; a < 6.28; a += 0.3) cz = Math.max(cz, hit(Math.cos(a) * Wd * 1.1, MY + Math.sin(a) * 0.17));
+    let cz = hit(0, MY); for (let a = 0; a < 6.28; a += 0.3) cz = Math.max(cz, hit(Math.cos(a) * Wd * 1.1, MY + Math.sin(a) * RY));
     const inner = new THREE.Group(); inner.position.set(0, MY, cz + 0.012); g.add(inner);
     const stIn = { stencilWrite: true, stencilRef: 1, stencilFunc: THREE.EqualStencilFunc, stencilFail: THREE.KeepStencilOp, stencilZFail: THREE.KeepStencilOp, stencilZPass: THREE.KeepStencilOp };
     const cap = new THREE.Mesh(new THREE.CircleGeometry(1, 40), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false, stencilWrite: true, stencilRef: 1, stencilFunc: THREE.AlwaysStencilFunc, stencilZPass: THREE.ReplaceStencilOp })); cap.renderOrder = 5; inner.add(cap);
@@ -18455,7 +18455,7 @@ const URMOUTH = (() => {
     let last = -1;
     const set = k => {
       k = Math.max(0, Math.min(1, k)); if (Math.abs(k - last) < 0.008) return; last = k;
-      const ry = 0.004 + 0.16 * k, rx = Wd * (1 + 0.08 * k); cav.scale.set(rx, 0.26, ry); cav.updateMatrix(); cap.scale.set(rx * 1.02, ry * 1.02, 1);
+      const ry = 0.004 + (RY - 0.01) * k, rx = Wd * (1 + 0.08 * k); cav.scale.set(rx, 0.26, ry); cav.updateMatrix(); cap.scale.set(rx * 1.02, ry * 1.02, 1);
       const grow = Math.max(0, Math.min(1, (k - 0.12) / 0.35));
       for (const t of T) { const p = rim0[t.idx].clone().applyMatrix4(cav.matrix); _d.set(-p.x, -p.y * 1.6, 0); const L = _d.length() || 1; _d.multiplyScalar(1 / L);
         const inset = 0.004 + t.row * 0.012, amp = 0.55 + 0.6 * Math.abs(Math.sin(Math.atan2(p.y, p.x))); _p.set(p.x + _d.x * inset, p.y + _d.y * inset, 0.004 - t.row * 0.016);
@@ -18487,7 +18487,20 @@ const URAH = {
         let m;
         if (nm === 'ArmRootGlow') { m = new THREE.MeshLambertMaterial({ map: m0.map, emissive: m0.emissive.clone(), emissiveMap: m0.emissiveMap || m0.map, side: THREE.DoubleSide }); this.rootGlow = m; this.rootE = m0.emissive.clone(); }
         else if (m0.map) m = new THREE.MeshLambertMaterial({ map: m0.map, side: THREE.DoubleSide, emissive: 0x0e0c0c, emissiveMap: m0.map });
-        else m = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide, emissive: 0x0a0a0e });
+        else { m = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide, emissive: 0x0a0a0e });
+          if (nm === 'PaintedWoodAndIndigo') m.onBeforeCompile = sh => {   /* 2026-11-16 着物（紺）→ ドス黒い赤に禍々しい模様、うっすら光る／帯（赤）→ 紺 */
+            sh.uniforms.uKT = this.kimT = this.kimT || { value: 0 };
+            sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vKP;').replace('#include <skinning_vertex>', '#include <skinning_vertex>\nvKP = transformed;');
+            sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vKP; uniform float uKT; float kimK; float kimV;')
+              .replace('#include <color_fragment>', `#include <color_fragment>
+              { vec3 p = vKP; float obi = step(0.08, vColor.r) * (1.0 - step(0.07, vColor.g)), kim = (1.0 - step(0.12, max(vColor.r, max(vColor.g, vColor.b)))) * (1.0 - obi);
+                float n1 = sin(p.x * 7.0 + sin(p.y * 6.0) * 2.2) * sin(p.y * 8.0 + sin(p.z * 5.0) * 2.2), n2 = sin(p.z * 9.0 + p.y * 4.0 + sin(p.x * 5.0) * 2.5);
+                float v = smoothstep(0.93, 0.995, abs(sin((p.y * 3.2 + n1 * 0.9 + n2 * 0.5) * 3.14159))) + 0.5 * smoothstep(0.96, 0.998, abs(sin((p.x * 4.5 - p.y * 2.0 + n2 * 0.6) * 3.14159)));
+                vec3 base = mix(vec3(0.025, 0.001, 0.003), vec3(0.085, 0.004, 0.008), 0.5 + 0.5 * n1 * n2);
+                diffuseColor.rgb = mix(diffuseColor.rgb, mix(base, vec3(0.22, 0.01, 0.012), clamp(v, 0.0, 1.0)), kim);
+                diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.025, 0.03, 0.055), obi); kimK = kim; kimV = clamp(v, 0.0, 1.0); }`)
+              .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance = mix(totalEmissiveRadiance, vec3(0.035, 0.0, 0.002) + vec3(0.16, 0.004, 0.002) * kimV * (0.7 + 0.3 * sin(uKT * 1.7)), kimK);');
+          }; }
         m.name = nm; o.material = m;
       });
       this.root.rotation.order = 'YXZ'; this.root.add(g.scene); scene.add(this.root); this.root.visible = false;
@@ -18728,6 +18741,7 @@ const URAH = {
   },
   gaitOn() { return (this.st === 'walk' || this.st === 'chase' || this.st === 'alert' || this.st === 'prey') && this.root.visible && !this.manual; },
   apply() {
+    if (this.kimT) this.kimT.value = world.t;
     for (const k of ['NohThroat', 'HannyaThroat']) if (this.bones[k]) this.bones[k].scale.setScalar(0.001);   /* 2026-11-16 お面の下の口：動きで大きくならないよう毎フレームしまう */
     let hy = 0; if (this.hop) { this.hop.t += 1 / 60; const u = clamp(this.hop.t / 0.5, 0, 1); hy = 0.7 * Math.sin(Math.PI * u); if (u >= 1) this.hop = null; }
     const g = this.gaitOn() && URGAIT.on ? URGAIT.bob || 0 : 0;
