@@ -352,7 +352,7 @@
   #resBrk{position:fixed;left:50%;top:calc(var(--sat, 0px) + 64px);transform:translateX(-50%);z-index:90;background:rgba(10,10,12,.9);border:1px solid #333338;border-radius:10px;padding:10px 14px;font-size:13px;line-height:1.7;color:#fff;white-space:pre-line;opacity:0;transition:opacity .3s;pointer-events:none;width:max-content;max-width:92vw}#resBrk.show{opacity:1;pointer-events:auto;cursor:pointer}#resBrk .bkP{color:#5fd38a}#resBrk .bkM{color:#ff5a5a}#resBrk .bkT{margin-top:3px;padding-top:3px;border-top:1px solid #333338;font-weight:700}
   #notePop{position:fixed;inset:0;z-index:150;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.62);padding:24px}#notePop.show{display:flex}
   #notePop .nbx{position:relative;width:100%;max-width:340px;max-height:86vh;overflow-y:auto;background:#151517;border:1px solid #333338;border-radius:16px;padding:18px 18px 16px;color:#e9e4da;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.6)}
-  #notePop .nbH{color:#ffd34d;font-weight:800;font-size:15px;letter-spacing:.14em;margin-bottom:12px}#notePop .nbS{font-weight:800;font-size:16px;line-height:1.55;color:#fff;margin-bottom:12px}
+  #notePop .nbH{color:#ffd34d;font-weight:800;font-size:15px;letter-spacing:.14em;margin-bottom:12px;padding-bottom:9px;background:linear-gradient(90deg,rgba(255,211,77,0),rgba(255,211,77,.38) 50%,rgba(255,211,77,0)) bottom/100% 1px no-repeat}   /* 2026-11-16 下に細い黄色の線（左右は消える） */#notePop .nbS{font-weight:800;font-size:16px;line-height:1.55;color:#fff;margin-bottom:12px}
   #notePop .nbB p{margin:0 0 10px;font-size:13.5px;line-height:1.8}#notePop .nbB.long p{text-align:left}#notePop .nbN{font-size:11px;line-height:1.7;color:#8f8a82;text-align:left;margin:4px 0 6px}
   #notePop .nY{color:#ffd34d;font-weight:700}#notePop .nR{color:#ff5a5a;font-weight:800}#notePop .ph{white-space:nowrap}#notePop .ytag{white-space:nowrap}
   #notePop .nbOk{display:block;width:100%;margin-top:12px;padding:12px;border:none;border-radius:12px;background:#fff;color:#111;font-size:15px;font-weight:700}#notePop .nbX{position:absolute;right:8px;top:6px;background:none;border:none;color:#8f8a82;font-size:22px;padding:4px 8px}
@@ -15061,7 +15061,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.38';
+const VERSION = '0.16.39';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -19922,7 +19922,7 @@ const XFNOTE = {
     let n = 0; try { n = (+localStorage.getItem(this.NKEY) || 0) + 1; localStorage.setItem(this.NKEY, String(n)); if (localStorage.getItem(this.KEY) === '1') return false; } catch (e) { return false; }
     if (n < 5 && !/[?&]xfnote\b/.test(location.search)) return false;
     const en = LANG === 'en', Y = t => `<b class="nY">${t}</b>`;   /* 2026-11-16 お知らせにそろえる（小見出しは2行・黄色） */
-    NOTE.show({ sub: `<span class="nY">${en ? 'If you never want to<br>lose your save data' : 'どうしてもセーブデータを<br>失いたくないとき'}</span>`,
+    NOTE.show({ sub: en ? 'If you never want to<br>lose your save data' : 'どうしてもセーブデータを<br>失いたくないとき',   /* 小見出しは白 */
       body: en ? [`From ${Y('"Save transfer code"')} in the settings on the start screen, you can export your save data (${Y('map progress, rank, total likes, footage collection')}, etc.) as a code. ${Y('If it is ever lost')}, or when you play on ${Y('another device or browser')}, load the code to restore it.`, `On iPhone, ${Y('Safari and the game added to your home screen keep separate save data')}. Use a transfer code to move it.`]
         : [`スタート画面の設定にある${Y('『引き継ぎコード』')}から、セーブデータ（${Y('マップの進行度・ランク・累計いいね数・撮れ高コレクション')}など）をコードとして書き出しておけます。`, `${Y('消えてしまった時')}や、${Y('別の端末・ブラウザ')}で遊ぶ時に、読み込めば元に戻せます。`, `iPhoneでは、${Y('Safariとホーム画面に追加したゲームのセーブデータは別々')}です。移したい時も引き継ぎコードを使ってください。`],
       ok: () => { try { localStorage.setItem(this.KEY, '1'); } catch (e) { } location.reload(); return 'stay'; }, x: () => { } });
