@@ -361,6 +361,15 @@
   .ytag{display:inline-block;font-size:10px;font-weight:700;line-height:1.5;border:1px solid;border-radius:5px;padding:0 5px;margin-left:6px;vertical-align:1px;white-space:nowrap;font-style:normal}.ytag.use{color:#c4a56c;border-color:rgba(196,165,108,.5);background:rgba(196,165,108,.1)}.ytag.perm{color:#8db0c0;border-color:rgba(141,176,192,.5);background:rgba(141,176,192,.1)}.ytag.in{color:#bdb8ae;border-color:rgba(189,184,174,.45)}#imTitle .ytag{font-size:12px;vertical-align:3px;letter-spacing:0}.yhow{font-style:normal;color:#d6d0c4;font-weight:700}
   .uiIc{width:15px;height:15px;vertical-align:-2px;margin-right:5px;opacity:.74}
   #shopRow{display:flex;gap:8px;margin:12px auto 0;max-width:100%}#shopRow #shopBtn{flex:1;margin:0;padding:0 8px;white-space:nowrap;display:flex;align-items:center;justify-content:center}#shopRow #bagBtn{flex:none;width:44px;height:44px;padding:0;margin:0;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  #endUI{position:fixed;inset:0;z-index:100000;background:#000;overflow:hidden;font-family:inherit}#endCv{position:absolute;inset:0;width:100%;height:100%}
+  #endUI video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;opacity:0;transition:opacity .8s}#endUI video.on{opacity:1}
+  #endTx{position:absolute;left:8%;right:8%;top:50%;transform:translateY(-50%);text-align:center;color:#f4efe6;opacity:0;transition:opacity .65s;text-shadow:0 2px 10px rgba(0,0,0,.85)}#endTx.on{opacity:1}
+  #endTx .enH{font-size:20px;font-weight:800;letter-spacing:.12em;margin-bottom:16px;color:#ffe7b0}#endTx .enL{font-size:17px;line-height:1.9}#endTx .enS{font-size:13px;line-height:1.9;opacity:.92}
+  #endTx .enC{margin:9px 0;font-size:13px;line-height:1.45}#endTx .enC b{display:block;font-weight:700}#endTx .enC span{display:block;font-size:11.5px;opacity:.8}
+  #endTx .enR{display:flex;justify-content:space-between;gap:12px;padding:9px 4px;border-bottom:1px solid rgba(255,235,200,.25);font-size:15px}#endTx .enR b{color:#ffe1a0;font-weight:800}
+  #endTx .enTY{font-size:30px;font-weight:800;letter-spacing:.04em}#endTx .enM img{width:96px;height:96px;display:block;margin:0 auto 12px}#endTx .enM div{font-size:22px;letter-spacing:.14em}
+  #endFade{position:absolute;inset:0;background:#000;opacity:0;transition:opacity .8s;pointer-events:none}#endFade.on{opacity:1}
+  #endSkip{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;padding:6px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.35);color:#ddd;font-size:12px;opacity:0;transition:opacity .6s;pointer-events:none}#endSkip.on{opacity:.8;pointer-events:auto}
   .bagTabs{display:flex;gap:6px;padding:8px 12px 2px}.bagTabs button{flex:1;padding:8px 6px;border-radius:9px;background:#26262a;color:#bbb;border:1px solid #3a3a40;font-weight:700;font-size:13px}.bagTabs button.on{background:#ffd34d;color:#1a1a1a;border-color:#ffd34d}#invTabs{padding:4px 0 8px}
   #bagUI{position:fixed;inset:0;z-index:72;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:16px}#bagUI.show{display:flex}
   #shopAsk{position:fixed;inset:0;z-index:74;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:24px}#shopAsk.show{display:flex}
@@ -15136,7 +15145,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.70';
+const VERSION = '0.16.71';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -21306,6 +21315,93 @@ const XEXT2 = {
 { const U0 = CMX.update.bind(CMX); CMX.update = function (dt) { U0(dt); if (world.state === 'play' && rec.active && !this.mkW && typeof CH !== 'undefined' && CH.state !== 'off') { this.mkW = 1; CHATLOG.add('mk', { w: 'W' }); } };
   const R0 = CMX.reset.bind(CMX); CMX.reset = function () { R0(); this.mkW = 0; }; }
 const SHOPFX = { update(dt) { IDLEC.update(dt); if (world.state !== 'play') return; BUZZ.update(dt); CANDLE.update(dt); DRINK.update(); STICK.update(dt); } };
+/* =========================================================
+   2026-11-17 遊びの記録（エンディング用）と、エンディング
+   ・STATS：この版から数え始める記録（コメント数・撮影時間・本数・稼いだお金・捕まった回数・封印した数・会った怪異・ロッカーに隠れた回数・歩いた距離）
+   ・ENDING：オフタリサマを初めて倒した周（ナカヨシの復讐）の、タイトルに戻る前に流す（1回だけ。確認用 ?ending でスタート画面から）
+     学校の映像 → クレジット → 神回の盛り上がった3場面（声付き・時系列順・足りない分は学校の映像）→ 夕方の教室で記録 → Thank you for playing! → まんま mamma
+   ・猫のアイコン：ENDING_CAT に画像（data URL）を入れると差し替わる。曲は「月の光」（45秒）をつないで流す
+   ========================================================= */
+const ENDING_CAT = null;
+const STATS = {
+  KEY: 'yt_stats_v1', d: null,
+  load() { if (this.d) return this.d; let d = null; try { d = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) { } this.d = d || { cm: 0, rec: 0, vids: 0, yen: 0, cap: 0, seal: 0, met: {}, hide: 0, dist: 0, first: Date.now(), runs: [] }; if (!d) this.save(); return this.d; },
+  save() { try { localStorage.setItem(this.KEY, JSON.stringify(this.d)); } catch (e) { } },
+  run(L) { const d = this.load(); if (d.runs.includes(world.runId)) return; d.runs.push(world.runId); d.runs = d.runs.slice(-30);
+    d.cm += L.cm | 0; d.yen += Math.max(0, L.yen | 0); if (L.cap) d.cap++; d.rec += rec.time || 0; if ((rec.time || 0) > 1) d.vids++;
+    d.seal += [world.sealedWoman, world.sealedSpider, world.sealedMann].filter(Boolean).length;
+    const met = []; if (world.phanRun) met.push('naka'); else if (world.enemy1) met.push(world.enemy1); if (URAH.on && world.urahSeen) met.push('urah'); for (const k of met) d.met[k] = (d.met[k] | 0) + 1; this.save(); },
+  first() { const d = this.load(); let t = d.first; try { for (const b of ACH.load().best) { const x = Date.parse(b.d); if (x && x < t) t = x; } const c = COL.load(); for (const k in c.items) { const x = Date.parse(c.items[k].first); if (x && x < t) t = x; } } catch (e) { } return t; },
+};
+{ const E0 = SHOP.endRun.bind(SHOP); SHOP.endRun = function (likes) { const r = E0(likes); try { STATS.run(this.last || {}); } catch (e) { } return r; }; }
+{ const U0 = CMX.update.bind(CMX); CMX.update = function (dt) { U0(dt); if (world.state !== 'play') { this.stP = null; return; } const d = STATS.load(); const p = this.stP; if (p && player.lv === p.lv) { const m = Math.hypot(player.x - p.x, player.z - p.z); if (m < 2) d.dist += m; } this.stP = { x: player.x, z: player.z, lv: player.lv };
+    const inL = !!HIDE.lk; if (inL && !this.stL) { d.hide++; } this.stL = inL; this.stSv = (this.stSv || 0) + dt; if (this.stSv > 5) { this.stSv = 0; STATS.save(); } }; }
+const ENDING = {
+  KEY: 'yt_ending_v1',
+  due() { try { return evidence.some(e => e.key === 'urahRevenge') && localStorage.getItem(this.KEY) !== '1'; } catch (e) { return false; } },
+  /* 神回の動画から、コメントがいちばん多い7秒を1本ずつ（時系列順・倒した周は使わない） */
+  async clips() { const out = []; try { const best = ACH.load().best.filter(b => b.v && b.id !== world.runId); best.sort((a, b) => String(a.d).localeCompare(String(b.d)));
+      for (const b of best) { if (out.length >= 3) break; const blobs = await VDB.get(b.id); if (!blobs || !blobs.length) continue; let cd = null; try { cd = await VDB.get(b.id + ':chat'); } catch (e) { }
+        const urls = blobs.map(x => URL.createObjectURL(x)), durs = []; for (const u of urls) durs.push(await durOf(u)); const tot = durs.reduce((a, c) => a + c, 0); if (tot < 3) continue;
+        let tc = null; const ts = (cd && cd.items || []).map(x => x[0]).filter(t => t < tot).sort((a, c) => a - c); let bc = 0; for (let i = 0; i < ts.length; i++) { let j = i; while (j < ts.length && ts[j] - ts[i] < 7) j++; if (j - i > bc) { bc = j - i; tc = ts[i]; } }
+        if (tc === null) { const ev = (b.ev || []).slice().sort((x, y) => (y[1] | 0) - (x[1] | 0))[0]; tc = ev ? Math.max(0, (ev[3] || 0) - 2) : Math.max(0, tot / 2 - 3); }
+        let st = Math.max(0, Math.min(tot - 7, tc - 1)), seg = 0, acc = 0; for (; seg < durs.length - 1; seg++) { if (st < acc + durs[seg]) break; acc += durs[seg]; } out.push({ url: urls[seg], at: Math.max(0, st - acc), urls }); } } catch (e) { console.warn('ENDING clips', e); } return out; },
+  credits() { const C = (typeof SFX_CREDITS !== 'undefined' ? SFX_CREDITS : []), esc = s => String(s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]); const pages = [];
+    pages.push(`<div class="enH">${LANG === 'en' ? 'Credits' : 'クレジット'}</div><div class="enL">Freesound<br>BigSoundBank<br>Wikimedia Commons<br>Google Fonts<br>three.js</div>`);
+    pages.push(`<div class="enS">Scream — FreqMan (CC BY 4.0)<br>Piano samples — Salamander Grand Piano / Alexander Holm (CC BY 3.0)<br>MP4 conversion — Mediabunny (MPL-2.0) / FFmpeg libavcodec AAC (LGPL)</div>`);
+    const lines = C.map(c => { const t = String(c.title || '').split('：').pop().replace(/（ファイル名[^）]*）/, '').replace(/（[^）]*\.(mp3|wav|ogg|flac)[^）]*）/i, ''); return `<div class="enC"><b>${esc(t.slice(0, 48))}</b>${c.author ? `<span>${esc(String(c.author).slice(0, 40))}</span>` : ''}</div>`; });
+    for (let i = 0; i < lines.length; i += 6) pages.push(lines.slice(i, i + 6).join(''));
+    return pages; },
+  statPages() { const d = STATS.load(), a = ACH.load(), en = LANG === 'en', N = n => Math.round(n).toLocaleString(), c = COL.load(); const got = COL.LIST.filter(x => c.items[x[1]] && c.items[x[1]].n > 0).length;
+    const hm = s => { s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60; return h ? `${h}${en ? 'h ' : '時間'}${m}${en ? 'm' : '分'}` : `${m}${en ? 'm ' : '分'}${ss}${en ? 's' : '秒'}`; };
+    const MON = { woman: ['逆さ女', 'Upside-down Woman'], spider: ['クモ女', 'Spider Woman'], mann: ['人体模型', 'Anatomy Model'], urah: ['オフタリサマ', 'Ofutarisama'], naka: ['ナカヨシ', 'Nakayoshi'] }; const top = Object.entries(d.met).sort((x, y) => y[1] - x[1])[0];
+    const days = Math.max(1, Math.floor((Date.now() - STATS.first()) / 864e5) + 1), bestN = a.best.length ? a.best[0].n : 0;
+    const R = en ? [['Total likes', N(a.total)], ['Comments posted', N(d.cm)], ['Time filmed', hm(d.rec)], ['Videos filmed', N(d.vids)], ['Footage collection', `${got} / ${COL.LIST.length}`], ['Most-liked video', N(bestN)], ['Money earned', N(d.yen) + ' yen'], ['Times caught', N(d.cap)], ['Spirits sealed', N(d.seal)], ['Days since first upload', N(days)], ['Met most often', top ? MON[top[0]][1] : '—'], ['More lockers than parents (hid)', N(d.hide) + ' times'], ['Distance walked', (d.dist / 1000).toFixed(2) + ' km']]
+      : [['累計いいね数', N(a.total)], ['流れたコメントの総数', N(d.cm) + '件'], ['合計の撮影時間', hm(d.rec)], ['撮影した本数', N(d.vids) + '本'], ['撮れ高コレクション', `${got} / ${COL.LIST.length}種`], ['一番伸びた動画', N(bestN) + 'いいね'], ['稼いだお金の合計', N(d.yen) + '円'], ['捕まった回数', N(d.cap) + '回'], ['封印した怪異の数', N(d.seal) + '体'], ['初投稿からの日数', N(days) + '日'], ['一番会った怪異', top ? MON[top[0]][0] : '—'], ['親の顔より見たロッカー', N(d.hide) + '回'], ['校舎を歩いた距離', (d.dist / 1000).toFixed(2) + 'km']];
+    const head = `<div class="enH">${en ? 'Your record' : 'これまでの記録'}</div>`, pages = []; for (let i = 0; i < R.length; i += 5) pages.push(head + R.slice(i, i + 5).map(([k, v]) => `<div class="enR"><span>${k}</span><b>${v}</b></div>`).join('')); return pages; },
+  cat() { if (ENDING_CAT) return ENDING_CAT; const c = document.createElement('canvas'); c.width = c.height = 160; const g = c.getContext('2d'); g.fillStyle = '#f2ece2'; g.beginPath(); g.moveTo(34, 62); g.lineTo(46, 20); g.lineTo(70, 46); g.lineTo(90, 46); g.lineTo(114, 20); g.lineTo(126, 62); g.quadraticCurveTo(140, 130, 80, 138); g.quadraticCurveTo(20, 130, 34, 62); g.fill(); g.fillStyle = '#2a2420'; for (const x of [62, 98]) { g.beginPath(); g.ellipse(x, 84, 5, 7, 0, 0, 7); g.fill(); } g.beginPath(); g.moveTo(76, 100); g.lineTo(84, 100); g.lineTo(80, 105); g.fill(); g.strokeStyle = '#2a2420'; g.lineWidth = 2; g.beginPath(); g.moveTo(80, 105); g.quadraticCurveTo(74, 113, 68, 108); g.moveTo(80, 105); g.quadraticCurveTo(86, 113, 92, 108); g.stroke(); return c.toDataURL(); },
+  music() { try { if (!A.ctx) initAudio(); const ctx = A.ctx; ctx.resume && ctx.resume(); const out = ctx.createGain(); out.gain.value = 0.9; out.connect(A.master || ctx.destination); this.mg = out; this.srcs = [];
+      const go = () => { const b = A.buf.clair; if (!b) return; const D = b.duration, X = 2.0; let t = ctx.currentTime + 0.05; for (let i = 0; i < 8; i++) { const s = ctx.createBufferSource(), g = ctx.createGain(); s.buffer = b; s.connect(g); g.connect(out); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1, t + (i ? X : 0.6)); g.gain.setValueAtTime(1, t + D - X); g.gain.linearRampToValueAtTime(0, t + D); s.start(t); s.stop(t + D + 0.1); this.srcs.push(s); t += D - X; } };
+      (A.buf.clair ? Promise.resolve() : sfxDecode('clair')).then(go); } catch (e) { console.warn('ENDING music', e); } },
+  duck(v) { try { this.mg.gain.setTargetAtTime(v, A.ctx.currentTime, 0.4); } catch (e) { } },
+  stopMusic() { try { this.mg.gain.setTargetAtTime(0, A.ctx.currentTime, 0.5); setTimeout(() => { for (const s of this.srcs || []) try { s.stop(); } catch (e) { } }, 1500); } catch (e) { } },
+  ui() { let el = $('#endUI'); if (el) el.remove(); el = document.createElement('div'); el.id = 'endUI';
+    el.innerHTML = `<canvas id="endCv"></canvas><video id="endVid" playsinline></video><video id="endVid2" playsinline></video><div id="endTx"></div><div id="endFade"></div><button id="endSkip">${LANG === 'en' ? 'Skip' : 'スキップ'}</button>`; document.body.appendChild(el);
+    for (const t of ['pointerdown', 'pointerup', 'touchstart', 'touchmove', 'click', 'keydown']) el.addEventListener(t, e => e.stopPropagation()); return el; },
+  page(html) { const t = $('#endTx'); t.classList.remove('on'); clearTimeout(this.pt); this.pt = setTimeout(() => { t.innerHTML = html || ''; if (html) t.classList.add('on'); }, html === null ? 0 : 650); },
+  fade(on) { $('#endFade').classList.toggle('on', !!on); },
+  async play(done) {
+    if (this.running) return; this.running = true; const el = this.ui(), cv = $('#endCv'), cx = cv.getContext('2d'), v1 = $('#endVid'), v2 = $('#endVid2'); let phase = 'school', alive = true; const W = () => { cv.width = innerWidth * Math.min(2, devicePixelRatio || 1); cv.height = innerHeight * Math.min(2, devicePixelRatio || 1); }; W();
+    const fin = () => { if (!alive) return; alive = false; this.stopMusic(); try { localStorage.setItem(this.KEY, '1'); } catch (e) { } this.fade(true); setTimeout(() => { el.remove(); this.running = false; if (done) done(); }, 1200); };
+    $('#endSkip').onclick = e => { e.stopPropagation(); fin(); }; setTimeout(() => $('#endSkip') && $('#endSkip').classList.add('on'), 2500);
+    const clipsP = this.clips(); world.state = 'ending'; this.music(); TOUR.i = 0; TOUR.t0 = performance.now() / 1000; let sunset = null;
+    const sun = () => { if (sunset) return; sunset = { t0: performance.now() / 1000 }; const L1 = new THREE.DirectionalLight(0xffa25a, 3.2); L1.position.set(26, 5, -22); L1.target.position.set(6, 0, -10); scene.add(L1, L1.target); const L2 = new THREE.AmbientLight(0xffd0a0, 0.38); scene.add(L2); const L3 = new THREE.HemisphereLight(0xffd6a8, 0x2a2440, 0.42); scene.add(L3); try { if (scene.fog) { scene.fog.color = new THREE.Color(0x3a1e10); } } catch (e) { } if (TOUR.amb) TOUR.amb.intensity = 0; };
+    const frame = now => { if (!alive) return; requestAnimationFrame(frame); if (cv.width !== Math.round(innerWidth * Math.min(2, devicePixelRatio || 1))) W();
+      try { if (phase === 'school') { TOUR.figAt = -1; TOUR.update(now); render(); }
+        else if (phase === 'sunset') { sun(); const u = Math.min(1, (now / 1000 - sunset.t0) / 40), k = u * u * (3 - 2 * u); camera.position.set(lerp(12.6, 10.6, k), 1.5, lerp(-9.3, -9.9, k)); camera.rotation.set(-0.05, lerp(0.75, 1.15, k), 0, 'YXZ'); camera.fov = CONFIG.fovScene; camera.updateProjectionMatrix(); camera.updateMatrixWorld(); const U = postMat.uniforms; U.black.value = 0; U.exposure.value = 1.3; U.sat.value = 1.12; U.focus.value = 8; U.vig.value = 0.3; for (const o of [SG.root, avatar.root, MANN.root, SP.wrap]) if (o) o.visible = false; render(); }
+        if (phase !== 'clip') { const s = renderer.domElement, r = Math.max(cv.width / s.width, cv.height / s.height), w = s.width * r, h = s.height * r; cx.drawImage(s, (cv.width - w) / 2, (cv.height - h) / 2, w, h); } } catch (e) { } };
+    requestAnimationFrame(frame);
+    const wait = s => new Promise(r => setTimeout(r, s * 1000)); const en = LANG === 'en';
+    const SUN = (TEST || BETA) && /[?&]endsun\b/.test(location.search);   /* 確認用：夕方の教室から */
+    /* 1. 学校の映像 → クレジット */
+    if (!SUN) await wait(6); if (!alive) return;
+    for (const p of SUN ? [] : this.credits()) { if (!alive) return; this.page(p); await wait(3.4); }
+    this.page(null); await wait(0.8); if (!alive) return;
+    /* 2. 盛り上がった3場面（足りない分は学校の映像のまま） */
+    const clips = await clipsP; let vi = 0;
+    for (let i = 0; i < (SUN ? 0 : 3); i++) { if (!alive) return; const c = clips[i]; this.fade(true); await wait(0.8); if (!alive) return;
+      if (c) { phase = 'clip'; this.duck(0.22); const v = vi++ % 2 ? v2 : v1, o = v === v1 ? v2 : v1; v.src = c.url; v.muted = false; v.volume = 1; try { await new Promise(r => { v.onloadedmetadata = r; setTimeout(r, 1500); }); v.currentTime = c.at; await v.play(); } catch (e) { } v.classList.add('on'); o.classList.remove('on'); try { o.pause(); } catch (e) { } this.fade(false); await wait(7); }
+      else { phase = 'school'; this.duck(0.9); v1.classList.remove('on'); v2.classList.remove('on'); TOUR.i = (3 + i * 2) % TOUR.SHOTS.length; TOUR.t0 = performance.now() / 1000; this.fade(false); await wait(6.5); } }
+    /* 3. 夕方の教室：記録 → Thank you → まんま */
+    this.fade(true); this.duck(0.9); await wait(1); if (!alive) return; for (const v of [v1, v2]) { v.classList.remove('on'); try { v.pause(); } catch (e) { } } phase = 'sunset'; await wait(0.3); this.fade(false); await wait(2);
+    for (const p of this.statPages()) { if (!alive) return; this.page(p); await wait(5.2); }
+    if (!alive) return; this.page(`<div class="enTY">Thank you for playing!</div>`); await wait(4.5);
+    if (!alive) return; this.page(`<div class="enM"><img src="${this.cat()}" alt=""><div>まんま mamma</div></div>`); await wait(5);
+    this.page(null); fin();
+  },
+};
+{ const G0 = SAVENOTE.go.bind(SAVENOTE); SAVENOTE.go = function () { if (!DEMO && ENDING.due()) { ENDING.play(() => G0()); return; } return G0(); }; }
+if ((TEST || BETA || DEV) && /[?&]ending\b/.test(location.search)) setTimeout(() => { const go = () => { if (world.state !== 'title' || !SHOP) return setTimeout(go, 800); ENDING.play(() => { world.state = 'title'; try { localStorage.removeItem(ENDING.KEY); } catch (e) { } }); }; go(); }, 1500);
 /* =========================================================
    2026-11-17 捕まった周は道具を失う／持ち物を「もちもの」「だいじなもの」のタブに／銀の盾・金の盾
    ・捕まった周：その周に持ち込んだ道具と、校舎で拾った道具をすべて失う（招き猫の白・黒も）。結果画面で失った物を知らせる
