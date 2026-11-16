@@ -4981,7 +4981,7 @@ const WD = {
       const want = this.interest === 1 ? 11 : 6;
       const cs = this.dests.filter(k => k !== this.node).sort((a, b) => Math.abs(distTo(NAV[a][0], NAV[a][1]) - want) - Math.abs(distTo(NAV[b][0], NAV[b][1]) - want));
       d = pick(cs.slice(0, 3));
-    } else { const ds0 = URAV.far(this.dests, k => nodePos(k)), ds1 = ds0.filter(k => !saltNear(nodePos(k))), ds = ds1.length ? ds1 : ds0; let g = 0; do d = pick(ds); while (d === this.node && g++ < 10); }   /* 2026-11-16 オフタリサマから12m以上離れた所へ */
+    } else { const ds0 = URAV.far(this.dests.filter(k => NAV[k]), k => nodePos(k)), ds1 = ds0.filter(k => !saltNear(nodePos(k))), ds = ds1.length ? ds1 : ds0; let g = 0; do d = pick(ds); while (d === this.node && g++ < 10); }   /* 2026-11-16 オフタリサマから12m以上離れた所へ */
     this.path = navPath(this.node, d).slice(1);
   },
   goTo(p) { const n = nearestNode(p.x, p.z, undefined, p.y || 0); this.path = navPath(nearestNode(this.pos.x, this.pos.z, undefined, this.pos.y), n).slice(1).map(k => k); this.extra = p.clone(); },
@@ -10941,7 +10941,7 @@ const MANN = {
           if (d > 0.01) this.face(Math.atan2(dx, dz), dt, 4);
           if (d <= move) { this.pos.copy(t); move -= d; this.path.shift(); } else { const k = move / d; this.pos.x += dx * k; this.pos.z += dz * k; this.pos.y += ((t.y || 0) - this.pos.y) * k; move = 0; }
         }
-        if (!this.path.length) { const ds0 = URAV.far(WD.dests, k => nodePos(k)), ds1 = ds0.filter(k => !saltNear(nodePos(k))); this.walkTo(pick(ds1.length ? ds1 : ds0)); }
+        if (!this.path.length) { const ds0 = URAV.far(WD.dests.filter(k => NAV[k]), k => nodePos(k)), ds1 = ds0.filter(k => !saltNear(nodePos(k))); this.walkTo(pick(ds1.length ? ds1 : ds0)); }
         this.stepTick(dt, 1.7); this.apply();
         this.seeT = this.seesPlayer(world.dark ? 20 : 14) ? (this.seeT || 0) + dt : 0;
         if (this.seeT > 0.4) { this.seeT = 0; this.spot(); }
