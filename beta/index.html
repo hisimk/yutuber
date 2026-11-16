@@ -4249,7 +4249,10 @@ function enableGyro() {
 }
 function disableGyro() { if (gyro.on && gyro.got) { look.yaw = player.yaw; look.pitch = player.pitch; } gyro.on = false; gyro.got = false; removeEventListener('deviceorientation', onOri); syncGyroUI(); }
 function recenter() { if (!gyro.got) return; look.yaw = player.yaw; gyro.ref = gyro.acc; look.pitch = 0; toast('いま向いている方向を正面にしました'); }
-function syncGyroUI() { $('#gyroBtn').classList.toggle('on', gyro.on); const b = $('#centerBtn'); b.style.display = gyro.on ? '' : 'none'; $('#hud').classList.toggle('gy', gyro.on); if (gyro.on) requestAnimationFrame(() => { const c = $('#cap'), w = (c && c.offsetWidth) || 150; b.style.left = `calc(50% - 28px + ${Math.round(w / 2) + 8}px)`; }); }   /* 2026-11-16 正面ボタンは残容量の右 */
+function syncGyroUI() { $('#gyroBtn').classList.toggle('on', gyro.on); const b = $('#centerBtn'); b.style.display = gyro.on ? '' : 'none'; $('#hud').classList.toggle('gy', gyro.on); if (gyro.on) requestAnimationFrame(placeCenterBtn); }
+/* 2026-11-16 正面ボタンは、残容量と持ち物ボタンのちょうど中間に置く（画面の大きさが変わっても合わせる） */
+function placeCenterBtn() { const b = $('#centerBtn'), c = $('#cap'), iv = $('#invBtn'), h = $('#hud'); if (!b || b.style.display === 'none' || !c || !iv || !h) return; const hr = h.getBoundingClientRect(), cr = c.getBoundingClientRect(), ir = iv.getBoundingClientRect(); if (!cr.width || !ir.width || !h.offsetWidth) return; const k = hr.width / h.offsetWidth, mid = ((cr.right + ir.left) / 2 - hr.left) / k; b.style.left = Math.round(mid - b.offsetWidth / 2) + 'px'; }
+addEventListener('resize', () => requestAnimationFrame(placeCenterBtn)); setInterval(() => { if (world.state === 'play') placeCenterBtn(); }, 1000);   /* 2026-11-16 正面ボタンは残容量の右 */
 $('#gyroBtn').addEventListener('click', e => { e.stopPropagation(); gyro.on ? disableGyro() : enableGyro(); });
 $('#centerBtn').addEventListener('click', e => { e.stopPropagation(); recenter(); });
 
@@ -4997,7 +5000,7 @@ const WD = {
       else { this.extra = null; this.repathN = 0; }
     }   // 見え方の調整中はその場に止める
     if (doorStallTick(this, dt)) return false;   // 閉まった引き戸の前で足止め中
-    let move = speed * dt;
+    let move = speed * dt * (typeof SALTK === 'function' ? SALTK(this.pos) : 1);   /* 2026-11-16 盛り塩の6m以内は半分の速さ */
     { const t0 = this.path.length ? nodePos(this.path[0]) : this.extra;   /* 2026-11-16 閉まった戸は、追跡中でなくても毎回開けてから通る（すり抜けない） */
       if (t0) { const h = Math.atan2(t0.x - this.pos.x, t0.z - this.pos.z), dh = Math.abs(Math.atan2(Math.sin(h - this.heading), Math.cos(h - this.heading))); if (CH.state !== 'off') move *= dh > 0.9 ? 0.45 : dh > 0.45 ? 0.75 : 1;   // 追跡中は、曲がる時に減速する
         const nx = this.pos.x + Math.sin(h) * 0.6, nz = this.pos.z + Math.cos(h) * 0.6; const d = closedDoorOn(this.pos.x, this.pos.z, nx, nz, this.pos.y > 1.6 ? 1 : 0); if (d) { doorStall(this, d); return false; } }
@@ -6490,7 +6493,7 @@ const SELF = {
       selfCam.up.set(0, 1, 0); selfCam.lookAt(tgt); selfCam.rotation.z += camera.rotation.z;
     }
     if (typeof STICK !== 'undefined' && STICK.k()) { const bk = V(); selfCam.getWorldDirection(bk); selfCam.position.addScaledVector(bk, -0.45); }   /* 2026-11-16 自撮り棒：少し遠く・広く */
-    selfCam.near = SELF.back + 0.05; selfCam.far = camera.far; selfCam.fov = CONFIG.fov1x * 1.3 * (typeof STICK !== 'undefined' && STICK.k() ? 1.15 : 1); /* インカメラらしい広角 */ selfCam.aspect = camera.aspect; selfCam.updateProjectionMatrix(); selfCam.updateMatrixWorld();
+    selfCam.near = SELF.back + (typeof STICK !== 'undefined' && STICK.k() ? 0.45 + 0.16 : 0.05);   /* 2026-11-16 自撮り棒の時は、手前のスマホと手も近接面で切って映さない */ selfCam.far = camera.far; selfCam.fov = CONFIG.fov1x * 1.3 * (typeof STICK !== 'undefined' && STICK.k() ? 1.15 : 1); /* インカメラらしい広角 */ selfCam.aspect = camera.aspect; selfCam.updateProjectionMatrix(); selfCam.updateMatrixWorld();
     selfLight.position.copy(selfCam.position).add(V(0, 0.25, 0));
     return { f, r };
   },
@@ -8565,7 +8568,7 @@ SP.updChase = function (dt, fp) {
   this.yaw += clamp(dh, -4.5 * dt, 4.5 * dt);
   const turnSlow = Math.abs(dh) > 0.9 ? 0.4 : Math.abs(dh) > 0.45 ? 0.75 : 1;   // 曲がる時は大きく減速
   const mul = ret ? 0.6 : lerp(CONFIG.spiderChaseMul, CONFIG.spiderChaseMax, rampK(this.appearUsed));
-  const sp = CONFIG.walkSpeed * mul * turnSlow * (inStair ? 0.85 : 1);
+  const sp = CONFIG.walkSpeed * mul * turnSlow * (inStair ? 0.85 : 1) * (typeof SALTK === 'function' ? SALTK(this.pos) : 1);
   const stepLen = Math.min(dist, sp * dt);
   const nx = dist > 1e-3 ? this.pos.x + ddx / dist * stepLen : this.pos.x, nz = dist > 1e-3 ? this.pos.z + ddz / dist * stepLen : this.pos.z;
   const toStair = !!stairZone(nx, nz);
@@ -10281,6 +10284,7 @@ defEvent('paCall', {
     if (this.ph === 'down' && this.t > this.d + 0.08) {   // 2026-11-14 「ほけんしつまで」と最後まで読んでから、ノイズが走って途切れる
       PACALL.noise(1.0); PACALL.cutVoice(); PASUB.glitch(); this.ph = 'after'; this.t = 0;
       if (!world.nurseCall) { world.nurseCall = true; NURSE.arm(); }   // 保健室のイベントが起きるようになる
+      if (player.lv === 0 && playerZone() === 'C') setTimeout(() => { try { XCHAT.log('paHere'); } catch (e) { } }, 2200);   /* 2026-11-16 もう保健室にいる時は、少し遅れてコメントが反応（先読みにならないように） */
       if (rec.active) award('paCall', '校内放送で呼ばれた自分の名前', 90);
     }
     return this.ph === 'after' && this.t > 3;
@@ -10794,7 +10798,7 @@ const MANN = {
     if (k === 0 && this.inAir) { this.inAir = false; this.step(1.0); SND.thud(V(this.pos.x, 0.1, this.pos.z), 0.7); }
   },
   follow(dt, speed) {   // 点の列（高さつき）に沿って走る。着いたら true
-    let move = speed * dt;
+    let move = speed * dt * (typeof SALTK === 'function' ? SALTK(this.pos) : 1);
     while (move > 0 && this.path.length) {
       const t = this.path[0], dx = t.x - this.pos.x, dz = t.z - this.pos.z, d = Math.hypot(dx, dz);
       if (d > 0.01) this.heading = Math.atan2(dx, dz);
@@ -15061,7 +15065,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.40';
+const VERSION = '0.16.42';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16584,7 +16588,7 @@ const KOK = {
     const N = { enter: 2, ask: 1, still: 2, move: 3, move2: 1, yesno: 2, name: 3, final: 1, drop: 3 };
     for (const e of ev) { const cat = CAT[e.w]; if (!cat) continue; const ids = CHAT_DICT.c[cat] || []; const n = N[e.w] + (R() < 0.4 ? 1 : 0);
       for (let i = 0; i < n; i++) { const tk = ids.filter(id => this.TSUK.includes(id)), sr = ids.filter(id => !this.TSUK.includes(id)); const pool = tk.length && R() < 0.33 ? tk : sr; const id = pool[Math.floor(R() * pool.length)]; if (!id || !T[id]) continue;
-        const t = e.t + (e.w === 'still' ? 2 : 0.6) + i * (0.7 + R() * 0.9); if (t > maxR) continue; if (out.some(x => x[2] === id && Math.abs(x[0] - t) < 8) || d.items.some(x => x[2] === id && Math.abs(x[0] - t) < 8)) continue;
+        const t = e.t + (e.w === 'still' ? 6.5 + R() * 2.5 : 0.6) + i * (0.7 + R() * 0.9); if (e.w === 'still' && ev.some(x => x.w !== 'still' && x.w !== 'ask' && x.t > e.t && x.t < t + 0.5)) continue;   /* 2026-11-16 「動かない」は、しばらく見守ってから（間に動いたら出さない） */ if (t > maxR) continue; if (out.some(x => x[2] === id && Math.abs(x[0] - t) < 8) || d.items.some(x => x[2] === id && Math.abs(x[0] - t) < 8)) continue;
         out.push([Math.round(t * 100) / 100, Math.floor(R() * U), id, T[id][0], T[id][1]]); } }
     if (out.length) d.items = d.items.concat(out).sort((a, b) => a[0] - b[0]);
   },
@@ -18690,7 +18694,7 @@ const URAH = {
   updChase(dt, dist) {
     const C = URAH_CFG, noh = this.face === 'noh', sees = this.sees() || this.frozen; this.lostT = sees ? 0 : this.lostT + dt; this.rep -= dt;
     /* 能面：見られたら勢いで2mほど進んで、ピタッと止まる（目の光もじわっと消える） */
-    const nohMax = this.sp('noh'); let want = noh ? nohMax : this.sp('hannya');
+    const nohMax = this.sp('noh'); let want = (noh ? nohMax : this.sp('hannya')) * (typeof SALTK === 'function' ? SALTK(this.pos) : 1);
     if (noh) { const w = this.watched();
       /* 2026-11-15 見られたら：勢いで少し進み → それまでの動きを逆再生で巻き戻して → ピタッと止まる */
       if (!this.rw && w) this.rw = { ph: 'hold' };   /* 2026-11-15 見られたら、勢いなしでその場でピタッと止まる（巻き戻しはやめた） */
@@ -20108,6 +20112,7 @@ Object.assign(CHAT_DICT.t, { 'ue.01': ['食った…', 'it ate her...'], 'ue.02'
   'uo.01': ['なんか来てない？', 'is something coming?'], 'uo.02': ['音やばい', 'that sound is insane'], 'uo.03': ['奥から何か来る', 'something is coming from the back'] });
 if (CHAT_DICT.ev) CHAT_DICT.ev['バケモノにはバケモノを'] = ['ue.01', 'ue.02', 'ue.03', 'ue.04', 'ue.05'];
 XCHAT.LIST.urahOmen = ['uo.01', 'uo.02', 'uo.03'];
+XCHAT.LIST.paHere = ['ph.01', 'ph.02', 'ph.03']; Object.assign(CHAT_DICT.t, { 'ph.01': ['もう保健室にいるよ', "you're already in the nurse's office"], 'ph.02': ['呼ばれる前から来てて草', 'already here before being called lol'], 'ph.03': ['ここにいますけど…', 'uh, we\'re right here...'] });
 /* 2026-11-16 コメントの追加：少ない区分を増やし、まだ無かった撮れ高・道具・新しい棟のコメントを（順当・面白・ツッコミの3つずつ） */
 Object.assign(CHAT_DICT.t, {"v2.spot_a.0": ["あっ", "oh"], "v2.spot_a.1": ["あ…", "ah..."], "v2.spot_a.2": ["お", "oh?"], "v2.spot_q.0": ["えっ！？", "wait what!?"], "v2.spot_q.1": ["!?", "!?"], "v2.spot_q.2": ["！？！？", "!?!?"], "v2.idle_random.0": ["さっき何か横切らなかった？", "did something just cross?"], "v2.idle_random.1": ["右奥見て", "look at the back right"], "v2.idle_random.2": ["天井見た？", "did you check the ceiling?"], "v2.idle_random.3": ["窓のとこ気になる", "the window bugs me"], "v2.idle_random.4": ["足音した？", "was that a footstep?"], "v2.idle_random.5": ["誰かいる気がする", "feels like someone is here"], "v2.idle_random.6": ["振り返らないで", "don't turn around"], "v2.idle_random.7": ["後ろ大丈夫？", "is your back clear?"], "v2.idle_random.8": ["耳鳴りしてきた", "my ears are ringing"], "v2.idle_random.9": ["今なんか光った？", "did something flash?"], "v2.chase_ez.0": ["よゆう", "easy"], "v2.chase_ez.1": ["ちょろい", "too easy"], "v2.chase_ez.2": ["楽勝ｗ", "piece of cake lol"], "v2.chase_ez.3": ["撒いたｗ", "shook it off lol"], "v2.item_useless.0": ["何に使うんそれｗ", "what is that even for lol"], "v2.item_useless.1": ["それ要る？", "do you need that?"], "v2.item_useless.2": ["持ってるだけで満足するやつ", "just happy to own it"], "v2.idle_watch.0": ["一緒に歩いてる気分", "feels like walking with you"], "v2.idle_watch.1": ["この画角好き", "love this angle"], "v2.idle_watch.2": ["手ブレが怖さ増す", "the shaky cam makes it scarier"], "v2.idle_watch.3": ["耳すませてる", "listening closely"], "v2.idle_watch.4": ["奥が気になる", "the far end bugs me"], "v2.idle_watch.5": ["今のとこ全部見たい", "want to see every corner"], "v2.idle_chat.0": ["コンビニ行けなくなった", "can't go to the store now"], "v2.idle_chat.1": ["布団から出られない", "can't leave my futon"], "v2.idle_chat.2": ["部屋の隅が暗い…", "my room corner is dark..."], "v2.idle_chat.3": ["電気つけたまま寝よ", "sleeping with the lights on"], "v2.idle_chat.4": ["友達にURL送った", "sent the link to a friend"], "v2.idle_chat.5": ["スマホの充電大丈夫？", "is your phone charged?"], "v2.quiet_unease.0": ["静かすぎる", "too quiet"], "v2.quiet_unease.1": ["嵐の前の静けさ", "the calm before the storm"], "v2.quiet_unease.2": ["何かに見られてる気がする", "feels like we're being watched"], "v2.quiet_unease.3": ["空気変わった？", "did the air change?"], "v2.quiet_chat.0": ["修学旅行の夜思い出した", "reminds me of school trip nights"], "v2.quiet_chat.1": ["黒板に何か書いてありそう", "bet something's written on a blackboard"], "v2.quiet_chat.2": ["七不思議ってここにもあるのかな", "does this place have seven mysteries too?"], "v2.quiet_short.0": ["のんびり探索", "chill exploring"], "v2.quiet_short.1": ["平和だ…", "so peaceful..."], "v2.quiet_short.2": ["散歩配信", "walking stream"], "v2.bored_mild.0": ["そろそろ出てきて", "come out already"], "v2.bored_mild.1": ["幽霊さーん", "ghost-saaan"], "v2.bored_mild.2": ["撮れ高どこ〜", "where's the good stuff~"], "v2.heard_bell.0": ["チリン…", "ting..."], "v2.heard_bell.1": ["鈴うるさいｗ", "that bell is loud lol"], "v2.heard_bell.2": ["その鈴外しなよｗ", "take that bell off lol"], "v2.ev0.0": ["扉開けた瞬間いるのやめて", "don't be there when the door opens"], "v2.ev0.1": ["出待ちされてて草", "she was waiting outside lol"], "v2.ev0.2": ["なんで外から開くんだよ", "why did it open from outside"], "v2.ev1.0": ["掲示板から来た…", "she came from the bulletin board..."], "v2.ev1.1": ["掲示物になりたかったのかな", "wanted to be a poster?"], "v2.ev1.2": ["掲示板の使い方ちがう", "that's not how boards work"], "v2.ev2.0": ["ロッカー開いてる…", "the locker is open..."], "v2.ev2.1": ["中から見られてる気がする", "feels like something inside is watching"], "v2.ev2.2": ["ちゃんと閉めとけ", "close it properly"], "v2.ev3.0": ["隣から笑い声…", "laughter next door..."], "v2.ev3.1": ["お隣さん楽しそうｗ", "the neighbor sounds happy lol"], "v2.ev3.2": ["何がおかしいんだよ", "what's so funny"], "v2.ev4.0": ["近い近い近い", "too close too close"], "v2.ev4.1": ["まつ毛長っ", "long lashes"], "v2.ev4.2": ["距離感バグってる", "no sense of personal space"], "v2.ev5.0": ["天井を歩いてる…", "walking on the ceiling..."], "v2.ev5.1": ["上履きの裏見えたｗ", "saw the shoe soles lol"], "v2.ev5.2": ["重力どうなってんの", "what happened to gravity"], "v2.ev6.0": ["机が動いた", "the desk moved"], "v2.ev6.1": ["机も帰りたいんかな", "the desk wants to go home too"], "v2.ev6.2": ["誰が押してるんだよ", "who is pushing it"], "v2.ev7.0": ["全員集合！？", "everyone's here!?"], "v2.ev7.1": ["奇跡の集合写真", "a miracle group photo"], "v2.ev7.2": ["そろわなくていいんだよ", "you didn't need to all show up"], "v2.ev8.0": ["腕長っ", "long arm"], "v2.ev8.1": ["壁から握手会", "a handshake event from the wall"], "v2.ev8.2": ["壁から生えるな", "don't grow out of the wall"], "v2.ev9.0": ["フル装備ｗｗ", "full gear lol"], "v2.ev9.1": ["どういう気持ちで見ればいいの", "how am I supposed to feel"], "v2.ev9.2": ["怖さ半減してて草", "half as scary now lol"], "v2.ev10.0": ["額縁落ちた…", "the frame fell..."], "v2.ev10.1": ["モーツァルトも逃げた", "even Mozart ran"], "v2.ev10.2": ["音楽室のお約束きた", "the classic music room scare"], "v2.ev11.0": ["うまっ", "so good"], "v2.ev11.1": ["ここでピアノ弾く度胸", "the nerve to play piano here"], "v2.ev11.2": ["アンコール！", "encore!"], "v2.ev12.0": ["スピーカーから砂嵐…", "static from the speaker..."], "v2.ev12.1": ["電波入ってないｗ", "no signal lol"], "v2.ev12.2": ["誰がスイッチ入れたの", "who turned it on"], "v2.ev13.0": ["閉じ込められた！？", "trapped!?"], "v2.ev13.1": ["自分で開けたからｗ", "you opened it yourself lol"], "v2.ev13.2": ["出して出して", "let me out"], "v2.ev14.0": ["うわ血…", "ugh, blood..."], "v2.ev14.1": ["見なきゃよかった", "shouldn't have looked"], "v2.ev14.2": ["なんでのぞいたんだよ", "why did you look in"], "v2.ev15.0": ["目が合った", "our eyes met"], "v2.ev15.1": ["トイレもう使えない", "can't use toilets anymore"], "v2.ev15.2": ["そこからのぞくな", "don't peek from there"], "v2.ev16.0": ["息止めた", "holding my breath"], "v2.ev16.1": ["机になりきってる", "fully becoming a desk"], "v2.ev16.2": ["見つかるな…", "don't get spotted..."], "v2.ev17.0": ["ナイスくぐり", "nice sneak"], "v2.ev17.1": ["忍者じゃん", "total ninja"], "v2.ev17.2": ["腰痛めないでｗ", "mind your back lol"], "v2.ev18.0": ["まだいた！？", "still there!?"], "v2.ev18.1": ["帰ったと思ったのに", "thought she left"], "v2.ev18.2": ["しつこい", "so persistent"], "v2.ev19.0": ["ポスターの目動いた", "the poster's eyes moved"], "v2.ev19.1": ["防犯意識高すぎ", "way too security-minded"], "v2.ev19.2": ["見張られてるｗ", "being watched lol"], "v2.ev20.0": ["何がいたんだろ…", "what was here..."], "v2.ev20.1": ["中身どこ行った", "where did it go"], "v2.ev20.2": ["台座だけ残ってる", "only the stand is left"], "v2.ev21.0": ["絵が増えてる…", "more paintings..."], "v2.ev21.1": ["画家が止まらない", "the artist won't stop"], "v2.ev21.2": ["誰が描いてるんだよ", "who is painting these"], "v2.ev22.0": ["手形が近づいてくる", "the handprints are coming"], "v2.ev22.1": ["ハイタッチしたいのかな", "wants a high five?"], "v2.ev22.2": ["手形増やすな", "stop adding handprints"], "v2.ev23.0": ["ダクトに手…", "a hand in the duct..."], "v2.ev23.1": ["そこ住んでるの？", "does it live there?"], "v2.ev23.2": ["狭い所から出てくるな", "don't come out of tiny spaces"], "v2.ev24.0": ["食べた…", "it ate it..."], "v2.ev24.1": ["怪異同士で喧嘩してて草", "ghosts fighting each other lol"], "v2.ev24.2": ["強すぎるだろ", "way too strong"], "v2.ev25.0": ["机の上きた", "on the desks now"], "v2.ev25.1": ["机は乗るもんじゃない", "desks aren't for crawling"], "v2.ev25.2": ["動きが無理", "that movement is a no"], "v2.ev26.0": ["逃げ切った！", "got away!"], "v2.ev26.1": ["頭脳プレー", "big brain play"], "v2.ev26.2": ["追いかけっこ上手すぎ", "too good at tag"], "v2.ev27.0": ["腕のびる…", "the arm stretches..."], "v2.ev27.1": ["般若の腕なが", "hannya has long arms"], "v2.ev27.2": ["届くな届くな", "don't reach don't reach"], "v2.ev28.0": ["にらめっこ勝てる？", "can you win the staring contest?"], "v2.ev28.1": ["笑ったら負け", "you lose if you laugh"], "v2.ev28.2": ["目そらすな", "don't look away"], "v2.ev29.0": ["顕微鏡に目…", "an eye in the microscope..."], "v2.ev29.1": ["観察されてるのこっち", "we're the ones being observed"], "v2.ev29.2": ["理科の時間おわり", "science class is over"], "v2.ev30.0": ["血だらけ…", "covered in blood..."], "v2.ev30.1": ["痛そう", "looks painful"], "v2.ev30.2": ["もう帰ろう！", "let's go home!"], "v2.ev31.0": ["首回った", "its head turned"], "v2.ev31.1": ["フクロウってそこまで回るっけ", "do owls turn that far?"], "v2.ev31.2": ["回りすぎ", "turned too much"], "v2.it.buzzer.0": ["ブザー作戦！", "buzzer strategy!"], "v2.it.buzzer.1": ["防犯ブザー鳴らす心霊配信初めて見たｗ", "first ghost stream with a safety buzzer lol"], "v2.it.buzzer.2": ["幽霊にブザー効くんか？", "do buzzers work on ghosts?"], "v2.it.chem.0": ["ケミカルライトいいね", "nice glow stick"], "v2.it.chem.1": ["ライブ会場かな？", "is this a concert?"], "v2.it.chem.2": ["振らないのかよｗ", "not gonna wave it? lol"], "v2.it.candle.0": ["ろうそくの明かり雰囲気出る", "the candlelight sets the mood"], "v2.it.candle.1": ["一気に儀式っぽくなったｗ", "suddenly feels like a ritual lol"], "v2.it.candle.2": ["火の扱い気をつけて", "careful with that fire"], "v2.it.spray.0": ["虫よけ準備ばっちり", "bug spray ready"], "v2.it.spray.1": ["クモ女に虫よけは草", "bug spray for spider woman lol"], "v2.it.spray.2": ["効くと思ってるの好き", "love that you think it works"], "v2.it.drink.0": ["ドーピング！", "doping!"], "v2.it.drink.1": ["翼をさずかった", "got wings"], "v2.it.drink.2": ["それで足速くなるんｗ", "that makes you faster? lol"], "v2.it.drinkG.0": ["Gまで飲んだ", "went for the G"], "v2.it.drinkG.1": ["本気の装備ｗ", "serious gear lol"], "v2.it.drinkG.2": ["Gってなんだよ", "what does G even mean"], "v2.it.salt.0": ["盛り塩助かる", "salt pile helps"], "v2.it.salt.1": ["台所から持ってきた？", "brought it from the kitchen?"], "v2.it.salt.2": ["塩で本当に寄ってこないんか", "does salt really keep them away?"], "v2.it.pmaskUse.0": ["お面つけた", "put on the mask"], "v2.it.pmaskUse.1": ["完全に向こう側の人", "totally one of them now"], "v2.it.pmaskUse.2": ["それで隠れられるの？", "you can hide with that?"]});
 for (const [c, L] of Object.entries({"spot_a": ["v2.spot_a.0", "v2.spot_a.1", "v2.spot_a.2"], "spot_q": ["v2.spot_q.0", "v2.spot_q.1", "v2.spot_q.2"], "idle_random": ["v2.idle_random.0", "v2.idle_random.1", "v2.idle_random.2", "v2.idle_random.3", "v2.idle_random.4", "v2.idle_random.5", "v2.idle_random.6", "v2.idle_random.7", "v2.idle_random.8", "v2.idle_random.9"], "chase_ez": ["v2.chase_ez.0", "v2.chase_ez.1", "v2.chase_ez.2", "v2.chase_ez.3"], "item_useless": ["v2.item_useless.0", "v2.item_useless.1", "v2.item_useless.2"], "idle_watch": ["v2.idle_watch.0", "v2.idle_watch.1", "v2.idle_watch.2", "v2.idle_watch.3", "v2.idle_watch.4", "v2.idle_watch.5"], "idle_chat": ["v2.idle_chat.0", "v2.idle_chat.1", "v2.idle_chat.2", "v2.idle_chat.3", "v2.idle_chat.4", "v2.idle_chat.5"], "quiet_unease": ["v2.quiet_unease.0", "v2.quiet_unease.1", "v2.quiet_unease.2", "v2.quiet_unease.3"], "quiet_chat": ["v2.quiet_chat.0", "v2.quiet_chat.1", "v2.quiet_chat.2"], "quiet_short": ["v2.quiet_short.0", "v2.quiet_short.1", "v2.quiet_short.2"], "bored_mild": ["v2.bored_mild.0", "v2.bored_mild.1", "v2.bored_mild.2"], "heard_bell": ["v2.heard_bell.0", "v2.heard_bell.1", "v2.heard_bell.2"]})) (CHAT_DICT.c[c] || (CHAT_DICT.c[c] = [])).push(...L);
@@ -20218,7 +20223,7 @@ Object.assign(ITEM.defs, {
   drink: { name: '栄養ドリンク', desc: '1分間、歩く速さが上がる。切れたあと少し息が上がる。', size: 0.18, act: '飲む' },
   drinkG: { name: '栄養ドリンクG', desc: '2分間、歩く速さが上がる（栄養ドリンクの上位版）。切れたあと少し息が上がる。', size: 0.18, act: '飲む' },
   stick: { name: 'こわれかけの自撮り棒', desc: '持っていると、インカメラが少し遠く・広く映る。インカメラで合計60秒使うと折れる。', size: 0.2 },
-  salt: { name: '盛り塩', desc: '足もとに置くと、まわり6mに怪異が寄りにくくなる。追ってきた怪異には効かない。', size: 0.18, act: '置く' },
+  salt: { name: '盛り塩', desc: '足もとに置くと、まわり6mに怪異が寄りにくくなり、入ってきた怪異は動きが半分の速さに遅くなる。', size: 0.18, act: '置く' },
   beads: { name: '数珠', desc: '持って入った周の間、追われている時に見失ってもらいやすくなる。', size: 0.18 },
   goldphone: { name: '金色のスマホ', desc: '伝説の記念品。見た目だけ。', size: 0.18 },
   goldframe: { name: '伝説のサムネイル枠', desc: '伝説の記念品。見た目だけ。', size: 0.18 },
@@ -20327,6 +20332,7 @@ const STICK = { k() { return ITEM.have.stick && world.selfie ? 1 : 0; },
   update(dt) { if (!this.k()) return; const d = SHOP.load(); d.stickT = (d.stickT || 0) + dt; if (d.stickT >= 60) { d.stickT = 0; ITEM.have.stick = false; SHOP.useOne('stick'); SND.knock(camera.position.clone(), 0.8); toast(LANG === 'en' ? 'The selfie stick snapped' : '自撮り棒がポキッと折れた', 1800); XCHAT.log('stick'); } if ((this.sv = (this.sv || 0) + dt) > 5) { this.sv = 0; SHOP.save(); } } };
 XCHAT.LIST.stick = ['sk.01', 'sk.02']; Object.assign(CHAT_DICT.t, { 'sk.01': ['折れたｗ', 'it snapped lol'], 'sk.02': ['安物だから…', 'cheap stuff...'] });
 const saltNear = p => (world.salts || []).some(s => Math.abs((p.y || 0) - s.y) < 1.6 && Math.hypot(p.x - s.x, p.z - s.z) < 6);
+function SALTK(p) { try { return p && saltNear(p) ? 0.5 : 1; } catch (e) { return 1; } }   /* 2026-11-16 盛り塩のまわり6mでは、怪異の速さが半分 */
 const beadsK = () => ITEM.have.beads ? 0.7 : 1;   /* 数珠：見失うまでの時間が7割に */
 /* 使う（持ち物から） */
 { const use0 = ITEM.use.bind(ITEM);
