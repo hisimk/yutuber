@@ -357,6 +357,7 @@
   #notePop .nbB p{margin:0 0 10px;font-size:13.5px;line-height:1.8}#notePop .nbB.long p{text-align:left}#notePop .nbN{font-size:11px;line-height:1.7;color:#8f8a82;text-align:left;margin:4px 0 6px}
   #notePop .nY{color:#ffd34d;font-weight:700}#notePop .nR{color:#ff5a5a;font-weight:800}#notePop .ph{white-space:nowrap}#notePop .ytag{white-space:nowrap}
   #notePop .nbOk{display:block;width:100%;margin-top:12px;padding:12px;border:none;border-radius:12px;background:#fff;color:#111;font-size:15px;font-weight:700}#notePop .nbX{position:absolute;right:8px;top:6px;background:none;border:none;color:#8f8a82;font-size:22px;padding:4px 8px}
+  .ytag.key{color:#ff9fb0;border-color:rgba(255,159,176,.55);background:rgba(255,159,176,.1)}
   .ytag{display:inline-block;font-size:10px;font-weight:700;line-height:1.5;border:1px solid;border-radius:5px;padding:0 5px;margin-left:6px;vertical-align:1px;white-space:nowrap;font-style:normal}.ytag.use{color:#c4a56c;border-color:rgba(196,165,108,.5);background:rgba(196,165,108,.1)}.ytag.perm{color:#8db0c0;border-color:rgba(141,176,192,.5);background:rgba(141,176,192,.1)}.ytag.in{color:#bdb8ae;border-color:rgba(189,184,174,.45)}#imTitle .ytag{font-size:12px;vertical-align:3px;letter-spacing:0}.yhow{font-style:normal;color:#d6d0c4;font-weight:700}
   .uiIc{width:15px;height:15px;vertical-align:-2px;margin-right:5px;opacity:.74}
   #shopRow{display:flex;gap:8px;margin:12px auto 0;max-width:100%}#shopRow #shopBtn{flex:1;margin:0;padding:0 8px;white-space:nowrap;display:flex;align-items:center;justify-content:center}#shopRow #bagBtn{flex:none;width:44px;height:44px;padding:0;margin:0;border-radius:50%;display:flex;align-items:center;justify-content:center}
@@ -14456,7 +14457,7 @@ const INV = {
       const D = PERM.DEFS[id], el = document.createElement('div'); el.className = 'invIt perm' + (PERM.active(id) ? ' on' : '');
       el.innerHTML = `<img alt=""><div><b></b><small></small></div><div class="pSw"></div>`; el.querySelector('img').src = PERM_IMG[id];
       const txt = v => TR(D.desc) + '　' + TR(v ? '効果：オン' : '効果：オフ');
-      el.querySelector('b').innerHTML = `${TR(D.name)}<span class="ytag perm">${TR('ずっと')}</span>`; const stx = v => { el.querySelector('small').textContent = txt(v); el.querySelector('small').insertAdjacentHTML('afterbegin', YTAG.desc(id, '')); }; stx(PERM.active(id));
+      el.querySelector('b').innerHTML = `${TR(D.name)}<span class="ytag key">${TR('だいじなもの')}</span>`; const stx = v => { el.querySelector('small').textContent = txt(v); el.querySelector('small').insertAdjacentHTML('afterbegin', YTAG.desc(id, '')); }; stx(PERM.active(id));
       el.addEventListener('click', e => { e.stopPropagation(); const v = !PERM.active(id); PERM.setOn(id, v); el.classList.toggle('on', v); stx(v); });
       if (id === 'fixcam' && PERM.active(id)) { const b = document.createElement('button'); b.className = 'invAct'; b.type = 'button'; b.textContent = TR(FIXCAM.placed ? '設置中' : '置く'); b.disabled = FIXCAM.placed; b.addEventListener('click', e => { e.stopPropagation(); if (FIXCAM.placed) return; this.hide(); setTimeout(() => FIXCAM.startFrame(), 60); }); el.appendChild(b); }   // 2026-11-14 定点カメラ：画角を決める画面へ（設置中は、カメラに近づいて回収すると置き直せる）
       L.appendChild(el);
@@ -21344,6 +21345,8 @@ Object.assign(EN, { '銀の盾': 'Silver Shield', '金の盾': 'Gold Shield', '�
     return r; }; }
 /* スタート画面を開いた時に盾を渡す */
 { const T0 = SHOP.title.bind(SHOP); SHOP.title = function () { const r = T0(); if (world.state === 'title') setTimeout(() => SHIELD.grant(), 400); return r; }; }
+/* 2026-11-17 「だいじなもの」の札：ランクの機材・シュン足など（PERM）と、自分の物になった見た目の物。捕まっても失わない */
+{ const T0 = YTAG.tag.bind(YTAG); YTAG.tag = function (id) { let key = !!PERM.DEFS[id]; if (!key) { const it = ECON.items.find(x => x[0] === id); key = !!(it && it[3] === 'look'); } return key ? `<span class="ytag key">${TR('だいじなもの')}</span>` : T0(id); }; }
 /* 持ち物（スタート画面）：「もちもの」「だいじなもの」のタブ */
 { const B0 = SHOP.openBag.bind(SHOP); SHOP.openBag = function () { B0(); const el = $('#bagUI'), list = el.querySelector('.shList'); if (!list) return; const en = LANG === 'en'; this.bagTab = this.bagTab || 'm';
     const secs = [...list.children]; let cur = 'm'; const groups = { m: [], d: [] }; for (const c of secs) { if (c.classList.contains('shSec')) cur = groups.m.length ? 'd' : 'm'; groups[cur].push(c); }
