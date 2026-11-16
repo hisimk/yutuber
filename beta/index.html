@@ -866,7 +866,7 @@
 <div class="screen show" id="start">
   <button class="btn gearBtn" id="startGear" aria-label="設定"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>設定</span></button>
   <h1 class="title logoTitle"><img id="titleLogo" alt="幽tuber 撮レ高狙エ"><div id="logoAnim" role="img" aria-label="幽tuber 撮レ高狙エ"><div class="lgGrp"></div></div></h1>
-  <div class="sub">夜の旧校舎で、決定的瞬間を撮って帰る</div>
+  <div class="sub">心霊動画を撮って「いいね・コメント・収益」を稼げ！</div>
   <div class="rankLine"><span>ランク</span><b id="rankTag"></b></div>
   <div class="opts">
     <div class="opt"><div class="nmL">名前<small>※コメントでの呼び名</small></div><input id="chName" maxlength="12" placeholder="心霊チャンネル"></div>
@@ -874,7 +874,7 @@
     <div id="nameNg" style="display:none;color:#ff6a5a;font-size:13px;font-weight:600;text-align:center;padding:2px 4px"></div>
     <div class="opt" id="startRow" style="display:none"><div id="startLbl">スタート地点</div><div class="stSeg"><button type="button" data-st="front">玄関から</button><button type="button" data-st="exit">2階の非常口から</button></div></div>
   </div>
-  <button class="go" id="goBtn">旧校舎に入る</button>
+  <button class="go" id="goBtn">撮影をはじめる</button>
   <button class="colBtn" id="colBtn">心霊アーカイブ</button>
   <div class="verTag"></div>
   <div class="warnLine" id="warnLine">⚠ 大きな音・点滅があります</div>
@@ -942,7 +942,7 @@
 <div id="tut"><div id="tHole"><b id="tTag"></b></div><div id="tStick"><b></b><i></i></div><div id="tSwipe"><i></i></div><div class="tBox" id="tBox"><button id="tSkipTop">遊び方をとばす ✕</button><div class="tStep" id="tStep"></div><div class="tIco" id="tIco"></div><img id="tGif" alt=""><h3 id="tTitle"></h3><p id="tText"></p><div class="tBtns"><button class="tSkip" id="tBack">もどる</button><button class="go" id="tNext">次へ</button></div></div></div>
 <div id="intro"><canvas id="introCv"></canvas><div class="iGhost ghL" aria-hidden="true"></div><div class="skip"></div></div>
 <div class="screen" id="result">
-  <div id="resTop"><div id="permIcons"></div><div id="resHeadL"><h2 id="resTitle">帰還</h2><div class="meta" id="resMeta"></div></div><div id="resR"><button id="retakeBtn">再撮影</button></div></div>
+  <div id="resTop"><div id="permIcons"></div><div id="resHeadL"><h2 id="resTitle">生還</h2><div class="meta" id="resMeta"></div></div><div id="resR"><button id="retakeBtn">再撮影</button></div></div>
   <div id="resSum"><div id="resCount">今回の撮れ高 <b id="resCountN">0</b>回</div><div id="likeRow"><div id="likeHero"><i class="like" id="likeIcon"></i><b id="evScore">0</b></div><div id="likeSub">いいね</div></div></div>
   <div id="replayRow"><div id="replayWrap"><video id="replay" playsinline controls preload="auto"></video><div id="noVideo">持ち帰った映像はありません</div></div><div id="resChatHost"></div></div>
   <div id="evWrap"><div id="missed"></div><div id="evHead"><span>いいねの内訳</span><span id="evCount"></span></div><div id="evList"></div></div>
@@ -1462,7 +1462,7 @@ const EN = {
   '画質': 'Quality', '標準': 'Standard', '軽い': 'Light', '重い時は「軽い」に（少し粗くなり、影が減ります）': 'Use Light if the game is slow (a bit rougher, fewer shadows)', '画面の細かさは、この回の録画が終わってから変わります': 'Resolution will change after this run’s recording ends',
   '動画をMP4に変換しています。少し待ってから、もう一度押してください': 'Converting the video to MP4. Please wait a moment and press again', '変換できました。もう一度押してください': 'Converted. Please press again',
   // スタート・設定
-  '夜の旧校舎で、決定的瞬間を撮って帰る': 'Film the decisive moment in the old school at night — and make it out',
+  '夜の旧校舎で、決定的瞬間を撮って帰る': 'Film the decisive moment in the old school at night — and make it out', '心霊動画を撮って「いいね・コメント・収益」を稼げ！': 'Film ghost videos and earn likes, comments and money!', '撮影をはじめる': 'Start filming',
   'チャンネル名': 'Channel name', 'なまえ': 'Name', 'タイトルを編集': 'Edit title', '無題の動画': 'Untitled video', 'とめどなき実況': "Nonstop Commentary", '大きな声での実況': "Loud Commentary", '悲鳴一閃': "Instant Scream", '遅れてくる恐怖': "Delayed Terror", '絶叫逃走中': "Screaming While Fleeing", '息つく暇もない': "No Time to Breathe", '隠れてるんですけど': "I'm Supposed to Be Hiding", '見つかるって！': "They'll Find You!", '静かに実況中': "Quiet Commentary", '急に小声': "Sudden Whisper", '急に無口': "Suddenly Speechless", '実況再開': "Commentary Resumed", 'メモリーカード': 'Memory card', '録画できる時間が15秒増える。': 'Adds 15 seconds of recording time.', 'いかついサングラス': 'Tough sunglasses', 'かけると威圧感が上がる。怪異に効果はない。': 'Makes you look intimidating. No effect on ghosts.',
   'パーティーなサングラス': 'Party sunglasses', '星型のサングラス。つけても何の意味もない。': 'Star-shaped sunglasses. Completely pointless.', '使いかけモバイルバッテリー': 'Half-used power bank', '少しだけ充電が残っている。電池残量が15％回復する。': 'A little charge left. Restores 15% battery.',
   'クマ避けの鈴': 'Bear bell', 'クマ避けの鈴。ここでは、別のものを呼び寄せてしまう。拾うと、この探索中は外せない。': 'A bell to keep bears away. Here it attracts something else. Once picked up, it can’t be removed for this run.',
@@ -1506,11 +1506,11 @@ const EN = {
   '怪奇現象を': 'Capture the paranormal', 'カメラに収めろ！': 'on camera!', '心霊動画の撮れ高を': 'Capture the ghostly money shot',
   // 結果
   '決定的瞬間は映っていなかった': 'No decisive moment was caught', '撮れ高なし。次は仕込みをするべき？': 'Nothing worth posting. Time to set something up next time?',
-  '帰還': 'Escaped', '満身創痍の帰還': 'Barely made it back', 'タイトルにもどる': 'Back to title', '回収された映像': 'Recovered footage', '逆さ女に襲われた': 'Attacked by the Upside-down Woman', 'クモ女に襲われた': 'Attacked by the Spider Woman', '人体模型に襲われた': 'Attacked by the Anatomy Model', 'オフタリサマに襲われた': 'Attacked by Ofutarisama', '継ぎ接ぎのナカヨシに襲われた': 'Attacked by the Stitched Nakayoshi', '怪異に襲われた': 'Attacked by a ghost', 'カメラが壊れる直前まで': 'Until just before the camera broke',
+  '帰還': 'Survived', '満身創痍の帰還': 'Barely made it back', 'タイトルにもどる': 'Back to title', '回収された映像': 'Recovered footage', '逆さ女に襲われた': 'Attacked by the Upside-down Woman', 'クモ女に襲われた': 'Attacked by the Spider Woman', '人体模型に襲われた': 'Attacked by the Anatomy Model', 'オフタリサマに襲われた': 'Attacked by Ofutarisama', '継ぎ接ぎのナカヨシに襲われた': 'Attacked by the Stitched Nakayoshi', '怪異に襲われた': 'Attacked by a ghost', 'カメラが壊れる直前まで': 'Until just before the camera broke',
   '最後まで回っていた映像': 'Footage that kept rolling to the end', 'クモ女に捕まった': 'Caught by the Spider Woman', '（暗闇から生還）': ' (survived the dark)',
   'いいね': 'Likes', 'いいねの内訳': 'Likes breakdown', '持ち帰った映像はありません': 'No footage brought back', 'この環境では映像を書き出せませんでした（撮れ高のみ）': 'Video couldn’t be exported here (likes only)',
   '決定的瞬間は映っていなかった。空振りの廊下も記録です。': 'No decisive moment was caught. An empty hallway is a record too.',
-  '動画を保存・投稿': 'Save / post video', '結果を画像で保存': 'Save result image', '動画と結果をシェア': 'Share video + result', '動画だけ': 'Video only', '結果画像だけ': 'Result image only', '結果をシェア': 'Share result', '撮影': 'Recorded', '再撮影': 'Shoot again', '動画を仕上げています…': 'Finishing the video…', 'ホーム画面に追加して遊ぶと、記録が消えにくくなります': 'Add to Home Screen to keep your records safer', 'TikTok・インスタは「動画だけ」がおすすめ（動画の最後に結果が入っています）': 'For TikTok / Instagram, use “Video only” (the result is at the end of the video)', '生還': 'Escaped', 'もう一度入る': 'Go back in',
+  '動画を保存・投稿': 'Save / post video', '結果を画像で保存': 'Save result image', '動画と結果をシェア': 'Share video + result', '動画だけ': 'Video only', '結果画像だけ': 'Result image only', '結果をシェア': 'Share result', '撮影': 'Recorded', '再撮影': 'Shoot again', '動画を仕上げています…': 'Finishing the video…', 'ホーム画面に追加して遊ぶと、記録が消えにくくなります': 'Add to Home Screen to keep your records safer', 'TikTok・インスタは「動画だけ」がおすすめ（動画の最後に結果が入っています）': 'For TikTok / Instagram, use “Video only” (the result is at the end of the video)', '生還': 'Survived', 'もう一度入る': 'Go back in',
   '保存しました': 'Saved', '保存をやめました': 'Canceled', 'ダウンロードを開始しました': 'Download started', 'この画面では保存できませんでした。': 'Couldn’t save on this screen.',
   'ダウンロードを開始しました。始まらない場合は、再生画面のメニューから保存してください。': 'Download started. If it doesn’t, save from the video player menu.',
   '投稿文（#幽tuber）をコピーしました。アプリで消えていたら貼り付けてください': 'Post text (#幽tuber) copied. Paste it if the app drops it', '画像を作っています…': 'Creating image…',
@@ -14409,6 +14409,7 @@ const INV = {
   syncActs() { for (const b of document.querySelectorAll('#invList .invAct[data-id]')) { const id = b.dataset.id, D = ITEM.defs[id], w = ITEM.wearing(id); b.textContent = TR(w ? D.off : D.on); b.classList.toggle('on', w); } },
   hide() {
     if (!this.open) return; this.open = false; $('#inv').classList.remove('show');
+    if (this.usedSe) { this.usedSe = false; setTimeout(() => { try { playSfx('duvet_rustle', { ear: 0, gain: 0.55, dur: 0.7 }) || playSfx('page_turn', { ear: 0, gain: 0.5, dur: 0.4 }); } catch (e) { } }, 60); }   /* 2026-11-16 持ち物で道具を使って戻った時：カバンを探る布の音（録音素材） */
     if (ITEM.fxQ.length && typeof ACC !== 'undefined') { const q = ITEM.fxQ.slice(); ITEM.fxQ = []; setTimeout(() => { for (const [i, o] of q) try { ACC.fx(i, o); } catch (e) { } }, 60); } else ITEM.fxQ = [];   /* サングラスの演出は、閉じてから */
     $('#invScore').classList.remove('show');
     world.state = 'play'; lastT = performance.now();
@@ -15065,7 +15066,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.42';
+const VERSION = '0.16.43';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -20422,7 +20423,7 @@ Object.assign(SHOP, {
 });
 try { SHOP.title(); } catch (e) { console.warn('ショップの表示', e); }   /* スタート画面に、最初からショップのボタンと所持金を出す */
 setTimeout(() => { try { SHOP.title(); RANKPOP.check(); } catch (e) { } }, 1500);
-{ const u0 = ITEM.use; ITEM.use = function (id) { const r = u0.call(this, id); if (r) try { const k = id === 'pmask' ? 'pmaskUse' : id; if (XCHAT.LIST['it_' + k]) XCHAT.log('it_' + k); } catch (e) { } return r; }; }   /* 道具を使った時のコメント */
+{ const u0 = ITEM.use; ITEM.use = function (id) { const r = u0.call(this, id); if (r && INV.open) INV.usedSe = true; if (r) try { const k = id === 'pmask' ? 'pmaskUse' : id; if (XCHAT.LIST['it_' + k]) XCHAT.log('it_' + k); } catch (e) { } return r; }; }   /* 道具を使った時のコメント */
 const SHOPFX = { update(dt) { IDLEC.update(dt); if (world.state !== 'play') return; BUZZ.update(dt); CANDLE.update(dt); DRINK.update(); STICK.update(dt); } };
 /* =========================================================
    2026-11-16 投げ銭（第2弾）：中堅から。コメントなしで、色の帯に「名前 ¥金額」だけ
