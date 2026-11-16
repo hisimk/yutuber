@@ -5137,7 +5137,7 @@ const WD = {
 const CH = {
   state: 'off', lastSeen: V(), seenAt: -9, repath: 0, searchT: 0, id: 0, roll: null, sndT: 0, speedMul: 1, grace: 0,
   start(mode = 'chase') {
-    if (world.mannRun || WD.prey) return;
+    if (world.mannRun || WD.prey || world.nakaFriend) return;   /* 2026-11-16 復讐を果たしたナカヨシはもう追わない */
     if (this.state !== 'off' && mode === 'chase') return;
     this.state = mode; this.id++; this.roll = null; this.lastSeen.set(player.x, player.y, player.z); this.seenAt = world.t; this.repath = 0; this.speedMul = mode === 'hunt' ? 0 : 1; this.grace = 0;
     WD.glance = null; SG.ovYaw = 0; if (DIR.active) DIR.end(DIR.active);
@@ -5359,7 +5359,7 @@ const HIDE = {
 const CAP = {
   on: false, t: 0, camYaw: 0, camPitch: 0,
   start() {
-    if (this.on || world.state !== 'play') return; scareZoom1();
+    if (this.on || world.state !== 'play' || world.t < (world.invUntil || 0) || world.nakaFriend) return; scareZoom1();
     if (ITEM.charm('woman')) { if (!OFUDA.on && !PHAN.on) ITEM.banishWoman(); return; }   // おまもり／封印のお札が一度だけ身代わりに
     if (world.selfie) SELF.set(false);
     this.on = true; this.t = 0; this.seenS = 0; world.capture = 0.0001; PAD.hit(1); CH.state = 'off'; $('#hud').classList.add('off'); $('#actBtn').classList.remove('show');
@@ -13425,7 +13425,8 @@ function escape() {
   world.state = 'end'; if (DIR.active) DIR.end(DIR.active);
   if (rec.active) award('alive', 'いのちだいじに', 10);
   if (rec.time > 0.5 && (world.battery ?? 100) <= 1) award('battery1', '電池1%の帰還', 120);   /* 2026-11-16 電池1%以下で、録画を持ったまま帰る */   /* 2026-11-13：脱出の瞬間を録画しているときだけ */
-  if (chased && rec.active) award('chaseOut', '追われながら生還', 50);   // 追跡中に帰還   // 帰還ボーナス
+  if (chased && rec.active) award('chaseOut', '追われながら生還', 50);
+  if (world.urahSeen && rec.active) award('urahEscape', 'オフタリサマから逃げ切った', 150);   /* 2026-11-16 オフタリサマが出た周に、出口から帰還 */   // 追跡中に帰還   // 帰還ボーナス
   if (rec.active) stopRec('end');
   $('#hud').classList.add('off'); postMat.uniforms.black.value = 1; render();
   if (A.ctx) A.master.gain.setTargetAtTime(0.0, A.ctx.currentTime, 0.5);
@@ -15120,7 +15121,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.51';
+const VERSION = '0.16.52';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -18665,7 +18666,7 @@ const URAH = {
     this.gDt = 0;
   },
   reset() {
-    URINT.reset(); URPREY.reset(); this.eatMul = 1; this.spawnK = null; this.restT = 0;
+    URFUDA.reset(); URINT.reset(); URPREY.reset(); this.eatMul = 1; this.spawnK = null; this.restT = 0;
     if (!this.ready) { this.on = false; return; }
     const s = this.sc(); this.root.scale.setScalar(s); this.graph();
     for (const k in FURN.items) for (const g of FURN.items[k]) if (g.userData.urO) { g.position.copy(g.userData.urO.p); g.rotation.copy(g.userData.urO.r); g.userData.flying = false; }
@@ -18717,6 +18718,9 @@ const URAH = {
     if (world.state !== 'play' || this.st === 'off') { URASP.stop(); return; }
     if (this.st === 'wait') { URINT.omen(dt); if (world.t >= this.at) this.spawn(); return; }
     if (typeof REVIVE !== 'undefined' && REVIVE.on) return;
+    world.urahSeen = true; URFUDA.follow();
+    if (this.st === 'revenge') { this.headTick(dt); URFUDA.revTick(dt); URFUDA.follow(); return; }
+    if (this.st === 'stun' || this.st === 'summon') { this.headTick(dt); URFUDA.tick(dt); URFUDA.follow(); this.apply(); return; }
     const dist = Math.hypot(player.x - this.pos.x, player.z - this.pos.z), dy = Math.abs(player.y - this.pos.y);
     if (dist < URAH_CFG.catchR * this.root.scale.x / 1.15 && dy < 1.2 && !player.hidden && this.st !== 'climb' && !['prey', 'feed', 'rest'].includes(this.st) && !(this.face === 'noh' && this.frozen)) { this.capture(this.face); return; }
     if (this.sees()) this.lastSeen = world.t;
@@ -18845,6 +18849,7 @@ const URAH = {
   },
   /* ── 捕まえる：帯の下の口が目の前で大きく開いて、かみつく */
   capture(side) {
+    if (URFUDA.try(side)) return;   /* 2026-11-16 封印のお札：倒せないが、ひるませる／2枚目でナカヨシを呼ぶ */
     if (this.st === 'cap' || world.state !== 'play') return; if (URAHT.blocked()) return;   /* テスト用の無敵 */ scareZoom1(); if (world.selfie) SELF.set(false); if (DIR.active) DIR.end(DIR.active);
     if (HIDE.lk) { const lk = HIDE.lk; lk.hinge.rotation.y = 1.5; HIDE.lk = null; player.hidden = false; lockerInside.visible = false; }
     world.capture = 0.0001; PAD.hit(1); $('#hud').classList.add('off'); $('#actBtn').classList.remove('show');
@@ -19643,6 +19648,7 @@ const PHAN = {
     if (SP.ready && SP.mixer && this.mode !== 'done') { if (!SP.cur || SP.cur !== SP.act.CeilingCrawl) spPlay('CeilingCrawl', 0); SP.mixer.update(dt * 1.3); }
     if (MANN.ready && this.mode !== 'done' && MANN.cur !== 'Run') MANN.play('Run', 1.15);
     if (this.tagT !== undefined) this.tagUpd(dt);
+    if (this.mode === 'friend') { if (world.t > (this.thT || 0) && distTo(WD.pos.x, WD.pos.z) < 14 && Math.abs(WD.pos.y - player.y) < 1.2) { this.thT = world.t + rnd(25, 45); this.thanks(); } return; }   /* 2026-11-16 復讐のあと：襲わず、たまにアリガトウ */
     if (this.mode === 'retreat') return this.retreatUpd(dt);
     if (this.mode === 'gone') { if (world.t >= this.retAt) { this.mode = 'idle'; WD.release(true); this.hunt(); } return; }
     if (this.mode === 'dead') return this.deadUpd(dt);
@@ -20514,17 +20520,20 @@ setTimeout(() => { try { SHOP.title(); RANKPOP.check(); } catch (e) { } }, 1500)
    ========================================================= */
 const HMEMO = {
   KEY: 'yt_hmemo_v1', d: null, cur: null,
+  NO: ['urahRevenge', 'urahSummon'],   /* 2026-11-16 メモにしない撮れ高（最高の撮れ高・ナカヨシ召喚） */
+  RW: { SS: 0.12, S: 0.3, A: 0.6, B: 1, C: 1, D: 1, PH: 0 },   /* レア度が高いほど出にくい */
   load() { if (!this.d) { try { this.d = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) { } if (!this.d || !this.d.got) this.d = { got: {} }; } return this.d; },
   save() { try { localStorage.setItem(this.KEY, JSON.stringify(this.d)); } catch (e) { } },
   colItems() { try { return (COL.data || (COL.load && COL.load()) || {}).items || {}; } catch (e) { return {}; } },
   mask(s, key, p) { const R = chatRng(chatHash(key + s)); let n = 0; const a = Array.from(String(s || '')); const out = a.map(c => { const k = /[一-龯々〆ァ-ヶーA-Za-z0-9０-９]/.test(c), h = /[ぁ-ん]/.test(c); if ((k && R() < p) || (h && R() < p * 0.5)) { n++; return '■'; } return c; });   /* 漢字・カタカナは多めに、ひらがなも少し伏せる */ if (!n && a.length > 1) { const i = a.findIndex(c => /[一-龯々ァ-ヶA-Za-z]/.test(c)); if (i >= 0) out[i] = '■'; } return out.join(''); },
   /* 次に置くメモを決める（まだ読んでいない撮れ高から。撮れていない物を多めに） */
   pick() {
-    const got = this.load().got, items = this.colItems(), L = COL.LIST.filter(x => x[0] !== 'memoHint' && !got[x[0]] && !(NOSG && NOSG_AW.includes(x[0])));
+    const got = this.load().got, items = this.colItems(), L = COL.LIST.filter(x => x[0] !== 'memoHint' && !this.NO.includes(x[0]) && !got[x[0]] && !(NOSG && NOSG_AW.includes(x[0])));
     if (!L.length) { this.cur = null; return null; }
     const un = L.filter(x => !items[x[1]]), src = un.length && (Math.random() < 0.75 || un.length === L.length) ? un : L.filter(x => items[x[1]]);
-    const x = pick(src.length ? src : L), key = x[0], d = CHIP_DESC[key] || [x[1], TR(x[1])];
-    this.cur = { key, r: rankOf({ key, pts: x[2] }), seen: !!items[x[1]], t: this.mask(x[1], key, 0.5), d: this.mask(d[0], key, 0.42), te: this.mask(TR(x[1]), key, 0.5), de: this.mask(d[1], key, 0.42) };
+    const P = src.length ? src : L, x = pickW(P.map(y => [y, this.RW[rankOf({ key: y[0], pts: y[2] })] ?? 1])), key = x[0], d = CHIP_DESC[key] || [x[1], TR(x[1])];
+    const r = rankOf({ key, pts: x[2] }), mt = r === 'SS' ? 0.72 : 0.5, md = r === 'SS' ? 0.62 : 0.42;   /* SSは穴あき多め */
+    this.cur = { key, r, seen: !!items[x[1]], t: this.mask(x[1], key, mt), d: this.mask(d[0], key, md), te: this.mask(TR(x[1]), key, mt), de: this.mask(d[1], key, md) };
     const en = LANG === 'en'; ITEM.defs.hmemo.desc = (en ? `Rarity ${rkTxt(this.cur.r)}\n"${this.cur.te}"\n${this.cur.de}` : `レア ${rkTxt(this.cur.r)}\n「${this.cur.t}」\n${this.cur.d}`);
     return this.cur;
   },
@@ -20661,7 +20670,7 @@ const ITEM_TIER = {
 };
 const ITEMFX = {
   SE: { rare: 'item_rare', ultra: 'item_ultra' },   /* 2026-11-16 提供の音 */
-  tier(id, yen) { if (yen !== undefined) return yen >= 1000 ? 'ultra' : yen >= 500 ? 'rare' : null; return ITEM_TIER.ultra.includes(id) ? 'ultra' : ITEM_TIER.rare.includes(id) ? 'rare' : null; },
+  tier(id, yen) { if (yen !== undefined) return yen >= 1000 ? 'ultra' : yen >= 500 ? 'rare' : null; if (id === 'hmemo') { const r = HMEMO.cur && HMEMO.cur.r; return r === 'SS' ? 'ultra' : (r === 'S' || r === 'A') ? 'rare' : null; }   /* かすれたメモは、書かれた撮れ高のレア度で（SS激レア・S/Aレア・B〜D通常） */ return ITEM_TIER.ultra.includes(id) ? 'ultra' : ITEM_TIER.rare.includes(id) ? 'rare' : null; },
   cols(t) { return t === 'ultra' ? ['#ff5a5a', '#ffd34d', '#5fd38a', '#4fb3ff', '#b07cff', '#ff9ae6'] : ['#fff2b0', '#ffd34d', '#ffe680']; },
   spark(host, cx, cy, t, n, burst) {
     const cols = this.cols(t);
@@ -20690,6 +20699,148 @@ const ITEMFX = {
   ITEM.pick = function (it) { const was = it.taken, r = P.call(this, it); if (!was && this.modal && this.modal.it === it) ITEMFX.modal(it.id); return r; };
   ITEM.pickMoney = function (it) { const r = M.call(this, it); ITEMFX.money(it.yen || 0); return r; };
   if (B) ITEM.askBell = function (it) { const r = B.call(this, it); if ($('#itemModal').classList.contains('show')) ITEMFX.modal('bell'); return r; }; }
+/* =========================================================
+   2026-11-16 オフタリサマに封印のお札（倒せない怪異。お札は燃えずに貼ったまま）
+   ・1枚目：捕まった時にお札があれば、向いている顔に貼る。その場でひるんで約7秒止まる（その間に逃げられる）
+   ・2枚目：もう片方の顔に貼る。その場で「継ぎ接ぎのナカヨシ」を呼び出す（演出の約4.5秒は無敵）→ そのあとは両方に追われる
+   ・撮れ高：お札を貼った（SS・500点。2回とも）／召喚を撮った（SS・150点）／オフタリサマが出た周に出口から帰った（S・150点）
+   ・確認用：?wingopen&urah&urahat=0&carry=ofuda,ofuda（お札2枚を持ってオフタリサマの周）
+   ========================================================= */
+const URFUDA = {
+  n: 0, tags: [], st: null,
+  reset() { if (this.rv && this.rv.pool) { scene.remove(this.rv.pool.grp); } this.rv = null; world.nakaFriend = false; if (URAH.root) URAH.root.rotation.order = 'XYZ'; for (const t of this.tags) { if (t.m.parent) t.m.parent.remove(t.m); t.m.material.dispose(); } this.tags = []; this.n = 0; this.st = null; world.urahSeen = false; },
+  tex() { if (!this.tx) { this.tx = new THREE.TextureLoader().load(ITEM_IMG.ofuda); this.tx.colorSpace = THREE.SRGBColorSpace; } return this.tx; },
+  /* 顔にお札を貼る（顔の骨から外向きに少し浮かせ、毎フレーム追従） */
+  tag(side) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.11, 0.34), new THREE.MeshBasicMaterial({ map: this.tex(), transparent: true, side: THREE.DoubleSide, depthWrite: false })); m.renderOrder = 7; scene.add(m); this.tags.push({ m, side, rz: rnd(-0.25, 0.25) }); this.follow(); },
+  follow() {
+    if (!this.tags.length || !URAH.ready) return; const c = URAH.bones.Head ? URAH.bones.Head.getWorldPosition(V()) : URAH.pos.clone().setY(URAH.pos.y + 1.4), s = URAH.root.scale.x;
+    for (const t of this.tags) { const f = URAH.head(t.side), d = f.clone().sub(c); if (d.lengthSq() < 1e-6) d.set(Math.sin(URAH.by), 0, Math.cos(URAH.by)); d.normalize(); t.m.position.copy(f).addScaledVector(d, 0.05 * s); t.m.lookAt(f.clone().addScaledVector(d, 1)); t.m.rotateZ(t.rz); t.m.scale.setScalar(s * 1.1); t.m.visible = URAH.root.visible; }
+  },
+  /* 捕まった瞬間（URAH.capture の最初）。お札を使ったら true */
+  try(side) {
+    if (!(ITEM.have.ofuda > 0) || this.n >= 2 || world.state !== 'play' || this.st) return false;
+    ITEM.have.ofuda = (ITEM.have.ofuda | 0) - 1; this.n++;
+    const face = this.n === 1 ? (side || URAH.face) : (this.tags[0].side === 'noh' ? 'hannya' : 'noh'); this.tag(face);
+    PAD.hit(1); world.vhs = Math.max(world.vhs || 0, 0.8); noiseHit(1); const U = postMat.uniforms; U.tear.value = 0.5; setTimeout(() => { U.tear.value = 0; }, 300);
+    if (rec.active) award('urahFuda' + this.n, 'おふたりさまに封印のお札を貼った', 500);
+    try { XCHAT.log(this.n === 1 ? 'urFuda1' : 'urFuda2'); } catch (e) { }
+    URAH.frozen = true; URAH.route = []; URAH.restArm && URAH.restArm(); URAH.scream(face, true);
+    const away = V(URAH.pos.x - player.x, 0, URAH.pos.z - player.z); if (away.lengthSq() < 1e-4) away.set(Math.sin(URAH.by), 0, Math.cos(URAH.by)); away.normalize();
+    this.st = { k: this.n === 1 ? 'stun' : 'summon', t: 0, away, p0: URAH.pos.clone() }; URAH.st = this.st.k;
+    if (this.n === 2) this.summonStart();
+    toast(TR(this.n === 1 ? 'お札を貼った！' : 'もう片方の顔にもお札を貼った…'), 2000);
+    if (TEST || DEV) console.log('URFUDA', this.n, face);
+    return true;
+  },
+  /* URAH.update から（stun / summon の間） */
+  tick(dt) {
+    const S = this.st; if (!S) { URAH.toChase(); return; } S.t += dt; const U = postMat.uniforms;
+    /* ひるむ：のけぞって震えながら、少し後ろへ下がる */
+    const back = smooth(0, 0.45, S.t) * 0.9; let nx = S.p0.x + S.away.x * back, nz = S.p0.z + S.away.z * back; const lv = S.p0.y > 1.6 ? 1 : 0; [nx, nz] = collide(nx, nz, 0.3, lv); URAH.pos.x = nx; URAH.pos.z = nz;
+    const sh = Math.max(0, 1 - S.t / 2.5); URAH.roll = Math.sin(S.t * 38) * 0.12 * sh + Math.sin(S.t * 2.1) * 0.04; URAH.pitch = -0.35 * smooth(0, 0.3, S.t) * (S.k === 'stun' ? (1 - smooth(5.5, 7, S.t)) : 1);
+    URAH.mouthSet(0.9 + 0.3 * Math.sin(S.t * 25) * sh);
+    if (S.k === 'stun') { if (S.t > 7) { this.st = null; URAH.frozen = false; URAH.roll = 0; URAH.pitch = 0; URAH.toChase(); } return; }
+    /* 召喚：ナカヨシが床から立ち上がる */
+    const N = S.naka; if (N) {
+      const k = smooth(0.4, 3.2, S.t); SG.root.position.set(N.p.x, N.p.y - (1 - k) * 1.7, N.p.z); SG.root.rotation.set(0, Math.atan2(player.x - N.p.x, player.z - N.p.z), Math.sin(S.t * 31) * 0.06 * (1 - k)); sgSetOpacity(k < 0.02 ? 0 : (Math.random() < 0.85 ? Math.min(1, k * 1.3) : 0.2));
+      U.tear.value = S.t < 3.4 ? rnd(0.02, 0.2) : 0; world.vhs = Math.max(world.vhs || 0, 0.45);
+      if (S.t > 0.4 && !N.sc) { N.sc = 1; wdScreamLong(0, 0.9); }
+      if (S.t > 2.2 && !N.sc2) { N.sc2 = 1; URAH.scream('hannya', true); jumpSting('jump_b', 0.8, 3); }
+      if (rec.active && S.t > 1.0 && seen(sgHead(V()), { maxD: 14, margin: 1.15 })) award('urahSummon', 'ナカヨシ召喚の瞬間', 150);
+      if (S.t > 4.5) { if (this.revOk()) this.revStart(); else this.summonEnd(); }
+    }
+  },
+  summonStart() {
+    const S = this.st; world.invUntil = world.t + 5; if (DIR.active) DIR.end(DIR.active); if (CH.state !== 'off') CH.stop();
+    if (WD.borrowed) WD.release(false);
+    /* 召喚する場所：オフタリサマの横（壁に当たらない方） */
+    const side = V(-S.away.z, 0, S.away.x), lv = S.p0.y > 1.6 ? 1 : 0; let p = null;
+    for (const sg of [1, -1]) { const q = S.p0.clone().addScaledVector(side, 1.5 * sg); if (!segBlocked(S.p0.x, S.p0.z, q.x, q.z, lv)) { p = q; break; } }
+    if (!p) p = S.p0.clone().addScaledVector(S.away, 1.2);
+    p.y = lv ? LH : 0;
+    /* 化け物の周に切り替える（ほかの怪異は、ナカヨシの体の一部になる） */
+    world.phanRun = true; world.mannRun = false; world.sealedWoman = false;
+    try { if (SP.ready && SP.st !== 'none') { SP.st = 'none'; SP.wrap.visible = false; } } catch (e) { }
+    try { if (MANN.ready) { MANN.st = 'absent'; MANN.setOp(0); if (MANN.col) MANN.col.on = false; MANN.runPlan = false; MANN.rattleStop && MANN.rattleStop(); } } catch (e) { }
+    Object.assign(PHAN, { on: true, hits: 0, mode: 'idle', nextHunt: world.t + 999, trackT: 0, sndT: 2, tintK: 1, tintSlow: false, wasCh: false, dead: null });
+    WD.borrow(); WD.pos.copy(p); WD.path = []; WD.extra = null; sgPlay('Walk', 0); sgSetOpacity(0); S.naka = { p };
+    try { XCHAT.log('urSummon'); } catch (e) { }
+  },
+  summonEnd() {
+    const S = this.st, p = S.naka.p; this.st = null; URAH.frozen = false; URAH.roll = 0; URAH.pitch = 0;
+    const U = postMat.uniforms; U.tear.value = 0; WD.release(false); WD.pos.copy(p); WD.wait = 0; WD.noDetectUntil = 0; sgSetOpacity(1);
+    CH.start('chase'); CH.grace = 0.6; PHAN.trackT = 15; PHAN.wasCh = true; PHAN.nextHunt = world.t + rnd(14, 24);
+    URAH.toChase(); world.invUntil = world.t + 0.8;
+  },
+};
+Object.assign(AW_TABLE, { urahFuda: ['SS', 500], urahSummon: ['SS', 150], urahEscape: ['S', 150] });
+COL.LIST.push(['urahFuda', 'おふたりさまに封印のお札を貼った', 500], ['urahSummon', 'ナカヨシ召喚の瞬間', 150], ['urahEscape', 'オフタリサマから逃げ切った', 150]);
+Object.assign(CHIP_DESC, { urahFuda: ['かみつかれる寸前、能面と般若の顔に封印のお札を叩きつけた。倒せはしない。', 'Right before the bite, you slapped a sealing charm on its face. It cannot be defeated.'],
+  urahSummon: ['二枚目のお札を貼った瞬間、その場に「継ぎ接ぎのナカヨシ」が呼び出された。', 'The moment the second charm stuck, Nakayoshi the Patchwork was summoned on the spot.'],
+  urahEscape: ['オフタリサマが現れた夜に、出口から生きて帰った。', 'You made it out the exit on a night Ofutarisama appeared.'] });
+Object.assign(AW_HINT, { urahFuda: ['お札を持ってオフタリサマに捕まる', 'get caught by Ofutarisama while holding a charm'], urahSummon: ['2枚目のお札のあとを撮る', 'film what happens after the second charm'], urahEscape: ['オフタリサマが出た周に出口から帰る', 'escape on a run where Ofutarisama appeared'] });
+Object.assign(EN, { 'おふたりさまに封印のお札を貼った': 'Sealed Ofutarisama with a charm', 'ナカヨシ召喚の瞬間': 'Nakayoshi summoned', 'オフタリサマから逃げ切った': 'Escaped Ofutarisama', 'お札を貼った！': 'Charm applied!', 'もう片方の顔にもお札を貼った…': 'Charm on the other face too...' });
+XCHAT.LIST.urFuda1 = ['uf.01', 'uf.02', 'uf.03']; XCHAT.LIST.urFuda2 = ['uf.11', 'uf.12']; XCHAT.LIST.urSummon = ['uf.21', 'uf.22', 'uf.23'];
+Object.assign(CHAT_DICT.t, { 'uf.01': ['効いた！？', 'did it work!?'], 'uf.02': ['お札つよ', 'charm OP'], 'uf.03': ['今のうちに逃げて！！', 'run while you can!!'],
+  'uf.11': ['え、燃えない…', 'wait, it’s not burning...'], 'uf.12': ['2枚目はやばくない？', 'isn’t a second one a bad idea?'],
+  'uf.21': ['なんか出てきた', 'something came out'], 'uf.22': ['ナカヨシ！？！？', 'NAKAYOSHI!?!?'], 'uf.23': ['絶望で草', 'pure despair lol'] });
+/* 2026-11-16 ナカヨシの復讐：過去にナカヨシを倒したことがあれば、呼び出されたナカヨシは主人公を追わず、オフタリサマに何度も体当たりする
+   → オフタリサマは悲鳴をあげて横倒しになり、赤い血に飲まれて床に消える → ナカヨシはもう襲わない（たまに「アリガトウ」）
+   その間に数秒撮れたら「最高の撮れ高」（SS・1000点）。次の周からはいつもどおり。確認用：?nakarev（倒したことがなくても復讐） */
+Object.assign(URFUDA, {
+  revOk() { try { return PHAN.load().st === 9 || WF('nakarev'); } catch (e) { return false; } },
+  revStart() {
+    const p = this.st.naka.p; this.st = null; URAH.st = 'revenge'; URAH.frozen = true; world.invUntil = world.t + 999;
+    sgSetOpacity(1); sgPlay('Walk', 0); this.rv = { t: 0, ph: 'ram', n: 0, k: 0, seenT: 0, p: p.clone(), hitAt: 0 };
+    PHAN.tintSlow = true; PHAN.tintK = 0.6; try { XCHAT.log('urRev'); } catch (e) { }
+    if (TEST || DEV) console.log('URFUDA revenge');
+  },
+  revTick(dt) {
+    const R = this.rv; if (!R) return; R.t += dt; const U = URAH, up = U.pos.clone(), dir = V(up.x - R.p.x, 0, up.z - R.p.z); const d = Math.max(0.01, dir.length()); dir.multiplyScalar(1 / d);
+    /* 撮れていれば「最高の撮れ高」 */
+    if (rec.active && (seen(U.head('noh'), { maxD: 16, margin: 1.15 }) || seen(sgHead(V()), { maxD: 16, margin: 1.15 }))) { R.seenT += dt; if (R.seenT > 3) award('urahRevenge', '最高の撮れ高', 1000); }
+    if (R.ph === 'ram') {
+      /* 体当たり：少し下がって助走 → 体ごと突っ込む（約1.1秒で1回、5回） */
+      const c = (R.t % 1.1) / 1.1, k = c < 0.55 ? -smooth(0, 0.55, c) : smooth(0.55, 0.78, c), gap = 2.1 - 1.55 * Math.max(0, k) + 0.5 * Math.min(0, k) * -1;
+      const tp = up.clone().addScaledVector(dir, -gap); R.p.lerp(V(tp.x, R.p.y, tp.z), Math.min(1, dt * (k > 0 ? 18 : 6)));
+      SG.root.position.copy(R.p); SG.root.rotation.set(k > 0 ? 0.35 * k : -0.1, Math.atan2(dir.x, dir.z), Math.sin(R.t * 21) * 0.05);
+      WD.pos.copy(R.p);
+      if (c > 0.74 && R.t - R.hitAt > 0.6) { R.hitAt = R.t; R.n++; const hp = up.clone().setY(up.y + 1.0); SND.thud(hp, 1.8); SND.hit && SND.hit(); playSfx('door_pound', { pos: hp, ref: 1.2, gain: 1.1, rate: 0.7, lowpass: 900 }); world.vhs = Math.max(world.vhs || 0, 0.5); PAD.hit(0.6); R.shake = 1;
+        if (R.n % 2 === 1) U.scream(R.n % 4 === 1 ? 'noh' : 'hannya', true); if (R.n === 2 || R.n === 4) wdScream(0, 0.7, 0.9); }
+      R.shake = Math.max(0, (R.shake || 0) - dt * 3); U.roll = Math.sin(R.t * 40) * 0.18 * R.shake; U.pitch = -0.25 * R.shake; U.pos.addScaledVector(dir, dt * 0.6 * R.shake); U.apply(); U.mouthSet(1.2);
+      if (R.n >= 5 && c > 0.9) { R.ph = 'fall'; R.t2 = 0; U.restPose(); U.root.rotation.order = 'YXZ'; U.scream('noh', true); U.scream('hannya', true); jumpSting('jump_b', 0.9, 3); }
+      return;
+    }
+    R.t2 += dt; const t = R.t2;
+    if (R.ph === 'fall') {
+      /* 悲鳴をあげて横倒し（体を床につけ、足を伸ばしたまま） */
+      const k = smooth(0, 0.9, t); U.root.position.set(U.pos.x, U.pos.y - 0.25 * k, U.pos.z); U.root.rotation.set(0, U.by, 1.5 * k * (R.side || (R.side = chance(0.5) ? 1 : -1))); U.mouthSet(1.4 * (1 - k * 0.5));
+      if (t > 0.85 && !R.thud) { R.thud = 1; SND.thud(U.pos.clone().setY(U.pos.y + 0.3), 2.2); world.vhs = 0.7; PAD.hit(1); }
+      if (t > 1.6) { R.ph = 'sink'; R.t2 = 0; R.pool = PHAN.mkPool(U.pos.x, U.pos.y, U.pos.z); playSfx('static_raw', { gain: 0.35 }); }
+      SG.root.position.copy(R.p); return;
+    }
+    if (R.ph === 'sink') {
+      /* 赤い血に飲まれて、床に消えていく */
+      const P = R.pool, g = Math.min(1, t / 0.6); P.m.scale.setScalar(2.6 * (1 - Math.pow(1 - g, 3)) * (1 + Math.sin(world.t * 3.1) * 0.03)); P.gl.scale.setScalar(2.6 * g); P.m.rotation.z += 0.12 * dt; P.gl.material.opacity = 0.75 + Math.sin(world.t * 7.7) * 0.25;
+      const s = smooth(0.4, 3.6, t); U.root.position.set(U.pos.x + Math.sin(t * 13) * 0.02 * (1 - s), U.pos.y - 0.25 - 1.3 * s, U.pos.z); U.root.rotation.z = 1.5 * R.side + Math.sin(t * 9) * 0.06 * (1 - s);
+      if (t > 3.8) { U.root.visible = false; U.on = false; U.st = 'off'; this.tags.forEach(x => x.m.visible = false); R.ph = 'after'; R.t2 = 0; this.friend(); }
+      return;
+    }
+    if (R.ph === 'after') { const P = R.pool; if (P) { const k = Math.max(0, 1 - t / 8); P.m.scale.setScalar(Math.max(0.001, 2.6 * k)); P.gl.scale.setScalar(Math.max(0.001, 2.6 * k)); P.gl.material.opacity = k; if (k <= 0) { scene.remove(P.grp); for (const o of [P.m, P.gl]) { o.geometry.dispose(); o.material.dispose(); } R.pool = null; } } }
+  },
+  /* もう襲わない：ふつうに歩き回り、たまにアリガトウ */
+  friend() {
+    world.nakaFriend = true; world.invUntil = world.t + 1; PHAN.mode = 'friend'; PHAN.tintK = 0; PHAN.tintSlow = true; PHAN.thT = world.t + 6;
+    WD.release(false); WD.wait = rnd(1, 3); CH.state !== 'off' && CH.stop(); setTimeout(() => PHAN.thanks(), 600);
+    try { XCHAT.log('urRevEnd'); } catch (e) { }
+  },
+});
+Object.assign(AW_TABLE, { urahRevenge: ['SS', 1000] }); COL.LIST.push(['urahRevenge', '最高の撮れ高', 1000]);
+Object.assign(CHIP_DESC, { urahRevenge: ['呼び出されたナカヨシは、こちらではなくオフタリサマに向かっていった。', 'The summoned Nakayoshi turned not on you, but on Ofutarisama.'] });
+Object.assign(AW_HINT, { urahRevenge: ['ナカヨシを倒したことがある人だけ', 'only for those who once defeated Nakayoshi'] });
+Object.assign(EN, { '最高の撮れ高': 'The greatest shot ever' });
+XCHAT.LIST.urRev = ['ur.01', 'ur.02', 'ur.03']; XCHAT.LIST.urRevEnd = ['ur.11', 'ur.12', 'ur.13'];
+Object.assign(CHAT_DICT.t, { 'ur.01': ['え、そっち！？', 'wait, THAT way!?'], 'ur.02': ['仲間割れ？', 'infighting?'], 'ur.03': ['ナカヨシ…お前…', 'Nakayoshi... you...'], 'ur.11': ['復讐を果たした…', 'revenge complete...'], 'ur.12': ['泣いた', "I'm crying"], 'ur.13': ['神回確定', 'legendary episode confirmed'] });
 const SHOPFX = { update(dt) { IDLEC.update(dt); if (world.state !== 'play') return; BUZZ.update(dt); CANDLE.update(dt); DRINK.update(); STICK.update(dt); } };
 /* =========================================================
    2026-11-16 投げ銭（第2弾）：中堅から。コメントなしで、色の帯に「名前 ¥金額」だけ
