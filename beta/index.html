@@ -14457,7 +14457,7 @@ const INV = {
       const D = PERM.DEFS[id], el = document.createElement('div'); el.className = 'invIt perm' + (PERM.active(id) ? ' on' : '');
       el.innerHTML = `<img alt=""><div><b></b><small></small></div><div class="pSw"></div>`; el.querySelector('img').src = PERM_IMG[id];
       const txt = v => TR(D.desc) + '　' + TR(v ? '効果：オン' : '効果：オフ');
-      el.querySelector('b').innerHTML = `${TR(D.name)}<span class="ytag key">${TR('だいじなもの')}</span>`; const stx = v => { el.querySelector('small').textContent = txt(v); el.querySelector('small').insertAdjacentHTML('afterbegin', YTAG.desc(id, '')); }; stx(PERM.active(id));
+      el.querySelector('b').innerHTML = `${TR(D.name)}`; const stx = v => { el.querySelector('small').textContent = txt(v); el.querySelector('small').insertAdjacentHTML('afterbegin', YTAG.desc(id, '')); }; stx(PERM.active(id));
       el.addEventListener('click', e => { e.stopPropagation(); const v = !PERM.active(id); PERM.setOn(id, v); el.classList.toggle('on', v); stx(v); });
       if (id === 'fixcam' && PERM.active(id)) { const b = document.createElement('button'); b.className = 'invAct'; b.type = 'button'; b.textContent = TR(FIXCAM.placed ? '設置中' : '置く'); b.disabled = FIXCAM.placed; b.addEventListener('click', e => { e.stopPropagation(); if (FIXCAM.placed) return; this.hide(); setTimeout(() => FIXCAM.startFrame(), 60); }); el.appendChild(b); }   // 2026-11-14 定点カメラ：画角を決める画面へ（設置中は、カメラに近づいて回収すると置き直せる）
       L.appendChild(el);
@@ -15136,7 +15136,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.69';
+const VERSION = '0.16.70';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -20436,7 +20436,7 @@ const SHOP = {
     const q = (TEST || BETA || DEV) && location.search.match(/[?&]carry=([\w,]+)/); const list = q ? q[1].split(',') : this.carryList();
     world.bneko = list.includes('bneko') || WF('bneko');   /* 2026-11-16 黒い招き猫 */
     for (const id of list) { if (!ITEM.defs[id]) continue; if (id === 'ofuda') ITEM.have.ofuda = (ITEM.have.ofuda | 0) + 1; else ITEM.have[id] = true; this.carried.push(id); if (id === 'bell') ITEM.bellT = 1; }
-    for (const id in d.look) if (d.look[id] && ITEM.defs[id] && !['goldphone', 'goldframe'].includes(id)) ITEM.have[id] = true;
+    /* 2026-11-17 見た目の物（金色のスマホ・伝説のサムネイル枠を除く）は、持ち込んだ時だけ（持ち込み枠を1つ使う） */
     document.documentElement.classList.toggle('goldPhone', !!d.look.goldphone);
   },
   placePicks() {   /* 新しい棟が開いた周は、理科室でケミカルライト・ろうそくを拾えることがある */
@@ -20595,12 +20595,12 @@ Object.assign(SHOP, {
     const en = LANG === 'en', d = this.load(), lim = ECON.carry[this.rank()], cl = this.carryList(); let el = $('#bagUI');
     if (!el) { el = document.createElement('div'); el.id = 'bagUI'; el.className = 'shopLike'; document.body.appendChild(el); el.addEventListener('click', e => { e.stopPropagation(); if (e.target.id === 'bagUI') { el.classList.remove('show'); this.title(); } }); for (const t of ['pointerdown', 'touchstart', 'touchmove']) el.addEventListener(t, e => e.stopPropagation(), { passive: true }); }
     const perm = PERM.owned().map(id => `<div class="shIt"><img src="${PERM_IMG[id]}"><div class="shTx"><b>${TR(PERM.DEFS[id].name)}${YTAG.tag(id)}</b><small>${YTAG.desc(id, TR(PERM.DEFS[id].desc || ''))}</small></div></div>`);
-    const looks = ECON.items.filter(it => it[3] === 'look' && d.look[it[0]]).map(it => `<div class="shIt"><img src="${ITEM_IMG[it[0]]}"><div class="shTx"><b>${TR(ITEM.defs[it[0]].name)}${YTAG.tag(it[0])}</b><small>${YTAG.desc(it[0], TR(ITEM.defs[it[0]].desc))}</small></div></div>`);
-    const uses = ECON.items.filter(it => it[3] === 'use' && this.cnt(it[0]) > 0).map(it => { const id = it[0], on = cl.includes(id), fav = this.favs().includes(id), full = !on && cl.length >= lim;
-      return `<div class="shIt${on ? ' sel' : ''}"><img src="${ITEM_IMG[id]}"><div class="shTx"><b>${TR(ITEM.defs[id].name)}${YTAG.tag(id)}<span class="shN">×${this.cnt(id)}</span></b><small>${YTAG.desc(id, TR(ITEM.defs[id].desc))}</small></div><button class="fav${fav ? ' on' : ''}" data-f="${id}" aria-label="★">${fav ? '★' : '☆'}</button><button class="shCar${on ? ' on' : ''}" data-c="${id}"${(full || fav) ? ' disabled' : ''}>${on ? (en ? 'Bring' : '持ち込む') : (en ? 'Leave' : '置いていく')}</button></div>`; });
+    const looks = ECON.items.filter(it => it[3] === 'look' && d.look[it[0]] && ['goldphone', 'goldframe'].includes(it[0])).map(it => `<div class="shIt"><img src="${ITEM_IMG[it[0]]}"><div class="shTx"><b>${TR(ITEM.defs[it[0]].name)}${YTAG.tag(it[0])}</b><small>${YTAG.desc(it[0], TR(ITEM.defs[it[0]].desc))}</small></div></div>`);
+    const uses = ECON.items.filter(it => (it[3] === 'use' && this.cnt(it[0]) > 0) || (it[3] === 'look' && d.look[it[0]] && !['goldphone', 'goldframe'].includes(it[0]))).map(it => { const id = it[0], on = cl.includes(id), fav = this.favs().includes(id), full = !on && cl.length >= lim;
+      return `<div class="shIt${on ? ' sel' : ''}"><img src="${ITEM_IMG[id]}"><div class="shTx"><b>${TR(ITEM.defs[id].name)}${YTAG.tag(id)}<span class="shN">×${it[3] === 'look' ? 1 : this.cnt(id)}</span></b><small>${YTAG.desc(id, TR(ITEM.defs[id].desc))}</small></div><button class="fav${fav ? ' on' : ''}" data-f="${id}" aria-label="★">${fav ? '★' : '☆'}</button><button class="shCar${on ? ' on' : ''}" data-c="${id}"${(full || fav) ? ' disabled' : ''}>${on ? (en ? 'Bring' : '持ち込む') : (en ? 'Leave' : '置いていく')}</button></div>`; });
     el.innerHTML = `<div class="shBox"><div class="shHead"><b>${en ? 'Bag' : '持ち物'}</b><span>${en ? 'Bringing' : '持ち込み'} <b>${cl.length} / ${lim}</b></span><button class="shX">×</button></div><div class="shList">
       <div class="shSec">${en ? 'Tools to bring in' : '持ち込む道具'}<small>${en ? `Up to ${lim} per run. ★ = always bring. Used tools are gone; unused ones stay.` : `1周に${lim}つまで。★お気に入りは、選ばなくても自動で持ち込みます。使った物はなくなり、使わなければ残ります。`}</small></div>${uses.join('') || `<div class="shEmpty">${en ? 'No tools yet. Buy them in the shop.' : 'まだありません。ショップで買えます。'}</div>`}
-      <div class="shSec">${en ? 'Always yours' : 'ずっと使える物'}<small>${en ? 'Never used up. Not counted in what you bring.' : 'なくならない物。持ち込む数には入りません。'}</small></div>${[...perm, ...looks].join('') || `<div class="shEmpty">${en ? 'None yet' : 'まだありません'}</div>`}</div></div>`;
+      <div class="shSec">${en ? 'Key items' : 'だいじなもの'}<small>${en ? 'Never lost, even if caught. Not counted in what you bring.' : '捕まってもなくならない物。持ち込む数には入りません。'}</small></div>${[...perm, ...looks].join('') || `<div class="shEmpty">${en ? 'None yet' : 'まだありません'}</div>`}</div></div>`;
     el.querySelector('.shX').onclick = e => { e.stopPropagation(); el.classList.remove('show'); this.title(); };
     el.querySelectorAll('[data-c]').forEach(b => b.onclick = e => { e.stopPropagation(); this.toggleCarry(b.dataset.c); this.openBag(); });
     el.querySelectorAll('[data-f]').forEach(b => b.onclick = e => { e.stopPropagation(); if (!this.toggleFav(b.dataset.f)) toast(en ? 'You cannot bring more' : 'これ以上は持ち込めません', 1500); this.openBag(); });
@@ -21337,7 +21337,7 @@ Object.assign(EN, { '銀の盾': 'Silver Shield', '金の盾': 'Gold Shield', '�
     if (cap) { const car = (this.carried || []).slice(), n = car.reduce((a, id) => a + (SHIELD.N[id] || 0), 0); let prot = n;
       const lose = []; for (const id of car) { if (SHIELD.ids.includes(id)) continue; const usedUp = id === 'bell' || (id === 'recorder' && (ITEM.tootN | 0) > 0) || (id === 'ofuda' ? !(ITEM.have.ofuda > 0) : !ITEM.have[id]) || ['spray', 'beads'].includes(id); if (usedUp) continue; if (prot > 0) { prot--; this.kept.push(id); continue; } lose.push(id); }
       const dd = this.load(); for (const it0 of ECON.items) { const id = it0[0], h = ITEM.have[id]; if (!h || SHIELD.ids.includes(id) || (it0[3] === 'look' && dd.look[id])) continue; const inC = car.includes(id); const extra = inC ? (id === 'ofuda' ? (h | 0) - 1 : 0) : (typeof h === 'number' ? h : 1); if (extra > 0) { this.lost.push(id); if (id === 'ofuda') ITEM.have.ofuda = inC ? 1 : 0; else ITEM.have[id] = false; } }   /* 拾った物：持ち帰らない */
-      const r = E0(likes); for (const id of lose) { this.useOne(id); if (!this.lost.includes(id)) this.lost.push(id); } this.brought = []; this.save(); if (TEST || DEV) console.log('LOSS lost', this.lost.join(','), 'kept', this.kept.join(',')); return r; }
+      const r = E0(likes); for (const id of lose) { if (this.def(id) && this.def(id)[3] === 'look') { this.load().look[id] = false; this.d.carry = this.d.carry.filter(x => x !== id); this.d.fav = (this.d.fav || []).filter(x => x !== id); } else this.useOne(id); if (!this.lost.includes(id)) this.lost.push(id); } this.brought = []; this.save(); if (TEST || DEV) console.log('LOSS lost', this.lost.join(','), 'kept', this.kept.join(',')); return r; }
     return E0(likes); }; }
 { const S0 = SHOP.showRes.bind(SHOP); SHOP.showRes = function (likes) { const r = S0(likes); const L = this.lost || [];
     if (world.state === 'over' && this.lostRun !== world.runId) { this.lostRun = world.runId; const en = LANG === 'en', K = this.kept || [];
@@ -21345,8 +21345,12 @@ Object.assign(EN, { '銀の盾': 'Silver Shield', '金の盾': 'Gold Shield', '�
     return r; }; }
 /* スタート画面を開いた時に盾を渡す */
 { const T0 = SHOP.title.bind(SHOP); SHOP.title = function () { const r = T0(); if (world.state === 'title') setTimeout(() => SHIELD.grant(), 400); return r; }; }
-/* 2026-11-17 「だいじなもの」の札：ランクの機材・シュン足など（PERM）と、自分の物になった見た目の物。捕まっても失わない */
-{ const T0 = YTAG.tag.bind(YTAG); YTAG.tag = function (id) { let key = !!PERM.DEFS[id]; if (!key) { const it = ECON.items.find(x => x[0] === id); key = !!(it && it[3] === 'look'); } return key ? `<span class="ytag key">${TR('だいじなもの')}</span>` : T0(id); }; }
+/* 2026-11-17 札は「使い切り」だけ（使うとなくなる物）。ショップだけは「だいじなもの」も付ける（同じ一覧に並ぶため） */
+const GOLD_LOOK = ['goldphone', 'goldframe'];
+YTAG.tag = function (id) { const it = ECON.items.find(x => x[0] === id), key = !!PERM.DEFS[id] || GOLD_LOOK.includes(id);
+  if (key) return this.inShop ? `<span class="ytag key">${TR('だいじなもの')}</span>` : '';
+  return it && it[3] === 'use' && !this.KEEP.includes(id) ? `<span class="ytag use">${TR('使い切り')}</span>` : ''; };
+{ const O0 = SHOP.openUI.bind(SHOP); SHOP.openUI = function () { YTAG.inShop = true; try { return O0(); } finally { YTAG.inShop = false; } }; }
 /* 持ち物（スタート画面）：「もちもの」「だいじなもの」のタブ */
 { const B0 = SHOP.openBag.bind(SHOP); SHOP.openBag = function () { B0(); const el = $('#bagUI'), list = el.querySelector('.shList'); if (!list) return; const en = LANG === 'en'; this.bagTab = this.bagTab || 'm';
     const secs = [...list.children]; let cur = 'm'; const groups = { m: [], d: [] }; for (const c of secs) { if (c.classList.contains('shSec')) cur = groups.m.length ? 'd' : 'm'; groups[cur].push(c); }
@@ -21356,7 +21360,7 @@ Object.assign(EN, { '銀の盾': 'Silver Shield', '金の盾': 'Gold Shield', '�
     bar.querySelectorAll('button').forEach(b => b.onclick = e => { e.stopPropagation(); show(b.dataset.t); }); show(this.bagTab); }; }
 /* 持ち物（遊んでいる時）：同じ2つのタブ */
 { const S0 = INV.show.bind(INV); INV.show = function () { S0(); if (!this.open) return; const L = $('#invList'); const own = this.owned(), kids = [...L.children], d = SHOP.load();
-    const isD = id => { const it = ECON.items.find(x => x[0] === id); return !!(it && it[3] === 'look' && d.look[id]); };
+    const isD = id => GOLD_LOOK.includes(id);
     kids.forEach((c, i) => { c.dataset.tab = i < own.length ? (isD(own[i]) ? 'd' : 'm') : 'd'; });
     let bar = $('#invTabs'); if (!bar) { bar = document.createElement('div'); bar.id = 'invTabs'; bar.className = 'bagTabs'; L.before(bar); }
     bar.innerHTML = `<button data-t="m">${TR('もちもの')}</button><button data-t="d">${TR('だいじなもの')}</button>`; this.tab = this.tab || 'm';
