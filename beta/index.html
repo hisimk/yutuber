@@ -10783,11 +10783,12 @@ const MANN = {
   },
   // ── イベント「走り出す人体模型」
   updRunEvent(dt) {
-    if (this.st === 'lkWait' || this.st === 'bedWait' || this.st === 'h3Wait' || this.st === 'bedOut') {   // 2026-11-14 かくれんぼ2・3：怯えて首をほんの少し、細かく左右に振る（音なし）
+    if (this.st === 'lkWait' || this.st === 'bedWait' || this.st === 'h3Wait' || this.st === 'bedOut' || this.st === 'bcCrouch') {   // 2026-11-14 かくれんぼ2・3：怯えて首をほんの少し、細かく左右に振る（音なし）
       this.trem = (this.trem || 0) + dt; const tr = this.trem;
       this.hy = (this.hyBase || 0) + (Math.sin(tr * 53) * 0.022 + Math.sin(tr * 31 + 1.3) * 0.012) * (0.7 + 0.3 * Math.sin(tr * 2.3)); this.lookHead();
     }
     if (this.st === 'h3Wait' || this.st === 'h3Leap' || this.st === 'h3Fall') return this.updH3(dt);
+    if (this.updBcCrouch(dt)) return;
     const H = this.head();
     if (this.st === 'stand' || this.st === 'watch') {   // 2026-11-14 首がこちらへ回ってから、合計6秒映すと走り出す
       if (!this.stare || this.stare.t < 1.8) return;
@@ -10827,6 +10828,7 @@ const MANN = {
       if (Math.hypot(player.x - this.pos.x, player.z - this.pos.z) < 0.65 && player.lv === this.lv() && Math.abs(player.y - this.pos.y) < 1 && !this.inAir) { const c = V(this.pos.x, 1.0, this.pos.z); this.burst(); if (rec.active && seen(c, { maxD: 6 })) award('mannBurst', '致命傷で済んだ人体模型', 70); return; }
       if (!this.path.length) {   // 放送室の扉の裏で待つ（かくれんぼ1）
         this.st = 'bcWait'; this.t = 0; this.pos.y = 0; this.tilt = 0; this.heading = -Math.PI / 2; this.apply(); this.play(null); this.rattleStop();
+        if (ITEM.bcOpen) this.bcCrouch();   /* 2026-11-17 放送室の扉がもう開いていたら、部屋の奥でうずくまって待つ */
         if (broadcastFog) broadcastFog.visible = false;
       }
       return;
@@ -10887,7 +10889,7 @@ const MANN = {
     if (k === 0 && this.inAir) { this.inAir = false; this.step(1.0); SND.thud(V(this.pos.x, 0.1, this.pos.z), 0.7); }
   },
   follow(dt, speed) {   // 点の列（高さつき）に沿って走る。着いたら true
-    let move = speed * dt * (typeof SALTK === 'function' ? SALTK(this.pos) : 1);
+    let move = speed * dt * (typeof SALTK === 'function' && !this.hideEv() ? SALTK(this.pos) : 1);
     while (move > 0 && this.path.length) {
       const t = this.path[0], dx = t.x - this.pos.x, dz = t.z - this.pos.z, d = Math.hypot(dx, dz);
       if (d > 0.01) this.heading = Math.atan2(dx, dz);
@@ -10897,13 +10899,21 @@ const MANN = {
     return !this.path.length;
   },
   onBcOpen() { if (this.st === 'bcWait') { this.st = 'bcOut'; this.t = 0; } },
+  /* 2026-11-17 かくれんぼ1：扉が開いていた時は、放送室の奥の隅に体育座りで震えている。近づくと立ち上がり、1秒後に走り出す */
+  bcCrouch() { try { this.mixer && this.mixer.stopAllAction(); } catch (e) { } this.cur = null; this.st = 'bcCrouch'; this.t = 0; this.pos.set(28.9, 0, -32.55); this.heading = -Math.PI * 0.75; this.tilt = 0; this.posePose('knees'); this.hy = 0; this.hp = 0.25; this.hyBase = 0; this.lookHead(); this.fitTo(0, 'min'); this.setOp(1); },
+  updBcCrouch(dt) { if (this.st === 'bcCrouch') { if (player.lv === 0 && !player.hidden && Math.hypot(player.x - this.pos.x, player.z - this.pos.z) < 3.2) { this.st = 'bcRise'; this.t = 0; this.restPose(); this.pos.y = 0; this.heading = this.toPlayer(); this.hp = 0; this.apply(); this.play(null); SND.knock(this.head(), 1.2); playSfx('metal_rattle', { pos: this.head(), ref: 0.6, dur: 0.4 }); } return true; }
+    if (this.st === 'bcRise') { this.t += dt; this.face(this.toPlayer(), dt, 6); this.apply(); if (this.t >= 1) { this.st = 'bcOut'; this.t = 1; this.updRunEvent(0); if (this.path && this.path.length) this.path.unshift(V(26.6, 0, -30.85)); } return true; } return false; },
+  hideEv() { return ['run', 'bcWait', 'bcCrouch', 'bcRise', 'bcOut', 'bcRun', 'lkWait', 'lkOut', 'lkRun', 'bedWait', 'bedOut', 'h3Wait', 'h3Leap', 'h3Fall', 'leap'].includes(this.st); },   /* かくれんぼの間（盛り塩は効かない） */
   setupHide2() {   // 突き当たりの床・階段・2階のロッカーの前に臓器を1つずつ。人体模型はそのロッカーの中
     const cands = lockers.filter(l => l.lv === 1 && !l.locked && !l.noHide && l !== (ITEM && ITEM.lockLk));
     const lk = cands.sort((a, b) => Math.hypot(a.o.x + 2, a.o.z + 28.9) - Math.hypot(b.o.x + 2, b.o.z + 28.9))[0];
     const put = (name, p) => this.placePart(name, p);
-    put('part_lung_L', V(0.55, 0, -32.35));    // 廊下Bの突き当たり（曲がった角）。色の付いた臓器を1つずつ
-    put('part_liver', V(-2.55, 0, -28.4));    // 奥階段の上り口
-    if (lk) { this.hideLk = lk; put('part_stomach', lkP(lk, 0, 0, 0.45)); this.st = 'lkWait'; this.hy = 0; this.hp = 0; this.hyBase = 0; }
+    if (lk && (lk.openAt !== undefined || lk.hinge.rotation.y > 0.05) && HIDE.lk !== lk) { lk.openAt = undefined; lk.hinge.rotation.y = 0; }   /* 2026-11-17 その周にもう開けていたロッカーでも、見ていない間に閉めておく（開けると飛び出す） */
+    /* 2026-11-17 臓器はすべて、廊下Bの突き当たりから奥階段を上って、そのロッカーの前まで点々と落とす（手がかり） */
+    const org = this.ORG.filter(n => this.pcs.some(pc => pc.name === n && !pc.on)), last = org.includes('part_stomach') ? 'part_stomach' : org[org.length - 1], rest = org.filter(n => n !== last);
+    const pts = [V(0.55, 0, -32.35), V(-2.55, 0, -28.4)]; if (lk) { const f = lkP(lk, 0, 0, 0.9); try { const n0 = nearestNode(-2.55, -28.4, undefined, 0), n1 = nearestNode(f.x, f.z, undefined, LH); for (const k of navPath(n0, n1).slice(1)) pts.push(nodePos(k)); } catch (e) { } }
+    rest.forEach((n, i) => { const p = pts[Math.min(pts.length - 1, Math.floor(i * pts.length / Math.max(1, rest.length)))], q = p.clone(); q.x += rnd(-0.25, 0.25); q.z += rnd(-0.25, 0.25); put(n, q); });
+    if (lk) { this.hideLk = lk; if (last) put(last, lkP(lk, 0, 0, 0.45)); this.st = 'lkWait'; this.hy = 0; this.hp = 0; this.hyBase = 0; }
     else this.st = 'gone';
     if (TEST || DEV) console.log('MANN hide2', lk && lk.o.x, lk && lk.o.z);
   },
@@ -15164,7 +15174,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.85';
+const VERSION = '0.16.86';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -21554,7 +21564,7 @@ const SALT2 = {
     if (!this.on() || world.state !== 'play') return; const L = this.last;
     const chk = (key, pos, y, chasing, back) => { if (!pos) return; if (!this.inRoom(pos, y)) { (L[key] || (L[key] = V())).copy(pos); return; } if (L[key]) pos.x = L[key].x, pos.z = L[key].z; if (chasing) this.repel(key, pos.clone()); try { back(chasing); } catch (e) { } };
     if (typeof WD !== 'undefined' && WD.pos && !WD.scripted && !WD.borrowed && !(typeof OFUDA !== 'undefined' && OFUDA.on)) chk('woman', WD.pos, WD.pos.y || 0, CH.state !== 'off', ch => { if (ch) ITEM.banishWoman(); else WD.pickDest(); });
-    if (typeof MANN !== 'undefined' && MANN.pos && MANN.root && MANN.root.visible && MANN.st !== 'absent' && !MANN.cap) chk('mann', MANN.pos, MANN.lv() ? LH : 0, !['walk', 'absent'].includes(MANN.st), () => { MANN.creepOff && MANN.creepOff(); MANN.st = 'walk'; MANN.bonked = false; MANN.rattleStop && MANN.rattleStop(); MANN.play('Walk', 1); const ks = WD.dests.filter(k => NAV[k] && NAV[k][2] !== this.room); MANN.walkTo(pick(ks)); MANN.apply(); });
+    if (typeof MANN !== 'undefined' && MANN.pos && MANN.root && MANN.root.visible && MANN.st !== 'absent' && !MANN.cap && !MANN.hideEv()) chk('mann', MANN.pos, MANN.lv() ? LH : 0, !['walk', 'absent'].includes(MANN.st), () => { MANN.creepOff && MANN.creepOff(); MANN.st = 'walk'; MANN.bonked = false; MANN.rattleStop && MANN.rattleStop(); MANN.play('Walk', 1); const ks = WD.dests.filter(k => NAV[k] && NAV[k][2] !== this.room); MANN.walkTo(pick(ks)); MANN.apply(); });
     if (typeof SP !== 'undefined' && SP.pos && !['none', 'sealed', 'off'].includes(SP.st)) chk('spider', SP.pos, SP.lv ? LH : 0, true, () => { SP.wrap.visible = false; SP.st = 'none'; SP.noChaseUntil = world.t + 25; SP.lastDrop = world.t + 20; SP.spawnAt = world.t + rnd(30, 50); });
     if (typeof URAH !== 'undefined' && URAH.on) { const d = URAH.st === 'door' && URAH.D && URAH.D.room === this.room; if (d && !this.uDoor) this.repel('urah', URAH.D.P.clone()); this.uDoor = d; }
   },
