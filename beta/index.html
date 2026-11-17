@@ -13560,7 +13560,8 @@ function seekTo(t) {
   if (resultUrls.length === 1) { v.currentTime = target; v.play().catch(() => { }); return; }
   (async () => { let acc = 0; for (let i = 0; i < resultUrls.length; i++) { const dur = await durOf(resultUrls[i]); if (target < acc + dur || i === resultUrls.length - 1) { segIdx = i; v.src = resultUrls[i]; v.currentTime = Math.max(0, target - acc); v.play().catch(() => { }); return; } acc += dur; } })();
 }
-function durOf(url) { return new Promise(r => { const e = document.createElement('video'); e.preload = 'metadata'; e.onloadedmetadata = () => r(isFinite(e.duration) ? e.duration : 0); e.onerror = () => r(0); e.src = url; }); }
+function durOf(url) { return new Promise(r => { const e = document.createElement('video'); e.preload = 'metadata'; e.muted = true; let done = false; const fin = v => { if (done) return; done = true; e.ontimeupdate = null; r(v); };   /* 2026-11-17 長さが「不明」の動画（PCのChromeの録画など）は、最後まで飛ばして長さを確かめる */
+  e.onloadedmetadata = () => { if (isFinite(e.duration) && e.duration > 0) return fin(e.duration); e.ontimeupdate = () => { if (isFinite(e.duration) && e.duration > 0) fin(e.duration); }; try { e.currentTime = 1e7; } catch (er) { } }; e.onerror = () => fin(0); setTimeout(() => fin(isFinite(e.duration) ? e.duration : 0), 6000); e.src = url; }); }
 // 2026-11-14 月の光は表記不要の音源に差し替えたので、結果画面と共有文への表記はなし
 const MUSIC_CREDIT = '';
 function shareText(T) {
@@ -15122,7 +15123,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.93';
+const VERSION = '0.16.94';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -22350,7 +22351,11 @@ Object.assign(CHAT_DICT.t, { 'sm1.0': ['誰のメモ？', 'whose note is this?']
   'sm2.0': ['アイツって誰', 'who is "that thing"'], 'sm2.1': ['人体模型でしょ', 'the anatomy model obviously'], 'sm2.2': ['臓器落とす人間がいるかよ！', 'what human drops organs!?'],
   'sm3.0': ['こっわ', 'terrifying'], 'sm3.1': ['おかしくなっちゃった', 'they lost it'], 'sm3.2': ['ぼそあたま…？', 'bosoatama...?'], 'sm3.3': ['まえのかおとうしろのかお', 'the front face and the back face'], 'sm3.4': ['字が震えてる', 'the handwriting is shaking'], 'sm3.5': ['鳥肌やばい', 'got goosebumps'] });
 /* 2026-11-17 設定に「エンディングを見る」（一度エンディングを見たら・スタート画面の時だけ）。?ownall（試し版）：ショップの道具を全部持っている状態 */
-{ const S0 = SET.show.bind(SET); SET.show = function () { const r = S0.apply(this, arguments); try { let seen = false; try { seen = localStorage.getItem(ENDING.KEY) === '1'; } catch (e) { } $('#setEnding').style.display = (seen || window.PLAY5) && world.state === 'title' ? '' : 'none'; $('#setEnding').textContent = TR('エンディングを見る'); } catch (e) { } return r; }; }
+{ const S0 = SET.show.bind(SET); SET.show = function () { const r = S0.apply(this, arguments); try { let seen = false; try { seen = localStorage.getItem(ENDING.KEY) === '1'; } catch (e) { } $('#setEnding').style.display = (seen || window.PLAY5) && world.state === 'title' ? '' : 'none'; $('#setEnding').textContent = TR('エンディングを見る'); if (window.PLAY5 && world.state === 'title') ENDDIAG.show(); } catch (e) { } return r; }; }
+/* 確認用 ?play5：エンディングに使える動画の数を、ボタンの下に出す（どこで止まっているか分かるように） */
+const ENDDIAG = { async show() { let el = $('#endDiag'); if (!el) { el = document.createElement('div'); el.id = 'endDiag'; el.style.cssText = 'font-size:11px;color:#8a867f;text-align:center;margin:-4px 0 8px;line-height:1.5'; $('#setEnding').after(el); } el.textContent = '確認中…';
+  try { const best = ACH.load().best, top = best.slice(0, GKEEP.get()), vs = best.filter(b => b.v); let inDb = 0; for (const b of vs) { const x = await VDB.get(b.id); if (x && x.length) inDb++; } const c = await ENDING.clips(); for (const x of c) for (const u of x.urls || []) URL.revokeObjectURL(u);
+    el.textContent = `神回 ${best.length}件（上位${top.length}件）／動画を残した ${vs.length}件／端末にある ${inDb}件／エンディングに使える ${c.length}本・残す本数の設定 ${GKEEP.get()}`; } catch (e) { el.textContent = '確認できませんでした：' + (e && e.message || e); } } };
 $('#setEnding').addEventListener('click', e => { e.stopPropagation(); if (world.state !== 'title' || ENDING.running) return; SET.hide(); setTimeout(() => ENDING.play(() => { world.state = 'title'; }), 200); });
 Object.assign(EN, { 'エンディングを見る': 'Watch the ending' });
 if (WF('ownall')) { const d = SHOP.load(); for (const it of ECON.items) { if (it[3] === 'look') d.look[it[0]] = true; else d.own[it[0]] = Math.max(d.own[it[0]] | 0, YTAG.KEEP.includes(it[0]) || ['goldphone', 'goldframe'].includes(it[0]) ? 1 : 5); } SHOP.save(); }
