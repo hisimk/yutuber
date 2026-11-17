@@ -3535,24 +3535,24 @@ function tensionCut(quiet) {
 function hush(sec, level = 0.0) { world.hushUntil = Math.max(world.hushUntil, world.t + sec); world.hushLevel = level; }
 
 const amb = {};
-const AMB_HUM = 0.03;
+const AMB_HUM = 0.018;   /* 2026-11-17 蛍光灯の唸りなど、作った音をさらに小さく（0.03→0.018） */
 const AMB_LOOP = 0.32 * 1.15;   // 2026-11-12 1.15倍に   // ホラー環境音ループの基準の大きさ（amb.vent の音量とかけ合わせ）   // 距離減衰をゆるめた分、常に鳴っている蛍光灯の唸りは下げる
 function startAmbience() {
   const ctx = A.ctx;
   // 常に流れる低い環境音：提供の「ホラー環境音ループ」（読み込みが終わり次第ループ再生）
-  amb.vent = ctx.createGain(); amb.vent.gain.value = 0.1; amb.vent.connect(A.master);
+  amb.vent = ctx.createGain(); amb.vent.gain.value = 0.1; amb.vent.connect(A.master); amb.wave = ctx.createGain(); amb.wave.connect(amb.vent);
   const startLoop = () => {
     if (!A.buf.horror_loop) { setTimeout(startLoop, 200); return; }
     const s = ctx.createBufferSource(); s.buffer = A.buf.horror_loop; s.loop = true; s.loopStart = 0.2; s.loopEnd = 0.2 + 2817206 / 44100;   // 2026-11-15 前後0.2秒は継ぎ目の続きを足した余白（MP3の頭の遅れがあっても継ぎ目がずれない）。ループ本体は 2817206 サンプル（44.1kHz）
     // 2026-11-14 少し大きく、低音を強めに（ごーーー）
     const ls = ctx.createBiquadFilter(); ls.type = 'lowshelf'; ls.frequency.value = 160; ls.gain.value = 7;
-    const g = ctx.createGain(); g.gain.value = AMB_LOOP * 1.25 * (SFX_GAIN.horror_loop || 1); s.connect(ls); ls.connect(g); g.connect(amb.vent); s.start(0, rnd(0, 20));
+    const g = ctx.createGain(); g.gain.value = AMB_LOOP * 1.25 * 0.7 * (SFX_GAIN.horror_loop || 1); s.connect(ls); ls.connect(g); g.connect(amb.wave);   /* 2026-11-17 0.7倍に。ゆっくりした波（amb.wave）を通す */ s.start(0, rnd(0, 20));
   };
   startLoop();
   { // 2026-11-14 建物そのものが鳴っているような、ごく低いうなり（環境音と一緒に下がる）
     const rs = ctx.createBufferSource(); rs.buffer = A.noise; rs.loop = true; rs.playbackRate.value = 0.5;
     const lp1 = ctx.createBiquadFilter(); lp1.type = 'lowpass'; lp1.frequency.value = 95; lp1.Q.value = 0.8; const lp2 = ctx.createBiquadFilter(); lp2.type = 'lowpass'; lp2.frequency.value = 140;
-    const rg = ctx.createGain(); rg.gain.value = 0.55; const lf = ctx.createOscillator(); lf.frequency.value = 0.07; const lfg = ctx.createGain(); lfg.gain.value = 0.18; lf.connect(lfg); lfg.connect(rg.gain); lf.start();
+    const rg = ctx.createGain(); rg.gain.value = 0.3; const lf = ctx.createOscillator(); lf.frequency.value = 0.07; const lfg = ctx.createGain(); lfg.gain.value = 0.1;   /* 2026-11-17 0.55→0.3 */ lf.connect(lfg); lfg.connect(rg.gain); lf.start();
     rs.connect(lp1); lp1.connect(lp2); lp2.connect(rg); rg.connect(amb.vent); rs.start();
   }
   amb.hum = ctx.createGain(); amb.hum.gain.value = AMB_HUM; amb.hum.connect(A.bus);
@@ -4042,7 +4042,7 @@ function cbgmUpdate(dt) {
   if (world.t < (world.pointRedUntil || 0)) { near = Math.min(near, 2.5); U.vig.value = Math.max(U.vig.value, 0.45 + 0.3 * Math.sin(world.t * 18)); }   /* 2026-11-16 壁の腕に指をさされている間だけ、追われている時の画面に */
   if (world.mannRun && typeof MANN !== 'undefined' && ['spot', 'windup', 'dash', 'skid', 'hunt', 'stun', 'turn'].includes(MANN.st)) near = Math.min(near, Math.hypot(MANN.root.position.x - player.x, MANN.root.position.z - player.z));
   const hid = player.hidden || (typeof HIDE !== 'undefined' && HIDE.lk) || CAP.on || world.state !== 'play';
-  const rt = hid ? 0 : Math.pow(clamp((9 - near) / 7.5, 0, 1), 1.2) * 0.6;
+  const rt = Math.max(hid ? 0 : Math.pow(clamp((9 - near) / 7.5, 0, 1), 1.2) * 0.6, (typeof PHAN !== 'undefined' && PHAN.on && world.state === 'play' ? 0.75 * (PHAN.tk || 0) : 0));   /* 2026-11-17 化け物の周は、ずっと赤い照明（倒すと色と一緒に戻る） */
   const cur = U.redK.value, rate = hid ? 1 / 0.35 : rt > cur ? 1 / 1.6 : 1 / 2.5;
   U.redK.value = rt > cur ? Math.min(rt, cur + dt * rate * 0.6) : Math.max(rt, cur - dt * rate * 0.6);
   heartUpdate(spCh, dt);   // 2026-11-14 心臓の鼓動（検証版から）
@@ -13131,6 +13131,8 @@ function tick(now) {
     const nearBroad = camera.position.x > 25.2 && z === 'B';   /* 2026-11-17 放送室の前だけ（東階段の前で環境音が消えていた） */
     amb.vent.gain.setTargetAtTime(hushing ? world.hushLevel : (nearBroad || world.dark || world.blackout ? 0.0 : 0.1), c, hushing ? 0.05 : (nearBroad ? 0.08 : 0.6));
     if (!world.blackout && !world.dark) amb.hum.gain.setTargetAtTime(hushing ? 0 : AMB_HUM, c, 0.08);
+    /* 2026-11-17 ホラー環境音ループに、長い周期でゆっくり大きさが変わる波（41秒と17秒の2つを重ねる。小さい時は半分）。敵とは無関係。電池が赤い時は静かな瞬間を作らない */
+    if (amb.wave) { const w = 0.75 + 0.25 * (0.6 * Math.sin(c * 6.2832 / 41) + 0.4 * Math.sin(c * 6.2832 / 17 + 1.3)); amb.wave.gain.setTargetAtTime(Math.ceil(world.battery) < 20 ? 1 : w, c, 1.5); }
     if (nearBroad && Math.random() < dt * 1.3) SND.micClick();
     amb.bugs.gain.setTargetAtTime(world.ouma ? 0 : clamp((camera.position.z + 1) / 5, 0, 1) * 0.035, c, 0.5);   /* 逢魔が時は夜の虫は鳴かない */
     A.send.gain.setTargetAtTime(z === 'T' ? 0.95 : 0.5, c, 0.3);
@@ -15132,7 +15134,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.02';
+const VERSION = '0.17.03';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -19637,7 +19639,7 @@ const BROOMEV = {
    2026-11-15 隠しイベント「ナカヨシ」（151種類目の撮れ高）
    ・チャットに混ざる荒らしコメントをBANしていくと段階が進む（この端末に記録。データをリセットで0に戻す）
      0 ふつう（数周に1回、荒らしが1つだけ）→ BANで1 → 荒らしを合計3回BANで2 → 段階2で通算20件BANで3 → 倒したら「済」
-     「済」のあとも10周に1回くらい荒らしが1つ出て、BANするとまた段階1から
+     「済」のあとも20周に1回くらい荒らしが1つ出て、BANするとまた段階1から（2026-11-17 再戦は1回きり。倒せなくても終われば「済」に戻る）
    ・段階3の周：校舎の明かりが赤っぽくなり、逆さ女・クモ女・人体模型を合体させた化け物が、逆さ女の追跡のしくみで追ってくる（ほかの敵は出ない）
      この周だけ「封印のお札」が5枚どこかにある（ピアノの「運命」のお札も数に入る）。お札を持って捕まると貼る
      1・2枚目：うめいて背を向けて去り、消えて20〜40秒後にまた来る／3枚目：崩れて消え、色が戻り、撮れ高「ナカヨシを倒す」
@@ -19659,19 +19661,25 @@ const PHAN = {
   // ── 荒らしコメントをBANした
   onBan() {
     const d = this.load();
+    if (d.st === 9) d.won = true;   /* 2026-11-17 一度倒したことがある（再戦は1回きりにするため） */
+    if (d.st === 0) d.rs = false;
     if (d.st === 0 || d.st === 9) { d.st = 1; d.bans = 0; }   // 倒した後（済）も、まれに出る荒らしをBANするとまた始まる
     else if (d.st === 1) { d.bans = (d.bans || 0) + 1; if (d.bans >= 3) { d.st = 2; d.bans = 0; } }
-    else if (d.st === 2) { d.bans = (d.bans || 0) + 1; if (d.bans >= 20) { d.st = 3; d.bans = 0; } }   // 2026-11-15 段階2：通算20件BANで段階3（周をまたいで数える）
+    else if (d.st === 2) { d.bans = (d.bans || 0) + 1; if (d.bans >= 20) { d.st = 3; d.bans = 0; d.tries = 0; } }   // 2026-11-15 段階2：通算20件BANで段階3（周をまたいで数える）
     this.save(); if (TEST || DEV) console.log('PHAN ban', d.st, d.bans); this.panel();
   },
   // ── 結果画面を開いた（段階2の周 → 次の周から段階3）
   onResult() { },   // 2026-11-15 段階3へは、結果画面ではなく段階2での通算20件BANで進む
   // ── 周のはじめ
   begin() {
-    this.runSt = this.stage(); this.rand = this.runSt !== 3 && (chance(0.01) || ((TEST || BETA) && /[?&]phanrand\b/.test(location.search)));   // 2026-11-15 ごくまれに（1%）段階に関係なく出る。この周だけ（続けて挑戦はできない）
+    this.runSt = this.stage(); this.rand = this.runSt !== 3 && (chance(0.02) || ((TEST || BETA) && /[?&]phanrand\b/.test(location.search)));   // 2026-11-15 ごくまれに（1%）段階に関係なく出る。この周だけ（続けて挑戦はできない）
+    /* 2026-11-17 再戦（一度倒した後に、また段階3まで進んだ周）は1回きり：周のはじめに「倒した後」へ戻しておく（倒せなくても、捕まっても、帰っても） */
+    this.rematch = this.runSt === 3 && !!this.load().won; if (this.rematch) { const d = this.load(); d.st = 9; d.bans = 0; this.save(); }
+    /* 2026-11-17 詰み防止：初めての化け物の周は倒すまで続くが、13回負けたら（13周目が終わったら）最初の段階へ戻す。戻った後の荒らしは10周に1回くらい */
+    else if (this.runSt === 3) { const d = this.load(); d.tries = (d.tries || 0) + 1; if (d.tries >= 13) { d.st = 0; d.bans = 0; d.tries = 0; d.rs = true; } this.save(); }
     this.on = this.runSt === 3 || this.rand; world.phanRun = this.on; this.partsOff(); if (this.h0 && SG.bones && SG.bones.Head) SG.bones.Head.position.copy(this.h0);
     this.hits = 0; this.mode = 'idle'; this.nextHunt = 0; this.trackT = 0; this.sndT = 3; this.tintK = this.on ? 1 : 0; this.wasCh = false; this.dead = null; this.tintSlow = false; this.armsOff(); if (this.pool) { scene.remove(this.pool.grp); this.pool = null; } world.camShake = 0;
-    this.troll0 = ((this.runSt === 0 && chance(0.25)) || (this.runSt === 9 && chance(0.1)) || ((TEST || BETA) && /[?&]troll\b/.test(location.search)));   // 段階0：数周に1回くらい
+    this.troll0 = ((this.runSt === 0 && chance(this.load().rs ? 0.1 : 0.25)) || (this.runSt === 9 && chance(0.05)) || ((TEST || BETA) && /[?&]troll\b/.test(location.search)));   // 段階0：数周に1回くらい
     if (this.tag) this.tag.visible = false;
     this.tk = this.on ? 1 : 0; this.tkSet = true; postMat.uniforms.tint.value.set(1, 1, 1);
     if (TEST || DEV) console.log('PHAN run', this.runSt, this.on ? 'monster' : '', this.troll0 ? 'troll' : '');
@@ -19771,6 +19779,8 @@ const PHAN = {
     if (this.mode === 'gone') { if (world.t >= this.retAt) { this.mode = 'idle'; WD.release(true); this.hunt(); } return; }
     if (this.mode === 'dead') return this.deadUpd(dt);
     if (this.mode === 'done') { this.poolTick(dt); return; }
+    /* 2026-11-17 お札を持っていれば、気づかれていなくても、体が触れた瞬間に貼る（後ろからそっと近づいて貼れる） */
+    if (this.mode === 'idle' && (ITEM.have.ofuda | 0) > 0 && SG.root.visible && (SG.opacity ?? 1) > 0.5 && !WD.borrowed && !CAP.on && !world.capture && !player.hidden && Math.abs(WD.pos.y - player.y) < 1.2 && distTo(WD.pos.x, WD.pos.z) < 0.95) { ITEM.have.ofuda = (ITEM.have.ofuda | 0) - 1; this.seal(); return; }   /* 捕まったわけではないので、自撮り棒やマントは使わない */
     if (!this.nextHunt) this.nextHunt = world.t + rnd(14, 24);
     if (CH.state === 'off' && this.wasCh) this.nextHunt = world.t + rnd(14, 26);   // 見失ったら、しばらくしてまた来る
     this.wasCh = CH.state !== 'off';
@@ -19793,8 +19803,11 @@ const PHAN = {
     const tgt = this.on ? this.tintK : (world.chime30 && world.t >= (world.redAt || 0) ? 1 : 0), c = this.tk ?? 0;
     this.tk = this.on && !this.tintSlow ? tgt : c + clamp(tgt - c, -dt / (this.tintSlow ? 4 : 3), dt / (this.tintSlow ? 4 : 3));   /* 2026-11-15 倒した後はゆっくり元に */
     if (typeof RED !== 'undefined' && RED.on) return;   // 赤く染まる別の演出の間はそちら
-    if (this.tk <= 0 && !this.tkSet) return; this.tkSet = this.tk > 0; const k = this.tk;
-    postMat.uniforms.tint.value.set(1 + 0.5 * k, 1 - 0.42 * k, 1 - 0.46 * k);   // 録画にも入る
+    const w = this.wf || 0; if (w > 0) this.wf = Math.max(0, w - dt / 0.9);   /* 2026-11-17 倒した瞬間の白い光（約1秒で引く） */
+    if (this.tk <= 0 && !this.tkSet && w <= 0) return; this.tkSet = this.tk > 0 || w > 0; const k = this.tk, f = 1 + 9 * w * w;
+    if (this.on) { const pu = 1 + 0.07 * Math.sin(world.t * 1.6) * k;   /* 2026-11-17 化け物の周は、赤い照明に変わったと分かるくらい強く（ゆっくり脈打つ） */
+      postMat.uniforms.tint.value.set((1 + 0.6 * k) * pu * f, (1 - 0.15 * k) * f, (1 - 0.2 * k) * f); }   /* 赤みは redK（画面全体を赤い照明の色に）で出す。ここは明るさを保つ程度 */
+    else postMat.uniforms.tint.value.set((1 + 0.5 * k) * f, (1 - 0.42 * k) * f, (1 - 0.46 * k) * f);   // 録画にも入る
   },
   // 少し離れた見えない所から現れて、追ってくる
   hunt() {
@@ -19848,7 +19861,7 @@ const PHAN = {
     world.vhs = Math.max(world.vhs, 0.7); try { PAD.hit && PAD.hit(1); } catch (e) { }
     wdScream(0.05, 0.9, 1.1); SND.glitch && SND.glitch(0.4); this.moan();   // 女の叫び・人体模型のきしみ・クモ女のささやきを混ぜて
     if (A.ctx && KANA.ok && KANA.ok()) { const pn = panAt(V(WD.pos.x, WD.pos.y + 1.4, WD.pos.z), 0.9, 1.6, undefined, 0); const len = SPV.speakFrags(pn, SPV.plan('みつけた').slice(0, 2), A.ctx.currentTime + 0.1); freeLater(len + 2, pn); }
-    if (!this.rand) this.setStage(9);   /* ランダムで出た周は、段階は変えない */
+    if (!this.rand) { const d = this.load(); d.won = true; d.tries = 0; this.setStage(9); }   /* ランダムで出た周は、段階は変えない */
     setTimeout(() => this.thanks(), 450);
   },
   // 叫びの終わりに、小さく途切れるように「アアアア……リガト…」
@@ -19933,6 +19946,7 @@ const PHAN = {
     // 5. 沈みきった：赤い手も戻り、色味はゆっくり元に戻る。撮れ高はこの瞬間
     if (sk >= 1 && !D.sunk) {
       D.sunk = true; world.camShake = 0; this.reachP(0); this.tintK = 0; this.tintSlow = true; if (this.pool) this.pool.out = 0;
+      this.wf = 1; const fl = $('#itemFlash'); if (fl) { fl.style.transition = 'none'; fl.style.opacity = '0.95'; void fl.offsetWidth; fl.style.transition = 'opacity 1.1s'; fl.style.opacity = '0'; }   /* 2026-11-17 倒した：画面を一瞬白く（録画にも入る） */
       if (rec.active) award(PHAN_AW[0], PHAN_AW[1], PHAN_AW[2]);   // 沈みきった瞬間を録画していた時だけ
       CHATLOG.add('phanWin'); SND.thud(V(D.x, D.y0, D.z), 0.6);
     }
@@ -20006,7 +20020,7 @@ const PHAN = {
       document.body.appendChild(el);
     }
     const d = this.load(), nm = { 0: '0 ふつう', 1: '1', 2: '2', 3: '3 化け物', 9: '済' };
-    el.innerHTML = `<b>継ぎ接ぎのナカヨシ（確認用）</b><br>段階：${nm[d.st] ?? d.st}${d.st === 1 ? `（BAN ${d.bans || 0}/3）` : d.st === 2 ? `（BAN ${d.bans || 0}/20）` : ''}<br>この周：${this.runSt}${this.on ? `・お札${ITEM.have && ITEM.have.ofuda | 0}枚・貼った${this.hits}` : ''}<br>`
+    el.innerHTML = `<b>継ぎ接ぎのナカヨシ（確認用）</b><br>段階：${nm[d.st] ?? d.st}${d.st === 1 ? `（BAN ${d.bans || 0}/3）` : d.st === 2 ? `（BAN ${d.bans || 0}/20）` : d.st === 3 ? `（負け ${d.tries || 0}/13）` : ''}<br>この周：${this.runSt}${this.on ? `・お札${ITEM.have && ITEM.have.ofuda | 0}枚・貼った${this.hits}` : ''}<br>`
       + [0, 1, 2, 3, 9].map(v => `<button data-a="st" data-v="${v}" style="margin:2px;padding:3px 7px">${v === 9 ? '済' : v}</button>`).join('')
       + `<br><button data-a="hunt" style="margin:2px;padding:3px 7px">化け物を呼ぶ</button><button data-a="fuda" style="margin:2px;padding:3px 7px">お札+1</button><br><small>段階の変更は次の周から</small>`;
   },
