@@ -15150,7 +15150,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.80';
+const VERSION = '0.16.81';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -21349,20 +21349,26 @@ const CEIL = {
     if (TEST || DEV) console.log('CEIL start'); },
   ceilY() { return (player.y > LH - 0.6 ? LH : 0) + HT; },
   pose(p, yaw) { const R = SG.root; R.rotation.order = 'YXZ'; R.rotation.set(Math.PI / 2, yaw + Math.PI, 0); R.position.copy(p); R.updateMatrixWorld(true); const h = sgHead(V()); R.position.x += p.x - h.x; R.position.y += p.y - h.y + 0.1; R.position.z += p.z - h.z; },
-  mkHair() { const g = new THREE.Group(), m = new THREE.MeshLambertMaterial({ color: 0x141210, map: TX.hair, alphaTest: 0.3, side: THREE.DoubleSide });
-    for (let i = 0; i < 9; i++) { const len = rnd(0.55, 0.85), geo = new THREE.PlaneGeometry(rnd(0.07, 0.11), len); geo.translate(0, -len / 2, 0); const q = new THREE.Mesh(geo, m), a = i / 9 * Math.PI * 2; q.position.set(Math.cos(a) * 0.07, 0, Math.sin(a) * 0.06); q.rotation.y = a + rnd(-0.4, 0.4); q.rotation.z = rnd(-0.05, 0.05); g.add(q); }
+  /* 髪：顔を取り囲むように、天井から真下へ垂れる（輪の内側から見上げると顔が見える） */
+  mkHair() { const g = new THREE.Group(), m = new THREE.MeshLambertMaterial({ color: 0x141210, map: TX.hair, alphaTest: 0.3, side: THREE.DoubleSide }), n = 16;
+    for (let i = 0; i < n; i++) { const len = rnd(0.5, 0.8), geo = new THREE.PlaneGeometry(rnd(0.08, 0.12), len); geo.translate(0, -len / 2, 0); const q = new THREE.Mesh(geo, m), a = i / n * Math.PI * 2, r = rnd(0.13, 0.17); q.position.set(Math.cos(a) * r, 0, Math.sin(a) * r); q.rotation.y = -a + Math.PI / 2 + rnd(-0.25, 0.25); q.rotation.x = rnd(-0.06, 0.06); g.add(q); }
     scene.add(g); return g; },
-  stop() { this.on = false; try { if (this.hair) { scene.remove(this.hair); this.hair = null; } SG.root.rotation.order = 'XYZ'; SG.root.rotation.set(0, SG.root.rotation.y, 0); if (WD.borrowed && !CAP.on && !(typeof OFUDA !== 'undefined' && OFUDA.on)) WD.release(true); } catch (e) { } },
+  /* 顔だけを見せる：頭のまわりの箱の外（首・服・体）と、天井より上を消す */
+  clip(H, top) { if (!this.cp) this.cp = [0, 1, 2, 3, 4].map(() => new THREE.Plane()); const yw = this.yw ?? player.yaw, f = V(-Math.sin(yw), 0, -Math.cos(yw)), sd = V(Math.cos(yw), 0, -Math.sin(yw)), P = this.cp;
+    P[0].set(V(0, -1, 0), top); P[1].normal.copy(f); P[1].constant = -f.dot(H) - 0.05; P[2].normal.copy(f).negate(); P[2].constant = f.dot(H) + 0.38;   /* 頭の骨から体側（-f）は首なので切る。顔は +f 側 */ P[3].normal.copy(sd); P[3].constant = -sd.dot(H) + 0.17; P[4].normal.copy(sd).negate(); P[4].constant = sd.dot(H) + 0.17;
+    if (!this.clipOn) { this.clipOn = true; renderer.localClippingEnabled = true; for (const m of SG.mats) { m.clippingPlanes = P; m.needsUpdate = true; } } },
+  unclip() { if (!this.clipOn) return; this.clipOn = false; for (const m of SG.mats) { m.clippingPlanes = null; m.needsUpdate = true; } },
+  stop() { this.on = false; try { this.unclip(); if (this.hair) { scene.remove(this.hair); this.hair = null; } SG.root.rotation.order = 'XYZ'; SG.root.rotation.set(0, SG.root.rotation.y, 0); if (WD.borrowed && !CAP.on && !(typeof OFUDA !== 'undefined' && OFUDA.on)) WD.release(true); } catch (e) { } },
   grab() { this.ph = 'grab'; CAP.ceil = true; CAP.start(); if (CAP.on) { if (TEST || DEV) console.log('CEIL grab'); return; } CAP.ceil = false; if (world.t < (world.invUntil || 0) && !WD.borrowed) { WD.borrowed = true; } if (world.t < (world.invUntil || 0)) { this.ph = 'ceil'; this.see = 0; return; } this.stop(); },
   update(dt) {
     if (!this.on) { if (this.can()) { if (!this.at) this.at = world.t + (WF('ceilwoman') ? 3 : rnd(15, 60)); if (world.t >= this.at) this.start(); } return; }
-    if (CAP.on) { if (this.hair) { const h = sgHead(V()); this.hair.position.set(h.x, h.y - 0.05, h.z); } return; }
+    if (CAP.on) { const h = sgHead(V()); if (this.hair) this.hair.position.set(h.x, Math.min(this.top || h.y, h.y + 0.12), h.z); if (this.clipOn) this.clip(h, Math.min(this.top || 99, h.y + 0.14)); if (CAP.done || world.state !== 'play') this.unclip(); return; }
     if (world.state !== 'play') return; this.t += dt;
     if (this.ph === 'sink') { const k = smooth(0, 1.4, this.t); SG.root.position.set(this.from.x, this.from.y - 2.1 * k, this.from.z); if (this.t >= 1.4) { this.ph = 'ceil'; sgSetOpacity(1); this.hair = this.mkHair(); } return; }
     if (this.ph !== 'ceil') return;
     const dy = Math.atan2(Math.sin(player.yaw - this.yw), Math.cos(player.yaw - this.yw)); this.yw += dy * Math.min(1, dt * 1.2);   // 体の向きは少し遅れてついてくる（足は後ろ側）
-    const tgt = V(player.x, this.ceilY() - 0.3, player.z); this.cur = this.cur ? this.cur.lerp(tgt, Math.min(1, dt * 4)) : tgt.clone(); this.cur.y = tgt.y; this.pose(this.cur, this.yw);
-    const h = sgHead(V()); this.hair.position.set(h.x, h.y - 0.05, h.z);
+    const tgt = V(player.x, this.ceilY() - 0.14, player.z);   /* 顔が天井からにゅっと出ている高さ */ this.cur = this.cur ? this.cur.lerp(tgt, Math.min(1, dt * 4)) : tgt.clone(); this.cur.y = tgt.y; this.pose(this.cur, this.yw);
+    const h = sgHead(V()); this.top = this.ceilY() - 0.005; this.clip(h, this.top); this.hair.position.set(h.x, this.top, h.z);
     /* 見上げて、顔をしっかり画面に入れたら */
     if (!player.hidden && camera.rotation.x > 0.55) { const q = h.clone().project(camera); if (q.z < 1 && Math.abs(q.x) < 0.5 && Math.abs(q.y) < 0.55) this.see += dt; else this.see = Math.max(0, this.see - dt); } else this.see = Math.max(0, this.see - dt);
     if (this.see > 0.3) { this.grab(); return; }
