@@ -9093,10 +9093,10 @@ const ITEM = {
     const L = [['ド', 0, 0], ['ド#', 0, 1], ['レ', 1, 0], ['レ#', 1, 1], ['ミ', 2, 0], ['ファ', 3, 0], ['ファ#', 3, 1], ['ソ', 4, 0], ['ソ#', 4, 1], ['ラ', 5, 0], ['ラ#', 5, 1], ['シ', 6, 0]];   // 2026-11-15 黒鍵はシャープに統一
     const n = S.notes.length, x0 = 150, dx = Math.min(66, (W - 200 - x0 + 120) / n);
     S.notes.forEach((pc, i) => {
-      const [nm, step, flat] = L[pc]; const y = bot - (step - 2) * gap / 2, x = x0 + i * dx;   // ミ（E4）が一番下の線
+      const [nm, st0, flat] = L[pc], step = S.draw ? S.draw[i] : st0; const y = bot - (step - 2) * gap / 2, x = x0 + i * dx;   // ミ（E4）が一番下の線   2026-11-17 draw：楽譜に書く高さ（真ん中のド＝0、1つ上のド＝7）
       if (step <= 0) { g.beginPath(); g.moveTo(x - 16, bot + gap); g.lineTo(x + 16, bot + gap); g.stroke(); }   // ドは加線
       if (flat) { g.font = 'bold 26px serif'; g.fillText('#', x - 30, y + 9); }
-      g.beginPath(); g.ellipse(x, y, 10, 7, -0.35, 0, 7); g.fill(); g.fillRect(x + 8.5, y - 46, 2.2, 46);
+      g.beginPath(); g.ellipse(x, y, 10, 7, -0.35, 0, 7); g.fill(); if (step >= 6) g.fillRect(x - 10.7, y, 2.2, 46); else g.fillRect(x + 8.5, y - 46, 2.2, 46);   /* 真ん中の線（シ）から上は、棒を下向きに */
       g.font = `bold ${nm.length > 2 ? 16 : 20}px sans-serif`; g.textAlign = 'center'; g.fillText(nm, x, bot + 58); g.textAlign = 'left';
     });
     g.fillStyle = 'rgba(150,20,20,.85)'; g.font = 'italic 24px serif'; g.fillText('ひいて', W - 120, H - 34);
@@ -9676,7 +9676,8 @@ const PIANO = {
   // 弾くと反応する曲。notes＝主旋律（音の名前だけを見る。オクターブは問わない）、acc＝原曲で同時に鳴る音（主旋律と同時に弾いても失敗にしない）
   SONGS: [
     { id: 'clair', notes: [8, 5, 8, 6, 5, 6], acc: [1, 3, 5, 6, 8, 10] },          // 月の光：ラ♭ ファ ラ♭ ソ♭ ファ ソ♭（下に3度を重ねてもよい）
-    { id: 'neko', notes: [3, 1, 6, 6, 6, 3, 1, 6, 6, 6], opt: [4, 9], acc: [1, 3, 5, 6, 10, 11] },     // 猫ふんじゃった：レ# ド# ファ# ファ# ファ#（3回目のファ#はあってもなくてもよい）×2   2026-11-17 きらきら星はなくした
+    { id: 'neko', notes: [3, 1, 6, 6, 6, 3, 1, 6, 6, 6], draw: [8, 7, 3, 10, 10, 8, 7, 3, 10, 10], opt: [4, 9], acc: [1, 3, 5, 6, 10, 11] },     // 猫ふんじゃった：レ# ド# ファ# ファ# ファ#（3回目のファ#はあってもなくてもよい）×2   2026-11-17 きらきら星はなくした
+    { id: 'neko2', as: 'neko', notes: [3, 1, 1, [5, 11], [5, 11], 3, 1, 1, [5, 11], [5, 11]], acc: [1, 3, 5, 6, 10, 11] },   // 2026-11-17 猫ふんじゃったの途中（5〜6小節目）：レ# ド# ド#（左手） ファ＋シ ファ＋シ ×2（[ ]は和音）
     { id: 'unmei', notes: [7, 7, 7, 3], acc: [7, 3] },   // 運命（ベートーベン）：ソ ソ ソ ミ♭
     { id: 'turca', notes: [11, 9, 8, 9, 0, 2, 0, 11, 0, 4], acc: [] },
     { id: 'toccata', notes: [9, 7, 9, 7, 5, 4, 2, 1, 2], acc: [] },   // 2026-11-15 トッカータとフーガ ニ短調（バッハ）：ラ ソ ラ　ソ ファ ミ レ ド# レ   // 2026-11-15 トルコ行進曲（モーツァルト）：シ ラ ソ# ラ ド レ ド シ ド ミ
@@ -9854,7 +9855,7 @@ const PIANO = {
       P.appendChild(d); }
   },
   sheet(on) {
-    this.sheetOn = !!on && !!ITEM.have.memo; const el = this.el.querySelector('#pnSheet');
+    this.sheetOn = !!on && (!!ITEM.have.memo || PERM.has('score')); const el = this.el.querySelector('#pnSheet');
     if (this.sheetOn) { const url = ITEM.memoScore(ITEM.memoSong); el.querySelector('img').src = url; this.sheetMesh3(url); }
     el.classList.toggle('show', this.sheetOn); if (this.sm) this.sm.visible = this.sheetOn;
   },
@@ -9915,14 +9916,14 @@ const PIANO = {
   close() {
     const G = this.grp; if (!G) return; this.grp = null; this.pi = this.pi || {};
     for (const S of this.SONGS) {
-      const P = S.notes, O = S.opt || [], ok = want => G.n.includes(want) && G.n.every(x => x === want || S.acc.includes(x));
+      const P = S.notes, O = S.opt || [], ok = want => Array.isArray(want) ? want.every(w => G.n.includes(w)) && G.n.every(x => want.includes(x) || S.acc.includes(x)) : G.n.includes(want) && G.n.every(x => x === want || S.acc.includes(x));
       const p = this.pi[S.id] || 0; this.miss = this.miss || {}; let np;
       if (ok(P[p])) np = p + 1;
       else if (O.includes(p) && ok(P[p + 1])) np = p + 2;   /* 2026-11-17 あってもなくてもよい音（猫ふんじゃったの3回目のファ#） */
       else if (p > 0 && !this.miss[S.id]) { this.miss[S.id] = 1; np = p; }   /* 2026-11-17 まちがいは1音だけ許す（続きから弾ける） */
       else { this.miss[S.id] = 0; np = ok(P[0]) ? 1 : 0; }
       this.pi[S.id] = np;
-      if (np >= P.length || (np === P.length - 1 && O.includes(np))) { this.pi[S.id] = 0; this.miss[S.id] = 0; this.done(S.id); }
+      if (np >= P.length || (np === P.length - 1 && O.includes(np))) { this.pi[S.id] = 0; this.miss[S.id] = 0; this.done(S.as || S.id); }
     }
   },
   done(id) {
@@ -14461,8 +14462,9 @@ const INV = {
       el.innerHTML = `<img alt=""><div><b></b><small></small></div><div class="pSw"></div>`; el.querySelector('img').src = PERM_IMG[id];
       const txt = v => TR(D.desc) + '　' + TR(v ? '効果：オン' : '効果：オフ');
       el.querySelector('b').innerHTML = `${TR(D.name)}`; const stx = v => { el.querySelector('small').textContent = txt(v); el.querySelector('small').insertAdjacentHTML('afterbegin', YTAG.desc(id, '')); }; stx(PERM.active(id));
-      if (['fixcam', 'rphone'].includes(id)) { el.classList.remove('perm'); el.querySelector('.pSw').remove(); el.querySelector('small').textContent = TR(D.desc); }   /* 2026-11-17 定点カメラはオン・オフなし */
-      el.addEventListener('click', e => { e.stopPropagation(); if (['fixcam', 'rphone'].includes(id)) return; const v = !PERM.active(id); PERM.setOn(id, v); el.classList.toggle('on', v); stx(v); });
+      if (['fixcam', 'rphone', 'score'].includes(id)) { el.classList.remove('perm'); el.querySelector('.pSw').remove(); el.querySelector('small').textContent = TR(D.desc); }   /* 2026-11-17 楽譜もオン・オフなし */
+      if (id === 'score') { el.classList.add('tap'); el.addEventListener('click', e => { e.stopPropagation(); $('#invScoreImg').src = ITEM.memoScore('neko'); $('#invScore').classList.add('show'); }); }   /* タップで楽譜を見る */   /* 2026-11-17 定点カメラはオン・オフなし */
+      el.addEventListener('click', e => { e.stopPropagation(); if (['fixcam', 'rphone', 'score'].includes(id)) return; const v = !PERM.active(id); PERM.setOn(id, v); el.classList.toggle('on', v); stx(v); });
       if (id === 'fixcam' && PERM.active(id)) { const b = document.createElement('button'); b.className = 'invAct'; b.type = 'button'; b.textContent = TR(FIXCAM.placed ? '設置中' : '置く'); b.disabled = FIXCAM.placed; b.addEventListener('click', e => { e.stopPropagation(); if (FIXCAM.placed) return; this.hide(); setTimeout(() => FIXCAM.startFrame(), 60); }); el.appendChild(b); }   // 2026-11-14 定点カメラ：画角を決める画面へ（設置中は、カメラに近づいて回収すると置き直せる）
       L.appendChild(el);
     }
@@ -15140,7 +15142,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.04';
+const VERSION = '0.17.05';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -19474,6 +19476,7 @@ Object.assign(CHAT_DICT.t, {
   'wg.aw.01': ['こっち向いてる…', "it's facing us..."], 'wg.aw.02': ['さっきと違う', "that's different from before"], 'wg.aw.03': ['目が合った', 'we made eye contact'],
 });
 if (CHAT_DICT.ev) Object.assign(CHAT_DICT.ev, { '闘牛士': ['wg.br.03', 'wg.br.01'], 'バリケード突破': ['wg.br.01', 'wg.br.02', 'wg.br.04'], 'こちらを向く骸骨': ['wg.aw.01', 'wg.aw.02'], '瓶の中の目玉': ['wg.aw.03', 'wg.aw.01'], '振り向く石膏像': ['wg.aw.01', 'wg.aw.02'], 'ポーズを変えたデッサン人形': ['wg.aw.02'], '石膏仮面でやり過ごす': ['wg.mask.03', 'wg.mask.01', 'wg.mask.02'], '校内放送ジャック': ['wg.pa.01', 'wg.pa.02'], '放送中の乱入者': ['wg.pa.03', 'wg.pa.04'] });
+/* 2026-11-17 ガラス戸に残ったカメラを構えたままの自分：イベントも撮れ高もなくした */ delete EV.glass; delete AW_TABLE.glassSelf; delete CHIP_DESC.glassSelf; COL.LIST = COL.LIST.filter(x => x[0] !== 'glassSelf'); delete EN['ガラスに残ったカメラを構えたままの自分']; if (CHAT_DICT.ev) delete CHAT_DICT.ev['ガラスに残ったカメラを構えたままの自分'];
 /* 消した撮れ高：一度だけ点いた赤ランプ・こちらを向くマイク */
 for (const k of ['micLamp', 'micTurn']) { delete AW_TABLE[k]; delete CHIP_DESC[k]; }
 COL.LIST = COL.LIST.filter(x => x[0] !== 'micLamp' && x[0] !== 'micTurn');
@@ -21417,10 +21420,10 @@ CHAT_DICT.c.ending_cutoff = ['ec.cut.01', 'ec.cut.02', 'ec.cut.03', 'ec.cut.04',
    ・スマホで弾いている時に、文字の選択（青い帯）と拡大鏡が出ないように
    ========================================================= */
 PERM.ORDER.push('score'); PERM.DEFS.score = { name: '楽譜の切れ端', desc: '誰かが書き残した楽譜の切れ端。「猫ふんじゃった」が書いてある。音楽室のピアノの画面で「楽譜を見る」から見られる。' };
-setTimeout(() => { PERM_IMG.score = ITEM_IMG.memo || PERM_IMG.score; }, 0);
+PERM_IMG.score = ITEM_ICON2.memo || PERM_IMG.score;   /* 2026-11-17 紙切れのアイコン素材を直接使う（前は、まだ空っぽの画像を写していた） */
 Object.assign(EN, { '楽譜の切れ端': 'Torn sheet music', '誰かが書き残した楽譜の切れ端。「猫ふんじゃった」が書いてある。音楽室のピアノの画面で「楽譜を見る」から見られる。': 'A torn scrap of sheet music someone left behind. It has “The Flea Waltz” on it. View it from “Sheet music” on the piano screen.', '楽譜を見る': 'Sheet music', 'しまう': 'Hide', 'いいね': 'Like', 'トルコ行進曲を弾く': 'Play the Turkish March', 'トッカータとフーガを弾く': 'Play Toccata and Fugue', '運命を弾く': 'Play the Fate Symphony' });
-{ const R0 = CMX.reset.bind(CMX); CMX.reset = function () { R0(); PIANO.nekoRolled = false; try { if (PERM.active('score')) { ITEM.have.memo = true; ITEM.memoSong = 'neko'; const m = ITEM.get('memo'); if (m) m.taken = true; ITEM.memoLk = null; } } catch (e) { } }; }
-{ const U0 = SHOPFX.update; SHOPFX.update = function (dt) { U0.call(SHOPFX, dt); if (ITEM.have.memo && !PERM.has('score')) { const d = PERM.load(); d.have.score = true; d.on.score = true; PERM.save(); } }; }
+{ const R0 = CMX.reset.bind(CMX); CMX.reset = function () { R0(); PIANO.nekoRolled = false; try { if (PERM.has('score')) { ITEM.have.memo = false; ITEM.memoSong = 'neko'; const m = ITEM.get('memo'); if (m) m.taken = true; ITEM.memoLk = null; } } catch (e) { } }; }   /* 2026-11-17 だいじなものだけに並べる（ふつうの持ち物の紙切れは出さない） */
+{ const U0 = SHOPFX.update; SHOPFX.update = function (dt) { U0.call(SHOPFX, dt); if (ITEM.have.memo) { if (!PERM.has('score')) { const d = PERM.load(); d.have.score = true; d.on.score = true; PERM.save(); } ITEM.have.memo = false; ITEM.memoSong = 'neko'; } }; }   /* 拾ったら、すぐだいじなものへ移す */
 Object.assign(PIANO, {
   ui2() { if (this.ui2done || !this.el) return; this.ui2done = true; const bar = this.el.querySelector('#pnBar');
     const sb = document.createElement('button'); sb.className = 'btn'; sb.id = 'pnScore'; sb.type = 'button'; this.el.querySelector('#pnInv').after(sb);
@@ -21430,7 +21433,7 @@ Object.assign(PIANO, {
     for (const t of ['touchstart', 'touchmove']) this.el.addEventListener(t, stop, { passive: false, capture: true });
     this.el.addEventListener('contextmenu', e => e.preventDefault()); this.el.addEventListener('selectstart', e => e.preventDefault());
     document.addEventListener('selectionchange', () => { if (this.on) try { const sel = getSelection(); if (sel && sel.rangeCount && !sel.isCollapsed) sel.removeAllRanges(); } catch (_) { } }); },
-  ui2sync() { const sb = this.el && this.el.querySelector('#pnScore'); if (!sb) return; sb.style.display = ITEM.have.memo ? '' : 'none'; sb.textContent = TR(this.sheetOn ? 'しまう' : '楽譜を見る'); sb.classList.toggle('on', !!this.sheetOn); },
+  ui2sync() { const sb = this.el && this.el.querySelector('#pnScore'); if (!sb) return; sb.style.display = ITEM.have.memo || PERM.has('score') ? '' : 'none'; sb.textContent = TR(this.sheetOn ? 'しまう' : '楽譜を見る'); sb.classList.toggle('on', !!this.sheetOn); },
   like() { },   /* 2026-11-17 自作の「いいね」ボタンはやめ、撮れ高のいつものアニメ（likePop）をピアノの画面にも出す */
 });
 { const E0 = PIANO.enter.bind(PIANO); PIANO.enter = function () { E0(); this.miss = {}; if (this.on) { this.ui2(); this.ui2sync(); document.documentElement.classList.add('pianoOn'); } }; }
