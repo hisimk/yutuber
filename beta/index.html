@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+<script>
+/* 2026-11-17 試し版の確認用 ?play5：ランク5・ショップの道具を全部持った状態で遊ぶ。
+   本番と同じ保存場所を使わないよう、いまの記録を写した「確認用の保存場所（T5:）」で遊ぶ（本番・ふだんの試し版の記録は変わらない） */
+(function () { var q = location.search; if (!/[?&]play5\b/.test(q) || !/\/beta\//.test(location.pathname)) return;
+  var P = 'T5:', S = Storage.prototype, g = S.getItem, s = S.setItem, r = S.removeItem;
+  try { if (g.call(localStorage, 'T5:__init') !== '1') { var ks = []; for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k.indexOf(P) !== 0) ks.push(k); } for (var j = 0; j < ks.length; j++) try { s.call(localStorage, P + ks[j], g.call(localStorage, ks[j])); } catch (e) { } s.call(localStorage, 'T5:__init', '1'); } } catch (e) { }
+  S.getItem = function (k) { return g.call(this, this === localStorage ? P + k : k); }; S.setItem = function (k, v) { return s.call(this, this === localStorage ? P + k : k, v); }; S.removeItem = function (k) { return r.call(this, this === localStorage ? P + k : k); };
+  if (!/[?&]rank=/.test(q)) history.replaceState(null, '', location.pathname + q + '&rank=5&shopall&perm=all&wingopen&ownall' + location.hash);
+  window.PLAY5 = true; })();
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>幽tuber -撮レ高ヲ狙エ-</title>
@@ -945,6 +955,7 @@
       <div class="opt" id="setLang"><div>言語 / Language</div><div class="seg" id="langSeg"><button data-lang="ja">日本語</button><button data-lang="en">English</button></div></div>
       <button class="setLink" id="setTut">遊び方を見る</button>
       <button class="setLink" id="setCol">心霊アーカイブ</button>
+      <button class="setLink" id="setEnding" style="display:none">エンディングを見る</button>
       <button class="setLink" id="setNotice">注意事項・プライバシー</button>
       <button class="setLink" id="setXfer">引き継ぎコード</button>
       <button class="setLink" id="setReset">データをリセット</button>
@@ -15109,17 +15120,19 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.89';
+const VERSION = '0.16.90';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
 const VDB = {
-  NAME: BETA ? 'beta_yutuber_db' : 'yutuber_db', db: null,
+  NAME: BETA ? (window.PLAY5 ? 'beta_yutuber_db_t5' : 'beta_yutuber_db') : 'yutuber_db', db: null,   /* 2026-11-17 確認用 ?play5 は別の保存場所（はじめに試し版の動画を写す） */
   open() {
     if (this.db) return Promise.resolve(this.db);
     return new Promise((ok, ng) => { try { const r = indexedDB.open(this.NAME, 1); r.onupgradeneeded = () => r.result.createObjectStore('vids'); r.onsuccess = () => { this.db = r.result; ok(this.db); }; r.onerror = () => ng(r.error); } catch (e) { ng(e); } });
   },
-  tx(mode, fn) { return this.open().then(db => new Promise((ok, ng) => { const t = db.transaction('vids', mode); const st = t.objectStore('vids'); const r = fn(st); t.oncomplete = () => ok(r && r.result); t.onerror = () => ng(t.error); })); },
+  copy5() { if (!window.PLAY5 || this.c5) return this.c5 || Promise.resolve(); let done = false; try { done = localStorage.getItem('yt_vdb_t5') === '1'; } catch (e) { } if (done) return (this.c5 = Promise.resolve());
+    return (this.c5 = new Promise(ok => { try { const r = indexedDB.open('beta_yutuber_db', 1); r.onupgradeneeded = () => r.result.createObjectStore('vids'); r.onerror = () => ok(); r.onsuccess = () => { const src = r.result; try { const t = src.transaction('vids', 'readonly'), st = t.objectStore('vids'), out = []; const c = st.openCursor(); c.onsuccess = () => { const cu = c.result; if (cu) { out.push([cu.key, cu.value]); cu.continue(); } }; t.oncomplete = () => { src.close(); this.open().then(db => { const t2 = db.transaction('vids', 'readwrite'), s2 = t2.objectStore('vids'); for (const [k, v] of out) s2.put(v, k); t2.oncomplete = () => { try { localStorage.setItem('yt_vdb_t5', '1'); } catch (e) { } ok(); }; t2.onerror = () => ok(); }).catch(() => ok()); }; t.onerror = () => { src.close(); ok(); }; } catch (e) { src.close(); ok(); } }; } catch (e) { ok(); } })); },
+  tx(mode, fn) { return (window.PLAY5 ? this.copy5() : Promise.resolve()).then(() => this.open()).then(db => new Promise((ok, ng) => { const t = db.transaction('vids', mode); const st = t.objectStore('vids'); const r = fn(st); t.oncomplete = () => ok(r && r.result); t.onerror = () => ng(t.error); })); },
   put(id, blobs) { return this.tx('readwrite', st => st.put(blobs, id)); },
   get(id) { return this.tx('readonly', st => st.get(id)); },
   del(id) { return this.tx('readwrite', st => st.delete(id)).catch(() => { }); },
@@ -22334,6 +22347,11 @@ XCHAT.ORD = ['smemo2']; XCHAT.BIG.push('smemo3');
 Object.assign(CHAT_DICT.t, { 'sm1.0': ['誰のメモ？', 'whose note is this?'], 'sm1.1': ['前に来た人いるじゃん', 'someone was here before'], 'sm1.2': ['同業者で草', 'a fellow creator lol'], 'sm1.3': ['その人どうなったの…', 'what happened to them...'],
   'sm2.0': ['アイツって誰', 'who is "that thing"'], 'sm2.1': ['人体模型でしょ', 'the anatomy model obviously'], 'sm2.2': ['臓器落とす人間がいるかよ！', 'what human drops organs!?'],
   'sm3.0': ['こっわ', 'terrifying'], 'sm3.1': ['おかしくなっちゃった', 'they lost it'], 'sm3.2': ['ぼそあたま…？', 'bosoatama...?'], 'sm3.3': ['まえのかおとうしろのかお', 'the front face and the back face'], 'sm3.4': ['字が震えてる', 'the handwriting is shaking'], 'sm3.5': ['鳥肌やばい', 'got goosebumps'] });
+/* 2026-11-17 設定に「エンディングを見る」（一度エンディングを見たら・スタート画面の時だけ）。?ownall（試し版）：ショップの道具を全部持っている状態 */
+{ const S0 = SET.show.bind(SET); SET.show = function () { const r = S0.apply(this, arguments); try { let seen = false; try { seen = localStorage.getItem(ENDING.KEY) === '1'; } catch (e) { } $('#setEnding').style.display = (seen || window.PLAY5) && world.state === 'title' ? '' : 'none'; $('#setEnding').textContent = TR('エンディングを見る'); } catch (e) { } return r; }; }
+$('#setEnding').addEventListener('click', e => { e.stopPropagation(); if (world.state !== 'title' || ENDING.running) return; SET.hide(); setTimeout(() => ENDING.play(() => { world.state = 'title'; }), 200); });
+Object.assign(EN, { 'エンディングを見る': 'Watch the ending' });
+if (WF('ownall')) { const d = SHOP.load(); for (const it of ECON.items) { if (it[3] === 'look') d.look[it[0]] = true; else d.own[it[0]] = Math.max(d.own[it[0]] | 0, YTAG.KEEP.includes(it[0]) || ['goldphone', 'goldframe'].includes(it[0]) ? 1 : 5); } SHOP.save(); }
 if (TEST && window.__G) Object.assign(window.__G, { HAND, POP, DRIFT, KBALL, CEIL, FIXCAM, avatar, SMEMO, IDLEC, CURTF, DARKK, TIPS, CHAT, escape, evidence, award, SHOP, ECON, ACH, ITEM, INV, BUZZ, CHEM, CANDLE, DRINK, STICK, PAINT, WING, CH, WD, SP, nodePos, clearLine, segBlocked, MINOR, HP, EV, DIR, URINT, URPREY, URAV, HANDS, HAND_SPOTS, POLT, MOVERS, UWA, GG_SPOTS, ABYSS, BUSTX, DOLLX, nearLook, setZoom(z) { zoom = zoomTarget = z; }, SCIRM, ARTRM, PMASK, COL, NAKA, TALLY, BROOMEV, AW_TABLE, CHIP_DESC, AW_HINT, GEAR, FIXCAM, RING, PERM, KANA, VO, PACALL, SPV, EV, seen, A, CH, HEART, CVOICE, wdScream, WARP, WD, ITEM, F2, PAD, QUALITY, opt, MP4FIX, rec, resultBlobs: () => resultBlobs, LOGOANIM, CHIP, VTITLE, NOISE, SNAKE, ACC, ACC_ICON, ACC_VIEW, award, CHATLOG, CHAT, CHATGEN, RES_CHAT, RANKPOP, yrankIdx, GOD, VDB, ACH, PERM, REVIVE, RESET, COL, escape, caught, DIR, SP, OFUDA, LUM, TRACE, HAZURE, seen, SFX_CREDITS, AW_TABLE, RANK_FIX, rankOf, MICLV, MIC, rec, opt, VED, RES_CHAT_: () => RES_CHAT, _attach: b => attachVideo(b), GODV: GOD, _blobs: () => resultBlobs, EVENTS: () => EV });
 /* 2026-11-14 PC：ウィンドウ／全画面（全画面はボタンを押した時と、旧校舎に入る時に切り替える。Escで戻したらウィンドウに） */
 const SCREEN = {
