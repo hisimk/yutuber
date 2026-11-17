@@ -5422,7 +5422,7 @@ const CAP = {
       if (chance(0.5)) { SG.ovYaw = clamp(SG.ovYaw + rnd(-0.06, 0.06), -0.5, 0.5); SG.ovPitch = clamp(SG.ovPitch + rnd(-0.04, 0.04), -0.35, 0.35); SG.ovRoll = clamp(SG.ovRoll + rnd(-0.08, 0.08), -0.38, 0.38); }
       this.flash = Math.max(0, (this.flash || 0) - dt); U.stat.value = this.flash > 0 || screamGap() ? 0.4 : 0.0;   // 叫びが途切れる瞬間に映像も飛ぶ
       if (t > 1.55 && !this.mo) { this.mo = 1; SG.ovYaw *= 0.3; SG.ovPitch *= 0.3; sgPlay('Scare_MouthOpen', 0); if (!this.seenS) wdScream(SCREAM_JAW); }   // 顎が開き始める瞬間に叫びが立ち上がる
-      if (seen(sgHead(V()), { maxD: 1.5 })) award('capture', '逆さ女に襲われた瞬間', 120);
+      if (seen(sgHead(V()), { maxD: 1.5 })) { if (this.ceil) award('ceilWoman', '上からくるぞ', 100); else award('capture', '逆さ女に襲われた瞬間', 120); }   /* 2026-11-17 天井の逆さ女は専用の撮れ高（襲われた瞬間とは重ならない） */
     }
     if (t > 2.3 && t < 2.5) { U.tear.value = 0.7; U.stat.value = Math.random() < 0.4 ? 0.8 : 0; }
     // ③ 音も映像も途中で途絶える
@@ -15150,7 +15150,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.82';
+const VERSION = '0.16.83';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -15674,7 +15674,7 @@ const CHATGEN = {
   LAUGH: new Set(['eqFull', 'eqShades', 'eqParty', 'eqEars', 'eqHood', 'eqFlute', 'mannTurn', 'mannRun', 'mannBurst', 'mannOrgan', 'mannHide1', 'mannHide2', 'mannHide3', 'nakayoshi', 'f2teddy', 'uwaWalk', 'nekoPiano', 'twinkle', 'soccer', 'selfieRun']),
   SKILL: new Set(['pianoPlay', 'clairPlay', 'requiem', 'akuryo']),
   END: new Set(['fireExit', 'chaseOut', 'alive']),
-  PERIL: new Set(['capture', 'spLatch', 'lockerFace', 'boardLunge', 'spDescend', 'close', 'chaseRec', 'chaseSelfie', 'fireFace', 'turnFace', 'tTurnFace', 'f2turnFace', 'mirrorGiant', 'selfieShoulder', 'stallTop']),
+  PERIL: new Set(['capture', 'ceilWoman', 'spLatch', 'lockerFace', 'boardLunge', 'spDescend', 'close', 'chaseRec', 'chaseSelfie', 'fireFace', 'turnFace', 'tTurnFace', 'f2turnFace', 'mirrorGiant', 'selfieShoulder', 'stallTop']),
   CALM: new Set(['chalk', 'broom', 'ball', 'scaleNeedle', 'clockRev', 'curtain', 'micLamp', 'micTurn', 'shoeBlood', 'uwaSeen', 'smudge']),
   POOL: {
     fear: { s: ['small_surprise', 'fear_short', 'scared', 'surprise'], n: ['name_worry'] },
@@ -20969,9 +20969,10 @@ Object.assign(URFUDA, {
     try { XCHAT.log('urRevEnd'); } catch (e) { }
   },
 });
-Object.assign(AW_TABLE, { urahRevenge: ['SS', 1000] }); COL.LIST.push(['urahRevenge', '最高の撮れ高', 1000]);
-Object.assign(CHIP_DESC, { urahRevenge: ['呼び出されたナカヨシは、こちらではなくオフタリサマに向かっていった。', 'The summoned Nakayoshi turned not on you, but on Ofutarisama.'] });
-Object.assign(AW_HINT, { urahRevenge: ['ナカヨシを倒したことがある人だけ', 'only for those who once defeated Nakayoshi'] });
+Object.assign(AW_TABLE, { urahRevenge: ['SS', 1000], ceilWoman: ['S', 100] }); COL.LIST.push(['ceilWoman', '上からくるぞ', 100]); Object.assign(EN, { '上からくるぞ': 'It’s coming from above' });
+Object.assign(AW_TABLE, { }); COL.LIST.push(['urahRevenge', '最高の撮れ高', 1000]);
+Object.assign(CHIP_DESC, { ceilWoman: ['ずっと聞こえていた声は、真上の天井からだった。', 'The voice you kept hearing came from the ceiling right above you.'], urahRevenge: ['呼び出されたナカヨシは、こちらではなくオフタリサマに向かっていった。', 'The summoned Nakayoshi turned not on you, but on Ofutarisama.'] });
+Object.assign(AW_HINT, { ceilWoman: ['ずっと声がするのに、姿が見えない時', 'when you keep hearing a voice but see no one'], urahRevenge: ['ナカヨシを倒したことがある人だけ', 'only for those who once defeated Nakayoshi'] });
 Object.assign(EN, { '最高の撮れ高': 'The greatest shot ever' });
 XCHAT.LIST.urRev = ['ur.01', 'ur.02', 'ur.03']; XCHAT.LIST.urRevEnd = ['ur.11', 'ur.12', 'ur.13'];
 Object.assign(CHAT_DICT.t, { 'ur.01': ['え、そっち！？', 'wait, THAT way!?'], 'ur.02': ['仲間割れ？', 'infighting?'], 'ur.03': ['ナカヨシ…お前…', 'Nakayoshi... you...'], 'ur.11': ['復讐を果たした…', 'revenge complete...'], 'ur.12': ['泣いた', "I'm crying"], 'ur.13': ['神回確定', 'legendary episode confirmed'] });
@@ -21333,7 +21334,7 @@ const XEXT2 = {
   const R0 = CMX.reset.bind(CMX); CMX.reset = function () { R0(); this.mkW = 0; }; }
 const SHOPFX = { update(dt) { IDLEC.update(dt); if (world.state !== 'play') return; BUZZ.update(dt); CANDLE.update(dt); DRINK.update(); STICK.update(dt); } };
 /* =========================================================
-   2026-11-17 逆さ女のまれなできごと「天井の逆さ女」（1周に1回まで・10%）
+   2026-11-17 逆さ女のまれなできごと「天井の逆さ女」（1周に1回まで・20%）
    ・逆さ女がいつもの血溜まりで沈んで消え、主人公の真上の天井にはりつく（顔は真下・髪は真下に垂れる）。ずっと真上についてくる
    ・ガラガラ声だけが、天井からずっと聞こえ続ける（姿は見上げないと見えない）
    ・見上げて顔をしっかり画面に入れると、カメラを奪われて真上を向かされ、顔がカクカク近づいてくる（いつもの捕まり方・ゲームオーバー）
@@ -21341,7 +21342,7 @@ const SHOPFX = { update(dt) { IDLEC.update(dt); if (world.state !== 'play') retu
    ・確認用：?ceilwoman（3秒後に必ず起きる）
    ========================================================= */
 const CEIL = {
-  P: 0.10,
+  P: 0.20,
   reset() { if (this.on || this.hair) this.stop(); this.armed = chance(this.P) || WF('ceilwoman'); this.at = 0; this.done = false; CAP.ceil = false; },
   can() { return this.armed && !this.on && !this.done && world.state === 'play' && SG.ready && !world.mannRun && !(typeof PHAN !== 'undefined' && PHAN.on) && womanOn() && CH.state === 'off' && !WD.borrowed && !WD.scripted && !WARP.on && !world.capture && !CAP.on && !(typeof OFUDA !== 'undefined' && OFUDA.on) && !world.dark; },
   start() { const W = WD; this.on = true; this.done = true; this.ph = 'sink'; this.t = 0; this.vt = 0; this.see = 0; this.cn = 0; this.from = W.pos.clone(); this.yw = player.yaw;
@@ -21350,27 +21351,30 @@ const CEIL = {
   ceilY() { return (player.y > LH - 0.6 ? LH : 0) + HT; },
   pose(p, yaw) { const R = SG.root; R.rotation.order = 'YXZ'; R.rotation.set(Math.PI / 2, yaw + Math.PI, 0); R.position.copy(p); R.updateMatrixWorld(true); const h = sgHead(V()); R.position.x += p.x - h.x; R.position.y += p.y - h.y + 0.1; R.position.z += p.z - h.z; },
   /* 髪：顔を取り囲むように、天井から真下へ垂れる（輪の内側から見上げると顔が見える） */
-  mkHair() { const g = new THREE.Group(), m = new THREE.MeshLambertMaterial({ color: 0x141210, map: TX.hair, alphaTest: 0.3, side: THREE.DoubleSide }), n = 16;
-    for (let i = 0; i < n; i++) { const len = rnd(0.5, 0.8), geo = new THREE.PlaneGeometry(rnd(0.08, 0.12), len); geo.translate(0, -len / 2, 0); const q = new THREE.Mesh(geo, m), a = i / n * Math.PI * 2, r = rnd(0.13, 0.17); q.position.set(Math.cos(a) * r, 0, Math.sin(a) * r); q.rotation.y = -a + Math.PI / 2 + rnd(-0.25, 0.25); q.rotation.x = rnd(-0.06, 0.06); g.add(q); }
+  mkHair() { const g = new THREE.Group(), m = new THREE.MeshLambertMaterial({ color: 0x141210, map: TX.hair, alphaTest: 0.3, side: THREE.DoubleSide }), n = 26;   /* 顔の輪郭（たて長のだ円）にそって生え際から垂らす */
+    for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, len = rnd(0.5, 0.8) * (Math.abs(Math.sin(a)) > 0.7 ? 1.08 : 1), geo = new THREE.PlaneGeometry(rnd(0.06, 0.09), len); geo.translate(0, -len / 2, 0); const q = new THREE.Mesh(geo, m);
+      const ex = Math.cos(a) * this.HR[0], ez = -Math.sin(a) * this.HR[1]; q.position.set(ex, rnd(0, 0.01), ez); q.rotation.y = Math.atan2(ez / (this.HR[1] * this.HR[1]), -ex / (this.HR[0] * this.HR[0])) + Math.PI / 2 + rnd(-0.2, 0.2); q.rotation.x = rnd(-0.05, 0.05); g.add(q); }
     scene.add(g); return g; },
+  HR: [0.1, 0.14], HC: 0.14,   /* 髪の輪：横の半径・たての半径（顔の向き）、顔の中心は頭の骨から顔の向きへ */
+  hairAt(h) { const yw = this.yw ?? player.yaw, f = V(-Math.sin(yw), 0, -Math.cos(yw)); this.hair.position.set(h.x + f.x * this.HC, this.top ?? h.y, h.z + f.z * this.HC); this.hair.rotation.y = yw; },
   /* 顔だけを見せる：頭のまわりの箱の外（首・服・体）と、天井より上を消す */
   clip(H, top) { if (!this.cp) this.cp = [0, 1, 2, 3, 4].map(() => new THREE.Plane()); const yw = this.yw ?? player.yaw, f = V(-Math.sin(yw), 0, -Math.cos(yw)), sd = V(Math.cos(yw), 0, -Math.sin(yw)), P = this.cp;
-    P[0].set(V(0, -1, 0), top); P[1].normal.copy(f); P[1].constant = -f.dot(H) - 0.05; P[2].normal.copy(f).negate(); P[2].constant = f.dot(H) + 0.38;   /* 頭の骨から体側（-f）は首なので切る。顔は +f 側 */ P[3].normal.copy(sd); P[3].constant = -sd.dot(H) + 0.17; P[4].normal.copy(sd).negate(); P[4].constant = sd.dot(H) + 0.17;
-    if (!this.clipOn) { this.clipOn = true; renderer.localClippingEnabled = true; for (const m of SG.mats) { m.clippingPlanes = P; m.needsUpdate = true; } } },
-  unclip() { if (!this.clipOn) return; this.clipOn = false; for (const m of SG.mats) { m.clippingPlanes = null; m.needsUpdate = true; } },
+    P[0].set(V(0, -1, 0), top); P[1].normal.copy(f); P[1].constant = -f.dot(H) - 0.0; P[2].normal.copy(f).negate(); P[2].constant = f.dot(H) + 0.3;   /* 頭の骨から体側（-f）は首なので切る。顔は +f 側 */ P[3].normal.copy(sd); P[3].constant = -sd.dot(H) + 0.115; P[4].normal.copy(sd).negate(); P[4].constant = sd.dot(H) + 0.115;   /* 髪の輪（顔の輪郭）とそろえる */
+    if (!this.clipOn) { this.clipOn = true; renderer.localClippingEnabled = true; for (const m of SG.mats) { m.clippingPlanes = P; m.needsUpdate = true; } for (const o of SG.meshes || []) { o.userData.cs0 = o.castShadow; o.castShadow = false; } } },   /* 体の影も天井に落とさない */
+  unclip() { if (!this.clipOn) return; this.clipOn = false; for (const m of SG.mats) { m.clippingPlanes = null; m.needsUpdate = true; } for (const o of SG.meshes || []) if (o.userData.cs0 !== undefined) o.castShadow = o.userData.cs0; },
   stop() { this.on = false; try { this.unclip(); if (this.hair) { scene.remove(this.hair); this.hair = null; } SG.root.rotation.order = 'XYZ'; SG.root.rotation.set(0, SG.root.rotation.y, 0); if (WD.borrowed && !CAP.on && !(typeof OFUDA !== 'undefined' && OFUDA.on)) WD.release(true); } catch (e) { } },
   grab() { this.ph = 'grab'; CAP.ceil = true; CAP.start(); if (CAP.on) { if (TEST || DEV) console.log('CEIL grab'); return; } CAP.ceil = false; if (world.t < (world.invUntil || 0) && !WD.borrowed) { WD.borrowed = true; } if (world.t < (world.invUntil || 0)) { this.ph = 'ceil'; this.see = 0; return; } this.stop(); },
   update(dt) {
     if (!this.on) { if (this.can()) { if (!this.at) this.at = world.t + (WF('ceilwoman') ? 3 : rnd(15, 60)); if (world.t >= this.at) this.start(); } return; }
-    if (CAP.on) { const h = sgHead(V()); if (this.hair) this.hair.position.set(h.x, Math.min(this.top || h.y, h.y + 0.12), h.z); if (this.clipOn) this.clip(h, Math.min(this.top || 99, h.y + 0.14)); if (CAP.done || world.state !== 'play') this.unclip(); return; }
+    if (CAP.on) { const h = sgHead(V()); if (this.hair) { this.hairAt(h); this.hair.position.y = Math.min(this.top || h.y, h.y + 0.12); } if (this.clipOn) this.clip(h, Math.min(this.top || 99, h.y + 0.14)); if (CAP.done || world.state !== 'play') this.unclip(); return; }
     if (world.state !== 'play') return; this.t += dt;
     if (this.ph === 'sink') { const k = smooth(0, 1.4, this.t); SG.root.position.set(this.from.x, this.from.y - 2.1 * k, this.from.z); if (this.t >= 1.4) { this.ph = 'ceil'; sgSetOpacity(1); this.hair = this.mkHair(); } return; }
     if (this.ph !== 'ceil') return;
     const dy = Math.atan2(Math.sin(player.yaw - this.yw), Math.cos(player.yaw - this.yw)); this.yw += dy * Math.min(1, dt * 1.2);   // 体の向きは少し遅れてついてくる（足は後ろ側）
     const tgt = V(player.x, this.ceilY() - 0.14, player.z);   /* 顔が天井からにゅっと出ている高さ */ this.cur = this.cur ? this.cur.lerp(tgt, Math.min(1, dt * 4)) : tgt.clone(); this.cur.y = tgt.y; this.pose(this.cur, this.yw);
-    const h = sgHead(V()); this.top = this.ceilY() - 0.005; this.clip(h, this.top); this.hair.position.set(h.x, this.top, h.z);
+    const h = sgHead(V()); this.top = this.ceilY() - 0.005; this.clip(h, this.top); this.hairAt(h);
     /* 見上げて、顔をしっかり画面に入れたら */
-    if (!player.hidden && camera.rotation.x > 0.55) { const q = h.clone().project(camera); if (q.z < 1 && Math.abs(q.x) < 0.5 && Math.abs(q.y) < 0.55) this.see += dt; else this.see = Math.max(0, this.see - dt); } else this.see = Math.max(0, this.see - dt);
+    if (!player.hidden && camera.rotation.x > 0.3) { const q = h.clone().project(camera); if (q.z < 1 && Math.abs(q.x) < 0.8 && q.y < 1.08 && q.y > -0.9) this.see += dt; else this.see = Math.max(0, this.see - dt); } else this.see = Math.max(0, this.see - dt);   /* 2026-11-17 画面の上の方に顔が入っただけでも */
     if (this.see > 0.3) { this.grab(); return; }
     /* 声が続くと、コメントが少しずつ触れ始める */
     this.vt += dt; if (this.vt > 20 && world.t >= (this.cnT || 0)) { this.cnT = world.t + rnd(8, 14); this.cn++; try { XCHAT.log(this.vt > 45 ? 'ceil2' : 'ceil1'); } catch (e) { } }
