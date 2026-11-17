@@ -554,6 +554,8 @@
   #gvChat{flex:1;min-width:0;height:100%}#godView #gvChat .chatBox{height:100%;margin-top:0}#gvChat .chatBox .cm{font-size:12px;gap:5px}#gvChat .chatHead{flex-wrap:wrap;row-gap:0;padding:5px 8px 4px}#gvChat .chatHead span{font-size:9.5px}#gvChat .chatList{padding:3px 6px 6px}
   #gvShareRow{flex:none}#gvShareRow.none{display:none}#gvShare{width:100%;min-height:46px;border:none;border-radius:12px;background:#e0362f;color:#fff;font:700 15px system-ui,-apple-system,"Hiragino Sans",sans-serif;cursor:pointer}#gvMsg{font-size:11.5px;color:#b4afa6;margin-top:6px;line-height:1.5}#gvMsg:empty{display:none}
   #gvList{min-height:120px}
+  /* 2026-11-17 歴代神回：撮れ高の一覧を広く。ページ全体を上下に動かして見る（シェア・消すは一番下） */
+  #godView .gvBox{overflow-y:auto;-webkit-overflow-scrolling:touch}#godView #gvList{flex:none;overflow:visible;min-height:0}#godView #gvRow{max-height:calc(50 * var(--vh))}#godView #gvWrap{max-height:calc(50 * var(--vh))}#godView #gvShareRow{padding-bottom:10px}
   /* 2026-11-14 動画は約6割、チャット欄は約4割。長いコメントは2行まで */
   #replayRow{height:auto;align-items:stretch}#replayWrap{flex:0 0 60%;width:60%;max-width:60%;height:auto;aspect-ratio:430/932}
   #resChatHost,#gvChat{position:relative;flex:1 1 40%;min-width:0}#resChatHost .chatBox,#godView #gvChat .chatBox{position:absolute;inset:0;height:auto}
@@ -754,11 +756,7 @@
   /* SSレア：虹色。文字はゆっくり色が流れ、枠のふちが虹色に光る */
   .rk.ss small,.rk.ss b{background:linear-gradient(100deg,#ff6b8b,#ffb35c,#ffe66b,#7dffa8,#6bd8ff,#9a8bff,#ff7ae0,#ff6b8b);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rbFlow 3.2s linear infinite}
   .rk.ss b{filter:drop-shadow(0 0 6px rgba(255,160,230,.55))}
-  /* 2026-11-15 レア「幻」：黒地に金 */
-  .rk.ph{background:#000;border:1px solid #b8912f;border-radius:6px;box-shadow:0 0 8px rgba(233,195,91,.35)}
-  .rk.ph small,.rk.ph b{background:linear-gradient(100deg,#9c771b,#f7dc85,#fff4c8,#d9aa3e,#9c771b);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rbFlow 3.2s linear infinite}
-  html[lang=en] .rk.ph b{font-size:11px;letter-spacing:0}
-  .ev.r-ph,.colItem.r-ph{background:linear-gradient(90deg,rgba(0,0,0,.92),rgba(52,40,10,.75))!important;border-color:#b8912f!important}
+  /* 2026-11-17 レア「幻」の見た目は、SSにしたのでなくした */
   .chatBox .cm.troll .tx{color:#f1dede}
   .ev.r-ss{border:1.5px solid transparent;background:linear-gradient(160deg,#1a1520,#121214 60%) padding-box,linear-gradient(100deg,#ff6b8b,#ffb35c,#ffe66b,#7dffa8,#6bd8ff,#9a8bff,#ff7ae0,#ff6b8b) border-box;background-size:100% 100%,300% 100%;animation:rbBorder 3.2s linear infinite,rbGlow 2.4s ease-in-out infinite}
   .ev.kira.r-ss{animation:rbBorder 3.2s linear infinite,rbFlash .9s ease-out}
@@ -10144,14 +10142,7 @@ const COL = {
       c.addEventListener('click', e => { e.stopPropagation(); CHIP.open(x, show); });   // 2026-11-14 タップで軽い説明
       list.appendChild(c);
     }
-    // 2026-11-15 151番目の枠（幻）：撮れ高が全部そろった時か、幻を初めて撮った時から、一番下に出る
-    { const it = d.items[PHAN_AW[1]], has = !!(it && it.n), show = has || ALL;
-      if (show || got === rows.length) {
-        const c = document.createElement('div'); c.className = 'colItem r-ph' + (show ? '' : ' unk'); c.style.setProperty('--rc', RANK_COL.PH);
-        c.innerHTML = `<span class="rk ph"><small>レア</small><b>${rkTxt('PH')}</b></span><div class="ci"><div class="cn">${show ? TR(PHAN_AW[1]) : TR('？？？（幻）')}</div><div class="cs">${show ? `<i class="like"></i>${PHAN_AW[2]}　<span class="cc">${has ? it.n + '回' : '未'}</span>` : 'まだ撮れていない'}</div></div>`;
-        c.addEventListener('click', e => { e.stopPropagation(); CHIP.open({ key: PHAN_AW[0], name: PHAN_AW[1], pts: PHAN_AW[2], r: 'PH', it }, show); });
-        list.appendChild(c);
-      } }
+    /* 2026-11-17 ナカヨシを倒す撮れ高は、ほかのSSと同じく一覧の中に並べる（専用の枠はなくした） */
     this.el.classList.add('show'); list.scrollTop = 0;
   },
   close() { if (this.el) this.el.classList.remove('show'); },
@@ -15145,7 +15136,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.06';
+const VERSION = '0.17.07';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -15222,7 +15213,7 @@ const GOD = {
   build() {
     if (this.el) return; const el = document.createElement('div'); el.id = 'godView';
     el.innerHTML = `<div class="gvBox"><div class="gvHead"><div><div class="gvT" id="gvT"></div><div class="gvSub" id="gvSub"></div></div><button id="gvClose">閉じる</button></div><div id="gvNoVid"></div><div id="gvRow"><div id="gvWrap"><video id="gvVid" playsinline controls preload="auto"></video></div><div id="gvChat"></div></div><div id="gvShareRow"><button id="gvShare" type="button">${TR('動画と結果をシェア')}</button><div id="gvMsg"></div><button id="gvDel" type="button">${TR('この動画を消す')}</button></div><div id="gvList"></div></div>`;
-    document.body.appendChild(el); this.el = el;
+    document.body.appendChild(el); this.el = el; el.querySelector('.gvBox').appendChild(el.querySelector('#gvShareRow'));   /* 2026-11-17 シェア・消すは一番下へ */
     for (const t of ['pointerdown', 'touchstart', 'click']) el.addEventListener(t, e => e.stopPropagation());
     el.querySelector('#gvClose').addEventListener('click', () => this.close());
     el.querySelector('#gvDel').addEventListener('click', e => { e.stopPropagation(); const i = this.i; POPINFO.show(TR('この回の動画を消しますか？'), TR('内訳は残ります。'), [[TR('やめる'), null], [TR('消す'), async () => { await ACH.delVid(i); this.open(i); }, true]]); });   // 2026-11-15 1本ずつ消す
@@ -19661,7 +19652,7 @@ const BROOMEV = {
    ・試し版の確認用：?phantest で段階を切り替える小さな画面、?phan=0〜3 / ?phan=9（済）で段階を指定
    ========================================================= */
 const PHAN_AW = ['phantom', '人知れぬ怪異「継ぎ接ぎのナカヨシ」を倒す', 550];   /* 2026-11-15 ナカヨシ → 人知れぬ怪異「継ぎ接ぎのナカヨシ」 */
-function rkTxt(r) { return r === 'PH' ? (LANG === 'en' ? 'Phantom' : '幻') : r; }
+function rkTxt(r) { return r === 'PH' ? 'SS' : r; }   /* 2026-11-17 「幻」はなくした（古い記録はSSと表示） */
 const PHAN = {
   KEY: 'yt_phan', d: null, runSt: 0, on: false, hits: 0, mode: 'idle', tintK: 0, troll0: false, nextHunt: 0, trackT: 0, sndT: 3,
   load() {
@@ -19693,7 +19684,7 @@ const PHAN = {
     /* 2026-11-17 詰み防止：初めての化け物の周は倒すまで続くが、13回負けたら（13周目が終わったら）最初の段階へ戻す。戻った後の荒らしは10周に1回くらい */
     else if (this.runSt === 3) { const d = this.load(); d.tries = (d.tries || 0) + 1; if (d.tries >= 13) { d.st = 0; d.bans = 0; d.tries = 0; d.rs = true; } this.save(); }
     this.on = this.runSt === 3 || this.rand; world.phanRun = this.on; this.partsOff(); if (this.h0 && SG.bones && SG.bones.Head) SG.bones.Head.position.copy(this.h0);
-    this.hits = 0; this.mode = 'idle'; this.nextHunt = 0; this.trackT = 0; this.sndT = 3; this.tintK = this.on ? 1 : 0; this.wasCh = false; this.dead = null; this.tintSlow = false; this.armsOff(); if (this.pool) { scene.remove(this.pool.grp); this.pool = null; } world.camShake = 0;
+    this.hits = 0; this.backN = 0; this.fuN = 0; this.mode = 'idle'; this.nextHunt = 0; this.trackT = 0; this.sndT = 3; this.tintK = this.on ? 1 : 0; this.wasCh = false; this.dead = null; this.tintSlow = false; this.armsOff(); if (this.pool) { scene.remove(this.pool.grp); this.pool = null; } world.camShake = 0;
     this.troll0 = ((this.runSt === 0 && chance(this.load().rs ? 0.1 : 0.25)) || (this.runSt === 9 && chance(0.05)) || ((TEST || BETA) && /[?&]troll\b/.test(location.search)));   // 段階0：数周に1回くらい
     if (this.tag) this.tag.visible = false;
     this.tk = this.on ? 1 : 0; this.tkSet = true; postMat.uniforms.tint.value.set(1, 1, 1);
@@ -19745,7 +19736,7 @@ const PHAN = {
     if (this.on) {   /* 化け物の周（段階3・ランダム） */
       const ev = CHATLOG.ev || [], win = ev.find(e => e.k === 'phanWin'), tEnd = win ? win.t : maxR;
       for (let t = rnd2(3, 7); t < tEnd; t += rnd2(9, 16)) say(t, this.L.scared3, 'phanFear');
-      for (const e of ev) if (e.k === 'phan' && e.n < 3) { const n = 3 + Math.floor(R() * 2); for (let i = 0; i < n; i++) say(e.t + 0.5 + i * rnd2(0.6, 1.1), this.L.hit, 'phanHit'); }
+      /* 2026-11-17 1・2枚目を貼った時のコメントは XCHAT（phHit1/phHit2・また現れて映った時の phBack1/phBack2）へ */
       if (win) { for (let i = 0; i < 5; i++) say(win.t + 0.3 + i * rnd2(0.35, 0.7), this.L.pulled, 'phanWin'); const n = 14 + Math.floor(R() * 6); for (let i = 0; i < n; i++) say(win.t + 3.2 + i * rnd2(0.12, 0.3), this.L.win, 'phanWin'); if (win.t + 2.6 <= maxR) out.push([Math.round((win.t + 2.6) * 100) / 100, -1, 'trollThanks', 'アリガトウ', 'THANK YOU']); }   // 2026-11-15 赤いアイコンが一度だけ
     }
     if (!out.length) return;
@@ -19792,7 +19783,8 @@ const PHAN = {
     if (this.tagT !== undefined) this.tagUpd(dt);
     if (this.mode === 'friend') { if (world.t > (this.thT || 0) && distTo(WD.pos.x, WD.pos.z) < 14 && Math.abs(WD.pos.y - player.y) < 1.2) { this.thT = world.t + rnd(25, 45); this.thanks(); } return; }   /* 2026-11-16 復讐のあと：襲わず、たまにアリガトウ */
     if (this.mode === 'retreat') return this.retreatUpd(dt);
-    if (this.mode === 'gone') { if (world.t >= this.retAt) { this.mode = 'idle'; WD.release(true); this.hunt(); } return; }
+    if (this.mode === 'gone') { if (world.t >= this.retAt) { this.mode = 'idle'; WD.release(true); this.hunt(); this.backN = this.hits; } return; }   /* backN：また現れた（映ったらコメント） */
+    if (this.backN && this.mode === 'idle' && rec.active && SG.root.visible && (SG.opacity ?? 1) > 0.5 && seen(sgHead(V()), { maxD: 16 })) { try { XCHAT.log('phBack' + Math.min(2, this.backN)); } catch (e) { } this.backN = 0; }   /* 2026-11-17 また現れたナカヨシが画面に映った時だけ */
     if (this.mode === 'dead') return this.deadUpd(dt);
     if (this.mode === 'done') { this.poolTick(dt); return; }
     /* 2026-11-17 お札を持っていれば、気づかれていなくても、体が触れた瞬間に貼る（後ろからそっと近づいて貼れる） */
@@ -19849,7 +19841,7 @@ const PHAN = {
   },
   // ── お札を貼る（捕まった時、お札があれば）
   seal() {
-    this.hits++; CHATLOG.add('phan', { n: this.hits });
+    this.hits++; CHATLOG.add('phan', { n: this.hits }); this.backN = 0; if (this.hits < 3) try { XCHAT.log('phHit' + this.hits); } catch (e) { }
     OFUDA.build(); this.tag = OFUDA.mesh; this.tagT = 0; this.tagBig = this.hits >= 3;
     CH.stop(); WD.borrow(); SG.ovRoll = 0; this.trackT = 0;
     if (!playSfx('static_raw', { gain: 0.3 })) SND.glitch(0.25); fudaSe();
@@ -20057,12 +20049,15 @@ const PHAN = {
       + `<br><button data-a="hunt" style="margin:2px;padding:3px 7px">化け物を呼ぶ</button><button data-a="fuda" style="margin:2px;padding:3px 7px">お札+1</button><br><small>段階の変更は次の周から</small>`;
   },
 };
-Object.assign(EN, { '人知れぬ怪異「継ぎ接ぎのナカヨシ」を倒す': 'Defeat the Unknown Horror "Nakayoshi the Patchwork"', '？？？（幻）': '??? (Phantom)', '幻': 'Phantom' });
+Object.assign(EN, { '人知れぬ怪異「継ぎ接ぎのナカヨシ」を倒す': 'Defeat the Unknown Horror "Nakayoshi the Patchwork"', });
+{ const J = { phPick1: [['お！', 'oh!'], ['キターー！', 'here it is!'], ['お札だ！', 'a charm!'], ['勝つる', 'we can win this']], phPick2: [['2枚目！', 'second one!'], ['これで戦える', 'now we can fight'], ['集まってきた', 'they’re adding up']], phPick3: [['これで戦える', 'now we can fight'], ['集まってきた', 'they’re adding up']],
+    phPick4: [['もう十分じゃない？', 'isn’t that enough?'], ['集めすぎｗ', 'hoarding lol'], ['全部貼る気だ', 'gonna slap them all on']],
+    phHit1: [['やったか…?!', 'did we get it…?!'], ['勝った？', 'did we win?'], ['消えた…！', 'it vanished…!'], ['フラグ立てんなｗ', 'don’t jinx it lol']], phHit2: [['今度こそ…！', 'this time for sure…!'], ['効いてる効いてる', 'it’s working, it’s working'], ['あと1枚？', 'one more?']],
+    phBack1: [['なんで！？', 'WHY!?'], ['倒せてないじゃん', 'it’s not dead'], ['戻ってきた！！', 'it’s BACK!!']], phBack2: [['しつこい', 'so persistent'], ['まだ来るの…', 'still coming…'], ['次で決めて', 'finish it next time']] };
+  for (const w in J) { XCHAT.LIST[w] = J[w].map((x, i) => 'phx.' + w + '.' + i); J[w].forEach((x, i) => { CHAT_DICT.t['phx.' + w + '.' + i] = x; }); } }   /* 2026-11-17 ナカヨシの周：お札を拾った・貼った・また現れた時のコメント */
+{ const K0 = ITEM.pick.bind(ITEM); ITEM.pick = function (it) { if (it && it.ph && !it.taken && world.state === 'play') { const n = PHAN.fuN = (PHAN.fuN || 0) + 1; try { XCHAT.log(n === 1 ? 'phPick1' : n === 2 ? 'phPick2' : n === 3 ? 'phPick3' : 'phPick4'); } catch (e) { } } return K0(it); }; }
 CHIP_DESC.phantom = ['荒らしコメントの向こうから現れた人知れぬ怪異「継ぎ接ぎのナカヨシ」を封じ、赤い手が連れ去っていった。', 'You sealed away Nakayoshi the Patchwork, the unknown horror that came through the spam, and red hands dragged it away.'];
-AW_TABLE.phantom = ['PH', 550];
-RANK_COL.PH = '#e9c35b';
-ENDCARD.ORD.PH = -1;
-CHAT_CFG.coef.PH = 1.2;
+AW_TABLE.phantom = ['SS', 550]; RANK_COL.PH = RANK_COL.SS; if (!COL.LIST.some(x => x[0] === 'phantom')) COL.LIST.push(['phantom', PHAN_AW[1], 550]);   /* 2026-11-17 レア度は専用の「幻」をやめ、ふつうのSSに */
 setInterval(() => { if (PHAN.el && world.state === 'play') PHAN.panel(); }, 1000);
 PHAN.load(); PHAN.panel();
 if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, WD, CH, SP, MANN, NAV, RED: typeof RED !== 'undefined' ? RED : null, postMat, CHAT, RES_CHAT, COL, ENDCARD, makeResultImage, KOK, MYNAME, awarded, PERM, RAP, WING, SCIRM, ARTRM, PMASK, DUCT, BCAST, NEWWING, CROUCH, MIC, MICLV, mic, POSTER, HOMAGE, SMASH, CAB, FCG, CURTF, MINOR, DOORS2, GEAR, curtains, TOUR, NEWEV, CORR, MAZE, RANDFLY, NBOT, MSTAND, LIBFALL, LIBGIRL, NAVX, NAV, NAV_ADJ, wdScreamLong, screamCut, MOZ, PIANO, F2, SELF, avatar, selfCam, STAIRS, groundAt, escapeRun: escape, evid: () => evidence, recS: () => rec, world });
@@ -20688,7 +20683,7 @@ setTimeout(() => { try { SHOP.title(); RANKPOP.check(); } catch (e) { } }, 1500)
    ========================================================= */
 const HMEMO = {
   KEY: 'yt_hmemo_v1', d: null, cur: null,
-  NO: ['urahRevenge', 'urahSummon'],   /* 2026-11-16 メモにしない撮れ高（最高の撮れ高・ナカヨシ召喚） */
+  NO: ['urahRevenge', 'urahSummon', 'phantom'],   /* 2026-11-16 メモにしない撮れ高（最高の撮れ高・ナカヨシ召喚） */
   RW: { SS: 0.12, S: 0.3, A: 0.6, B: 1, C: 1, D: 1, PH: 0 },   /* レア度が高いほど出にくい */
   load() { if (!this.d) { try { this.d = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) { } if (!this.d || !this.d.got) this.d = { got: {} }; } return this.d; },
   save() { try { localStorage.setItem(this.KEY, JSON.stringify(this.d)); } catch (e) { } },
@@ -20893,10 +20888,10 @@ const URFUDA = {
     PAD.hit(1); fudaSe(); world.vhs = Math.max(world.vhs || 0, 0.8); noiseHit(1); const U = postMat.uniforms; U.tear.value = 0.5; setTimeout(() => { U.tear.value = 0; }, 300);
     if (rec.active) award('urahFuda' + this.n, 'おふたりさまに封印のお札を貼った', 500);
     try { XCHAT.log(this.n === 1 ? 'urFuda1' : 'urFuda2'); } catch (e) { }
-    URAH.frozen = true; URAH.route = []; URAH.restArm && URAH.restArm(); URAH.scream(face, true);
+    URAH.frozen = true; URAH.route = []; URAH.restArm && URAH.restArm(); if (this.n === 1) URAH.scream(face, true);   /* 2026-11-17 2枚目は叫ばず、固まって静かになる */
     const away = V(URAH.pos.x - player.x, 0, URAH.pos.z - player.z); if (away.lengthSq() < 1e-4) away.set(Math.sin(URAH.by), 0, Math.cos(URAH.by)); away.normalize();
     this.st = { k: this.n === 1 ? 'stun' : 'summon', t: 0, away, p0: URAH.pos.clone() }; URAH.st = this.st.k;
-    if (this.n === 2) this.summonStart();
+    if (this.n === 2) { this.st.wait = rnd(2, 3); world.invUntil = world.t + this.st.wait + 5; }   /* 2026-11-17 2〜3秒の「間」のあとにナカヨシを呼ぶ（その間にコメントが喜ぶ） */
     toast(TR(this.n === 1 ? 'お札を貼った！' : 'もう片方の顔にもお札を貼った…'), 2000);
     if (TEST || DEV) console.log('URFUDA', this.n, face);
     return true;
@@ -20904,6 +20899,7 @@ const URFUDA = {
   /* URAH.update から（stun / summon の間） */
   tick(dt) {
     const S = this.st; if (!S) { URAH.toChase(); return; } S.t += dt; const U = postMat.uniforms;
+    if (S.k === 'summon' && !S.naka) { URAH.roll = Math.sin(S.t * 1.3) * 0.015; URAH.pitch = -0.08; URAH.mouthSet(0.05); if (S.t >= (S.wait || 0)) { S.t = 0; this.summonStart(); } return; }   /* 固まっている間 */
     /* ひるむ：のけぞって震えながら、少し後ろへ下がる */
     const back = smooth(0, 0.45, S.t) * 0.9; let nx = S.p0.x + S.away.x * back, nz = S.p0.z + S.away.z * back; const lv = S.p0.y > 1.6 ? 1 : 0; [nx, nz] = collide(nx, nz, 0.3, lv); URAH.pos.x = nx; URAH.pos.z = nz;
     const sh = Math.max(0, 1 - S.t / 2.5); URAH.roll = Math.sin(S.t * 38) * 0.12 * sh + Math.sin(S.t * 2.1) * 0.04; URAH.pitch = -0.35 * smooth(0, 0.3, S.t) * (S.k === 'stun' ? (1 - smooth(5.5, 7, S.t)) : 1);
@@ -20956,6 +20952,7 @@ Object.assign(CHAT_DICT.t, { 'uf.01': ['効いた！？', 'did it work!?'], 'uf.
 /* 2026-11-16 ナカヨシの復讐：過去にナカヨシを倒したことがあれば、呼び出されたナカヨシは主人公を追わず、オフタリサマに何度も体当たりする
    → オフタリサマは悲鳴をあげて横倒しになり、赤い血に飲まれて床に消える → ナカヨシはもう襲わない（たまに「アリガトウ」）
    その間に数秒撮れたら「最高の撮れ高」（SS・1000点）。次の周からはいつもどおり。確認用：?nakarev（倒したことがなくても復讐） */
+if (TEST && window.__G) Object.assign(window.__G, { URFUDA, ACH, GOD });
 Object.assign(URFUDA, {
   revOk() { try { return PHAN.load().st === 9 || WF('nakarev'); } catch (e) { return false; } },
   revStart() {
@@ -21017,8 +21014,8 @@ Object.assign(CHAT_DICT.t, { 'ur.01': ['え、そっち！？', 'wait, THAT way!
 XCHAT.BIG = ['urFuda1', 'urFuda2', 'urSummon', 'urRev', 'urRevEnd'];
 { const J = {
     urFuda1: [['効いた！？', 'did it work!?'], ['お札つよ', 'charm OP'], ['今のうちに逃げて！！', 'run while you can!!'], ['ひるんでるｗｗ', "it's flinching lol"], ['顔に貼ったｗｗｗ', 'right on the face lol'], ['ナイス判断', 'great call'], ['心臓止まるかと思った', 'my heart almost stopped'], ['逃げろおおお', 'RUUUN'], ['まだ生きてる！', 'still alive!'], ['倒せはしないのか…', "so it can't be beaten..."]],
-    urFuda2: [['え、燃えない…', 'wait, it’s not burning...'], ['2枚目はやばくない？', 'isn’t a second one a bad idea?'], ['両方の顔に貼った！？', 'both faces!?'], ['なんか様子おかしい', 'something feels off'], ['嫌な予感しかしない', 'I have a bad feeling'], ['お札光ってない？', 'is the charm glowing?'], ['やめとけって…', "don't do it..."], ['空気変わった', 'the air changed']],
-    urSummon: [['なんか出てきた', 'something came out'], ['ナカヨシ！？！？', 'NAKAYOSHI!?!?'], ['絶望で草', 'pure despair lol'], ['召喚しちゃった', 'you summoned it'], ['2体はむりｗｗｗ', 'two of them is impossible lol'], ['終わった', "it's over"], ['床から出てきた…', 'it rose from the floor...'], ['ここで来るのかよ', 'NOW of all times'], ['悪夢', 'nightmare'], ['逃げ場ない', 'nowhere to run']],
+    urFuda2: [['やったか…?!', 'did we get it…?!'], ['勝った！', 'we won!'], ['お札最強', 'charms OP'], ['2枚で倒せるんか', 'two charms is all it takes?'], ['フラグ', 'that’s a flag'], ['嫌な予感', 'bad feeling']],   /* 2026-11-17 2枚目を貼った直後の「間」：まず喜ばせる（不吉なのは最後の2つだけ） */
+    urSummon: [['なんか出てきた', 'something came out'], ['ナカヨシ！？！？', 'NAKAYOSHI!?!?'], ['なんで！？', 'WHY!?'], ['床から出てきた…', 'it rose from the floor...'], ['やってなかった', 'it wasn’t over'], ['喜んだの誰だよ', 'who was celebrating lol'], ['終わった', "it's over"], ['絶望で草', 'pure despair lol'], ['2体はむりｗｗｗ', 'two of them is impossible lol'], ['逃げ場ない', 'nowhere to run']],   /* 2026-11-17 動揺→びっくり→絶望の順 */
     urRev: [['え、そっち！？', 'wait, THAT way!?'], ['仲間割れ？', 'infighting?'], ['ナカヨシ…お前…', 'Nakayoshi... you...'], ['覚えてたんだ', 'it remembered'], ['体当たりｗｗｗ', 'body slam lol'], ['いけええええ', 'GO GO GO'], ['ナカヨシがんばれ', 'you got this Nakayoshi'], ['胸熱すぎる', 'this is so hype'], ['怪獣大決戦', 'kaiju battle'], ['録画回して！！', 'keep recording!!']],
     urRevEnd: [['復讐を果たした…', 'revenge complete...'], ['泣いた', "I'm crying"], ['神回確定', 'legendary episode confirmed'], ['オフタリサマ沈んだ', 'Ofutarisama sank'], ['ありがとうって言った…', 'it said thank you...'], ['伝説の瞬間', 'a legendary moment'], ['切り抜き確定', 'this is getting clipped'], ['鳥肌やばい', 'goosebumps'], ['ナカヨシ…', 'Nakayoshi...'], ['これは保存版', 'saving this one']] };
   for (const w in J) { XCHAT.LIST[w] = J[w].map((x, i) => 'ux.' + w + '.' + i); J[w].forEach((x, i) => { CHAT_DICT.t['ux.' + w + '.' + i] = x; }); } }
@@ -22414,7 +22411,7 @@ Object.assign(EN, { '殴り書きのメモ': 'Scrawled note' }); for (const id o
 const V2T = new THREE.Vector2();
 { const A0 = GEAR.after.bind(GEAR); GEAR.after = function () { const r = A0(); try { SMEMO.draw(); } catch (e) { } return r; }; }
 XCHAT.LIST.smemo1 = ['sm1.0', 'sm1.1', 'sm1.2', 'sm1.3']; XCHAT.LIST.smemo2 = ['sm2.0', 'sm2.1', 'sm2.2']; XCHAT.LIST.smemo3 = ['sm3.0', 'sm3.1', 'sm3.2', 'sm3.3', 'sm3.4', 'sm3.5'];
-XCHAT.ORD = ['smemo2']; XCHAT.BIG.push('smemo3');
+XCHAT.ORD = ['smemo2', 'urFuda2', 'urSummon', 'phHit1', 'phHit2', 'phBack1', 'phBack2']; XCHAT.BIG.push('smemo3');
 Object.assign(CHAT_DICT.t, { 'sm1.0': ['誰のメモ？', 'whose note is this?'], 'sm1.1': ['前に来た人いるじゃん', 'someone was here before'], 'sm1.2': ['同業者で草', 'a fellow creator lol'], 'sm1.3': ['その人どうなったの…', 'what happened to them...'],
   'sm2.0': ['アイツって誰', 'who is "that thing"'], 'sm2.1': ['人体模型でしょ', 'the anatomy model obviously'], 'sm2.2': ['臓器落とす人間がいるかよ！', 'what human drops organs!?'],
   'sm3.0': ['こっわ', 'terrifying'], 'sm3.1': ['おかしくなっちゃった', 'they lost it'], 'sm3.2': ['ぼそあたま…？', 'bosoatama...?'], 'sm3.3': ['まえのかおとうしろのかお', 'the front face and the back face'], 'sm3.4': ['字が震えてる', 'the handwriting is shaking'], 'sm3.5': ['鳥肌やばい', 'got goosebumps'] });
