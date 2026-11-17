@@ -243,7 +243,7 @@
   #gvDel{width:100%;min-height:40px;margin-top:8px;border:1px solid #4a4744;border-radius:12px;background:transparent;color:#d8d2c8;font:600 13.5px system-ui,-apple-system,"Hiragino Sans",sans-serif;cursor:pointer}
   #popInfo{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.66);padding:20px}#popInfo.show{display:flex}#popInfo .pBox{width:min(340px,100%);background:#161517;border:1px solid #3a3836;border-radius:16px;padding:20px 18px;color:#eee;font-size:14px;line-height:1.7}#popInfo h3{margin:0 0 8px;font-size:16px}#popInfo .pBtns{display:flex;gap:8px;margin-top:16px}#popInfo button{flex:1;min-height:42px;border-radius:10px;border:1px solid #444;background:#222;color:#fff;font:700 14px system-ui,-apple-system,"Hiragino Sans",sans-serif}#popInfo button.pri{background:#e0362f;border-color:#e0362f}
   #callHit{position:fixed;inset:0;z-index:35;pointer-events:none;display:none}#callHit.show{display:block}#callHit button{position:absolute;border:none;background:transparent;border-radius:50%;pointer-events:auto;padding:0;cursor:pointer}#callHit #callEnd{display:none}#callHit.talk #callNo,#callHit.talk #callYes{display:none}#callHit.talk #callEnd{display:block}
-  #qualSeg{flex:none}#qualSeg button{white-space:nowrap;padding:7px 12px}
+  #qualSeg,#fpsSeg{flex:none}#qualSeg button,#fpsSeg button{white-space:nowrap;padding:7px 12px}
   .opt .optTop{display:flex;justify-content:space-between;align-items:center;gap:10px}
   .rng{width:100%;accent-color:#e9e4da;margin:2px 0 0}
   .sel{width:100%;font-size:16px;padding:8px 9px;border-radius:8px;border:1px solid #333;background:#0b0b0c;color:#fff}
@@ -780,8 +780,6 @@
   /* 2026-11-15 演奏中の持ち物：楽譜のメモを鍵盤の上（中央）に置く */
   #pnInv{flex:0 0 auto;height:34px;padding:0 14px;border-radius:17px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:12px;font-weight:700}
   #pnScore{flex:0 0 auto;height:34px;padding:0 14px;border-radius:17px;background:#ffd60a;border:1px solid #ffd60a;color:#1a1608;font-size:12px;font-weight:800}#pnScore.on{background:rgba(255,214,10,.25);color:#ffe680}
-  #pnLike{display:none;position:relative;flex:0 0 auto;height:34px;padding:0 16px;border-radius:17px;background:#ff3b5c;border:0;color:#fff;font-size:13px;font-weight:800;box-shadow:0 2px 10px rgba(255,59,92,.45)}#pnLike.show{display:block;animation:pnLikeIn .45s cubic-bezier(.2,1.6,.4,1)}#pnLike.tap{transform:scale(1.12)}@keyframes pnLikeIn{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
-  .pnHeart{position:absolute;left:50%;top:0;font-style:normal;color:#ff6b86;font-size:18px;pointer-events:none;animation:pnHeart 1.2s ease-out forwards;opacity:0}@keyframes pnHeart{0%{opacity:1;transform:translate(-50%,0) scale(.8)}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),-70px) scale(1.3)}}
   #pianoUI,#pianoUI *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}#pianoUI{touch-action:none}html.pianoOn,html.pianoOn body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
   #pnInvPop{display:none;position:absolute;left:12px;top:50px;z-index:3;min-width:220px;max-width:70%;background:rgba(20,18,16,.96);border:1px solid rgba(255,255,255,.25);border-radius:12px;padding:6px;box-shadow:0 6px 18px rgba(0,0,0,.5)}
   #pnInvPop.show{display:block}
@@ -925,7 +923,7 @@
       <div class="opt col" id="setMicRow"><div class="optTop" id="setMic"><div>実況マイク<small>録画中の自分の声も動画に入ります</small></div><div class="sw"></div></div><div id="micMeter"><div id="micMeterFill"></div></div><div id="micNote"></div></div>
       <div class="opt col" id="setVolRow"><div class="optTop"><div>音量<small>スピーカーから出る大きさ（録画の音は変わりません）</small></div><div class="val" id="volVal">100%</div></div><input class="rng" id="volRange" type="range" min="0" max="100" step="5" value="100"></div>
       <div class="opt col" id="setSensRow"><div class="optTop"><div>視点を動かす速さ<small>なぞった時・ドラッグした時の回りやすさ</small></div><div class="val" id="sensVal">×1.0</div></div><input class="rng" id="sensRange" type="range" min="0.4" max="2" step="0.1" value="1"></div>
-      <div class="opt" id="setFpsRow"><div>なめらかさ<small>60にすると動きがなめらかになりますが、スマホが熱くなりやすく、電池も早く減ります</small></div><div class="seg" id="fpsSeg"><button data-f="30">30</button><button data-f="60">60</button></div></div>
+      <div class="opt" id="setFpsRow"><div>なめらかさ<small>60はなめらか（スマホが熱くなりやすい）</small></div><div class="seg" id="fpsSeg"><button data-f="30">30fps</button><button data-f="60">60fps</button></div></div>
       <div class="opt" id="setQualRow"><div>画質<small>重い時は「軽い」に（少し粗くなり、影が減ります）</small></div><div class="seg" id="qualSeg"><button data-q="std">標準</button><button data-q="lite">軽い</button></div></div>
       <div class="opt col" id="setGodRow"><div class="optTop"><div>神回の動画を端末に残す<small>動画はこの端末の中だけに保存され、外部には送られません。1本あたり最大で約50MBです。</small></div></div><div class="seg" id="godSeg"><button data-g="3">上位3位まで</button><button data-g="1">1位だけ</button><button data-g="0">残さない</button></div><div id="godUse"></div></div>
       <div class="opt" id="setBright"><div>明るさ<small>入口の景色を見ながら合わせます</small></div><div class="val"><span id="brightVal">0</span> ›</div></div>
@@ -1028,6 +1026,7 @@
     </div>
     <div class="veRowO"><span id="veLcard"></span><button id="veCard" class="tg" type="button" role="switch"></button></div>
     <div id="veCardNote" class="veNote"></div>
+    <div class="veRowO" id="veThumbRow"><span id="veLthumb">サムネイル<small style="display:block;font-size:11px;color:#8a867f">結果カードの背景にうっすら</small></span><div class="seg" id="veThumb"><button data-t="rec" type="button">おすすめ</button><button data-t="now" type="button">いまの場面</button><button data-t="off" type="button">なし</button></div></div>
   </div>
   <div class="veFoot"><button id="veGoSave" class="sec" type="button"></button><button id="veGo" type="button"></button></div>
   <div id="veList"><div class="veLH"><b id="veListT"></b><button id="veListDone" type="button"></button></div><div id="veListBox"></div></div>
@@ -1490,7 +1489,7 @@ const EN = {
   'ワイプカメラ': 'Wipe camera', '定点カメラ': 'Fixed camera', 'ここに置く': 'Place here', '置いた': 'Placed', 'リングライト': 'Ring light', 'ガンマイク': 'Shotgun mic', '予備バッテリー': 'Spare battery',
   'ひろう': 'Pick up',
   'コントローラーをつなぎました': 'Controller connected', 'ボタンを押す…': 'Press a button…', '先にコントローラーをつないで、どれかボタンを押してください': 'Connect a controller and press any button first', 'つながっていません（PS・Xbox・Switchプロコンに対応）': 'Not connected (PS, Xbox, Switch Pro supported)', '録画の開始・停止': 'Start/stop recording', '調べる・開ける・隠れる': 'Examine / open / hide', 'インカメラ切り替え': 'Selfie camera', 'ズームを下げる': 'Zoom out', 'ズームを上げる': 'Zoom in', '持ち物': 'Items', '設定（一時停止）': 'Settings (pause)', '閉じる・戻る': 'Close / back',
-  '画質': 'Quality', 'なめらかさ': 'Smoothness (fps)', '60にすると動きがなめらかになりますが、スマホが熱くなりやすく、電池も早く減ります': '60 is smoother, but your phone may get hotter and the battery drains faster', '標準': 'Standard', '軽い': 'Light', '重い時は「軽い」に（少し粗くなり、影が減ります）': 'Use Light if the game is slow (a bit rougher, fewer shadows)', '画面の細かさは、この回の録画が終わってから変わります': 'Resolution will change after this run’s recording ends',
+  '画質': 'Quality', 'なめらかさ': 'Smoothness (fps)', '60はなめらか（スマホが熱くなりやすい）': '60 is smoother (phones may get hot)', '標準': 'Standard', '軽い': 'Light', '重い時は「軽い」に（少し粗くなり、影が減ります）': 'Use Light if the game is slow (a bit rougher, fewer shadows)', '画面の細かさは、この回の録画が終わってから変わります': 'Resolution will change after this run’s recording ends',
   '動画をMP4に変換しています。少し待ってから、もう一度押してください': 'Converting the video to MP4. Please wait a moment and press again', '変換できました。もう一度押してください': 'Converted. Please press again',
   // スタート・設定
   '夜の旧校舎で、決定的瞬間を撮って帰る': 'Film the decisive moment in the old school at night — and make it out', 'バズる心霊動画を撮って「いいね・コメント・収益」を稼げ！': 'Film viral ghost videos and earn likes, comments and money!', '撮影をはじめる': 'Start filming',
@@ -4538,7 +4537,7 @@ function startRec() {
   if (rec.active) playSfx('record_on', { dest: uiOut() });   // 開始が成立した時だけ
   syncRecUI();
 }
-function stopRec(reason) {
+function stopRec(reason) { if (reason === 'capture') world.capRec = true;   /* 2026-11-17 捕まる瞬間まで録画していた */
   if (!rec.active) return; CHATLOG.segStop(); rec.active = false;
   if (rec.micGain) rec.micGain.gain.setTargetAtTime(0, A.ctx.currentTime, 0.01);
   if (rec.available && rec.recorder) {
@@ -4600,6 +4599,7 @@ const ENDCARD = {
     const u = Math.min(W / 900, H / 1100), cx = W / 2, sans = '-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif', serif = '"Shippori Mincho","Hiragino Mincho ProN",serif';
     const fade = Math.min(1, t / 0.35), out = 1;   // 2026-11-15 最後はフェードさせない
     g.globalAlpha = 1; g.fillStyle = '#050506'; g.fillRect(0, 0, W, H);
+    if (d.bg) { const b = d.bg, k = Math.max(W / b.width, H / b.height), bw = b.width * k, bh = b.height * k; g.globalAlpha = 0.22 * fade; g.drawImage(b, (W - bw) / 2, (H - bh) / 2, bw, bh); }   /* 2026-11-17 サムネイル：黒の上に、うっすら透けて見える程度 */
     g.globalAlpha = fade * out;
     for (const [x, y, a] of d.noise) { g.fillStyle = `rgba(255,255,255,${a})`; g.fillRect(x * W, ((y + t * 0.03) % 1) * H, 2 * u, 2 * u); }
     /* 2026-11-15 撮れ高の行数に合わせて、全体を上下のまん中に置く（行が多い時は上の余白も使う） */
@@ -9980,7 +9980,7 @@ const PIANO = {
       if (rc) award('clairPlay', '月の光を演奏する', 30);
     } else if (id === 'neko') {   // 猫ふんじゃった：遠くで猫が鳴き、猫又が出るようになる
       setTimeout(() => playSfx('meow', { pos: V(34, 0.4, -18), ref: 1.6, roll: 0.8, lowpass: 2600, gain: 0.9 }), 900);
-      if (!NEKO.done) NEKO.chosen = true;
+      if (!NEKO.done && !NEKO.chosen && !this.nekoRolled) { this.nekoRolled = true; NEKO.chosen = Math.random() < 0.5 || WF('nekosure'); }   /* 2026-11-17 弾いた周は50%で化け猫が出る（1周に1回だけ抽選） */
       if (rc) award('nekoPiano', '猫ふんじゃったを弾く', 30);
     } else if (id === 'turca') {   // トルコ行進曲：モーツァルトの額縁が落ちる（アイテムはなし。落ちる所を録画で撮るとS）
       MOZ.fall('mozart'); if (rc) award('turcaPlay', 'トルコ行進曲を弾く', 40);
@@ -9989,7 +9989,6 @@ const PIANO = {
     } else if (id === 'unmei') {   // 運命：ガタンとベートーベンの額縁が落ちる（撮れ高にはしない）
       OFUDA.fall(); if (rc) award('unmeiPlay', '運命を弾く', 40);
     }
-    this.like();   /* 2026-11-17 弾き終えたら「いいね」 */
   },
 
 };
@@ -13501,7 +13500,7 @@ function likePopShow(e) {
   const el = document.createElement('div'); el.className = 'lpop ' + rk;
   const live = host.querySelectorAll('.lpop').length; LIKEPOP.z = (LIKEPOP.z || 0) + 1; el.style.zIndex = String(LIKEPOP.z);
   const g = $('#cap'), gr = g && g.getBoundingClientRect().width ? frameRect(g).right : r.left - 50; el.style.left = ((gr + r.left) / 2 + live * 9) + 'px'; el.style.top = (r.top + r.height / 2 + live * 9) + 'px';
-  const ov = likeOver(); host.style.zIndex = ov ? '96' : ''; if (ov) { el.style.left = (vpW() - 44 - live * 9) + 'px'; el.style.top = (vpH() * 0.42 + live * 9) + 'px'; }   /* 別の画面の時は、右端の真ん中あたり（上に重ねる） */ el.style.setProperty('--rc', col); el.style.setProperty('--gw', gw);
+  const ov = likeOver(); host.style.zIndex = ov ? '96' : ''; if (ov) { el.style.left = (vpW() - 44 - live * 9) + 'px'; el.style.top = (vpH() * 0.42 + live * 9) + 'px'; }   /* 別の画面の時は、右端の真ん中あたり（上に重ねる） */ el.style.setProperty('--rc', col); el.style.setProperty('--gw', gw); if (typeof PIANO !== 'undefined' && PIANO.on && !PIANO.isPC && innerHeight > innerWidth) el.style.rotate = '90deg';   /* 2026-11-17 ピアノの画面（横向き）では、いいねも横向きに */
   let h = '<i class="like"></i>';
   if (rk !== 'D') h += '<span class="ring"></span>';
   const nSp = { SS: 10, S: 7, A: 4 }[rk] || 0;   // キラキラは高いレア度だけ
@@ -13778,7 +13777,7 @@ try {
   // 2026-11-13 ジャイロと実況マイクは最初からオン（PCにジャイロはないのでオフ）。この版より前に保存した設定も一度だけ新しい初期値にそろえる
   if (sv.v === 2) { opt.gyro = !!sv.gyro; opt.mic = !!sv.mic; } else { opt.gyro = !FRAME.on; opt.mic = true; } if (typeof sv.bright === 'number') opt.bright = sv.bright;
   if (typeof sv.vol === 'number') opt.vol = clamp(sv.vol, 0, 1); if (typeof sv.sens === 'number') opt.sens = clamp(sv.sens, 0.4, 2);
-  if (typeof sv.sink === 'string') opt.sink = sv.sink; if (sv.midi) opt.midi = true; if (typeof sv.midiIn === 'string') opt.midiIn = sv.midiIn; if (sv.screen === 'full') opt.screen = 'full'; if (sv.quality === 'lite') opt.quality = 'lite'; if (sv.fps === 60) opt.fps = 60;
+  /* 2026-11-17 音の出力先の設定はなくした（パソコン・ブラウザの設定で変える）。前に選んだ出力も使わない */ if (sv.midi) opt.midi = true; if (typeof sv.midiIn === 'string') opt.midiIn = sv.midiIn; if (sv.screen === 'full') opt.screen = 'full'; if (sv.quality === 'lite') opt.quality = 'lite'; if (sv.fps === 60) opt.fps = 60;
 } catch (e) { }
 function saveOpts() { try { localStorage.setItem('yt_settings', JSON.stringify({ v: 2, gyro: opt.gyro, mic: opt.mic, bright: opt.bright, vol: opt.vol, sens: opt.sens, sink: opt.sink, midi: opt.midi, midiIn: opt.midiIn, screen: opt.screen, quality: opt.quality, fps: opt.fps })); } catch (e) { } }
 const brightK = v => Math.pow(1.09, v);   // 明るさ：-5〜+5 の段階 → 画面の中間の明るさの持ち上げ量
@@ -13817,7 +13816,7 @@ const SET = {
     $('#setClose').textContent = TR(this.paused ? 'ゲームにもどる' : '閉じる');
     this.homeArm = 0; $('#setHome').classList.remove('warn'); $('#setHome').textContent = TR('スタート画面にもどる');
     this.sync(); $('#settings').classList.remove('bright'); $('#settings').classList.add('show'); this.meter();
-    if (FRAME.on) { AUDIO_OUT.list(); MIDI.list(); KEYUI.draw(); }
+    if (FRAME.on) { MIDI.list(); KEYUI.draw(); }
     PAD.wait = null; PADUI.draw();   // 2026-11-14 コントローラー
   },
   hide() {
@@ -14159,7 +14158,7 @@ $('#sensRange').addEventListener('change', saveOpts);
 const AUDIO_OUT = {
   ok() { return !!(window.AudioContext && AudioContext.prototype.setSinkId && navigator.mediaDevices && navigator.mediaDevices.enumerateDevices); },
   async list() {
-    const sel = $('#outSel'), note = $('#outNote');
+    const sel = $('#outSel'), note = $('#outNote'); if (!sel) return;
     if (!this.ok()) { sel.disabled = true; note.textContent = TR('このブラウザでは選べません（Chrome・Edgeで選べます）'); return; }
     let devs = []; try { devs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audiooutput' && d.deviceId && d.deviceId !== 'default'); } catch (e) { }
     sel.innerHTML = ''; const o0 = document.createElement('option'); o0.value = ''; o0.textContent = TR('いつもの出力（パソコンの設定）'); sel.appendChild(o0);
@@ -15165,7 +15164,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.84';
+const VERSION = '0.16.85';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -15624,7 +15623,7 @@ const CHATLOG = {
   segStop() { const s = this.segs[this.segs.length - 1]; if (s) s[1] = rec.time; this.add('stop'); },
   finish() { const s = this.segs[this.segs.length - 1]; if (s && rec.active) s[1] = rec.time; VOICE.finish();   /* 2026-11-14 とめどなき実況は録画がすべて終わった時に判定 */
     if (world.state !== 'over' && rec.time > 1) { const f = camFwd(), was = rec.active; rec.active = true; if (world.t <= 30 && this.w0 !== undefined && this.w0 < 5 && rec.time >= world.t * 0.7) this.add('bh', { b: 'quick' });   /* 2026-11-14 最初から撮っていて、ほとんどを録画した時だけ */ if (world.selfie) this.add('bh', { b: 'odd', n: '098' }); else if (f.z < -0.5) this.add('bh', { b: 'odd', n: '099' }); rec.active = was; }   /* 帰還の直前の様子 */
-    this.end = { R: rec.time, ec: !!(typeof ENDCARD !== 'undefined' && ENDCARD.will()), lost: world.state === 'over' }; },
+    this.end = { R: rec.time, ec: !!(typeof ENDCARD !== 'undefined' && ENDCARD.will()), lost: world.state === 'over', capRec: !!world.capRec }; },
   // 低頻度（0.4秒ごと）の確認：追跡・演奏・インカメ・暗さ・ズーム・電池・場所と、見えた物
   tick() {
     if (!rec.active || (world.state !== 'play' && world.state !== 'piano')) { this.lastTick = undefined; return; }
@@ -15794,7 +15793,7 @@ const CHATGEN = {
     // 結末（結果カードが映っている間だけ）
     if (end.ec) {
       const n = Math.max(1, Math.min(6, Math.round(N * 0.45)));
-      for (let i = 0; i < n; i++) { const t = end.R + 0.5 + i * (2.4 / n) + rnd2(0, 0.25); const cat = end.lost ? pickR(['ending_capture', 'ending_capture', 'peril_slang']) : pickR(['ending_return', 'ending_return', 'name_return', 'relief_short']); const x = line(cat, { end: !end.lost }); if (x) out.push([t, 'g', x, 9, end.R]); }
+      for (let i = 0; i < n; i++) { const t = end.R + 0.5 + i * (2.4 / n) + rnd2(0, 0.25); const cat = end.lost ? (end.capRec === false ? 'ending_cutoff' : pickR(['ending_capture', 'ending_capture', 'peril_slang'])) : pickR(['ending_return', 'ending_return', 'name_return', 'relief_short']); const x = line(cat, { end: !end.lost }); if (x) out.push([t, 'g', x, 9, end.R]); }
     }
     // 追跡中（映っている・聞こえる間）と、収まった後
     const spans = (k) => { const r = []; let on = null; for (const e of ev) if (e.k === k) { if (e.on && on === null) on = e.t; else if (!e.on && on !== null) { r.push([on, e.t]); on = null; } } if (on !== null) r.push([on, end.R]); return r; };
@@ -17637,8 +17636,8 @@ const WING = {
     if (b.door) { b.doorFall = 0; }   /* 扉は内側へ倒れる */
     SND.bang(c, 1.6); SND.thud(c, 1.8); for (let i = 0; i < 7; i++) setTimeout(() => { SND.knock(c.clone().add(V(rnd(-1, 1), rnd(-0.8, 0.8), rnd(-1, 1))), 1.2); SND.kata && SND.kata(c, 1); }, 60 + i * rnd(60, 140));
     playSfx('metal_rattle', { pos: c, ref: 1.6, gain: 1.1 }); world.vhs = Math.max(world.vhs || 0, 0.8);
-    if (rec.active && camera.position.distanceTo(c) < 14 && [-1.2, -0.6, 0, 0.6, 1.2].some(x => { const p = V(b.x + x * cs, LH + 1.0, b.z - x * sn); return onScreen(p, 1.1) && clearLine(p, [], camera.position); })) award('barBreak', 'バリケード突破', 150);   /* 崩れる瞬間（暗くても大きな音と動きで分かる） */
-    XCHAT.log('wingBreak'); if (TEST || DEV) console.log('WING broken', b.id);
+    const wbVis = rec.active && camera.position.distanceTo(c) < 14 && [-1.2, -0.6, 0, 0.6, 1.2].some(x => { const p = V(b.x + x * cs, LH + 1.0, b.z - x * sn); return onScreen(p, 1.1) && clearLine(p, [], camera.position); }); if (wbVis) award('barBreak', 'バリケード突破', 150);   /* 崩れる瞬間（暗くても大きな音と動きで分かる） */
+    if (wbVis) XCHAT.log('wingBreak'); if (TEST || DEV) console.log('WING broken', b.id);   /* 2026-11-17 コメント（誘導うますぎ等）は、崩れる所が映った時だけ */
     M.bonked = true; M.bonk();   /* バラバラになって、数秒動けない（壁に激突した時の動き） */
     if (M.dropParts) try { M.dropParts(['ArmL', 'ArmR'], 0.8); } catch (e) { }
   },
@@ -19405,7 +19404,7 @@ const ENEMY = {
       const score = evidence.reduce((a, e) => a + (e.pts || 0), 0);
       if (this.force2 || (world.wingOpen && (world.battery ?? 100) < 50 && score > 500)) {   /* 2026-11-15 2体目は、新しい棟に入れるようになってから（扉①かバリケード②のどちらかを壊したあと） */
         const o = world.enemy1 === 'woman' ? 'spider' : 'woman'; world.enemy2 = o; this.up(o);
-        if (typeof XCHAT !== 'undefined') XCHAT.log('second'); if (TEST || DEV) console.log('ENEMY second', o);
+        this.e2Seen = false; if (TEST || DEV) console.log('ENEMY second', o);   /* 2026-11-17 コメント（2体目きた！？）は、2体目が録画に映った時に出す */
       }
     }
   },
@@ -21354,6 +21353,42 @@ const XEXT2 = {
   const R0 = CMX.reset.bind(CMX); CMX.reset = function () { R0(); this.mkW = 0; }; }
 const SHOPFX = { update(dt) { IDLEC.update(dt); if (world.state !== 'play') return; BUZZ.update(dt); CANDLE.update(dt); DRINK.update(); STICK.update(dt); } };
 /* =========================================================
+   2026-11-17 サムネイル：編集画面で、結果カードの背景に動画の1場面をうっすら敷く
+   ・いいねが0の時は黒（なし）。それ以外は、いちばんいいねの多い撮れ高の瞬間を「おすすめ」で自動で選ぶ
+   ・「いまの場面」：プレビューで止めている場面を使う。「なし」：黒
+   ========================================================= */
+Object.assign(VED, {
+  thumbRec() { const M = this.marks || [], top = (this.cardD && this.cardD.top) || []; let best = null, bp = -1;
+    for (const m of M) { const e = top.find(x => TR(x.label) === m.label || x.label === m.label); const p = e ? (e.pts || 0) : 1; if (p > bp) { bp = p; best = m.g; } }
+    if (best === null && (this.items || []).length) { let bc = 0; const it = this.items; for (let i = 0, j = 0; i < it.length; i++) { while (it[j].g < it[i].g - 4) j++; if (i - j + 1 > bc) { bc = i - j + 1; best = it[i].g - 2; } } }
+    if (best === null) best = this.gEnd * 0.5; return clamp(best + 0.8, 0, Math.max(0, this.gEnd - 0.1)); },
+  grabAt(G) { return new Promise(done => { try { let i = 0; for (let k = 0; k < this.starts.length; k++) if (this.starts[k] <= G) i = k; const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'auto'; v.src = this.vids[i].currentSrc || this.vids[i].src;
+      const fin = c => { clearTimeout(to); try { v.removeAttribute('src'); v.load(); } catch (e) { } done(c); }, to = setTimeout(() => fin(null), 4000);
+      v.addEventListener('loadeddata', () => { v.currentTime = Math.max(0, Math.min((v.duration || 99) - 0.05, G - this.starts[i])); }, { once: true });
+      v.addEventListener('seeked', () => { const c = document.createElement('canvas'); c.width = this.W; c.height = this.H; try { c.getContext('2d').drawImage(v, 0, 0, this.W, this.H); fin(c); } catch (e) { fin(null); } }, { once: true });
+    } catch (e) { done(null); } }); },
+  async thumb(mode, peek = true) { this.thumbMode = mode; this.uiThumb(); if (!this.cardD) return;
+    if (mode === 'off') this.cardD.bg = null;
+    else if (mode === 'now') { const c = document.createElement('canvas'); c.width = this.W; c.height = this.H; c.getContext('2d').drawImage(this.fc, 0, 0); this.cardD.bg = c; }
+    else { const c = await this.grabAt(this.thumbRec()); if (this.thumbMode === 'rec') this.cardD.bg = c; }
+    if (peek) this.thumbPeek(); },
+  thumbPeek() { if (!this.on || !this.set || !this.set.card || this.playing) return; this.cardT = 1.6; },   /* 止めている時は、結果カードを出して見せる（再生すると続きから） */
+  uiThumb() { for (const b of document.querySelectorAll('#veThumb button')) b.classList.toggle('on', b.dataset.t === this.thumbMode); const r = $('#veThumbRow'); if (r) r.classList.toggle('dim', !(this.set && this.set.card)); },
+});
+{ const O0 = VED.open.bind(VED); VED.open = async function (src) { this.thumbMode = null; const r = await O0(src); try { if (this.on && this.cardD) { this.thumb((this.cardD.total || 0) > 0 ? 'rec' : 'off', false); } } catch (e) { console.warn('thumb', e); } return r; }; }
+{ const U0 = VED.ui.bind(VED); VED.ui = function () { const r = U0(); try { this.uiThumb(); const en = LANG === 'en', L = $('#veLthumb'); if (L && en) L.firstChild.textContent = 'Thumbnail'; if (en) { const T = { rec: 'Pick', now: 'This frame', off: 'None' }; for (const b of document.querySelectorAll('#veThumb button')) b.textContent = T[b.dataset.t]; } } catch (e) { } return r; }; }
+for (const b of document.querySelectorAll('#veThumb button')) b.addEventListener('click', e => { e.stopPropagation(); VED.thumb(b.dataset.t); });
+/* =========================================================
+   2026-11-17 コメントは「動画に映った・聞こえたこと」への反応だけ
+   ・2体目の怪異：録画中に2体目が画面に映った時に「2体目きた！？」
+   ・捕まって終わった回：捕まる瞬間まで録画していなかったら、「早く病院行って！」などは出さず、急に終わったことへの反応にする
+   ・ほかに：バリケードが崩れた時・盛り塩で追い返した時のコメントも、映っている時だけ
+   ========================================================= */
+{ const R0 = CMX.reset.bind(CMX); CMX.reset = function () { R0(); world.capRec = false; ENEMY.e2Seen = true; }; }
+{ const U0 = SHOPFX.update; SHOPFX.update = function (dt) { U0.call(SHOPFX, dt); try { if (world.enemy2 && ENEMY.e2Seen === false && rec.active) { const o = world.enemy2, v = o === 'spider' ? (SP.wrap && SP.wrap.visible && SP.st !== 'none' && seen(spFacePos(V()), { maxD: 16 })) : (SG.ready && SG.root.visible && (SG.opacity ?? 0) > 0.3 && seen(sgHead(V()), { maxD: 16 })); if (v) { ENEMY.e2Seen = true; XCHAT.log('second'); } } } catch (e) { } }; }
+Object.assign(CHAT_DICT.t, { 'ec.cut.01': ['え、終わり？', 'wait, that’s it?'], 'ec.cut.02': ['急に切れた', 'it cut off'], 'ec.cut.03': ['何があったの…', 'what happened...'], 'ec.cut.04': ['続きは？', 'where’s the rest?'], 'ec.cut.05': ['おつかれ…', 'well... gg'] });
+CHAT_DICT.c.ending_cutoff = ['ec.cut.01', 'ec.cut.02', 'ec.cut.03', 'ec.cut.04', 'ec.cut.05'];
+/* =========================================================
    2026-11-17 設定画面を種類ごとに整理（スマホ・PC）
    ・「操作」「音」「画面」「データ・その他」の見出しでまとめる
    ・PCのキー操作と、コントローラーの設定は、押すと別の画面で開く（長くなるため）
@@ -21371,19 +21406,19 @@ const SHOPFX = { update(dt) { IDLEC.update(dt); if (world.state !== 'play') retu
   pl.addEventListener('click', e => { e.stopPropagation(); $('#settings').classList.add('pad'); try { PADUI.draw(); } catch (_) { } box.scrollTop = 0; });
   pane('setKeysPane', en ? 'Key controls' : 'キー操作', keys); pane('setPadPane', en ? 'Controller' : 'コントローラー', pad);
   const order = [head(en ? 'Controls' : '操作'), ...ids(['setGyro', 'setSensRow']), kl, pl,
-    head(en ? 'Sound' : '音'), ...ids(['setVolRow', 'setMicRow', 'setOutRow', 'setMidiRow']),
+    head(en ? 'Sound' : '音'), ...ids(['setVolRow', 'setMicRow', 'setMidiRow']),
     head(en ? 'Display' : '画面'), ...ids(['setFpsRow', 'setQualRow', 'setBright', 'setScreenRow']),
     head(en ? 'Data & more' : 'データ・その他'), ...ids(['setGodRow', 'setLang', 'setTut', 'setCol', 'setNotice', 'setXfer', 'setReset', 'verSet', 'setHome', 'setClose'])];
   const rest = [...M.children].filter(c => !order.includes(c) && c.id !== 'setPC' && c.id !== 'setKeys' && c.id !== 'setPad');
   const close = order.indexOf($('#setHome')); order.splice(close, 0, ...rest);   /* あとから足された行は「データ・その他」の終わりに */
-  for (const e of order) M.appendChild(e); const pc = $('#setPC'); if (pc) pc.remove();
+  for (const e of order) M.appendChild(e); const pc = $('#setPC'); if (pc) pc.remove(); { const o = $('#setOutRow'); if (o) o.remove(); }
   const S0 = SET.show.bind(SET); SET.show = function () { $('#settings').classList.remove('keys', 'pad'); return S0(); };
 })();
 /* =========================================================
    2026-11-17 音楽室のピアノの見直し
    ・楽譜の切れ端は「だいじなもの」に（一度拾えば、次の周からも最初から持っている。捕まってもなくならない）
    ・持っている時は、ピアノの画面の左上に黄色い「楽譜を見る」
-   ・曲を弾き終えたら、画面の上に「いいね」のボタン（押すとハートが飛ぶ）
+   ・ピアノの撮れ高が入ったら、ピアノの画面の上にも、いつもの「いいね」のアニメを出す
    ・撮れ高：運命／トッカータとフーガ／トルコ行進曲 S40、月の光 A30、猫ふんじゃった A30。きらきら星・落ちたモーツァルトの額縁はなくした
    ・霊場のピアニスト（SS）は一度撮ったら、次の周からは撮れ高にならない（額縁が落ちる現象はそのまま）
    ・スマホで弾いている時に、文字の選択（青い帯）と拡大鏡が出ないように
@@ -21391,28 +21426,26 @@ const SHOPFX = { update(dt) { IDLEC.update(dt); if (world.state !== 'play') retu
 PERM.ORDER.push('score'); PERM.DEFS.score = { name: '楽譜の切れ端', desc: '誰かが書き残した楽譜の切れ端。「猫ふんじゃった」が書いてある。音楽室のピアノの画面で「楽譜を見る」から見られる。' };
 setTimeout(() => { PERM_IMG.score = ITEM_IMG.memo || PERM_IMG.score; }, 0);
 Object.assign(EN, { '楽譜の切れ端': 'Torn sheet music', '誰かが書き残した楽譜の切れ端。「猫ふんじゃった」が書いてある。音楽室のピアノの画面で「楽譜を見る」から見られる。': 'A torn scrap of sheet music someone left behind. It has “The Flea Waltz” on it. View it from “Sheet music” on the piano screen.', '楽譜を見る': 'Sheet music', 'しまう': 'Hide', 'いいね': 'Like', 'トルコ行進曲を弾く': 'Play the Turkish March', 'トッカータとフーガを弾く': 'Play Toccata and Fugue', '運命を弾く': 'Play the Fate Symphony' });
-{ const R0 = CMX.reset.bind(CMX); CMX.reset = function () { R0(); try { if (PERM.active('score')) { ITEM.have.memo = true; ITEM.memoSong = 'neko'; const m = ITEM.get('memo'); if (m) m.taken = true; ITEM.memoLk = null; } } catch (e) { } }; }
+{ const R0 = CMX.reset.bind(CMX); CMX.reset = function () { R0(); PIANO.nekoRolled = false; try { if (PERM.active('score')) { ITEM.have.memo = true; ITEM.memoSong = 'neko'; const m = ITEM.get('memo'); if (m) m.taken = true; ITEM.memoLk = null; } } catch (e) { } }; }
 { const U0 = SHOPFX.update; SHOPFX.update = function (dt) { U0.call(SHOPFX, dt); if (ITEM.have.memo && !PERM.has('score')) { const d = PERM.load(); d.have.score = true; d.on.score = true; PERM.save(); } }; }
 Object.assign(PIANO, {
   ui2() { if (this.ui2done || !this.el) return; this.ui2done = true; const bar = this.el.querySelector('#pnBar');
     const sb = document.createElement('button'); sb.className = 'btn'; sb.id = 'pnScore'; sb.type = 'button'; this.el.querySelector('#pnInv').after(sb);
     sb.addEventListener('click', e => { e.stopPropagation(); this.sheet(!this.sheetOn); this.ui2sync(); });
-    const lk = document.createElement('button'); lk.id = 'pnLike'; lk.type = 'button'; bar.querySelector('#pnStat').before(lk);
-    lk.addEventListener('click', e => { e.stopPropagation(); lk.classList.add('tap'); try { SND.click && SND.click(); } catch (_) { } for (let i = 0; i < 6; i++) { const h = document.createElement('i'); h.className = 'pnHeart'; h.textContent = '♥'; h.style.setProperty('--dx', (Math.random() * 80 - 40) + 'px'); h.style.animationDelay = (i * 0.06) + 's'; lk.appendChild(h); setTimeout(() => h.remove(), 1400); } setTimeout(() => lk.classList.remove('show', 'tap'), 1300); });
     /* 文字の選択（青い帯）・拡大鏡を出さない：鍵盤とボタン以外での長押し・なぞりを止める */
     const stop = e => { if (!this.on) return; if (e.cancelable && !e.target.closest('button,select,input')) e.preventDefault(); try { const sel = getSelection(); if (sel && sel.rangeCount) sel.removeAllRanges(); } catch (_) { } };
     for (const t of ['touchstart', 'touchmove']) this.el.addEventListener(t, stop, { passive: false, capture: true });
     this.el.addEventListener('contextmenu', e => e.preventDefault()); this.el.addEventListener('selectstart', e => e.preventDefault());
     document.addEventListener('selectionchange', () => { if (this.on) try { const sel = getSelection(); if (sel && sel.rangeCount && !sel.isCollapsed) sel.removeAllRanges(); } catch (_) { } }); },
-  ui2sync() { const sb = this.el && this.el.querySelector('#pnScore'); if (!sb) return; sb.style.display = ITEM.have.memo ? '' : 'none'; sb.textContent = TR(this.sheetOn ? 'しまう' : '楽譜を見る'); sb.classList.toggle('on', !!this.sheetOn); const lk = this.el.querySelector('#pnLike'); if (lk) lk.textContent = '♥ ' + TR('いいね'); },
-  like() { this.ui2(); const lk = this.el && this.el.querySelector('#pnLike'); if (!lk) return; this.ui2sync(); lk.classList.remove('show', 'tap'); void lk.offsetWidth; lk.classList.add('show'); clearTimeout(this.likeTO); this.likeTO = setTimeout(() => lk.classList.remove('show'), 8000); },
+  ui2sync() { const sb = this.el && this.el.querySelector('#pnScore'); if (!sb) return; sb.style.display = ITEM.have.memo ? '' : 'none'; sb.textContent = TR(this.sheetOn ? 'しまう' : '楽譜を見る'); sb.classList.toggle('on', !!this.sheetOn); },
+  like() { },   /* 2026-11-17 自作の「いいね」ボタンはやめ、撮れ高のいつものアニメ（likePop）をピアノの画面にも出す */
 });
 { const E0 = PIANO.enter.bind(PIANO); PIANO.enter = function () { E0(); this.miss = {}; if (this.on) { this.ui2(); this.ui2sync(); document.documentElement.classList.add('pianoOn'); } }; }
-{ const X0 = PIANO.exit.bind(PIANO); PIANO.exit = function () { X0(); document.documentElement.classList.remove('pianoOn'); const lk = this.el && this.el.querySelector('#pnLike'); if (lk) lk.classList.remove('show'); }; }
+{ const X0 = PIANO.exit.bind(PIANO); PIANO.exit = function () { X0(); document.documentElement.classList.remove('pianoOn'); }; }
 /* 撮れ高の表 */
 Object.assign(AW_TABLE, { clairPlay: ['A', 30], nekoPiano: ['A', 30], turcaPlay: ['S', 40], toccataPlay: ['S', 40], unmeiPlay: ['S', 40] }); delete AW_TABLE.twinkle; delete AW_TABLE.mozFall;
 COL.LIST = COL.LIST.filter(x => x[0] !== 'twinkle' && x[0] !== 'mozFall'); COL.LIST.push(['turcaPlay', 'トルコ行進曲を弾く', 40], ['toccataPlay', 'トッカータとフーガを弾く', 40], ['unmeiPlay', '運命を弾く', 40]); COL.fixPts();
-Object.assign(CHIP_DESC, { nekoPiano: ['音楽室のピアノで「猫ふんじゃった」を弾いた。この周は化け猫が出やすくなる。', 'You played The Flea Waltz on the music room piano. A cat demon is more likely to appear this run.'],
+Object.assign(CHIP_DESC, { nekoPiano: ['音楽室のピアノで「猫ふんじゃった」を弾いた。どこかで猫が鳴いた気がする。弾いた周は、化け猫が出やすくなる。', 'You played The Flea Waltz on the music room piano. A cat seemed to cry somewhere. A cat demon is more likely to appear that run.'],
   turcaPlay: ['音楽室のピアノでトルコ行進曲を弾いたら、モーツァルトの額縁が落ちた。', 'You played the Turkish March, and the Mozart portrait fell.'], toccataPlay: ['音楽室のピアノでトッカータとフーガを弾いたら、バッハの額縁が落ちた。', 'You played Toccata and Fugue, and the Bach portrait fell.'], unmeiPlay: ['音楽室のピアノで運命を弾いたら、ベートーベンの額縁が落ちた。', 'You played the Fate Symphony, and the Beethoven portrait fell.'] });
 Object.assign(AW_HINT, { turcaPlay: ['音楽室で、ある曲を', 'a certain piece in the music room'], toccataPlay: ['音楽室で、ある曲を', 'a certain piece in the music room'], unmeiPlay: ['音楽室で、ある曲を', 'a certain piece in the music room'] });
 try { CHATGEN.SKILL.add('turcaPlay'); CHATGEN.SKILL.add('toccataPlay'); CHATGEN.SKILL.add('unmeiPlay'); } catch (e) { }
@@ -21469,7 +21502,12 @@ const CEIL = {
 { const U0 = CAP.update.bind(CAP); CAP.update = function (dt) { U0(dt); if (this.ceil && this.on) { const k = smooth(0, 0.55, this.t); this.camYaw = this.yaw0; this.camPitch = lerp(this.pitch0, 1.45, k); } }; }
 { const R0 = CMX.reset.bind(CMX); CMX.reset = function () { R0(); try { CEIL.reset(); } catch (e) { } }; }
 { const U0 = SHOPFX.update; SHOPFX.update = function (dt) { U0.call(SHOPFX, dt); try { CEIL.update(dt); } catch (e) { if (TEST || DEV) console.warn('CEIL', e); } }; }
-{ const R0 = raspUpdate; raspUpdate = function (dt) { R0(dt); if (CEIL.on && RASP.on && CEIL.ph === 'ceil' && A.ctx) { const t = A.ctx.currentTime; RASP.g.gain.setTargetAtTime(0.32 * SFX_GAIN.throat_rasp, t, 0.3); RASP.lp.frequency.setTargetAtTime(5200, t, 0.2); } }; }
+{ const R0 = raspUpdate; raspUpdate = function (dt) { R0(dt); if (CEIL.on && RASP.on && CEIL.ph === 'ceil' && A.ctx) { const t = A.ctx.currentTime; RASP.g.gain.setTargetAtTime(0.18 * SFX_GAIN.throat_rasp, t, 0.3); RASP.lp.frequency.setTargetAtTime(5200, t, 0.2); } CEIL.voice(); }; }
+/* 2026-11-17 天井にいる間は、追われている時の逆さ女の声（horror_aaaaaa）を、真上の顔の位置からはっきり聞こえる大きさで流す。ガラガラ声は小さく重ねる */
+Object.assign(CEIL, { voice() { const on = this.on && this.ph === 'ceil' && world.state === 'play' && !CAP.on && A.ctx && hasSfx('chase_voice'), V0 = this.vc;
+    if (!on) { if (V0) { const t = A.ctx.currentTime; V0.g.gain.cancelScheduledValues(t); V0.g.gain.setTargetAtTime(0, t, CAP.on ? 0.02 : 0.25); try { V0.s.stop(t + (CAP.on ? 0.1 : 1.2)); } catch (e) { } this.vc = null; } return; }
+    const h = sgHead(V()); if (!V0) { const ctx = A.ctx, s = ctx.createBufferSource(); s.buffer = A.buf.chase_voice; s.loop = true; const g = ctx.createGain(); g.gain.value = 0.0001; const p = panAt(h, 1.6, 0.8, A.bus, 0); s.connect(g); g.connect(p); s.start(0, Math.random() * s.buffer.duration); g.gain.setTargetAtTime(1.5 * (SFX_GAIN.chase_voice || 1), ctx.currentTime, 0.6); this.vc = { s, g, p }; }
+    else setP(this.vc.p, h); } });
 XCHAT.LIST.ceil1 = ['cw.01', 'cw.02', 'cw.03', 'cw.04', 'cw.05', 'cw.06']; XCHAT.LIST.ceil2 = ['cw.07', 'cw.08', 'cw.09', 'cw.10', 'cw.11', 'cw.12'];
 Object.assign(CHAT_DICT.t, { 'cw.01': ['なんかずっと変な声してない？', 'is there a weird voice the whole time?'], 'cw.02': ['なんの音？', 'what is that sound?'], 'cw.03': ['何も聞こえないけど', "I don't hear anything"], 'cw.04': ['イヤホンだと聞こえる', 'I can hear it on earphones'], 'cw.05': ['ガラガラ声みたいなのする', 'sounds like a raspy voice'], 'cw.06': ['気のせい？', 'just me?'],
   'cw.07': ['まだ鳴ってる', "it's still going"], 'cw.08': ['声ずっとついてきてない？', 'is the voice following you?'], 'cw.09': ['どこから聞こえてるの', 'where is it coming from'], 'cw.10': ['近くない？', "isn't it close?"], 'cw.11': ['上…？', 'up...?'], 'cw.12': ['怖い怖い怖い', 'scary scary scary'] });
@@ -21509,7 +21547,7 @@ const SALT2 = {
     const c = this.cool; if (world.t < (c[kind] || 0)) return; c[kind] = world.t + 6; this.n++;
     const k = Math.min(1, this.n / this.MAX); this.mat.color.setHex(0xe9e6de).lerp(new THREE.Color(0x2a2622), k); this.mat.emissive.setHex(0x2a2926).multiplyScalar(1 - k); this.plate.color.setHex(0xbfbab0).lerp(new THREE.Color(0x25221f), k);
     try { playSfx('kehai_whoosh', { pos: p, ref: 1, gain: 0.45, rate: 0.7 }); SND.creak && SND.creak(p, 0.5, 0.6); } catch (e) { }
-    try { XCHAT.log(this.n >= this.MAX ? 'salt_dead' : 'salt_rep'); } catch (e) { }
+    try { if (seen(V(p.x, (p.y || this.y) + 0.3, p.z), { maxD: 12, margin: 1.05 })) XCHAT.log(this.n >= this.MAX ? 'salt_dead' : 'salt_rep'); } catch (e) { }   /* 2026-11-17 追い返した入口が映っている時だけ */
     if (this.n >= this.MAX) { this.dead = true; toast(LANG === 'en' ? 'The salt turned black…' : '盛り塩が、黒く変色した…', 2200); try { if (URAH.N) URAH.graph(); } catch (e) { } }
     if (TEST || DEV) console.log('SALT repel', kind, this.n); },
   update(dt) {
