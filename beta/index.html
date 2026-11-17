@@ -15150,7 +15150,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.81';
+const VERSION = '0.16.82';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -21601,7 +21601,7 @@ const ENDING = {
         this.wave(k, now); }
       else if (k === 'woman') { if (!SG.ready) return; const u = now - TOUR.t0, [x, z] = back(c.x, c.z, yw, Math.max(2.4, 6.5 - u * 0.65), 1.2); if (!this.wWalk) { this.wWalk = 1; try { sgPlay('Walk'); } catch (e) { } } try { SG.mixer.update(dt); } catch (e) { }
         sgSetOpacity(1); SG.root.position.set(x, fy, z); SG.root.rotation.set(0, Math.atan2(c.x - x, c.z - z), 0); SG.root.visible = true; }
-      else if (k === 'spider') { if (!SP.ready || !SP.wrap) return; SP.pos = SP.pos || V(); SP.lv = lv; SP.pos.set(c.x + Math.sin(yw) * 0.6, spCeil(lv), c.z + Math.cos(yw) * 0.6); SP.yaw = yw; SP.apply(); SP.wrap.visible = true; } } catch (e) { } },
+      else if (k === 'spider') { if (!SP.ready || !SP.wrap) return; SP.pos = SP.pos || V(); SP.lv = lv; const [sx, sz] = back(c.x, c.z, yw, 3.3, 1.2); SP.pos.set(sx, spCeil(lv), sz); SP.yaw = yw + Math.PI;   /* 2026-11-17 少し遠目（後ろ上の天井）で、顔をカメラに向ける */ SP.apply(); SP.wrap.visible = true; } } catch (e) { } },
   /* 手を振る：片腕をまっすぐ上へ伸ばし、肩（根元）を起点に左右に大きく振る */
   WAVE: { mann: { up: ['UpperR', 'x', -2.75], sw: ['UpperR', 'z', 0.38], st: ['ForeR', 'x', 0] }, urah: { up: ['FrontRShoulder', 'x', -1.6], sw: ['FrontRShoulder', 'z', 0.38], st: ['FrontRElbow', 'x', 0] } },
   wave(k, t) { const O = k === 'mann' ? MANN : URAH, W = this.WAVE[k]; if (!O.bones || !O.rest) return; if (O.mixer) try { O.mixer.stopAllAction(); } catch (e) { }
