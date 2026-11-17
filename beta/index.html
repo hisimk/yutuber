@@ -15150,7 +15150,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.79';
+const VERSION = '0.16.80';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -21333,6 +21333,53 @@ const XEXT2 = {
   const R0 = CMX.reset.bind(CMX); CMX.reset = function () { R0(); this.mkW = 0; }; }
 const SHOPFX = { update(dt) { IDLEC.update(dt); if (world.state !== 'play') return; BUZZ.update(dt); CANDLE.update(dt); DRINK.update(); STICK.update(dt); } };
 /* =========================================================
+   2026-11-17 逆さ女のまれなできごと「天井の逆さ女」（1周に1回まで・10%）
+   ・逆さ女がいつもの血溜まりで沈んで消え、主人公の真上の天井にはりつく（顔は真下・髪は真下に垂れる）。ずっと真上についてくる
+   ・ガラガラ声だけが、天井からずっと聞こえ続ける（姿は見上げないと見えない）
+   ・見上げて顔をしっかり画面に入れると、カメラを奪われて真上を向かされ、顔がカクカク近づいてくる（いつもの捕まり方・ゲームオーバー）
+   ・声が20秒以上続くと、少しずつコメントが声に触れ始める
+   ・確認用：?ceilwoman（3秒後に必ず起きる）
+   ========================================================= */
+const CEIL = {
+  P: 0.10,
+  reset() { if (this.on || this.hair) this.stop(); this.armed = chance(this.P) || WF('ceilwoman'); this.at = 0; this.done = false; CAP.ceil = false; },
+  can() { return this.armed && !this.on && !this.done && world.state === 'play' && SG.ready && !world.mannRun && !(typeof PHAN !== 'undefined' && PHAN.on) && womanOn() && CH.state === 'off' && !WD.borrowed && !WD.scripted && !WARP.on && !world.capture && !CAP.on && !(typeof OFUDA !== 'undefined' && OFUDA.on) && !world.dark; },
+  start() { const W = WD; this.on = true; this.done = true; this.ph = 'sink'; this.t = 0; this.vt = 0; this.see = 0; this.cn = 0; this.from = W.pos.clone(); this.yw = player.yaw;
+    W.borrowed = true; W.glance = null; SG.ovYaw = SG.ovPitch = SG.ovStretch = SG.ovRoll = 0; try { WARP.spawn(this.from); SND.splat ? SND.splat(this.from) : SND.thud(V(this.from.x, this.from.y + 0.1, this.from.z), 0.35); } catch (e) { }
+    if (TEST || DEV) console.log('CEIL start'); },
+  ceilY() { return (player.y > LH - 0.6 ? LH : 0) + HT; },
+  pose(p, yaw) { const R = SG.root; R.rotation.order = 'YXZ'; R.rotation.set(Math.PI / 2, yaw + Math.PI, 0); R.position.copy(p); R.updateMatrixWorld(true); const h = sgHead(V()); R.position.x += p.x - h.x; R.position.y += p.y - h.y + 0.1; R.position.z += p.z - h.z; },
+  mkHair() { const g = new THREE.Group(), m = new THREE.MeshLambertMaterial({ color: 0x141210, map: TX.hair, alphaTest: 0.3, side: THREE.DoubleSide });
+    for (let i = 0; i < 9; i++) { const len = rnd(0.55, 0.85), geo = new THREE.PlaneGeometry(rnd(0.07, 0.11), len); geo.translate(0, -len / 2, 0); const q = new THREE.Mesh(geo, m), a = i / 9 * Math.PI * 2; q.position.set(Math.cos(a) * 0.07, 0, Math.sin(a) * 0.06); q.rotation.y = a + rnd(-0.4, 0.4); q.rotation.z = rnd(-0.05, 0.05); g.add(q); }
+    scene.add(g); return g; },
+  stop() { this.on = false; try { if (this.hair) { scene.remove(this.hair); this.hair = null; } SG.root.rotation.order = 'XYZ'; SG.root.rotation.set(0, SG.root.rotation.y, 0); if (WD.borrowed && !CAP.on && !(typeof OFUDA !== 'undefined' && OFUDA.on)) WD.release(true); } catch (e) { } },
+  grab() { this.ph = 'grab'; CAP.ceil = true; CAP.start(); if (CAP.on) { if (TEST || DEV) console.log('CEIL grab'); return; } CAP.ceil = false; if (world.t < (world.invUntil || 0) && !WD.borrowed) { WD.borrowed = true; } if (world.t < (world.invUntil || 0)) { this.ph = 'ceil'; this.see = 0; return; } this.stop(); },
+  update(dt) {
+    if (!this.on) { if (this.can()) { if (!this.at) this.at = world.t + (WF('ceilwoman') ? 3 : rnd(15, 60)); if (world.t >= this.at) this.start(); } return; }
+    if (CAP.on) { if (this.hair) { const h = sgHead(V()); this.hair.position.set(h.x, h.y - 0.05, h.z); } return; }
+    if (world.state !== 'play') return; this.t += dt;
+    if (this.ph === 'sink') { const k = smooth(0, 1.4, this.t); SG.root.position.set(this.from.x, this.from.y - 2.1 * k, this.from.z); if (this.t >= 1.4) { this.ph = 'ceil'; sgSetOpacity(1); this.hair = this.mkHair(); } return; }
+    if (this.ph !== 'ceil') return;
+    const dy = Math.atan2(Math.sin(player.yaw - this.yw), Math.cos(player.yaw - this.yw)); this.yw += dy * Math.min(1, dt * 1.2);   // 体の向きは少し遅れてついてくる（足は後ろ側）
+    const tgt = V(player.x, this.ceilY() - 0.3, player.z); this.cur = this.cur ? this.cur.lerp(tgt, Math.min(1, dt * 4)) : tgt.clone(); this.cur.y = tgt.y; this.pose(this.cur, this.yw);
+    const h = sgHead(V()); this.hair.position.set(h.x, h.y - 0.05, h.z);
+    /* 見上げて、顔をしっかり画面に入れたら */
+    if (!player.hidden && camera.rotation.x > 0.55) { const q = h.clone().project(camera); if (q.z < 1 && Math.abs(q.x) < 0.5 && Math.abs(q.y) < 0.55) this.see += dt; else this.see = Math.max(0, this.see - dt); } else this.see = Math.max(0, this.see - dt);
+    if (this.see > 0.3) { this.grab(); return; }
+    /* 声が続くと、コメントが少しずつ触れ始める */
+    this.vt += dt; if (this.vt > 20 && world.t >= (this.cnT || 0)) { this.cnT = world.t + rnd(8, 14); this.cn++; try { XCHAT.log(this.vt > 45 ? 'ceil2' : 'ceil1'); } catch (e) { } }
+  },
+};
+{ const S0 = CAP.start.bind(CAP); CAP.start = function () { const ceil = this.ceil; S0(); if (ceil && this.on) { this.yaw0 = this.yaw1 = player.yaw; this.camYaw = player.yaw; } }; }
+{ const P0 = CAP.place.bind(CAP); CAP.place = function (d, side, up) { if (!this.ceil) return P0(d, side, up); const c = camera.position, p = V(c.x + Math.sin(player.yaw) * side, c.y + 0.12 + d * NEAR_K * 0.9 + up, c.z + Math.cos(player.yaw) * side); CEIL.pose(p, CEIL.yw ?? player.yaw); }; }
+{ const U0 = CAP.update.bind(CAP); CAP.update = function (dt) { U0(dt); if (this.ceil && this.on) { const k = smooth(0, 0.55, this.t); this.camYaw = this.yaw0; this.camPitch = lerp(this.pitch0, 1.45, k); } }; }
+{ const R0 = CMX.reset.bind(CMX); CMX.reset = function () { R0(); try { CEIL.reset(); } catch (e) { } }; }
+{ const U0 = SHOPFX.update; SHOPFX.update = function (dt) { U0.call(SHOPFX, dt); try { CEIL.update(dt); } catch (e) { if (TEST || DEV) console.warn('CEIL', e); } }; }
+{ const R0 = raspUpdate; raspUpdate = function (dt) { R0(dt); if (CEIL.on && RASP.on && CEIL.ph === 'ceil' && A.ctx) { const t = A.ctx.currentTime; RASP.g.gain.setTargetAtTime(0.32 * SFX_GAIN.throat_rasp, t, 0.3); RASP.lp.frequency.setTargetAtTime(5200, t, 0.2); } }; }
+XCHAT.LIST.ceil1 = ['cw.01', 'cw.02', 'cw.03', 'cw.04', 'cw.05', 'cw.06']; XCHAT.LIST.ceil2 = ['cw.07', 'cw.08', 'cw.09', 'cw.10', 'cw.11', 'cw.12'];
+Object.assign(CHAT_DICT.t, { 'cw.01': ['なんかずっと変な声してない？', 'is there a weird voice the whole time?'], 'cw.02': ['なんの音？', 'what is that sound?'], 'cw.03': ['何も聞こえないけど', "I don't hear anything"], 'cw.04': ['イヤホンだと聞こえる', 'I can hear it on earphones'], 'cw.05': ['ガラガラ声みたいなのする', 'sounds like a raspy voice'], 'cw.06': ['気のせい？', 'just me?'],
+  'cw.07': ['まだ鳴ってる', "it's still going"], 'cw.08': ['声ずっとついてきてない？', 'is the voice following you?'], 'cw.09': ['どこから聞こえてるの', 'where is it coming from'], 'cw.10': ['近くない？', "isn't it close?"], 'cw.11': ['上…？', 'up...?'], 'cw.12': ['怖い怖い怖い', 'scary scary scary'] });
+/* =========================================================
    2026-11-17 ショップの道具の見直し
    ・盛り塩：避難部屋を作る道具に。部屋の中で置くと、その部屋の入口すべてに塩を盛り、怪異は入ってこられない。
      追い返すたびに塩がくすみ、3回で黒く変色して効かなくなる（うろついているだけの時は数えない）
@@ -21513,14 +21560,14 @@ const ENDING = {
   shotBy() { const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]); let n = ''; try { n = ($('#chName').value || '').trim() || world.channel || ''; } catch (e) { } n = n || (LANG === 'en' ? 'Ghost Channel' : '心霊チャンネル'); return `<div class="enShot"><small>${LANG === 'en' ? 'Filmed by' : '動画撮影'}</small><b>${esc(n)}</b></div>`; },
   /* 2026-11-17 エンディングの学校の映像（タイトル画面とは別）：下駄箱・階段を外し、美術室・理科室を足す */
   SHOTS: [
-    [[0, 1.5, 4.1], [0, 1.48, 2.3], 0.0, 0.0, -0.04, 7],                 // 玄関
-    [[0, 1.5, -1.6], [0, 1.5, -7.4], 0.0, 0.0, -0.02, 7],                // 1階の廊下
-    [[12.6, 1.55, -9.1], [11.4, 1.55, -9.4], 0.62, 1.05, -0.12, 7.5],    // 教室
-    [[20.5, 1.5, -8.8], [20.5, 1.5, -15.5], 0.0, 0.0, -0.03, 7],         // 渡り廊下
-    [[0.6, 4.7, -33.7], [2.2, 4.7, -33.9], -1.05, -1.35, -0.1, 7.5],     // 美術室
-    [[16.6, 4.7, -34.0], [18.0, 4.7, -34.3], -0.7, -1.05, -0.1, 7.5],    // 理科室
-    [[-2.0, 4.7, -21.5], [-2.9, 4.7, -21.3], 1.25, 1.85, -0.1, 7.5],     // 音楽室
-    [[-2.1, 4.7, -13.0], [-3.9, 4.7, -13.0], 1.5708, 1.5708, -0.04, 7],  // 図書室
+    [[0, 1.5, 4.1], [0, 1.48, 2.3], 0.0, 0.0, -0.04, 6],                 // 玄関
+    [[0, 1.5, -1.6], [0, 1.5, -7.4], 0.0, 0.0, -0.02, 6],                // 1階の廊下
+    [[12.6, 1.55, -9.1], [11.4, 1.55, -9.4], 0.62, 1.05, -0.12, 6],    // 教室
+    [[20.5, 1.5, -8.8], [20.5, 1.5, -15.5], 0.0, 0.0, -0.03, 6],         // 渡り廊下
+    [[0.6, 4.7, -33.7], [2.2, 4.7, -33.9], -1.05, -1.35, -0.1, 6],     // 美術室
+    [[16.6, 4.7, -34.0], [18.0, 4.7, -34.3], -0.7, -1.05, -0.1, 6],    // 理科室
+    [[-2.0, 4.7, -21.5], [-2.9, 4.7, -21.3], 1.25, 1.85, -0.1, 6],     // 音楽室
+    [[-2.1, 4.7, -13.0], [-3.9, 4.7, -13.0], 1.5708, 1.5708, -0.04, 6],  // 図書室
   ],
   /* 2026-11-17 学校の音を止める／戻す（曲は別の経路） */
   mute(on) { try { if (!A.ctx || !A.master) return; if (on && !this.cut) { A.master.disconnect(); this.cut = true; } else if (!on && this.cut) { A.master.connect(A.comp); this.cut = false; } if (typeof RBGM !== 'undefined' && RBGM.g) RBGM.g.gain.setTargetAtTime(on ? 0 : RBGM.vol, A.ctx.currentTime, 0.2); } catch (e) { } },   /* 2026-11-17 学校の音（環境音・虫の声など）と結果画面の曲は、線ごと外して鳴らさない。曲とプレイ動画の声だけ */
@@ -21534,27 +21581,28 @@ const ENDING = {
     let gy = 0, gp = 0; if (gyro.on && gyro.got) { if (!L.g0) L.g0 = { a: gyro.acc, p: gyro.pitch || 0 }; gy = gyro.acc - L.g0.a; gp = (gyro.pitch || 0) - L.g0.p; }
     L.y += (L.dy + gy - L.y) * 0.18; L.p += (clamp(L.dp + gp, -0.9, 0.9) - L.p) * 0.18; camera.rotation.y += L.y; camera.rotation.x = clamp(camera.rotation.x + L.p, -1.15, 1.15); camera.updateMatrixWorld(); },
   /* 2026-11-17 見回すと、校舎のあちこちに怪異がこっそり立っている（ふつうに見ている向きには映らない所） */
-  figInit() { const K = []; try { if (MANN.root) K.push('mann'); if (SG.ready && !world.mannRun) K.push('woman'); if (SP.wrap && SP.ready) K.push('spider'); if (typeof URAH !== 'undefined' && URAH.ready && URAH.root) K.push('urah'); } catch (e) { } this.figK = shuffle(K); this.figAt = {}; },
-  figFor(i) { if (i in this.figAt) return this.figAt[i]; let out = null; const S = TOUR.SHOTS[i], K = this.figK || []; if (S && K.length) { const a = S[0], lv = a[1] > LH ? 1 : 0, fy = lv ? LH : 0, yaw0 = (S[2] + S[3]) / 2;
-      for (const off of [Math.PI, Math.PI * 0.72, -Math.PI * 0.72, Math.PI / 2, -Math.PI / 2, Math.PI * 0.85, -Math.PI * 0.85, Math.PI * 0.4, -Math.PI * 0.4]) { const an = yaw0 + off, dx = -Math.sin(an), dz = -Math.cos(an); let d = 0; for (let t = 0.5; t <= 7.5; t += 0.25) { if (segBlocked(a[0], a[2], a[0] + dx * t, a[2] + dz * t, lv, 0.3) || /^X/.test(zoneOf(a[0] + dx * t, a[2] + dz * t, fy + 1))) break; d = t; }   /* 校舎の外には置かない */
-        if (d >= 2.0) { const dd = Math.min(d - 0.4, 6.5), x = a[0] + dx * dd, z = a[2] + dz * dd; out = { k: K[i % K.length], x, y: fy, z, lv, f: Math.atan2(a[0] - x, a[2] - z) }; break; } } }
-    return (this.figAt[i] = out); },
+  /* 2026-11-17 怪異は1体ずつ、最初の4つの場面に1回ずつ（クレジットの間に全部出る）。逆さ女だけ後ろから歩いて近づく。ほかは動かない
+     人体模型・オフタリサマはやや遠目（場面の始まりの位置の後ろ）で手を振る。クモ女はカメラの真上の天井 */
+  figInit() { this.figK = shuffle(['woman', 'spider', 'mann', 'urah']); this.anc = {}; this.figT = null; },
   figHide() { try { for (const o of [MANN.root, SP.wrap, URAH.root]) if (o) o.visible = false; if (SG.ready) sgSetOpacity(0); } catch (e) { } },
-  /* 2026-11-17 隠れている怪異は、カメラの真後ろのすぐ近く（振り向いたらすぐそこ）。カメラが進んでも、ずっと後ろについてくる */
-  figShow() { const K = this.figK || []; try { if (!K.length) return; const k = K[(TOUR.i | 0) % K.length], c = camera.position, yw = camera.rotation.y, lv = c.y > LH ? 1 : 0, fy = lv ? LH : 0;
-      if (URAH.root && k !== 'urah') URAH.root.visible = false; if (MANN.root && k !== 'mann') MANN.root.visible = false;
-      const bx = Math.sin(yw), bz = Math.cos(yw); let d = k === 'urah' ? 2.8 : 1.45; while (d > 0.8 && segBlocked(c.x, c.z, c.x + bx * (d + 0.3), c.z + bz * (d + 0.3), lv, 0.2)) d -= 0.1;
-      const x = c.x + bx * d, z = c.z + bz * d, f = Math.atan2(c.x - x, c.z - z), t = performance.now() / 1000;
-      if (k === 'mann') { const M = MANN; if (!this.mOp) { this.mOp = 1; M.setOp && M.setOp(1); } M.root.position.set(x, fy, z); M.root.rotation.y = f; M.root.visible = true; this.wave('mann', t); }
-      else if (k === 'urah') { URAH.root.position.set(x, fy, z); URAH.root.rotation.y = f; URAH.root.visible = true; this.wave('urah', t); }
-      else if (k === 'woman') { sgSetOpacity(1); SG.root.position.set(x, fy, z); SG.root.rotation.y = f; SG.root.visible = true; }
-      else if (k === 'spider') { SP.lv = lv; SP.pos.set(x, spCeil(lv), z); SP.yaw = f; SP.apply(); SP.wrap.visible = true; } } catch (e) { } },
-  /* 人体模型・オフタリサマはカメラに向かって手を振る（右腕を上げ、ひじから先を左右に） */
-  WAVE: { mann: { up: ['UpperR', 'x', -2.3], fo: ['ForeR', 'z', 0.2], sw: 0.45 }, urah: { up: ['FrontRShoulder', 'x', -1.6], fo: ['FrontRElbow', 'z', 0.1], sw: 0.6 } },
+  figShow() { const now = performance.now() / 1000, dt = Math.min(0.1, now - (this.figT || now)); this.figT = now; const i = TOUR.i | 0, k = (this.figK || [])[i];
+    try { if (URAH.root && k !== 'urah') URAH.root.visible = false; if (MANN.root && k !== 'mann') MANN.root.visible = false; if (!k) return;
+      const S = TOUR.SHOTS[i], c = camera.position, yw = camera.rotation.y, lv = c.y > LH ? 1 : 0, fy = lv ? LH : 0;
+      const back = (px, pz, yaw, d0, dmin) => { const bx = Math.sin(yaw), bz = Math.cos(yaw); let d = d0; while (d > dmin && (segBlocked(px, pz, px + bx * (d + 0.4), pz + bz * (d + 0.4), lv, 0.25) || /^X/.test(zoneOf(px + bx * d, pz + bz * d, fy + 1)))) d -= 0.1; return [px + bx * d, pz + bz * d]; };
+      if (k === 'mann' || k === 'urah') { const A0 = this.anc[i] || (this.anc[i] = back(S[0][0], S[0][2], S[2], k === 'urah' ? 5.2 : 3.2, 1.6)); const [x, z] = A0, f = Math.atan2(c.x - x, c.z - z);
+        if (k === 'mann') { if (!MANN.ready && !MANN.root) return; if (!this.mOp) { this.mOp = 1; MANN.setOp && MANN.setOp(1); } MANN.root.position.set(x, fy, z); MANN.root.rotation.y = f; MANN.root.visible = true; }
+        else { if (!URAH.root) return; URAH.root.position.set(x, fy, z); URAH.root.rotation.y = f; URAH.root.visible = true; }
+        this.wave(k, now); }
+      else if (k === 'woman') { if (!SG.ready) return; const u = now - TOUR.t0, [x, z] = back(c.x, c.z, yw, Math.max(2.4, 6.5 - u * 0.65), 1.2); if (!this.wWalk) { this.wWalk = 1; try { sgPlay('Walk'); } catch (e) { } } try { SG.mixer.update(dt); } catch (e) { }
+        sgSetOpacity(1); SG.root.position.set(x, fy, z); SG.root.rotation.set(0, Math.atan2(c.x - x, c.z - z), 0); SG.root.visible = true; }
+      else if (k === 'spider') { if (!SP.ready || !SP.wrap) return; SP.pos = SP.pos || V(); SP.lv = lv; SP.pos.set(c.x + Math.sin(yw) * 0.6, spCeil(lv), c.z + Math.cos(yw) * 0.6); SP.yaw = yw; SP.apply(); SP.wrap.visible = true; } } catch (e) { } },
+  /* 手を振る：片腕をまっすぐ上へ伸ばし、肩（根元）を起点に左右に大きく振る */
+  WAVE: { mann: { up: ['UpperR', 'x', -2.75], sw: ['UpperR', 'z', 0.38], st: ['ForeR', 'x', 0] }, urah: { up: ['FrontRShoulder', 'x', -1.6], sw: ['FrontRShoulder', 'z', 0.38], st: ['FrontRElbow', 'x', 0] } },
   wave(k, t) { const O = k === 'mann' ? MANN : URAH, W = this.WAVE[k]; if (!O.bones || !O.rest) return; if (O.mixer) try { O.mixer.stopAllAction(); } catch (e) { }
-    const set = (n, ax, a) => { const b = O.bones[n], r = O.rest[n]; if (!b || !r) return; b.quaternion.copy(r).multiply(new THREE.Quaternion().setFromAxisAngle(ax === 'x' ? _MX : ax === 'y' ? _MY : _MZ, a)); };
-    for (const n in O.rest) { const b = O.bones[n]; if (b && n !== W.up[0] && n !== W.fo[0]) b.quaternion.copy(O.rest[n]); }
-    set(W.up[0], W.up[1], W.up[2]); set(W.fo[0], W.fo[1], W.fo[2] + Math.sin(t * 6) * W.sw); },
+    for (const n in O.rest) { const b = O.bones[n]; if (b && O.rest[n] && O.rest[n].isQuaternion) b.quaternion.copy(O.rest[n]); }
+    const q = (ax, a) => new THREE.Quaternion().setFromAxisAngle(ax === 'x' ? _MX : ax === 'y' ? _MY : _MZ, a), b = O.bones[W.up[0]];
+    if (b) b.quaternion.copy(O.rest[W.up[0]]).multiply(q(W.sw[1], Math.sin(t * 5.2) * W.sw[2])).multiply(q(W.up[1], W.up[2]));
+    const e = O.bones[W.st[0]]; if (e && O.rest[W.st[0]]) e.quaternion.copy(O.rest[W.st[0]]).multiply(q(W.st[1], W.st[2])); },
   /* 盛り上がった場面のコメント：画面の上の方に、時間どおりに流す（最新6件） */
   comments(list) { const el = $('#endCm'); if (!el) return; for (const t of this.cmT || []) clearTimeout(t); this.cmT = []; el.innerHTML = ''; el.classList.toggle('on', !!list);
     if (!list) return; const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
