@@ -203,6 +203,7 @@
   #intro .iGhost{--s:46px;position:absolute;left:50%;top:calc(50% - 150px);margin-left:-23px;opacity:.9}   /* 2026-11-16 ナウローディングのドット絵おばけ（文字のやや上） */
   .title{font-family:"Shippori Mincho",serif;font-weight:800;font-size:56px;letter-spacing:.18em;margin:0 0 6px;color:#e9e4da;text-shadow:0 0 24px rgba(255,40,40,.25)}
   .sub{font-size:13px;color:#9a958c;margin-bottom:22px;letter-spacing:.08em}
+  .sub.tSub{white-space:nowrap;letter-spacing:.03em;font-size:min(13px,calc(var(--vw, 1vw) * 3.4))}   /* 2026-11-17 タイトル下の文は1行に */
   .opts{width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
   .opt{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-radius:12px;background:#121214;border:1px solid #26262a;font-size:15px}
   .stSeg{display:flex;gap:6px}.stSeg button{font:inherit;font-size:12px;padding:6px 9px;border-radius:8px;border:1px solid #3a3a40;background:#1c1c20;color:#bbb}.stSeg button.on{background:#e8e2d4;color:#111;border-color:#e8e2d4}
@@ -895,7 +896,7 @@
 <div class="screen show" id="start">
   <button class="btn gearBtn" id="startGear" aria-label="設定"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>設定</span></button>
   <h1 class="title logoTitle"><img id="titleLogo" alt="幽tuber 撮レ高狙エ"><div id="logoAnim" role="img" aria-label="幽tuber 撮レ高狙エ"><div class="lgGrp"></div></div></h1>
-  <div class="sub">バズる心霊動画を撮って「いいね・コメント・収益」を稼げ！</div>
+  <div class="sub tSub">バズる心霊動画を撮って、いいね・コメント・お金を稼ごう！</div>
   <div class="rankLine"><span>ランク</span><b id="rankTag"></b></div>
   <div class="opts">
     <div class="opt"><div class="nmL">名前<small>※コメントでの呼び名</small></div><input id="chName" maxlength="12" placeholder="心霊チャンネル"></div>
@@ -1504,7 +1505,7 @@ const EN = {
   '画質': 'Quality', 'なめらかさ': 'Smoothness (fps)', '60はなめらか（スマホが熱くなりやすい）': '60 is smoother (phones may get hot)', '標準': 'Standard', '軽い': 'Light', '重い時は「軽い」に（少し粗くなり、影が減ります）': 'Use Light if the game is slow (a bit rougher, fewer shadows)', '画面の細かさは、この回の録画が終わってから変わります': 'Resolution will change after this run’s recording ends',
   '動画をMP4に変換しています。少し待ってから、もう一度押してください': 'Converting the video to MP4. Please wait a moment and press again', '変換できました。もう一度押してください': 'Converted. Please press again',
   // スタート・設定
-  '夜の旧校舎で、決定的瞬間を撮って帰る': 'Film the decisive moment in the old school at night — and make it out', 'バズる心霊動画を撮って「いいね・コメント・収益」を稼げ！': 'Film viral ghost videos and earn likes, comments and money!', '撮影をはじめる': 'Start filming',
+  '夜の旧校舎で、決定的瞬間を撮って帰る': 'Film the decisive moment in the old school at night — and make it out', 'バズる心霊動画を撮って、いいね・コメント・お金を稼ごう！': 'Film viral ghost videos and earn likes, comments and money!', '撮影をはじめる': 'Start filming',
   'チャンネル名': 'Channel name', 'なまえ': 'Name', 'タイトルを編集': 'Edit title', '無題の動画': 'Untitled video', 'とめどなき実況': "Nonstop Commentary", '大きな声での実況': "Loud Commentary", '悲鳴一閃': "Instant Scream", '遅れてくる恐怖': "Delayed Terror", '絶叫逃走中': "Screaming While Fleeing", '息つく暇もない': "No Time to Breathe", '隠れてるんですけど': "I'm Supposed to Be Hiding", '見つかるって！': "They'll Find You!", '静かに実況中': "Quiet Commentary", '急に小声': "Sudden Whisper", '急に無口': "Suddenly Speechless", '実況再開': "Commentary Resumed", 'メモリーカード': 'Memory card', '録画できる時間が15秒増える。': 'Adds 15 seconds of recording time.', 'いかついサングラス': 'Tough sunglasses', 'かけると威圧感が上がる。怪異に効果はない。': 'Makes you look intimidating. No effect on ghosts.',
   'パーティーなサングラス': 'Party sunglasses', '星型のサングラス。つけても何の意味もない。': 'Star-shaped sunglasses. Completely pointless.', '使いかけモバイルバッテリー': 'Half-used power bank', '少しだけ充電が残っている。電池残量が15％回復する。': 'A little charge left. Restores 15% battery.',
   'クマ避けの鈴': 'Bear bell', 'クマ避けの鈴。ここでは、別のものを呼び寄せてしまう。拾うと、この探索中は外せない。': 'A bell to keep bears away. Here it attracts something else. Once picked up, it can’t be removed for this run.',
@@ -15108,7 +15109,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.88';
+const VERSION = '0.16.89';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
