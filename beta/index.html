@@ -934,6 +934,7 @@
     <button id="setX" aria-label="閉じる">×</button>
     <div id="setMain">
       <div class="opt" id="setGyro"><div>ジャイロで見回す<small>スマホの向きで視点が動きます</small></div><div class="sw"></div></div>
+      <div class="opt" id="setTilt"><div>傾きも反映する<small>スマホをななめにすると、画面も傾きます</small></div><div class="sw"></div></div>
       <div class="opt col" id="setMicRow"><div class="optTop" id="setMic"><div>実況マイク<small>録画中の自分の声も動画に入ります</small></div><div class="sw"></div></div><div id="micMeter"><div id="micMeterFill"></div></div><div id="micNote"></div></div>
       <div class="opt col" id="setVolRow"><div class="optTop"><div>音量<small>スピーカーから出る大きさ（録画の音は変わりません）</small></div><div class="val" id="volVal">100%</div></div><input class="rng" id="volRange" type="range" min="0" max="100" step="5" value="100"></div>
       <div class="opt col" id="setSensRow"><div class="optTop"><div>視点を動かす速さ<small>なぞった時・ドラッグした時の回りやすさ</small></div><div class="val" id="sensVal">×1.0</div></div><input class="rng" id="sensRange" type="range" min="0.4" max="2" step="0.1" value="1"></div>
@@ -1538,7 +1539,7 @@ const EN = {
   '電子ピアノ（MIDI）': 'Digital piano (MIDI)', 'USBでつないだ電子ピアノで音楽室のピアノを弾けます': 'Play the music-room piano with a USB digital piano', 'つないだ機器すべて': 'All connected devices', 'このブラウザでは使えません（Chrome・Edgeで使えます）': 'Not available in this browser (works in Chrome / Edge)',
   '許可を待っています…': 'Waiting for permission…', '許可されなかったため使えません': 'Not available because permission was denied', '音楽室のピアノの前で「ピアノを弾く」と、電子ピアノで弾けます': 'Choose “Play the piano” in the music room to play with your digital piano', '電子ピアノが見つかりません。USBでつないで電源を入れてください': 'No digital piano found. Connect it by USB and turn it on',
   '持ち物': 'Items', 'まだ何も持っていない': 'You have nothing yet', 'タップで閉じる': 'Tap to close',
-  '設定': 'Settings', '一時停止中': 'Paused', 'ジャイロで見回す': 'Look with gyro', 'スマホの向きで視点が動きます': 'Tilt your phone to look around',
+  '設定': 'Settings', '一時停止中': 'Paused', 'ジャイロで見回す': 'Look with gyro', '傾きも反映する': 'Follow phone tilt', 'スマホをななめにすると、画面も傾きます': 'Tilting your phone tilts the view', 'スマホの向きで視点が動きます': 'Tilt your phone to look around',
   '明るさ': 'Brightness', '入口の景色を見ながら合わせます': 'Adjust while looking at the entrance', '実況マイク': 'Commentary mic', '録画中の自分の声も動画に入ります': 'Your voice is recorded into the video',
   '効果音の大きさ': 'Sound effects volume', '遠くの物音や笑い声が聞こえにくい時は右へ': 'Slide right if distant sounds are hard to hear',
   'スタート画面にもどる': 'Back to title', 'ゲームにもどる': 'Resume', '閉じる': 'Close',
@@ -4307,7 +4308,7 @@ function onOri(ev) {
   const y = _eu.y, p = _eu.x;
   if (!gyro.got) { gyro.got = true; gyro.last = y; gyro.acc = 0; gyro.ref = 0; look.yaw = player.yaw; look.pitch = 0; }
   if (Math.abs(p) < 1.38) { let dy = y - gyro.last; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); gyro.acc += dy; gyro.last = y; } else gyro.last = y;
-  gyro.pitch = p;
+  gyro.pitch = p; gyro.roll = _eu.z;   /* 2026-11-18 ななめの傾き */
 }
 function enableGyro() {
   const start = () => {
@@ -13095,7 +13096,8 @@ function tick(now) {
     camera.position.copy(lkP(HIDE.lk, 0, 1.505, -0.13));
     if (HIDE.ph === 'peekOpen') { const k = smooth(0, 0.35, HIDE.t); camera.position.copy(lkP(HIDE.lk, 0.08 * k, 1.505, -0.13)); player.yaw = lerp(player.yaw, HIDE.lk.yaw - 0.42, k); camera.rotation.set(player.pitch * (1 - k), player.yaw, 0); }   // 扉を押して隙間をのぞく
   }
-  camera.rotation.set(lerp(player.pitch + shY, -1.2, outroP), player.yaw + shX + F2.yawOff, Math.sin(player.bob * 0.5) * 0.006 * walkAmt + outroP * 0.2);
+  { const want = gyro.on && gyro.got && opt.tilt && world.state === 'play' && Math.abs(gyro.pitch || 0) < 1.3 ? clamp(gyro.roll || 0, -0.6, 0.6) : 0; gyro.rollS = (gyro.rollS || 0) + (want - (gyro.rollS || 0)) * Math.min(1, dt * 14); }   /* 2026-11-18 スマホの傾きを画面に（左右35度まで・少しなめらかに）。真上・真下を向いた時は使わない */
+  camera.rotation.set(lerp(player.pitch + shY, -1.2, outroP), player.yaw + shX + F2.yawOff, Math.sin(player.bob * 0.5) * 0.006 * walkAmt + outroP * 0.2 + gyro.rollS);
   camera.updateMatrixWorld();
   // 鏡・ガラスに映る自分
   if (!world.avatarFrozen) {
@@ -13762,16 +13764,16 @@ $('#overBtn').addEventListener('click', () => location.reload());
 $('#overVideo').addEventListener('click', () => { $('#over').classList.remove('show'); showResult(capturedBlobs); $('#resTitle').textContent = '回収された映像'; $('#resMeta').textContent = 'カメラが壊れる直前まで'; });
 
 /* ---------- 開始 ---------- */
-const opt = { gyro: !FRAME.on, mic: true };
+const opt = { gyro: !FRAME.on, mic: true, tilt: true };   /* 2026-11-18 tilt：ジャイロの時、スマホの傾き（ななめ）も画面に反映（最初はオン） */
 opt.fps = 30; opt.bright = 0; opt.vol = 1; opt.sens = 1; opt.sink = ''; opt.midi = false; opt.midiIn = ''; opt.screen = 'win'; opt.quality = 'std';
 try {
   const sv = JSON.parse(localStorage.getItem('yt_settings') || '{}');
   // 2026-11-13 ジャイロと実況マイクは最初からオン（PCにジャイロはないのでオフ）。この版より前に保存した設定も一度だけ新しい初期値にそろえる
   if (sv.v === 2) { opt.gyro = !!sv.gyro; opt.mic = !!sv.mic; } else { opt.gyro = !FRAME.on; opt.mic = true; } if (typeof sv.bright === 'number') opt.bright = sv.bv === 2 ? sv.bright : Math.max(-5, Math.min(5, sv.bright + 2));   /* 前の目盛りで保存した値は、見た目の明るさが変わらないよう+2して引き継ぐ */
-  if (typeof sv.vol === 'number') opt.vol = clamp(sv.vol, 0, 1); if (typeof sv.sens === 'number') opt.sens = clamp(sv.sens, 0.4, 2);
+  if (typeof sv.tilt === 'boolean') opt.tilt = sv.tilt; if (typeof sv.vol === 'number') opt.vol = clamp(sv.vol, 0, 1); if (typeof sv.sens === 'number') opt.sens = clamp(sv.sens, 0.4, 2);
   /* 2026-11-17 音の出力先の設定はなくした（パソコン・ブラウザの設定で変える）。前に選んだ出力も使わない */ if (sv.midi) opt.midi = true; if (typeof sv.midiIn === 'string') opt.midiIn = sv.midiIn; if (sv.screen === 'full') opt.screen = 'full'; if (sv.quality === 'lite') opt.quality = 'lite'; if (sv.fps === 60) opt.fps = 60;
 } catch (e) { }
-function saveOpts() { try { localStorage.setItem('yt_settings', JSON.stringify({ v: 2, bv: 2, gyro: opt.gyro, mic: opt.mic, bright: opt.bright, vol: opt.vol, sens: opt.sens, sink: opt.sink, midi: opt.midi, midiIn: opt.midiIn, screen: opt.screen, quality: opt.quality, fps: opt.fps })); } catch (e) { } }
+function saveOpts() { try { localStorage.setItem('yt_settings', JSON.stringify({ v: 2, bv: 2, gyro: opt.gyro, tilt: opt.tilt, mic: opt.mic, bright: opt.bright, vol: opt.vol, sens: opt.sens, sink: opt.sink, midi: opt.midi, midiIn: opt.midiIn, screen: opt.screen, quality: opt.quality, fps: opt.fps })); } catch (e) { } }
 const brightK = v => Math.pow(1.09, v - 2);   /* 2026-11-17 本人の判断：前の「-2」の明るさを、新しい「0」（基準）に */   // 明るさ：-5〜+5 の段階 → 画面の中間の明るさの持ち上げ量
 postMat.uniforms.bright.value = brightK(opt.bright);
 /* 2026-11-14 画質：標準／軽い（重いPC向け）。軽い＝描画の解像度を下げ、影を切り、ぼかしの回数を減らす。
@@ -13822,6 +13824,7 @@ const SET = {
   },
   sync() {
     $('#setGyro').classList.toggle('on', !!opt.gyro);
+    $('#setTilt').classList.toggle('on', !!opt.tilt); $('#setTilt').style.display = opt.gyro && !FRAME.on ? '' : 'none';   /* ジャイロがオンの時だけ出す */
     $('#setMicRow').classList.toggle('on', !!opt.mic);
     $('#brightVal').textContent = (opt.bright > 0 ? '+' : '') + opt.bright;
     $('#volRange').value = Math.round(opt.vol * 100); $('#volVal').textContent = Math.round(opt.vol * 100) + '%';
@@ -14137,6 +14140,7 @@ for (const id of ['#gearBtn', '#startGear']) { const el = $(id); for (const ev o
 for (const ev of ['pointerdown', 'pointermove', 'pointerup', 'touchstart', 'touchmove']) $('#settings').addEventListener(ev, e => e.stopPropagation(), { passive: true });
 $('#setClose').addEventListener('click', () => SET.hide());
 $('#setX').addEventListener('click', e => { e.stopPropagation(); if ($('#setBrightPane').classList.contains('show') || getComputedStyle($('#setBrightPane')).display !== 'none') { const d = $('#brightDone'); if (d) d.click(); } SET.hide(); });   // 2026-11-13 右上の×でも閉じる
+$('#setTilt').addEventListener('click', e => { e.stopPropagation(); opt.tilt = !opt.tilt; saveOpts(); SET.sync(); });
 $('#setGyro').addEventListener('click', () => {
   opt.gyro = !opt.gyro; saveOpts(); SET.sync();
   if (SET.paused) { if (opt.gyro) enableGyro(); else disableGyro(); }
@@ -15166,7 +15170,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.20';
+const VERSION = '0.17.21';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -21558,7 +21562,7 @@ CHAT_DICT.c.ending_cutoff = ['ec.cut.01', 'ec.cut.02', 'ec.cut.03', 'ec.cut.04',
   kl.addEventListener('click', e => { e.stopPropagation(); $('#settings').classList.add('keys'); try { KEYUI.draw(); } catch (_) { } box.scrollTop = 0; });
   pl.addEventListener('click', e => { e.stopPropagation(); $('#settings').classList.add('pad'); try { PADUI.draw(); } catch (_) { } box.scrollTop = 0; });
   pane('setKeysPane', en ? 'Key controls' : 'キー操作', keys); pane('setPadPane', en ? 'Controller' : 'コントローラー', pad);
-  const order = [head(en ? 'Controls' : '操作'), ...ids(['setGyro', 'setSensRow']), kl, pl,
+  const order = [head(en ? 'Controls' : '操作'), ...ids(['setGyro', 'setTilt', 'setSensRow']), kl, pl,
     head(en ? 'Sound' : '音'), ...ids(['setVolRow', 'setMicRow', 'setMidiRow']),
     head(en ? 'Display' : '画面'), ...ids(['setFpsRow', 'setQualRow', 'setBright', 'setScreenRow']),
     head(en ? 'Data & more' : 'データ・その他'), ...ids(['setGodRow', 'setLang', 'setTut', 'setCol', 'setNotice', 'setXfer', 'setReset', 'verSet', 'setHome', 'setClose'])];
@@ -23134,7 +23138,7 @@ const NICKV = {
   }; }
 
 /* 「呼ばれ方」の一覧（③-2）は本人の判断で作らない（2026-11-18） */
-if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING });
+if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
