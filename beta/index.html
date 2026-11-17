@@ -782,7 +782,7 @@
   #pianoUI.show{display:block}
   #pnRot{position:absolute;left:0;top:0;box-sizing:border-box;display:flex;flex-direction:column;transform-origin:top left;padding:0 12px 10px}
   #pnBar{flex:0 0 auto;display:flex;align-items:center;gap:12px;height:48px}
-  #pnRec{flex:0 0 auto;display:flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:17px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.04em}#pnRec i{width:11px;height:11px;border-radius:50%;background:#ff3b30;flex:0 0 auto}#pnRec.on{border-color:#ff3b30;background:rgba(255,59,48,.18)}#pnRec.on i{animation:pnRecB 1s steps(2) infinite}@keyframes pnRecB{50%{opacity:.25}}
+  #pnRec+#pnStat{margin-left:-4px}#pnRec{flex:0 0 auto;display:flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:17px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.04em}#pnRec i{width:11px;height:11px;border-radius:50%;background:#ff3b30;flex:0 0 auto}#pnRec.on{border-color:#ff3b30;background:rgba(255,59,48,.18)}#pnRec.on i{animation:pnRecB 1s steps(2) infinite}@keyframes pnRecB{50%{opacity:.25}}
   #pnMemo{flex:1;min-width:0;font-size:12px;line-height:1.35;color:rgba(255,255,255,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   #pnMemo b{font-size:10px;font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,.5);margin-right:8px}
   #pnStat{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap}
@@ -9702,7 +9702,7 @@ const PIANO = {
   build() {
     if (this.el) return;
     const el = document.createElement('div'); el.id = 'pianoUI';
-    el.innerHTML = `<div id="pnRot"><div id="pnBar"><button class="btn" id="pnRec" type="button"><i></i><span id="pnRecT">REC</span></button><button class="btn" id="pnInv" style="display:none">持ち物</button><div id="pnMemo"></div><div id="pnStat"><span class="lb">残容量</span><span class="bar"><i id="pnCapF"></i></span><span id="pnCapT">2:00</span><span id="pnBat">100%</span></div><button class="btn" id="pnLbl">キー表示</button><button class="btn" id="pnQuit">やめる</button></div><div id="pnInvPop"></div><div id="pnKeys"><div id="pnSheet"><img alt=""></div></div></div>`;
+    el.innerHTML = `<div id="pnRot"><div id="pnBar"><button class="btn" id="pnRec" type="button"><i></i><span id="pnRecT">REC</span></button><div id="pnStat"><span class="lb">残容量</span><span class="bar"><i id="pnCapF"></i></span><span id="pnCapT">2:00</span><span id="pnBat">100%</span></div><button class="btn" id="pnInv" style="display:none">持ち物</button><div id="pnMemo"></div><button class="btn" id="pnLbl">キー表示</button><button class="btn" id="pnQuit">やめる</button></div><div id="pnInvPop"></div><div id="pnKeys"><div id="pnSheet"><img alt=""></div></div></div>`;
     (FRAME.on ? document.documentElement : document.body).appendChild(el); this.el = el;   // PCはゲーム画面の枠の外（ウィンドウいっぱい）に鍵盤を出す
     addEventListener('resize', () => this.on && this.fit());
     const K = el.querySelector('#pnKeys');
@@ -15166,7 +15166,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.17';
+const VERSION = '0.17.18';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
