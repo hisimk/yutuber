@@ -6,7 +6,9 @@
    本番と同じ保存場所を使わないよう、いまの記録を写した「確認用の保存場所（T5:）」で遊ぶ（本番・ふだんの試し版の記録は変わらない） */
 (function () { var q = location.search; if (!/[?&]play5\b/.test(q) || !/\/beta\//.test(location.pathname)) return;
   var P = 'T5:', S = Storage.prototype, g = S.getItem, s = S.setItem, r = S.removeItem;
-  try { if (g.call(localStorage, 'T5:__init') !== '1') { var ks = []; for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k.indexOf(P) !== 0) ks.push(k); } for (var j = 0; j < ks.length; j++) try { s.call(localStorage, P + ks[j], g.call(localStorage, ks[j])); } catch (e) { } s.call(localStorage, 'T5:__init', '1'); } } catch (e) { }
+  /* 2026-11-17 v2：写す時に神回の一覧だけ空にする（本番の神回が上位を埋めていて、ここで撮った動画が残らなかったため）。?play5reset で作り直し */
+  try { if (g.call(localStorage, 'T5:__init') !== '2' || /[?&]play5reset\b/.test(q)) { var old = []; for (var i0 = 0; i0 < localStorage.length; i0++) { var k0 = localStorage.key(i0); if (k0.indexOf(P) === 0) old.push(k0); } for (var i1 = 0; i1 < old.length; i1++) r.call(localStorage, old[i1]);
+      var ks = []; for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k.indexOf(P) !== 0) ks.push(k); } for (var j = 0; j < ks.length; j++) try { var v = g.call(localStorage, ks[j]); if (/(^|:)yutuber_achieve_v1$/.test(ks[j])) { try { var a = JSON.parse(v); if (a) { a.best = []; v = JSON.stringify(a); } } catch (e) { } } s.call(localStorage, P + ks[j], v); } catch (e) { } s.call(localStorage, 'T5:__init', '2'); } } catch (e) { }
   S.getItem = function (k) { return g.call(this, this === localStorage ? P + k : k); }; S.setItem = function (k, v) { return s.call(this, this === localStorage ? P + k : k, v); }; S.removeItem = function (k) { return r.call(this, this === localStorage ? P + k : k); };
   if (!/[?&]rank=/.test(q)) history.replaceState(null, '', location.pathname + q + '&rank=5&shopall&perm=all&wingopen&ownall' + location.hash);
   window.PLAY5 = true; })();
@@ -15120,7 +15122,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.91';
+const VERSION = '0.16.92';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -22352,7 +22354,7 @@ Object.assign(CHAT_DICT.t, { 'sm1.0': ['誰のメモ？', 'whose note is this?']
 $('#setEnding').addEventListener('click', e => { e.stopPropagation(); if (world.state !== 'title' || ENDING.running) return; SET.hide(); setTimeout(() => ENDING.play(() => { world.state = 'title'; }), 200); });
 Object.assign(EN, { 'エンディングを見る': 'Watch the ending' });
 if (WF('ownall')) { const d = SHOP.load(); for (const it of ECON.items) { if (it[3] === 'look') d.look[it[0]] = true; else d.own[it[0]] = Math.max(d.own[it[0]] | 0, YTAG.KEEP.includes(it[0]) || ['goldphone', 'goldframe'].includes(it[0]) ? 1 : 5); } SHOP.save(); }
-if (TEST && window.__G) Object.assign(window.__G, { HAND, POP, DRIFT, KBALL, CEIL, FIXCAM, avatar, SMEMO, IDLEC, CURTF, DARKK, TIPS, CHAT, escape, evidence, award, SHOP, ECON, ACH, ITEM, INV, BUZZ, CHEM, CANDLE, DRINK, STICK, PAINT, WING, CH, WD, SP, nodePos, clearLine, segBlocked, MINOR, HP, EV, DIR, URINT, URPREY, URAV, HANDS, HAND_SPOTS, POLT, MOVERS, UWA, GG_SPOTS, ABYSS, BUSTX, DOLLX, nearLook, setZoom(z) { zoom = zoomTarget = z; }, SCIRM, ARTRM, PMASK, COL, NAKA, TALLY, BROOMEV, AW_TABLE, CHIP_DESC, AW_HINT, GEAR, FIXCAM, RING, PERM, KANA, VO, PACALL, SPV, EV, seen, A, CH, HEART, CVOICE, wdScream, WARP, WD, ITEM, F2, PAD, QUALITY, opt, MP4FIX, rec, resultBlobs: () => resultBlobs, LOGOANIM, CHIP, VTITLE, NOISE, SNAKE, ACC, ACC_ICON, ACC_VIEW, award, CHATLOG, CHAT, CHATGEN, RES_CHAT, RANKPOP, yrankIdx, GOD, VDB, ACH, PERM, REVIVE, RESET, COL, escape, caught, DIR, SP, OFUDA, LUM, TRACE, HAZURE, seen, SFX_CREDITS, AW_TABLE, RANK_FIX, rankOf, MICLV, MIC, rec, opt, VED, RES_CHAT_: () => RES_CHAT, _attach: b => attachVideo(b), GODV: GOD, _blobs: () => resultBlobs, EVENTS: () => EV });
+if (TEST && window.__G) Object.assign(window.__G, { HAND, POP, DRIFT, KBALL, CEIL, FIXCAM, avatar, SMEMO, ENDING, IDLEC, CURTF, DARKK, TIPS, CHAT, escape, evidence, award, SHOP, ECON, ACH, ITEM, INV, BUZZ, CHEM, CANDLE, DRINK, STICK, PAINT, WING, CH, WD, SP, nodePos, clearLine, segBlocked, MINOR, HP, EV, DIR, URINT, URPREY, URAV, HANDS, HAND_SPOTS, POLT, MOVERS, UWA, GG_SPOTS, ABYSS, BUSTX, DOLLX, nearLook, setZoom(z) { zoom = zoomTarget = z; }, SCIRM, ARTRM, PMASK, COL, NAKA, TALLY, BROOMEV, AW_TABLE, CHIP_DESC, AW_HINT, GEAR, FIXCAM, RING, PERM, KANA, VO, PACALL, SPV, EV, seen, A, CH, HEART, CVOICE, wdScream, WARP, WD, ITEM, F2, PAD, QUALITY, opt, MP4FIX, rec, resultBlobs: () => resultBlobs, LOGOANIM, CHIP, VTITLE, NOISE, SNAKE, ACC, ACC_ICON, ACC_VIEW, award, CHATLOG, CHAT, CHATGEN, RES_CHAT, RANKPOP, yrankIdx, GOD, VDB, ACH, PERM, REVIVE, RESET, COL, escape, caught, DIR, SP, OFUDA, LUM, TRACE, HAZURE, seen, SFX_CREDITS, AW_TABLE, RANK_FIX, rankOf, MICLV, MIC, rec, opt, VED, RES_CHAT_: () => RES_CHAT, _attach: b => attachVideo(b), GODV: GOD, _blobs: () => resultBlobs, EVENTS: () => EV });
 /* 2026-11-14 PC：ウィンドウ／全画面（全画面はボタンを押した時と、旧校舎に入る時に切り替える。Escで戻したらウィンドウに） */
 const SCREEN = {
   isFull() { return !!(document.fullscreenElement || document.webkitFullscreenElement); },
