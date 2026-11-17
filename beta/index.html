@@ -370,7 +370,7 @@
   #endTx .enR{display:flex;justify-content:space-between;gap:12px;padding:9px 4px;border-bottom:1px solid rgba(255,235,200,.25);font-size:15px}#endTx .enR b{color:#ffe1a0;font-weight:800}
   #endTx .enTY{font-size:30px;font-weight:800;letter-spacing:.04em}#endTx .enM img{width:112px;height:112px;display:block;margin:0 auto 12px;image-rendering:pixelated}#endTx .enLogo{display:block;width:min(74vw,300px);margin:6px auto 0;filter:drop-shadow(0 2px 8px rgba(0,0,0,.8))}#endTx .enM div{font-size:22px;letter-spacing:.14em}
   #endCm{position:absolute;left:0;right:0;top:0;padding:calc(54px + env(safe-area-inset-top)) 16px 26px;background:linear-gradient(rgba(0,0,0,.62),rgba(0,0,0,.35) 75%,rgba(0,0,0,0));opacity:0;transition:opacity .6s;display:flex;flex-direction:column;gap:5px;pointer-events:none}#endCm.on{opacity:1}
-  #endCm .ec{color:#fff;font-size:13px;line-height:1.35;text-shadow:0 1px 3px #000;animation:ecIn .3s ease-out}#endCm .ec i{font-style:normal;color:#9fd0ff;margin-right:6px;font-size:11.5px}#endCm .ec i.eu{display:inline-block;width:15px;height:15px;margin:0 7px -3px 0;border-radius:50%;background:#8a8f96 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='6' r='3' fill='%23e8e8e8'/%3E%3Cpath d='M2.5 15c.6-3.2 2.8-4.8 5.5-4.8s4.9 1.6 5.5 4.8z' fill='%23e8e8e8'/%3E%3C/svg%3E") center/100% no-repeat}#endTx.low{top:auto;bottom:calc(11% + env(safe-area-inset-bottom));transform:none;background:rgba(0,0,0,.5);border-radius:14px;padding:14px 16px 10px}#endHint{position:absolute;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom));text-align:center;color:#e8e2d6;font-size:12.5px;opacity:0;transition:opacity .8s;pointer-events:none;text-shadow:0 1px 4px #000}#endHint.on{opacity:.85}@keyframes ecIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  #endCm .ec{color:#fff;font-size:13px;line-height:1.35;text-shadow:0 1px 3px #000;animation:ecIn .3s ease-out}#endCm .ec i{font-style:normal;color:#9fd0ff;margin-right:6px;font-size:11.5px}#endCm .ec i.eu{display:inline-block;width:15px;height:15px;margin:0 7px -3px 0;border-radius:50%;background:#8a8f96 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='6' r='3' fill='%23e8e8e8'/%3E%3Cpath d='M2.5 15c.6-3.2 2.8-4.8 5.5-4.8s4.9 1.6 5.5 4.8z' fill='%23e8e8e8'/%3E%3C/svg%3E") center/100% no-repeat}#endTx.low{top:auto;bottom:calc(11% + env(safe-area-inset-bottom));transform:none;padding:14px 4px 10px;text-shadow:0 1px 3px #000,0 0 12px rgba(0,0,0,.95)}#endTx .enCat{display:block;width:75px;height:75px;margin:14px auto 0;image-rendering:pixelated}#endTx .enShot{margin-bottom:18px}#endTx .enShot small{display:block;font-size:12.5px;letter-spacing:.16em;color:#ffe7b0;margin-bottom:4px}#endTx .enShot b{display:block;font-size:20px;font-weight:700;letter-spacing:.06em}#endHint{position:absolute;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom));text-align:center;color:#e8e2d6;font-size:12.5px;opacity:0;transition:opacity .8s;pointer-events:none;text-shadow:0 1px 4px #000}#endHint.on{opacity:.85}@keyframes ecIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   #endUI video{filter:brightness(.82)}
   #endFade{position:absolute;inset:0;background:#000;opacity:0;transition:opacity .8s;pointer-events:none}#endFade.on{opacity:1}
   #endSkip{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;padding:6px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.35);color:#ddd;font-size:12px;opacity:0;transition:opacity .6s;pointer-events:none}#endSkip.on{opacity:.8;pointer-events:auto}
@@ -15150,7 +15150,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.78';
+const VERSION = '0.16.79';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -21487,7 +21487,7 @@ const ENDING = {
         out.push({ url: urls[seg], at: Math.max(0, st - acc), urls, cm }); } } catch (e) { console.warn('ENDING clips', e); } return out; },
   credits() {   /* 2026-11-17 クレジットは文章だけ。順番：制作 → 使用したもの → 効果音 → スペシャルサンクス → 挿入歌・楽曲アレンジ */
     const en = LANG === 'en', P = (h, b) => `<div class="enH">${h}</div><div class="enL">${b}</div>`;
-    return [P(en ? 'Created by' : '制作', `<span class="enS">${en ? 'Concept / Game design / Scenario / Direction' : '企画・ゲームデザイン・シナリオ・ディレクション'}</span><br><span style="font-size:22px;letter-spacing:.12em">まんま mamma</span>`),
+    return [P(en ? 'Created by' : '制作', `<span class="enS">${en ? 'Concept / Game design / Scenario / Direction' : '企画・ゲームデザイン・シナリオ・ディレクション'}</span><br><span style="font-size:22px;letter-spacing:.12em">まんま mamma</span><img class="enCat" src="${this.cat()}" alt="">`),   /* 2026-11-17 猫のアイコンは制作のページの名前の下に */
       P(en ? 'Made with' : '使用したもの', 'three.js / Google Fonts / Wikimedia Commons<br>Mediabunny / FFmpeg<br>Adobe / Studio One<br>Claude / ChatGPT'),
       P(en ? 'Sound' : '効果音', 'Freesound / BigSoundBank / Pixabay<br>OpenTracks / 効果音ラボ / MFLASH<br>Envato / 音人 / OtoLogic<br>ポケットサウンド / 効果音工房<br><span class="enS">OtoLogic (CC BY 4.0)<br>Scream: FreqMan (CC BY 4.0)<br>Piano: Salamander Grand Piano, Alexander Holm (CC BY 3.0)</span>'),
       `<div class="enH">${en ? 'Special Thanks' : 'スペシャルサンクス'}</div><img class="enLogo" src="${ENDING_THX}" alt="平成末期">`,
@@ -21510,6 +21510,7 @@ const ENDING = {
     for (const t of ['pointerdown', 'pointerup', 'touchstart', 'touchmove', 'click', 'keydown']) el.addEventListener(t, e => e.stopPropagation()); return el; },
   page(html) { const t = $('#endTx'); t.classList.remove('on'); clearTimeout(this.pt); this.pt = setTimeout(() => { t.innerHTML = html || ''; if (html) t.classList.add('on'); }, html === null ? 0 : 650); },
   fade(on) { $('#endFade').classList.toggle('on', !!on); },
+  shotBy() { const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]); let n = ''; try { n = ($('#chName').value || '').trim() || world.channel || ''; } catch (e) { } n = n || (LANG === 'en' ? 'Ghost Channel' : '心霊チャンネル'); return `<div class="enShot"><small>${LANG === 'en' ? 'Filmed by' : '動画撮影'}</small><b>${esc(n)}</b></div>`; },
   /* 2026-11-17 エンディングの学校の映像（タイトル画面とは別）：下駄箱・階段を外し、美術室・理科室を足す */
   SHOTS: [
     [[0, 1.5, 4.1], [0, 1.48, 2.3], 0.0, 0.0, -0.04, 7],                 // 玄関
@@ -21522,7 +21523,7 @@ const ENDING = {
     [[-2.1, 4.7, -13.0], [-3.9, 4.7, -13.0], 1.5708, 1.5708, -0.04, 7],  // 図書室
   ],
   /* 2026-11-17 学校の音を止める／戻す（曲は別の経路） */
-  mute(on) { try { if (!A.ctx || !A.master) return; const g = A.master.gain; g.cancelScheduledValues(A.ctx.currentTime); if (on) { this.mv0 = this.mv0 ?? (g.value || 0.9); g.value = 0; } else { g.setValueAtTime(this.mv0 || 0.9, A.ctx.currentTime + 0.05); this.mv0 = null; } } catch (e) { } },
+  mute(on) { try { if (!A.ctx || !A.master) return; if (on && !this.cut) { A.master.disconnect(); this.cut = true; } else if (!on && this.cut) { A.master.connect(A.comp); this.cut = false; } if (typeof RBGM !== 'undefined' && RBGM.g) RBGM.g.gain.setTargetAtTime(on ? 0 : RBGM.vol, A.ctx.currentTime, 0.2); } catch (e) { } },   /* 2026-11-17 学校の音（環境音・虫の声など）と結果画面の曲は、線ごと外して鳴らさない。曲とプレイ動画の声だけ */
   /* 2026-11-17 学校の映像を指（なぞる）やジャイロで見回せる。場面が変わると正面に戻る */
   look(el) { const L = this.lk = { y: 0, p: 0, dy: 0, dp: 0, i: -1, g0: null, down: null };
     el.addEventListener('pointerdown', e => { if (e.target.id === 'endSkip') return; L.down = { x: e.clientX, y: e.clientY, dy: L.dy, dp: L.dp }; });
@@ -21561,12 +21562,12 @@ const ENDING = {
   async play(done) {
     if (this.running) return; this.running = true; const el = this.ui(), cv = $('#endCv'), cx = cv.getContext('2d'), v1 = $('#endVid'), v2 = $('#endVid2'); let phase = 'school', alive = true; const W = () => { cv.width = innerWidth * Math.min(2, devicePixelRatio || 1); cv.height = innerHeight * Math.min(2, devicePixelRatio || 1); }; W();
     const fin = () => { if (!alive) return; alive = false; this.stopMusic(); this.mute(false); this.figHide(); if (this.shots0) TOUR.SHOTS = this.shots0; try { localStorage.setItem(this.KEY, '1'); } catch (e) { } this.fade(true); setTimeout(() => { el.remove(); this.running = false; if (done) done(); }, 1200); };
-    this.look(el); this.mute(true); this.figInit();
+    this.look(el); this.figInit();
     $('#endSkip').onclick = e => { e.stopPropagation(); fin(); }; setTimeout(() => $('#endSkip') && $('#endSkip').classList.add('on'), 2500);
-    const clipsP = this.clips(); world.state = 'ending'; this.music(); this.shots0 = TOUR.SHOTS; TOUR.SHOTS = world.wingOpen ? this.SHOTS : this.SHOTS.filter((x, i) => i !== 4 && i !== 5);   /* 新しい棟が閉じていた周は、美術室・理科室の中が空なので使わない */ TOUR.i = 0; TOUR.t0 = performance.now() / 1000; let sunset = null;
+    const clipsP = this.clips(); world.state = 'ending'; this.music(); this.mute(true); this.shots0 = TOUR.SHOTS; TOUR.SHOTS = world.wingOpen ? this.SHOTS : this.SHOTS.filter((x, i) => i !== 4 && i !== 5);   /* 新しい棟が閉じていた周は、美術室・理科室の中が空なので使わない */ TOUR.i = 0; TOUR.t0 = performance.now() / 1000; let sunset = null;
     const sun = () => { if (sunset) return; sunset = { t0: performance.now() / 1000 }; const L1 = new THREE.DirectionalLight(0xffa25a, 3.2); L1.position.set(26, 5, -22); L1.target.position.set(6, 0, -10); scene.add(L1, L1.target); const L2 = new THREE.AmbientLight(0xffd0a0, 0.38); scene.add(L2); const L3 = new THREE.HemisphereLight(0xffd6a8, 0x2a2440, 0.42); scene.add(L3); try { if (scene.fog) { scene.fog.color = new THREE.Color(0x3a1e10); } } catch (e) { } if (TOUR.amb) TOUR.amb.intensity = 0; };
     const frame = now => { if (!alive) return; requestAnimationFrame(frame); if (cv.width !== Math.round(innerWidth * Math.min(2, devicePixelRatio || 1))) W();
-      try { if (A.ctx && A.master) A.master.gain.value = 0;   /* 学校の環境音は流さない */
+      try {
         if (phase === 'school') { TOUR.figAt = -1; TOUR.update(now); this.figShow(); this.lookApply(); render(); }   /* 怪異は「見回す前の向き」の真後ろ */
         else if (phase === 'sunset') { sun(); const u = Math.min(1, (now / 1000 - sunset.t0) / 40), k = u * u * (3 - 2 * u); camera.position.set(lerp(12.6, 10.6, k), 1.5, lerp(-9.3, -9.9, k)); camera.rotation.set(-0.05, lerp(0.75, 1.15, k), 0, 'YXZ'); camera.fov = CONFIG.fovScene; camera.updateProjectionMatrix(); camera.updateMatrixWorld(); const U = postMat.uniforms; U.black.value = 0; U.exposure.value = 1.3; U.sat.value = 1.12; U.focus.value = 8; U.vig.value = 0; U.redK.value = 0; for (const o of [SG.root, avatar.root, MANN.root, SP.wrap]) if (o) o.visible = false; this.figHide(); this.lookApply(); render(); }
         if (phase !== 'clip') { const s = renderer.domElement, r = Math.max(cv.width / s.width, cv.height / s.height), w = s.width * r, h = s.height * r; cx.drawImage(s, (cv.width - w) / 2, (cv.height - h) / 2, w, h); if ($('#endTx').classList.contains('on')) { cx.fillStyle = 'rgba(0,0,0,.26)'; cx.fillRect(0, 0, cv.width, cv.height); } } } catch (e) { } };
@@ -21579,15 +21580,14 @@ const ENDING = {
     this.page(null); await wait(0.8); if (!alive) return;
     /* 2. 盛り上がった3場面（足りない分は学校の映像のまま） */
     const clips = await clipsP; let vi = 0; const SP0 = this.statPages(); $('#endTx').classList.add('low');   /* 2026-11-17 記録は盛り上がった場面にも重ねて（コメントと重ならない下の方に） */
-    for (let i = 0; i < (SUN ? 0 : 3); i++) { if (!alive) return; const c = clips[i]; this.fade(true); this.page(null); await wait(0.8); if (!alive) return; setTimeout(() => { if (alive && SP0[i]) this.page(SP0[i]); }, 900);
+    for (let i = 0; i < (SUN ? 0 : 3); i++) { if (!alive) return; const c = clips[i]; this.fade(true); this.page(null); await wait(0.8); if (!alive) return; setTimeout(() => { if (alive && (SP0[i] || c)) this.page((c ? this.shotBy() : '') + (SP0[i] || '')); }, 900);   /* 2026-11-17 過去の動画の場面には「動画撮影　その人の名前」 */
       if (c) { phase = 'clip'; this.duck(0.12); this.comments(c.cm || []); const v = vi++ % 2 ? v2 : v1, o = v === v1 ? v2 : v1; v.src = c.url; v.muted = false; v.volume = 1; try { await new Promise(r => { v.onloadedmetadata = r; setTimeout(r, 1500); }); v.currentTime = c.at; await v.play(); } catch (e) { } v.classList.add('on'); o.classList.remove('on'); try { o.pause(); } catch (e) { } this.fade(false); await wait(7); this.comments(null); }
       else { phase = 'school'; this.duck(0.75); v1.classList.remove('on'); v2.classList.remove('on'); TOUR.i = (3 + i * 2) % TOUR.SHOTS.length; TOUR.t0 = performance.now() / 1000; this.fade(false); await wait(7); } }
     this.page(null); $('#endTx').classList.remove('low');
     /* 3. 夕方の教室：記録 → Thank you → まんま */
     this.fade(true); this.duck(0.75); await wait(1); if (!alive) return; for (const v of [v1, v2]) { v.classList.remove('on'); try { v.pause(); } catch (e) { } } phase = 'sunset'; await wait(0.3); this.fade(false); await wait(2);
     for (const p of SUN ? SP0 : SP0.slice(3)) { if (!alive) return; this.page(p); await wait(5.5); }
-    if (!alive) return; this.page(`<div class="enTY">Thank you for playing!</div>`); await wait(4);
-    if (!alive) return; this.page(`<div class="enM"><img src="${this.cat()}" alt=""><div>まんま mamma</div></div>`); await wait(5);
+    await wait(3); if (!alive) return; this.page(`<div class="enTY">Thank you for playing!</div>`); await wait(6);   /* 2026-11-17 Thank you は最後（今までの「まんま mamma」の所）に。名前と猫は制作のページへ */
     this.page(null); fin();
   },
 };
