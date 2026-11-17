@@ -15122,7 +15122,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.92';
+const VERSION = '0.16.93';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -22354,6 +22354,15 @@ Object.assign(CHAT_DICT.t, { 'sm1.0': ['誰のメモ？', 'whose note is this?']
 $('#setEnding').addEventListener('click', e => { e.stopPropagation(); if (world.state !== 'title' || ENDING.running) return; SET.hide(); setTimeout(() => ENDING.play(() => { world.state = 'title'; }), 200); });
 Object.assign(EN, { 'エンディングを見る': 'Watch the ending' });
 if (WF('ownall')) { const d = SHOP.load(); for (const it of ECON.items) { if (it[3] === 'look') d.look[it[0]] = true; else d.own[it[0]] = Math.max(d.own[it[0]] | 0, YTAG.KEEP.includes(it[0]) || ['goldphone', 'goldframe'].includes(it[0]) ? 1 : 5); } SHOP.save(); }
+/* 2026-11-17 結果画面で「再撮影」「タイトルにもどる」を押した時、動画の処理・神回の保存が終わっていなければ、終わるまで待ってから進む
+   （待たずに読み込み直すと、上位3位の回でも動画が残らず、エンディングにも入らなかった） */
+{ const S0 = ACH.saveVid.bind(ACH); ACH.saveVid = function (blobs) { const p = Promise.resolve(S0(blobs)).catch(() => { }); this.busy = (this.busy || 0) + 1; p.finally(() => { this.busy--; }); return p; }; }
+{ const G0 = SAVENOTE.go.bind(SAVENOTE); SAVENOTE.go = function () {
+    const wait = () => resEarly || (ACH.pendVid && !resultBlobs.length) || (ACH.busy | 0) > 0;
+    if (!wait() || this.waiting) { if (!this.waiting) return G0(); return; }
+    this.waiting = true; const bs = ['#retakeBtn', '#againBtn'].map(q => $(q)).filter(Boolean), keep = bs.map(b => b.textContent); bs.forEach(b => { b.disabled = true; b.textContent = TR('動画を保存中…'); });
+    const t0 = performance.now(), tick = () => { if (wait() && performance.now() - t0 < 25000) return setTimeout(tick, 300); this.waiting = false; bs.forEach((b, i) => { b.disabled = false; b.textContent = keep[i]; }); G0(); }; tick(); }; }
+Object.assign(EN, { '動画を保存中…': 'Saving video…' });
 if (TEST && window.__G) Object.assign(window.__G, { HAND, POP, DRIFT, KBALL, CEIL, FIXCAM, avatar, SMEMO, ENDING, IDLEC, CURTF, DARKK, TIPS, CHAT, escape, evidence, award, SHOP, ECON, ACH, ITEM, INV, BUZZ, CHEM, CANDLE, DRINK, STICK, PAINT, WING, CH, WD, SP, nodePos, clearLine, segBlocked, MINOR, HP, EV, DIR, URINT, URPREY, URAV, HANDS, HAND_SPOTS, POLT, MOVERS, UWA, GG_SPOTS, ABYSS, BUSTX, DOLLX, nearLook, setZoom(z) { zoom = zoomTarget = z; }, SCIRM, ARTRM, PMASK, COL, NAKA, TALLY, BROOMEV, AW_TABLE, CHIP_DESC, AW_HINT, GEAR, FIXCAM, RING, PERM, KANA, VO, PACALL, SPV, EV, seen, A, CH, HEART, CVOICE, wdScream, WARP, WD, ITEM, F2, PAD, QUALITY, opt, MP4FIX, rec, resultBlobs: () => resultBlobs, LOGOANIM, CHIP, VTITLE, NOISE, SNAKE, ACC, ACC_ICON, ACC_VIEW, award, CHATLOG, CHAT, CHATGEN, RES_CHAT, RANKPOP, yrankIdx, GOD, VDB, ACH, PERM, REVIVE, RESET, COL, escape, caught, DIR, SP, OFUDA, LUM, TRACE, HAZURE, seen, SFX_CREDITS, AW_TABLE, RANK_FIX, rankOf, MICLV, MIC, rec, opt, VED, RES_CHAT_: () => RES_CHAT, _attach: b => attachVideo(b), GODV: GOD, _blobs: () => resultBlobs, EVENTS: () => EV });
 /* 2026-11-14 PC：ウィンドウ／全画面（全画面はボタンを押した時と、旧校舎に入る時に切り替える。Escで戻したらウィンドウに） */
 const SCREEN = {
