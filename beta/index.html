@@ -256,6 +256,7 @@
   #godSeg{margin-top:9px;align-self:stretch;display:flex}#godSeg button{flex:1;white-space:nowrap;padding:7px 6px}#godUse{font-size:12px;color:#9a958c;margin-top:7px;align-self:flex-start}
   #gvDel{width:100%;min-height:40px;margin-top:8px;border:1px solid #4a4744;border-radius:12px;background:transparent;color:#d8d2c8;font:600 13.5px system-ui,-apple-system,"Hiragino Sans",sans-serif;cursor:pointer}
   #popInfo{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.66);padding:20px}#popInfo.show{display:flex}#popInfo .pBox{width:min(340px,100%);background:#161517;border:1px solid #3a3836;border-radius:16px;padding:20px 18px;color:#eee;font-size:14px;line-height:1.7}#popInfo h3{margin:0 0 8px;font-size:16px}#popInfo .pBtns{display:flex;gap:8px;margin-top:16px}#popInfo button{flex:1;min-height:42px;border-radius:10px;border:1px solid #444;background:#222;color:#fff;font:700 14px system-ui,-apple-system,"Hiragino Sans",sans-serif}#popInfo button.pri{background:#e0362f;border-color:#e0362f}
+  #callHit .ck{position:absolute;right:-6px;top:-6px;min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border-radius:6px;background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.7);color:#fff;font:700 12px/18px system-ui,sans-serif;text-align:center;pointer-events:none}
   #callHit{position:fixed;inset:0;z-index:35;pointer-events:none;display:none}#callHit.show{display:block}#callHit button{position:absolute;border:none;background:transparent;border-radius:50%;pointer-events:auto;padding:0;cursor:pointer}#callHit #callEnd{display:none}#callHit.talk #callNo,#callHit.talk #callYes{display:none}#callHit.talk #callEnd{display:block}
   #qualSeg,#fpsSeg,#fearSeg{flex:none}#qualSeg button,#fpsSeg button,#fearSeg button{white-space:nowrap;padding:7px 12px}
   .opt .optTop{display:flex;justify-content:space-between;align-items:center;gap:10px}
@@ -4414,7 +4415,9 @@ const PAD = {
     const play = world.state === 'play';
     if (a === 'menu') { if (INV.open) INV.hide(); else if (SET.open) SET.hide(); else if (play || world.state === 'title') SET.show(); return; }
     if (a === 'back' && !INV.open && !SET.open && play && SCIRM.scope) { SCIRM.scopeClose(); return; }
-    if (a === 'back' && !INV.open && !SET.open && play && KOK.on) { KOK.exit(); return; }   // 2026-11-15 ×/B：こっくりさんをやめる
+    if (a === 'back' && !INV.open && !SET.open && play && KOK.on) { KOK.exit(); return; }
+    if (a === 'back' && !INV.open && !SET.open && play && UNDER.on) { if (UNDER.ph !== 'peek') UNDER.exit(); return; }   /* 2026-11-17 特別な場面は戻るボタンでやめる */
+    if (a === 'back' && !INV.open && !SET.open && play && FIXCAM.framing) { FIXCAM.endFrame(); return; }   // 2026-11-15 ×/B：こっくりさんをやめる
     if (a === 'back') { if (INV.open) { if ($('#invScore').classList.contains('show')) $('#invScore').classList.remove('show'); else INV.hide(); } else if (SET.open) SET.hide(); return; }
     if (a === 'inv') { if (INV.open) INV.hide(); else if (play) INV.show(); return; }
     if (!play) return;
@@ -4448,7 +4451,7 @@ addEventListener('gamepaddisconnected', e => { if (e.gamepad.index === PAD.idx) 
 addEventListener('keydown', () => PAD.setUsing(false), true);
 addEventListener('mousemove', e => { if (Math.abs(e.movementX) + Math.abs(e.movementY) > 2) PAD.setUsing(false); }, true);
 // 画面のキー表示を、いま使っている方（キー／ボタン）に合わせて書き換える
-function hintsRefresh() { const rk = $('#recKey'); if (rk) rk.textContent = PAD.using ? PAD.of('rec') : `${KB.of('rec')} キー`; const ck = $('#crouchKey'); if (ck) ck.textContent = PAD.using ? PAD.of('crouch') : `${KB.of('crouch')} キー`; const ab = $('#actBtn'); if (ab && FRAME.on) ab.dataset.k = PAD.using ? PAD.of('act') : KB.of('act'); if (typeof TUT !== 'undefined' && TUT.redraw) TUT.redraw(); }
+function hintsRefresh() { try { CALL.keys(); } catch (e) { } const rk = $('#recKey'); if (rk) rk.textContent = PAD.using ? PAD.of('rec') : `${KB.of('rec')} キー`; const ck = $('#crouchKey'); if (ck) ck.textContent = PAD.using ? PAD.of('crouch') : `${KB.of('crouch')} キー`; const ab = $('#actBtn'); if (ab && FRAME.on) ab.dataset.k = PAD.using ? PAD.of('act') : KB.of('act'); if (typeof TUT !== 'undefined' && TUT.redraw) TUT.redraw(); }
 
 
 /* ---------- 録画（1本のセッションを一時停止・再開） ---------- */
@@ -12709,7 +12712,7 @@ const UNDER = {
    ========================================================= */
 const CALL = {
   plan: false, done: false, ph: '', t: 0, qT: 0, ring: null, noise: null, tk: 0, card: null, lastSec: -1,
-  reset() { this.stopAll(); this.plan = !world.phanRun && (chance(0.3) || /[?&]call/.test(location.search)); this.done = false; this.ph = ''; this.qT = 0; this.t0 = world.t; this.look = null; this.hide(); },
+  reset() { this.stopAll(); this.plan = !world.phanRun && (chance(0.1) || /[?&]call/.test(location.search));   /* 2026-11-17 着信は今の1/3 */ this.done = false; this.ph = ''; this.qT = 0; this.t0 = world.t; this.look = null; this.hide(); },
   busy() { return this.ph === 'ring' || this.ph === 'talk' || this.ph === 'end' || this.ph === 'scare' || this.ph === 'whip'; },
   can() {
     return world.state === 'play' && typeof AMB !== 'undefined' && AMB.quiet() && !world.selfie && !(typeof SP !== 'undefined' && SP.st === 'chase') && !CROUCH.chasing() && !UNDER.on && !SET.open && !INV.open && !world.capture && !REVIVE.on && world.outro === 0;
@@ -12824,12 +12827,15 @@ const CALL = {
       this.q = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshBasicMaterial({ map: this.tex, transparent: true, depthTest: false, depthWrite: false, toneMapped: false })); this.ov.add(this.q);
       this.edge = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({ transparent: true, depthTest: false, depthWrite: false, uniforms: { a: { value: 0 } }, vertexShader: 'varying vec2 v; void main(){ v=uv; gl_Position=vec4(position.xy,0.,1.); }',
         fragmentShader: 'varying vec2 v; uniform float a; void main(){ float d=min(min(v.x,1.-v.x),min(v.y,1.-v.y)); float e=smoothstep(0.06,0.,d); gl_FragColor=vec4(0.75,0.95,0.8,e*a); }' })); this.edge.renderOrder = -1; this.ov.add(this.edge);
-      const el = document.createElement('div'); el.id = 'callHit'; el.innerHTML = '<button type="button" id="callNo" aria-label="拒否"></button><button type="button" id="callYes" aria-label="応答"></button><button type="button" id="callEnd" aria-label="終話"></button>'; document.body.appendChild(el); this.el = el;
+      const el = document.createElement('div'); el.id = 'callHit'; el.innerHTML = '<button type="button" id="callNo" aria-label="拒否"><span class="ck"></span></button><button type="button" id="callYes" aria-label="応答"><span class="ck"></span></button><button type="button" id="callEnd" aria-label="終話"><span class="ck"></span></button>'; document.body.appendChild(el); this.el = el;
       this.dc = document.createElement('canvas'); this.dc.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none'; el.prepend(this.dc);
       for (const t of ['pointerdown', 'touchstart']) el.addEventListener(t, e => e.stopPropagation());
       el.querySelector('#callNo').addEventListener('click', e => { e.stopPropagation(); this.reject(); }); el.querySelector('#callYes').addEventListener('click', e => { e.stopPropagation(); this.answer(); }); el.querySelector('#callEnd').addEventListener('click', e => { e.stopPropagation(); this.hangup(); }); }
-    this.vis = true; this.el.classList.add('show');
+    this.vis = true; this.el.classList.add('show'); this.keys();
   },
+  /* 2026-11-17 ボタンのそばにキー（PCはE／Q、コントローラーはそのボタン。タッチだけの時は出さない） */
+  keys() { if (!this.el) return; const show = FRAME.on || PAD.using, yes = PAD.using ? PAD.of('act') : KB.of('act'), no = PAD.using ? PAD.of('back') : 'Q';
+    for (const [id, t] of [['#callYes', yes], ['#callNo', no], ['#callEnd', no]]) { const k = this.el.querySelector(id + ' .ck'); if (k) { k.textContent = t; k.style.display = show ? '' : 'none'; } } },
   hide() { this.vis = false; if (this.el) this.el.classList.remove('show', 'talk'); },
   draw(talk) {
     if (!this.cv) return; const W0 = 360, H0 = Math.round(360 * H / W) || 640; const key = (talk ? 't' : 'r') + (talk ? Math.floor(this.t) : 0) + this.ph; if (key === this.dk && this.cv.height === H0) return; this.dk = key;
@@ -12860,7 +12866,8 @@ const CALL = {
     if (!this.vis || !this.ov) return; this.edge.material.uniforms.a.value = this.ph === 'ring' ? 0.18 + 0.16 * Math.sin(performance.now() / 160) : 0;
     renderer.setRenderTarget(null); const ac = renderer.autoClear; renderer.autoClear = false; renderer.render(this.ov, this.ovCam); renderer.autoClear = ac;
   },
-  key(e) { if (this.ph === 'ring') { if (e.key === 'Enter') { this.answer(); return true; } if (e.key === 'Backspace') { this.reject(); return true; } } else if (this.ph === 'talk' && e.key === 'Backspace') { this.hangup(); return true; } return false; },
+  key(e) { const ok = e.code === KB.map.act || e.key === 'Enter', no = e.code === 'KeyQ' || e.key === 'Backspace';   /* 2026-11-17 出る＝E（調べるのキー）、拒否・切る＝Q */
+    if (this.ph === 'ring') { if (ok) { this.answer(); return true; } if (no) { this.reject(); return true; } } else if (this.ph === 'talk' && no) { this.hangup(); return true; } return false; },
   pad(a) { if (this.ph === 'ring') { if (a === 'act') { this.answer(); return true; } if (a === 'back') { this.reject(); return true; } } else if (this.ph === 'talk' && a === 'back') { this.hangup(); return true; } return false; },
 };
 addEventListener('keydown', e => { if (CALL.ph && CALL.key(e)) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
@@ -12968,7 +12975,7 @@ function updateInteractions() {
   if (typeof NEWWING !== 'undefined') NEWWING.offer();   // 2026-11-15 新しい棟・放送室
   offerUnder();   // 2026-11-15 しゃがんでベッド・ピアノに近づくと「下にもぐる」
   const b = $('#actBtn'); if (world.tutAct) return;   // 遊び方の説明でお手本を出している間はそのまま
-  b.classList.toggle('show', !!actFn && !world.dark); b.classList.toggle('key', !!actFn && actKey && !actExit); b.classList.toggle('exit', !!actFn && actExit); if (b.textContent !== actLabel) b.textContent = actLabel; if (FRAME.on) { const kl = PAD.using ? PAD.of('act') : KB.of('act'); if (b.dataset.k !== kl) b.dataset.k = kl; }
+  b.classList.toggle('show', !!actFn && !world.dark); b.classList.toggle('key', !!actFn && actKey && !actExit); b.classList.toggle('exit', !!actFn && actExit); if (b.textContent !== actLabel) b.textContent = actLabel; if (FRAME.on || PAD.using) { const quit = SCIRM.scope || KOK.on || UNDER.on, kl = quit ? (PAD.using ? PAD.of('back') : 'Q') : (PAD.using ? PAD.of('act') : KB.of('act')); if (b.dataset.k !== kl) b.dataset.k = kl; }   /* 2026-11-17 特別な場面の「やめる」はQ（コントローラーは戻る） */
 }
 function toggleWater(sk) { TAP.toggle(sk); }
 
@@ -13250,7 +13257,7 @@ const FIXCAM = {
     if (!PERM.active('fixcam') || this.placed || this.framing || world.state !== 'play') return;
     this.framing = true; this.wasRec = rec.active; if (rec.active) stopRec('pause'); if (world.selfie) SELF.set(false); setZoom(1); zoom = 1;
     $('#hud').classList.add('fixMode'); let el = $('#fixUI'); if (!el) { el = document.createElement('div'); el.id = 'fixUI'; $('#hud').appendChild(el); for (const ev of ['pointerdown', 'pointerup', 'touchstart']) el.addEventListener(ev, e => e.stopPropagation()); }
-    el.innerHTML = `<div class="fxT">📹 ${TR('定点カメラ')}<small>${TR('歩いたり見回したりして、画角を決めてください')}</small></div><div class="fxFrame"></div><div class="fxB"><button type="button" class="fxNo">${TR('やめる')}</button><button type="button" class="fxGo">${TR('ここに設置')}</button></div>`;
+    el.innerHTML = `<div class="fxT">📹 ${TR('定点カメラ')}<small>${TR('歩いたり見回したりして、画角を決めてください')}</small></div><div class="fxFrame"></div><div class="fxB"><button type="button" class="fxNo">${TR('やめる')}${FRAME.on || PAD.using ? ` <span style="display:inline-block;min-width:18px;padding:0 4px;border:1px solid currentColor;border-radius:5px;font-size:11px;line-height:16px">${PAD.using ? PAD.of('back') : 'Q'}</span>` : ''}</button><button type="button" class="fxGo">${TR('ここに設置')}</button></div>`;
     el.querySelector('.fxGo').addEventListener('click', e => { e.stopPropagation(); this.place(); });
     el.querySelector('.fxNo').addEventListener('click', e => { e.stopPropagation(); this.endFrame(); });
   },
@@ -15124,7 +15131,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.16.99';
+const VERSION = '0.17.00';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -22416,7 +22423,7 @@ ABYSS.slide = function (x, S, t) {
       S.pokes = (S.pokes || []).filter(p => S.t - p.t < 0.6); S.pokes.push({ x: lx, y: ly, t: S.t }); const W = 1024;
       for (const o of S.org || []) { let ox = ((o.x - S.px + 256 + 384) % W + W) % W - 384, oy = ((o.y - S.py + 256 + 384) % W + W) % W - 384; const dx = ox - lx, dy = oy - ly, d = Math.hypot(dx, dy); if (d < 110 && d > 0.1) { const f = (110 - d) * 2.2; o.vx += dx / d * f; o.vy += dy / d * f; if (o.k === 'eug' || o.k === 'para') o.a = Math.atan2(dy, dx); } } e.stopPropagation(); }
     dn = null; }, true);
-  addEventListener('keydown', e => { if (e.code !== 'KeyQ' || world.state !== 'play') return; if (SCIRM.scope) { e.preventDefault(); SCIRM.scopeClose(); } else if (KOK.on) { e.preventDefault(); KOK.exit(); } }); }
+  addEventListener('keydown', e => { if (e.code !== 'KeyQ' || world.state !== 'play') return; if (SCIRM.scope) { e.preventDefault(); SCIRM.scopeClose(); } else if (KOK.on) { e.preventDefault(); KOK.exit(); } else if (UNDER.on) { e.preventDefault(); if (UNDER.ph !== 'peek') UNDER.exit(); } else if (FIXCAM.framing) { e.preventDefault(); FIXCAM.endFrame(); } }); }
 /* ダクトとそのイベントは使わない */
 DUCT.build = function () { }; DUCT.reset = function () { if (world.inDuct) { world.inDuct = false; } this.on = false; }; DUCT.gate = function () { }; DUCT.update = function () { };
 /* 2026-11-17 赤いマント：捕まっても最初からやり直す（スタート地点へ戻る）のをやめ、その場で攻撃を跳ね返して怪異を怯ませる（1周に1度） */
