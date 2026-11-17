@@ -41,7 +41,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&family=Zen+Kurenaido&display=swap" rel="stylesheet">
 <style>
   :root{--vw:1vw;--vh:1vh}
   /* 2026-11-13 PC：430×932の縦長の画面に固定。余りは黒（大きさはJSのframeFitで合わせる） */
@@ -15132,7 +15132,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.01';
+const VERSION = '0.17.02';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -22312,9 +22312,9 @@ Object.assign(EN, { 'トモダチ人形': 'Friend Doll', '持ち込むと顔が2
    ・読む画面は、連打でうっかり閉じないよう少し待ってから閉じられる
    ========================================================= */
 const SMEMO = { KEY: 'yt_smemo_v1', IDS: ['smemo1', 'smemo2', 'smemo3'],
-  TXT: { smemo1: ['この先ヤバそう。絶対いい動画撮れる。どうやって入ろうか。', 'Looks dangerous up ahead. This will make a great video for sure. How do I get in?'],
-    smemo2: ['アイツ壁にぶつかるたびに臓器を落とすんだけど、あとで全部拾い直してるのかなwww', 'Every time that thing hits a wall it drops an organ. Does it go back and pick them all up later lol'],
-    smemo3: ['もういいかい　もういいよ　もういいよ　もういいよ\nしーっ\nふたりがさがしてる\nまえのかおと　うしろのかお\nふふ　ふふふ\nたのしい　たのしい　たのしい\nたのしい　たのしい　たのしい\nまたあそぼ\nぼそあたま　ぼたま', 'Ready or not? Ready. Ready. Ready.\nShh...\nThe two of them are looking\nthe front face and the back face\nhehe hehehe\nfun fun fun\nfun fun fun\nlet’s play again\nbosoatama  botama'] },
+  TXT: { smemo1: ['この先ヤバそう。\n絶対いい動画撮れる。\nどうやって入ろうか。', 'Looks dangerous up ahead. This will make a great video for sure. How do I get in?'],
+    smemo2: ['アイツ壁にぶつかるたびに\n臓器を落とすんだけど、\nあとで全部\n拾い直してるのかなwww', 'Every time that thing hits a wall it drops an organ. Does it go back and pick them all up later lol'],
+    smemo3: ['もういいかい　もういいよ\nもういいよ　もういいよ\nしーっ\nふたりがさがしてる\nまえのかおと　うしろのかお\nふふ　ふふふ\nたのしい　たのしい　たのしい\nたのしい　たのしい　たのしい\nまたあそぼ\nぼそあたま　ぼたま', 'Ready or not? Ready. Ready. Ready.\nShh...\nThe two of them are looking\nthe front face and the back face\nhehe hehehe\nfun fun fun\nfun fun fun\nlet’s play again\nbosoatama  botama'] },
   load() { try { return JSON.parse(localStorage.getItem(this.KEY) || '{}') || {}; } catch (e) { return {}; } },
   got(id) { return !!this.load()[id] || false; },
   mark(id) { const d = this.load(); d[id] = 1; try { localStorage.setItem(this.KEY, JSON.stringify(d)); } catch (e) { } },
@@ -22332,12 +22332,22 @@ const SMEMO = { KEY: 'yt_smemo_v1', IDS: ['smemo1', 'smemo2', 'smemo3'],
     try { const c = document.createElement('canvas'); c.width = 512; c.height = 640; const g = c.getContext('2d');
       g.fillStyle = '#e9e0cb'; g.beginPath(); g.moveTo(14, 20); for (let x = 14; x <= 498; x += 22) g.lineTo(x, 14 + Math.random() * 10); g.lineTo(500, 620); for (let x = 498; x >= 14; x -= 22) g.lineTo(x, 618 + Math.random() * 10); g.closePath(); g.fill();
       for (let i = 0; i < 18; i++) { g.fillStyle = `rgba(120,30,20,${Math.random() * 0.12})`; g.beginPath(); g.ellipse(Math.random() * 512, Math.random() * 640, 10 + Math.random() * 40, 6 + Math.random() * 30, Math.random() * 3, 0, 7); g.fill(); }
-      let fs = 44, lines; for (; fs > 18; fs -= 2) { g.font = `700 ${fs}px "Yu Mincho","Hiragino Mincho ProN",serif`; lines = []; for (const para of this.text(id).split('\n')) { let cur = ''; const tk = /[　 ]/.test(para) ? para.split(/(?<=[　 ])/) : Array.from(para); for (const w of tk) { if (g.measureText((cur + w).trimEnd()).width > 420 && cur) { lines.push(cur.trimEnd()); cur = ''; } if (g.measureText(w).width > 420) { for (const ch of w) { if (g.measureText(cur + ch).width > 420 && cur) { lines.push(cur); cur = ''; } cur += ch; } } else cur += w; } if (cur) lines.push(cur.trimEnd()); }   /* 区切り（空白）で折り返す */ if (lines.length * fs * 1.35 <= 550) break; }   /* 紙に収まる大きさで、幅で折り返す */
-      g.fillStyle = '#7a0d0d'; g.textBaseline = 'top';
-      lines.forEach((l, i) => { g.save(); g.translate(40 + Math.random() * 8, 50 + i * fs * 1.35); g.rotate((Math.random() - 0.5) * 0.06); g.fillText(l, 0, 0); g.restore(); });
-      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+      /* 2026-11-17 手書きのフォント（Zen Kurenaido）を太らせて書く。行の頭に「、。っ」などが来ないよう、言葉の切れ目で折り返す */
+      const FONT = '"Zen Kurenaido","Yu Mincho","Hiragino Mincho ProN",serif', mad = id === 'smemo3', NOSTART = /^[、。，．,.!！?？…‥ー～〜）)」』】〕・：；:;ぁぃぅぇぉっゃゅょゎんァィゥェォッャュョヮヵヶンwｗ]/;
+      const seg = t => { try { return [...new Intl.Segmenter('ja', { granularity: 'word' }).segment(t)].map(x => x.segment); } catch (e) { return Array.from(t); } };
+      const wrap = (text, maxW) => { const out = []; for (const para of text.split('\n')) { const tk = []; const PART = /^(は|が|を|に|で|と|も|の|へ|や|から|まで|けど|けれど|ので|って|より|だけど)$/, KJ = /^[一-龯々ァ-ヶ]/;   /* 区切れるのは：句読点・空白のあと、助詞のあと、ひらがなの後に漢字・カタカナが来る所だけ */
+          let prev = ''; for (const t of seg(para)) { const ok = tk.length && !NOSTART.test(t) && (/[、。！？!?　 ]$/.test(prev) || /^[　 ]/.test(t) || PART.test(prev) || (/[ぁ-ん]$/.test(prev) && KJ.test(t))); if (tk.length && !ok) tk[tk.length - 1] += t; else tk.push(t); prev = t; }
+          let cur = ''; for (const t of tk) { if (g.measureText((cur + t).replace(/[　 ]+$/, '')).width > maxW && cur.trim()) { out.push(cur.replace(/[　 ]+$/, '')); cur = t.replace(/^[　 ]+/, ''); } else cur += t;
+            while (g.measureText(cur).width > maxW * 1.06 && cur.length > 2) { let k = cur.length - 1; while (k > 1 && (g.measureText(cur.slice(0, k)).width > maxW || NOSTART.test(cur.slice(k)))) k--; out.push(cur.slice(0, k)); cur = cur.slice(k); } }
+          if (cur.trim()) out.push(cur.replace(/[　 ]+$/, '')); } return out; };
+      const LH2 = mad ? 1.5 : 1.42, draw = () => { const np = this.text(id).split('\n').length; let fs = 46, lines; for (; fs > 18; fs -= 2) { g.font = `${fs}px ${FONT}`; lines = wrap(this.text(id), 420); if (lines.length * fs * LH2 <= 550 && (np === 1 || lines.length === np || fs <= 22)) break; }   /* 段落の途中で折り返さずに収まる大きさを優先 */
+        g.fillStyle = g.strokeStyle = '#7a0d0d'; g.lineJoin = 'round'; g.textBaseline = 'top';
+        lines.forEach((l, i) => { g.save(); g.translate(42 + Math.random() * (mad ? 14 : 6), 48 + i * fs * LH2); g.rotate((Math.random() - 0.5) * (mad ? 0.06 : 0.04)); if (mad) g.scale(0.94 + Math.random() * 0.1, 0.94 + Math.random() * 0.08);
+          g.lineWidth = fs * (mad ? 0.085 : 0.05); g.strokeText(l, 0, 0); g.fillText(l, 0, 0); g.restore(); }); };
+      const fin = () => { draw(); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
       if (!this.ov) { this.ov = new THREE.Scene(); this.ovCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); this.m = new THREE.MeshBasicMaterial({ transparent: true, depthTest: false, depthWrite: false, toneMapped: false }); this.q = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this.m); this.q.frustumCulled = false; this.ov.add(this.q); }
-      if (this.m.map) this.m.map.dispose(); this.m.map = t; this.m.needsUpdate = true; this.cur = { k: 0, dur: id === 'smemo3' ? 8 : 6, t0: performance.now() }; } catch (e) { }
+      if (this.m.map) this.m.map.dispose(); this.m.map = t; this.m.needsUpdate = true; this.cur = { k: 0, dur: id === 'smemo3' ? 8 : 6, t0: performance.now() }; };
+      Promise.race([document.fonts.load('40px "Zen Kurenaido"', this.text(id)), new Promise(r => setTimeout(r, 1500))]).catch(() => { }).then(fin); } catch (e) { }   /* フォントを読み込んでから書く */
   },
   /* 画面の上に重ねる（いつもの映像の加工の後なので、ぼけずに読める。録画にも入る） */
   draw() { const C = this.cur; if (!C || !this.ov) return; if (this.hold) C.k = Math.min(C.k + Math.min(0.05, (performance.now() - C.t0) / 1000) / C.dur, 0.5); else if (world.state === 'play') C.k = Math.max(C.k, 0.88) + Math.min(0.05, (performance.now() - C.t0) / 1000) / 0.6 * 0.12; C.t0 = performance.now(); if (C.k >= 1) { this.cur = null; return; }
