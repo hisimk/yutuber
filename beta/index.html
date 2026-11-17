@@ -14464,7 +14464,7 @@ const INV = {
     if (A.ctx) { this.masterV = A.master.gain.value || 0.9; A.master.gain.cancelScheduledValues(A.ctx.currentTime); A.master.gain.setTargetAtTime(0, A.ctx.currentTime, 0.05); }
     const L = $('#invList'); L.innerHTML = ''; const own = this.owned(); try { HAND.invRow(L); } catch (e) { }
     for (const id of own) {
-      const D = ITEM.defs[id], el = document.createElement('div'); el.className = 'invIt' + (id === 'memo' ? ' tap' : '');
+      const D = ITEM.defs[id], el = document.createElement('div'); el.className = 'invIt' + (id === 'memo' ? ' tap' : ''); el.dataset.tab = typeof GOLD_LOOK !== 'undefined' && GOLD_LOOK.includes(id) ? 'd' : 'm';   /* 2026-11-17 タブは行ごとの印で分ける（43番） */
       el.innerHTML = `<img alt=""><div><b></b><small></small></div>`; el.querySelector('img').src = ITEM_IMG[id]; el.querySelector('b').textContent = TR(D.name) + (ITEM.cnt(id) > 1 ? ' ×' + ITEM.cnt(id) : ''); if ((SHOP.carried || []).includes(id)) el.classList.add('carry'); el.querySelector('small').textContent = TR(D.desc);
       try { el.querySelector('b').insertAdjacentHTML('beforeend', YTAG.tag(id) + ((SHOP.carried || []).includes(id) ? `<span class="ytag in">${TR('持ち込み中')}</span>` : '')); el.querySelector('small').insertAdjacentHTML('afterbegin', YTAG.desc(id, '')); } catch (e) { }   /* 2026-11-16 種類の札・持ち込み中 */
       if (id === 'memo') el.addEventListener('click', e => { e.stopPropagation(); $('#invScoreImg').src = ITEM.memoScore(ITEM.memoSong); $('#invScore').classList.add('show'); });
@@ -14472,7 +14472,7 @@ const INV = {
       L.appendChild(el);
     }
     for (const id of PERM.owned()) {   // 2026-11-14 永続アイテム：タップで効果のオン・オフ
-      const D = PERM.DEFS[id], el = document.createElement('div'); el.className = 'invIt perm' + (PERM.active(id) ? ' on' : '');
+      const D = PERM.DEFS[id], el = document.createElement('div'); el.className = 'invIt perm' + (PERM.active(id) ? ' on' : ''); el.dataset.tab = 'd';
       el.innerHTML = `<img alt=""><div><b></b><small></small></div><div class="pSw"></div>`; el.querySelector('img').src = PERM_IMG[id];
       const txt = v => TR(D.desc) + '　' + TR(v ? '効果：オン' : '効果：オフ');
       el.querySelector('b').innerHTML = `${TR(D.name)}`; const stx = v => { el.querySelector('small').textContent = txt(v); el.querySelector('small').insertAdjacentHTML('afterbegin', YTAG.desc(id, '')); }; stx(PERM.active(id));
@@ -15160,7 +15160,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.13';
+const VERSION = '0.17.14';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -21006,8 +21006,12 @@ const GJW = {
   flush() { this.busy = false; const L = [...this.q]; this.q.clear(); this.mo && this.mo.disconnect(); try { for (const t of L) if (t.isConnected) this.fix(t); } finally { this.watch(); } },
   later() { if (this.busy) return; this.busy = true; queueMicrotask(() => this.flush()); },
   watch() { if (!this.mo) this.mo = new MutationObserver(ms => { for (const m of ms) { if (m.type === 'characterData') this.q.add(m.target); else for (const n of m.addedNodes) this.scan(n); } if (this.q.size) this.later(); }); this.mo.observe(document.documentElement, { childList: true, subtree: true, characterData: true }); },
-  init() { if (typeof Intl === 'undefined' || !Intl.Segmenter) return; const st = document.createElement('style'); st.textContent = 'body{text-wrap-style:pretty}h1,h2,h3,h4,h5,.nT,.nSub,.pT,.raT,#resTitle,#imTitle,#chipT,.gvT,#rpT,button{text-wrap-style:balance}.jw{white-space:nowrap!important;text-wrap-mode:nowrap!important}';   /* 折り返しの「しかた」だけを指定（改行しない箱は必ず守る） */ document.head.appendChild(st);
-    this.scan(document.body); this.flush(); },
+  /* 2026-11-17 44番：言葉のまとまり（.jw）は「1行に入る時は折り返さない箱」（inline-block）。置き場所より広い時だけ、箱の中で普通に折り返す（はみ出さない）
+     調べるボタン（丸）は、まとまりで2行に。それでも入らない時だけ文字を少し小さく */
+  fitAct() { const b = document.getElementById('actBtn'); if (!b || !b.offsetWidth) return; b.style.fontSize = ''; for (const j of [...b.querySelectorAll('.jw')]) { const lh = parseFloat(getComputedStyle(b).lineHeight) || 17; if (j.offsetHeight > lh * 1.4) { const parts = j.textContent.split(/(?<=[一-龯々ァ-ヶー][をにでがはへと])/).filter(Boolean); if (parts.length > 1) { const f = document.createDocumentFragment(); for (const t of parts) { const e = document.createElement('span'); e.className = 'jw'; e.textContent = t; f.appendChild(e); } j.replaceWith(f); } } }   /* 丸に入らないまとまりは、助詞のあとで分ける（顕微鏡を／のぞく） */ let f = parseFloat(getComputedStyle(b).fontSize) || 14; for (let i = 0; i < 6 && (b.scrollHeight > b.clientHeight + 1 || b.scrollWidth > b.clientWidth + 1) && f > 10; i++) { f -= 1; b.style.fontSize = f + 'px'; } },
+  init() { if (typeof Intl === 'undefined' || !Intl.Segmenter) return; const st = document.createElement('style'); st.textContent = 'body{text-wrap-style:pretty}h1,h2,h3,h4,h5,.nT,.nSub,.pT,.raT,#resTitle,#imTitle,#chipT,.gvT,#rpT,button{text-wrap-style:balance}.jw{display:inline-block;max-width:100%;text-indent:0}#inv,#invList,.shopLike,.shBox,.shList,#settings,#colList,#credits,.screen,#notePop .nbx,#snBox,#veListBox,#gvList,#godView .gvBox,#chipBox{overflow-x:hidden;overscroll-behavior-x:none}#inv,#invList,.shList,#colList,#settings{touch-action:pan-y}.invIt>div,.shTx{min-width:0}';   /* 折り返しの「しかた」だけを指定（改行しない箱は必ず守る） */ document.head.appendChild(st);
+    this.scan(document.body); this.flush();
+    { const b = document.getElementById('actBtn'); if (b) { const go = () => requestAnimationFrame(() => this.fitAct()); new MutationObserver(go).observe(b, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class'] }); addEventListener('resize', go); } } },
 };
 try { GJW.init(); } catch (e) { console.warn('GJW', e); } if (TEST && window.__G) window.__G.GJW = GJW;
 
@@ -21952,7 +21956,7 @@ YTAG.tag = function (id) { const it = ECON.items.find(x => x[0] === id), key = !
 /* 持ち物（遊んでいる時）：同じ2つのタブ */
 { const S0 = INV.show.bind(INV); INV.show = function () { S0(); if (!this.open) return; const L = $('#invList'); const own = this.owned(), kids = [...L.children], d = SHOP.load();
     const isD = id => GOLD_LOOK.includes(id);
-    kids.forEach((c, i) => { c.dataset.tab = i < own.length ? (isD(own[i]) ? 'd' : 'm') : 'd'; });
+    kids.forEach(c => { if (!c.dataset.tab) c.dataset.tab = 'd'; });   /* 2026-11-17 順番で決めない：印のない行（金色のスマホ・伝説のサムネイル枠など）は「だいじなもの」 */
     let bar = $('#invTabs'); if (!bar) { bar = document.createElement('div'); bar.id = 'invTabs'; bar.className = 'bagTabs'; L.before(bar); }
     bar.innerHTML = `<button data-t="m">${TR('もちもの')}</button><button data-t="d">${TR('だいじなもの')}</button>`; this.tab = this.tab || 'm';
     const show = t => { this.tab = t; let n = 0; for (const c of L.children) { const on = c.dataset.tab === t; c.style.display = on ? '' : 'none'; if (on) n++; } bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === t)); $('#invEmpty').style.display = n ? 'none' : 'block'; $('#invEmpty').textContent = TR(kids.length ? 'ここにはまだ何もない' : 'まだ何も持っていない'); };
@@ -22403,7 +22407,7 @@ const HAND = {
   },
   invRow(L) {
     const id = this.item; if (!id) return; const el = document.createElement('div'); el.className = 'invIt held';
-    el.innerHTML = '<img alt=""><div><b></b><small></small></div>'; el.querySelector('img').src = ITEM_IMG[id]; el.querySelector('b').textContent = this.name(id); el.querySelector('small').textContent = TR('手に持っている');
+    el.innerHTML = '<img alt=""><div><b></b><small></small></div>'; el.querySelector('img').src = ITEM_IMG[id]; el.querySelector('b').textContent = this.name(id); el.querySelector('small').textContent = TR('手に持っている'); el.dataset.tab = 'm';
     const b = document.createElement('button'); b.type = 'button'; b.className = 'invAct'; b.textContent = TR('しまう'); b.addEventListener('click', e => { e.stopPropagation(); this.stow(); INV.redraw(); }); el.appendChild(b); L.appendChild(el);
   },
 };
@@ -22474,7 +22478,7 @@ const SMEMO = { KEY: 'yt_smemo_v1', IDS: ['smemo1', 'smemo2', 'smemo3'],
   place() {
     for (const id of this.IDS) { if (!ITEM.get(id)) ITEM.add(id, V(0, -50, 0), 1); const it = ITEM.get(id); it.taken = true; it.lk = null; it.spot = null; it.pos.set(0, -50, 0); it.s.visible = false; }
     const put = (id, p, lv, lk) => { if (this.got(id) && !WF(id)) return; const it = ITEM.get(id); it.taken = false; it.lv = lv; it.lk = lk || null; it.spot = lk ? { type: 'locker', lk } : { type: 'floor', p: p.clone(), lv }; it.pos.copy(p); ITEM.skin(it); };
-    put('smemo1', world.bar1Open && !world.bar2Open ? V(10.85, LH + 0.1, -31.1) : V(0.45, LH + 0.1, -32.85), 1);   /* 閉まっているバリケードの手前 */
+    put('smemo1', world.bar1Open && !world.bar2Open ? V(9.3, LH + 0.1, -31.5) : V(0, LH + 0.1, -31.4), 1);   /* 2026-11-17 閉まっているバリケードの2〜3m手前、廊下の真ん中 */
     if (WF('smemo2') || (() => { try { return localStorage.getItem('yt_mannran') === '1'; } catch (e) { return false; } })()) put('smemo2', V(-2.62, 0.1, -15.83), 0);   /* 保健室の人体模型の前 */
     if (world.wingOpen) { const R = lockers.filter(l => l.red && l.hinge), free = R.filter(l => !ITEM.list.some(i => !i.taken && i.lk === l && !this.IDS.includes(i.id))), lk = (free.length ? free : R)[0] && pick(free.length ? free : R);
       if (lk) put('smemo3', lkP(lk, 0.05, 0.16, -0.2), lk.lv, lk); }
