@@ -939,7 +939,7 @@
       <div class="opt" id="setFearRow"><div>怖さ<small>「小」にすると、ジャンプスケアの描写と、取得できる撮れ高が減ります。</small></div><div class="seg" id="fearSeg"><button data-f="lo">小</button><button data-f="hi">大</button></div></div>
       <div class="opt" id="setFpsRow"><div>なめらかさ<small>60はなめらか（スマホが熱くなりやすい）</small></div><div class="seg" id="fpsSeg"><button data-f="30">30fps</button><button data-f="60">60fps</button></div></div>
       <div class="opt" id="setQualRow"><div>画質<small>重い時は「軽い」に（少し粗くなり、影が減ります）</small></div><div class="seg" id="qualSeg"><button data-q="std">標準</button><button data-q="lite">軽い</button></div></div>
-      <div class="opt col" id="setGodRow"><div class="optTop"><div>神回の動画を端末に残す<small>動画はこの端末の中だけに保存され、外部には送られません。1本あたり最大で約50MBです。</small></div></div><div class="seg" id="godSeg"><button data-g="3">上位3位まで</button><button data-g="1">1位だけ</button><button data-g="0">残さない</button></div><div id="godUse"></div></div>
+      <div class="opt col" id="setGodRow"><div class="optTop"><div>神回の動画を端末に残す<small>動画はこの端末の中だけに保存され、外部には送られません。<span style="white-space:nowrap">1本あたり最大で約50MBです。</span></small></div></div><div class="seg" id="godSeg"><button data-g="3">上位3位まで</button><button data-g="1">1位だけ</button><button data-g="0">残さない</button></div><div id="godUse"></div></div>
       <div class="opt" id="setBright"><div>明るさ<small>入口の景色を見ながら合わせます</small></div><div class="val"><span id="brightVal">0</span> ›</div></div>
       <div id="setPC">
         <div class="opt" id="setScreenRow"><div>画面の表示<small>ウィンドウのまま遊ぶか、全画面で遊ぶか</small></div><div class="seg" id="scrSeg"><button data-scr="win">ウィンドウ</button><button data-scr="full">全画面</button></div></div>
@@ -1497,7 +1497,7 @@ function plane(w, h, mat, x, y, z, ry = 0, rx = 0, o = {}) {
 /* ---------- 言語（日本語／English）：画面の文言は T() で英語に置き換える。英語の表が無い文言は日本語のまま ---------- */
 let LANG = 'ja'; try { const l = localStorage.getItem('yt_lang'); if (l === 'en' || l === 'ja') LANG = l; } catch (e) { }
 const EN = {
-  '机の陰で息を殺す': 'Holding your breath behind a desk', '神回の動画を端末に残す': 'Keep top-episode videos on this device', '動画はこの端末の中だけに保存され、外部には送られません。1本あたり最大で約50MBです。': 'Videos are stored only on this device and never sent anywhere. Up to about 50 MB each.', '上位3位まで': 'Top 3', '1位だけ': 'Top 1 only', '残さない': "Don't keep", '保存している動画はありません': 'No saved videos', 'この動画を消す': 'Delete this video', 'この回の動画を消しますか？': 'Delete the video for this episode?', '内訳は残ります。': 'The breakdown will stay.', 'やめる': 'Cancel', '消す': 'Delete', '動画は残さない設定です（設定で変えられます）': 'Videos are set not to be kept (you can change this in Settings)', '端末の空きが少なめです': 'Your device is low on space', '神回の動画は1本あたり最大で約50MBです。空きが足りない時は、動画を保存せずに内訳だけ残します。「1位だけ」か「残さない」にすると安心です。': 'Each top-episode video can be up to about 50 MB. If space runs short, only the breakdown is kept. "Top 1 only" or "Don\'t keep" is safer.', 'このまま': 'Keep as is', '1位だけにする': 'Switch to Top 1 only', '動画を保存できませんでした': "Couldn't save the video", '端末の空きが足りないため、この回の動画は保存していません（内訳とランキングは残っています）。設定の「神回の動画を端末に残す」で本数を減らすと、空きが増えます。': 'There wasn\'t enough space, so this episode\'s video wasn\'t saved (the breakdown and ranking are kept). Keeping fewer videos in Settings frees up space.', 'ベッドの下にもぐる': 'Under the bed', 'ピアノの下にもぐる': 'Under the piano', 'ベッドの下でやり過ごす': 'Waited it out under the bed', 'ピアノの下でやり過ごす': 'Waited it out under the piano', 'やり過ごしたはずの逆さの顔': 'The upside-down face, after it left', '非通知の着信に出た': 'Answered an unknown caller', 'いま、あなたのうしろにいるの': "I'm right behind you now", '振り返ると電話の主': 'Turned around, and she was there', '誰もいない場所に顔を検出': 'A face detected where no one is', '大量に検出された顔': 'Faces detected everywhere', '出る': 'Get out', '窓の下をくぐり抜ける': 'Sneaking under the windows', 'もはや筋トレ配信': 'Basically a workout stream now', 'しゃがむ': 'Crouch', '立つ': 'Stand', 'しゃがむ・立つ': 'Crouch / stand', 'しゃがむと窓の下や机の陰に隠れられます': 'Crouch to hide below windows or behind desks',
+  '机の陰で息を殺す': 'Holding your breath behind a desk', '神回の動画を端末に残す': 'Keep top-episode videos on this device', '動画はこの端末の中だけに保存され、外部には送られません。1本あたり最大で約50MBです。': 'Videos are stored only on this device and never sent anywhere. Up to about 50 MB each.', '動画はこの端末の中だけに保存され、外部には送られません。': 'Videos are stored only on this device and never sent anywhere.', '1本あたり最大で約50MBです。': 'Up to about 50 MB each.', '上位3位まで': 'Top 3', '1位だけ': 'Top 1 only', '残さない': "Don't keep", '保存している動画はありません': 'No saved videos', 'この動画を消す': 'Delete this video', 'この回の動画を消しますか？': 'Delete the video for this episode?', '内訳は残ります。': 'The breakdown will stay.', 'やめる': 'Cancel', '消す': 'Delete', '動画は残さない設定です（設定で変えられます）': 'Videos are set not to be kept (you can change this in Settings)', '端末の空きが少なめです': 'Your device is low on space', '神回の動画は1本あたり最大で約50MBです。空きが足りない時は、動画を保存せずに内訳だけ残します。「1位だけ」か「残さない」にすると安心です。': 'Each top-episode video can be up to about 50 MB. If space runs short, only the breakdown is kept. "Top 1 only" or "Don\'t keep" is safer.', 'このまま': 'Keep as is', '1位だけにする': 'Switch to Top 1 only', '動画を保存できませんでした': "Couldn't save the video", '端末の空きが足りないため、この回の動画は保存していません（内訳とランキングは残っています）。設定の「神回の動画を端末に残す」で本数を減らすと、空きが増えます。': 'There wasn\'t enough space, so this episode\'s video wasn\'t saved (the breakdown and ranking are kept). Keeping fewer videos in Settings frees up space.', 'ベッドの下にもぐる': 'Under the bed', 'ピアノの下にもぐる': 'Under the piano', 'ベッドの下でやり過ごす': 'Waited it out under the bed', 'ピアノの下でやり過ごす': 'Waited it out under the piano', 'やり過ごしたはずの逆さの顔': 'The upside-down face, after it left', '非通知の着信に出た': 'Answered an unknown caller', 'いま、あなたのうしろにいるの': "I'm right behind you now", '振り返ると電話の主': 'Turned around, and she was there', '誰もいない場所に顔を検出': 'A face detected where no one is', '大量に検出された顔': 'Faces detected everywhere', '出る': 'Get out', '窓の下をくぐり抜ける': 'Sneaking under the windows', 'もはや筋トレ配信': 'Basically a workout stream now', 'しゃがむ': 'Crouch', '立つ': 'Stand', 'しゃがむ・立つ': 'Crouch / stand', 'しゃがむと窓の下や机の陰に隠れられます': 'Crouch to hide below windows or behind desks',
   '動画を切り抜き編集': 'Clip & edit', 'おすすめ': 'Recommended', '切り抜き・コメント・結果カード': 'Trim · comments · result card', 'そのまま保存': 'Save as is', 'そのままシェア': 'Share as is',
   '何をシェアする？': 'What to share?', 'X向け': 'For X', 'TikTok・インスタ向け': 'For TikTok / Instagram', '動画': 'Video', '結果画像': 'Result image', '投稿文': 'Post text', '#幽tuber とURL（コピーもします）': '#幽tuber and the link (also copied)',
   'シェアする': 'Share', '結果画像だけ保存': 'Save result image only', 'この環境ではシェアできないため、保存してから投稿してください': 'Sharing isn’t available here, so the files were saved. Please post them from your app.', '（投稿文はコピーしました）': ' (Post text copied.)',
@@ -14521,7 +14521,7 @@ addEventListener('keydown', e => { if (INV.open && e.code === 'Escape') { e.prev
 setInterval(() => INV.badge(), 400);
 $('#setMic').addEventListener('click', () => { opt.mic = !opt.mic; saveOpts(); SET.sync(); if (opt.mic) micOn(); else micOff(); });
 $('#setHome').addEventListener('click', () => {
-  if (!SET.homeArm) { SET.homeArm = 1; $('#setHome').classList.add('warn'); $('#setHome').textContent = TR('もう一度押すとスタート画面にもどります（録画は消えます）'); return; }
+  if (!SET.homeArm) { SET.homeArm = 1; $('#setHome').classList.add('warn'); if (LANG === 'en') $('#setHome').textContent = TR('もう一度押すとスタート画面にもどります（録画は消えます）'); else $('#setHome').innerHTML = 'もう一度押すとスタート画面にもどります<br>（録画は消えます）'; return; }   /* 2026-11-17 45番：補足は2行目に */
   location.reload();
 });
 for (const b of document.querySelectorAll('#langSeg button')) b.addEventListener('click', () => { setLang(b.dataset.lang); SET.sync(); $('#setClose').textContent = TR(SET.paused ? 'ゲームにもどる' : '閉じる'); $('#setHome').textContent = TR('スタート画面にもどる'); });
@@ -15160,7 +15160,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.14';
+const VERSION = '0.17.15';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16474,7 +16474,7 @@ const RANKPOP = {
     const d = ACH.load(); if (d.rkPend === undefined || d.rkPend <= (d.rk || 0)) { if ($('#start').classList.contains('show')) setTimeout(() => { try { SHOP.notify(); } catch (e) { } }, 300); return; }
     if (!$('#start').classList.contains('show') || $('#resetAsk').classList.contains('show') || $('#tut').classList.contains('show') || (typeof SET !== 'undefined' && SET.open)) { setTimeout(() => this.check(), 800); return; }
     const r = YRANK[d.rkPend], el = $('#rankPop'), en = LANG === 'en';   // 保留はランクIDで持ち、いまの言語で出す
-    $('#rpT').innerHTML = ''; $('#rpT').append(cui('congrats'), document.createElement('br'), en ? r[5] : `${r[1]}になりました！`);
+    $('#rpT').innerHTML = ''; $('#rpT').append(cui('congrats'), document.createElement('br'), ...(en ? [r[5]] : [Object.assign(document.createElement('span'), { textContent: r[1], style: 'white-space:nowrap' }), Object.assign(document.createElement('span'), { textContent: 'になりました！', style: 'white-space:nowrap' })]));   /* 2026-11-17 45番：「〜に／なりました」の途中で切らない */
     $('#rpFrom').textContent = `${yrankName(d.rk || 0)} → ${yrankName(d.rkPend)}`; $('#rpTot').textContent = cui('lifetime', d.total);
     $('#rpNote').textContent = cui('explain'); $('#rpOk').textContent = cui('ok');
     { const got = PERM.rankSync(d.rkPend); let gb = $('#rpGear'); if (!gb) { gb = document.createElement('div'); gb.id = 'rpGear'; $('#rpNote').after(gb); }   // 2026-11-14 ランクで配信機材を入手
@@ -20991,11 +20991,13 @@ if (TEST && window.__G) Object.assign(window.__G, { URFUDA, ACH, GOD });
    ・キャンバスに描く物（録画・結果カード・メモの絵）は対象外。英語の時は何もしない
    ========================================================= */
 const GJW = {
-  JP: /[぀-ヿ㐀-鿿]/, SKIP: 'script,style,textarea,input,select,option,svg,canvas,[contenteditable],.jw,.ph,#recTime,#batTxt,#capTxt,#pnCapT,#pnBat,.chatList',
+  JP: /[぀-ヿ㐀-鿿]/, SKIP: 'script,style,textarea,input,select,option,svg,canvas,[contenteditable],.jw,.ph,#recTime,#batTxt,#capTxt,#pnCapT,#pnBat,.chatList,button',
+  /* 2026-11-17 本人の判断：言葉のまとまりで折り返すのは、説明欄とポップだけ（ボタン・コメント欄・ほかの画面は元のふつうの折り返しに戻した） */
+  ALLOW: '#notePop,#rankPop,#chipPop,#ttlPop,#askPop,#imTitle,#imDesc,#pnInvPop,.invIt small,.shTx small,#settings small',
   q: new Set(), busy: false,
   fix(t) {
     const p = t.parentNode; if (!p || p.nodeType !== 1 || LANG === 'en') return; const v = t.nodeValue; if (!v || v.length < 6 || !this.JP.test(v)) return;
-    if (p.closest(this.SKIP)) return;
+    if (p.closest(this.SKIP) || !p.closest(this.ALLOW)) return;
     const btn = p.closest('button'), f = document.createDocumentFragment(); let txt = v, tail = '';
     if (btn && /[（(]/.test(v) && v.length >= 14) { const i = v.search(/[（(]/); if (i >= 6) { txt = v.slice(0, i); tail = v.slice(i); } }   /* 長いボタンの補足は2行目に */
     const add = str => { for (const ph of jpPhrases(str)) { if (Array.from(ph).length > 16) { f.appendChild(document.createTextNode(ph)); continue; } const sp = document.createElement('span'); sp.className = 'jw'; sp.textContent = ph; f.appendChild(sp); } };
@@ -21009,11 +21011,15 @@ const GJW = {
   /* 2026-11-17 44番：言葉のまとまり（.jw）は「1行に入る時は折り返さない箱」（inline-block）。置き場所より広い時だけ、箱の中で普通に折り返す（はみ出さない）
      調べるボタン（丸）は、まとまりで2行に。それでも入らない時だけ文字を少し小さく */
   fitAct() { const b = document.getElementById('actBtn'); if (!b || !b.offsetWidth) return; b.style.fontSize = ''; for (const j of [...b.querySelectorAll('.jw')]) { const lh = parseFloat(getComputedStyle(b).lineHeight) || 17; if (j.offsetHeight > lh * 1.4) { const parts = j.textContent.split(/(?<=[一-龯々ァ-ヶー][をにでがはへと])/).filter(Boolean); if (parts.length > 1) { const f = document.createDocumentFragment(); for (const t of parts) { const e = document.createElement('span'); e.className = 'jw'; e.textContent = t; f.appendChild(e); } j.replaceWith(f); } } }   /* 丸に入らないまとまりは、助詞のあとで分ける（顕微鏡を／のぞく） */ let f = parseFloat(getComputedStyle(b).fontSize) || 14; for (let i = 0; i < 6 && (b.scrollHeight > b.clientHeight + 1 || b.scrollWidth > b.clientWidth + 1) && f > 10; i++) { f -= 1; b.style.fontSize = f + 'px'; } },
-  init() { if (typeof Intl === 'undefined' || !Intl.Segmenter) return; const st = document.createElement('style'); st.textContent = 'body{text-wrap-style:pretty}h1,h2,h3,h4,h5,.nT,.nSub,.pT,.raT,#resTitle,#imTitle,#chipT,.gvT,#rpT,button{text-wrap-style:balance}.jw{display:inline-block;max-width:100%;text-indent:0}#inv,#invList,.shopLike,.shBox,.shList,#settings,#colList,#credits,.screen,#notePop .nbx,#snBox,#veListBox,#gvList,#godView .gvBox,#chipBox{overflow-x:hidden;overscroll-behavior-x:none}#inv,#invList,.shList,#colList,#settings{touch-action:pan-y}.invIt>div,.shTx{min-width:0}';   /* 折り返しの「しかた」だけを指定（改行しない箱は必ず守る） */ document.head.appendChild(st);
+  init() { if (typeof Intl === 'undefined' || !Intl.Segmenter) return; const st = document.createElement('style'); st.textContent = '#notePop,#rankPop,#chipPop,#ttlPop,#askPop,#imDesc,#pnInvPop,.invIt small,.shTx small,#settings small{text-wrap-style:pretty}#notePop .nT,#notePop .nSub,#rankPop .raT,#rpT,#imTitle,#chipT{text-wrap-style:balance}#notePop button,#rankPop button,#chipPop button,#ttlPop button,#askPop button{text-wrap-style:auto}.jw{display:inline-block;max-width:100%;text-indent:0}.chatList,.chatList *,.cm,.cm *{text-wrap-style:auto!important}#inv,#invList,.shopLike,.shBox,.shList,#settings,#colList,#credits,.screen,#notePop .nbx,#snBox,#veListBox,#gvList,#godView .gvBox,#chipBox{overflow-x:hidden;overscroll-behavior-x:none}#inv,#invList,.shList,#colList,#settings{touch-action:pan-y}.invIt>div,.shTx{min-width:0}';   /* 折り返しの「しかた」だけを指定（改行しない箱は必ず守る） */ document.head.appendChild(st);
     this.scan(document.body); this.flush();
     { const b = document.getElementById('actBtn'); if (b) { const go = () => requestAnimationFrame(() => this.fitAct()); new MutationObserver(go).observe(b, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class'] }); addEventListener('resize', go); } } },
 };
-try { GJW.init(); } catch (e) { console.warn('GJW', e); } if (TEST && window.__G) window.__G.GJW = GJW;
+/* 2026-11-17 45番：全体に効く改行のしくみ（GJW：言葉の箱・pretty・balance・丸ボタンの文字の調整）は使わない。ふつうの折り返しに戻した（GJW.init は呼ばない）
+   決まり：改行は「ふつうの折り返し」が基本。言葉の途中で切れて気になる所が見つかったら、その文だけ直す。まだ行に入るのに早めに改行するしくみ（pretty・balance）は使わない
+   残すのは、持ち物などが横にずれない・横スワイプで動かない設定（44番）だけ */
+{ const st = document.createElement('style'); st.textContent = '#inv,#invList,.shopLike,.shBox,.shList,#settings,#colList,#credits,.screen,#notePop .nbx,#snBox,#veListBox,#gvList,#godView .gvBox,#chipBox{overflow-x:hidden;overscroll-behavior-x:none}#inv,#invList,.shList,#colList,#settings{touch-action:pan-y}.invIt>div,.shTx{min-width:0}'; document.head.appendChild(st); }
+if (TEST && window.__G) window.__G.GJW = GJW;
 
 /* 2026-11-17 人体模型の名前は「内田くん」：撮れ高の名前をそろえ、これまでの記録（回数・歴代の神回）を引き継ぐ。説明文は「人体模型（内田くん）」 */
 { const RN = { '人体模型とかくれんぼFINAL': '内田くんとかくれんぼFINAL', '人体模型とかくれんぼ1': '内田くんとかくれんぼ1', '人体模型とかくれんぼ2': '内田くんとかくれんぼ2', '逃げた人体模型を追え': '逃げた内田くんを追え', '致命傷で済んだ人体模型': '致命傷で済んだ内田くん', '首が回る人体模型': '首が回る内田くん' }; Object.assign(COL.RENAME, RN);
