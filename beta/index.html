@@ -5725,8 +5725,8 @@ Object.assign(EV.steps, {
 
 /* ② 二倍にすると近い */
 defEvent('zoomNear', {
-  tier: 'big', zones: ['R3', 'R2'], woman: true, weight: 0.9,
-  ready() { return world.distSinceBig > 10; },
+  tier: 'big', zones: ['R3', 'R2'], woman: true, weight: 0.45,   /* 2026-11-19 0.9→0.45 */
+  ready() { return world.distSinceBig > 10 && !(typeof GIRL !== 'undefined' && GIRL.on); },   /* 小さな女の子が出る周は出さない */
   start() {
     this.room = playerZone(); borrowWoman(); this.st = 'stand'; this.t = 0; this.hold = 0; this.moved = false; this.awayT = 0;
     const zs = this.room === 'R3' ? [-22.2, -23.8, -25.4, -27.0] : [-14.6, -13.0, -11.4];
@@ -15258,7 +15258,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.50';
+const VERSION = '0.17.51';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -21025,9 +21025,17 @@ Object.assign(SFX_B64, { ouma_crow: 'SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjE
 SFX_CREDITS.push({ id: 'ouma_bgm', title: '夕焼け小焼け 防災行政無線チャイム 17時', author: 'MFLASH（mflash.biz/935.html）', license: 'フリー素材（完全無料・登録不要）' }, { id: 'ouma_crow', title: 'カラスの鳴き声（逢魔が時）', author: '提供素材', license: '提供素材' });
 const BELL_PRE = () => { try { return WF('bell') || SHOP.carryList().includes('bell'); } catch (e) { return false; } };
 const BNEKO_PRE = () => { try { return WF('bneko') || SHOP.carryList().includes('bneko'); } catch (e) { return false; } };   /* 周を始める前に、黒い招き猫を持ち込むか */
+/* 2026-11-19 ナカヨシがオフタリサマを倒したあとのBGM：『月の光』をうっすら（場所からではなく、ゲームのBGMとして）。周が終わると止める */
+const VBGM = {
+  start() { if (!A.ctx || this.r) return; (hasSfx('clair') ? Promise.resolve() : sfxDecode('clair')).then(() => { if (world.state !== 'play' && world.state !== 'piano' && world.state !== 'paused') return; const r = playSfx('clair', { ear: 0, gain: 0.0001, lowpass: 5000 }); if (!r) return; r.s.loop = true; this.r = r; r.g.gain.setTargetAtTime(0.16, A.ctx.currentTime + 0.8, 2.5); }).catch(() => { }); },
+  stop(now) { const r = this.r; this.r = null; if (!r || !A.ctx) return; try { const t = A.ctx.currentTime; r.g.gain.cancelScheduledValues(t); r.g.gain.setValueAtTime(r.g.gain.value, t); r.g.gain.linearRampToValueAtTime(0.0001, t + (now ? 0.1 : 1.5)); r.s.stop(t + (now ? 0.2 : 1.6)); } catch (e) { } },
+  tick() { if (this.r && !['play', 'piano', 'paused'].includes(world.state)) this.stop(); },
+};
+setInterval(() => { try { VBGM.tick(); } catch (e) { } }, 300);
 const OUMA = {
   on: false, KEY: 'yt_ouma_seen', SEG: [[0, 2.3], [2.3, 4.4], [4.4, 9.25], [9.25, 12.1], [12.1, 16.5]], LEN: 420,
   decide() {
+    this.vk = undefined; this.bgmOff = false; try { VBGM.stop(true); } catch (e) { }
     this.on = !world.phanRun && !WF('noouma') && (WF('ouma') || chance(0.1)); world.ouma = this.on;
     if (this.on) { if (!(TEST || BETA || DEV) || new URLSearchParams(location.search).get('enemyat') === null) world.enemyAt = rnd(8, 22); this.build(); this.k = -1; this.look(0); }   /* 最初の敵：いつもは電池20〜50%使った頃 → 8〜22% */
     if (TEST || DEV) console.log('OUMA', this.on);
@@ -21082,10 +21090,10 @@ const OUMA = {
   bgmGain() { const d = Math.hypot(player.x - 0, player.z - 3.4); return 0.32 * clamp(1 - (d - 2) / 24, 0.03, 1) * (player.lv ? 0.75 : 1); },   /* 入口から離れる（奥へ入る）ほど小さく */
   update(dt) {
     if (!this.on || !this.sun) return;
-    const qk = (TEST || BETA) && new URLSearchParams(location.search).get('oumak'); const k = qk !== null && qk !== false ? clamp(+qk, 0, 1) : clamp((world.t - (world.playT0 || 0)) / this.LEN, 0, 1);
+    const qk = (TEST || BETA) && new URLSearchParams(location.search).get('oumak'); if (this.vk !== undefined) this.vk = Math.max(0.12, this.vk - dt * 0.05); const k = this.vk !== undefined ? this.vk : qk !== null && qk !== false ? clamp(+qk, 0, 1) : clamp((world.t - (world.playT0 || 0)) / this.LEN, 0, 1);
     if (world.state === 'play' || world.state === 'intro') this.look(world.state === 'intro' ? 0 : k);
     if (!A.ctx || world.state !== 'play') return;
-    if (this.bgm) this.bgm.g.gain.setTargetAtTime(this.bgmGain(), A.ctx.currentTime, 0.8);
+    if (this.bgm && !this.bgmOff) this.bgm.g.gain.setTargetAtTime(this.bgmGain(), A.ctx.currentTime, 0.8);
     this.crowT -= dt; if (this.crowT > 0) return; this.crowT = rnd(45, 75);
     /* カラス：いちばん近い外の窓から、遠くで。窓ぎわ（6m以内）でだけ聞こえる */
     let best = null, bd = 6; for (const w of this.panes) { if (w.lv !== player.lv) continue; const d = Math.hypot(w.p.x - player.x, w.p.z - player.z); if (d < bd) { bd = d; best = w; } }
@@ -21189,7 +21197,7 @@ const URFUDA = {
     URAH.frozen = true; URAH.route = []; URAH.restArm && URAH.restArm(); if (this.n === 1) URAH.scream(face, true);   /* 2026-11-17 2枚目は叫ばず、固まって静かになる */
     const away = V(URAH.pos.x - player.x, 0, URAH.pos.z - player.z); if (away.lengthSq() < 1e-4) away.set(Math.sin(URAH.by), 0, Math.cos(URAH.by)); away.normalize();
     this.st = { k: this.n === 1 ? 'stun' : 'summon', t: 0, away, p0: URAH.pos.clone() }; URAH.st = this.st.k;
-    if (this.n === 2) { this.st.wait = rnd(2, 3); world.invUntil = world.t + this.st.wait + 5; }   /* 2026-11-17 2〜3秒の「間」のあとにナカヨシを呼ぶ（その間にコメントが喜ぶ） */
+    if (this.n === 2) { this.st.ph = 'stun'; this.st.dur = 3; world.invUntil = world.t + 3 + 1.3 + 5; }   /* 2026-11-19 2枚目も、まずひるむ（約3秒）。ひるみが終わってから呼ぶ動き（約1.3秒）→ 召喚 */   /* 2026-11-17 2〜3秒の「間」のあとにナカヨシを呼ぶ（その間にコメントが喜ぶ） */
     toast(TR(this.n === 1 ? 'お札を貼った！' : 'もう片方の顔にもお札を貼った…'), 2000);
     if (TEST || DEV) console.log('URFUDA', this.n, face);
     return true;
@@ -21197,14 +21205,12 @@ const URFUDA = {
   /* URAH.update から（stun / summon の間） */
   tick(dt) {
     const S = this.st; if (!S) { URAH.toChase(); return; } S.t += dt; const U = postMat.uniforms;
-    if (S.k === 'summon' && !S.naka) { URAH.roll = Math.sin(S.t * 1.3) * 0.015; URAH.pitch = -0.08; URAH.mouthSet(0.05); if (S.t >= (S.wait || 0)) { S.t = 0; this.summonStart(); } return; }   /* 固まっている間 */
-    /* ひるむ：のけぞって震えながら、少し後ろへ下がる */
     for (const t of this.tags) if (t.pulse) t.pulse = Math.max(0, t.pulse - dt * 2.5); this.dfxTick(dt);
-    const back = S.dfl ? 0 : smooth(0, 0.45, S.t) * 0.9; let nx = S.p0.x + S.away.x * back, nz = S.p0.z + S.away.z * back; const lv = S.p0.y > 1.6 ? 1 : 0; [nx, nz] = collide(nx, nz, 0.3, lv); URAH.pos.x = nx; URAH.pos.z = nz;
-    const sh = Math.max(0, 1 - S.t / 2.5), dur = S.dur || 7, wn = S.k === 'stun' && !S.dfl ? smooth(dur - 1.7, dur - 1.3, S.t) : 0; URAH.roll = Math.sin(S.t * 38) * 0.12 * sh + Math.sin(S.t * 2.1) * 0.04 + Math.sin(S.t * 46) * 0.13 * wn;   /* 2026-11-18 75番：ひるみが終わる約1.5秒前から、震えが強くなる */
-    if (wn > 0 && !S.warned) { S.warned = 1; try { URAH.scream(URAH.face, false); } catch (e) { } world.vhs = Math.max(world.vhs || 0, 0.3); }   /* 合図：短いうなり声 */ URAH.pitch = -0.35 * smooth(0, 0.3, S.t) * (S.k === 'stun' ? (1 - smooth((S.dur || 7) - 1.5, S.dur || 7, S.t)) : 1);
-    URAH.mouthSet(0.9 + 0.3 * Math.sin(S.t * 25) * Math.max(sh, wn));
-    if (S.k === 'stun') { if (S.t > (S.dur || 7)) { this.graceUntil = world.t + 1.5;   /* 2026-11-18 75番：ひるみが終わった直後の1.5秒は捕まえない（追いかけ始めるのはよい） */ this.st = null; URAH.frozen = false; URAH.roll = 0; URAH.pitch = 0; URAH.toChase(); } return; }
+    if (S.k === 'stun') { this.stunFx(S, dt); if (S.t > (S.dur || 7)) { this.stunSettle(); this.graceUntil = world.t + 1.5;   /* 2026-11-18 75番：ひるみが終わった直後の1.5秒は捕まえない（追いかけ始めるのはよい） */ this.st = null; URAH.frozen = false; URAH.roll = 0; URAH.pitch = 0; URAH.toChase(); } return; }
+    /* 2枚目：ひるむ → 呼ぶ（見つけた時の動きを、ゆっくり）→ 召喚 */
+    if (S.ph === 'stun') { this.stunFx(S, dt); if (S.t > S.dur) { this.stunSettle(); S.ph = 'call'; S.t = 0; URAH.roll = 0; URAH.pitch = 0; URAH.once(URAH.face === 'hannya' ? 'Hannya_Detect' : 'Noh_Detect', 0.55); } return; }
+    URAH.mixer && URAH.mixer.update(dt); URAH.roll = Math.sin(world.t * 1.3) * 0.02; URAH.pitch = -0.14 * smooth(0, 0.6, S.t); URAH.mouthSet(0.75 + 0.2 * Math.sin(world.t * 7));
+    if (S.ph === 'call') { if (S.t >= 1.3) { S.t = 0; S.ph = 'naka'; this.summonStart(); } return; }
     /* 召喚：ナカヨシが床から立ち上がる */
     const N = S.naka; if (N) {
       const k = smooth(0.4, 3.2, S.t); SG.root.position.set(N.p.x, N.p.y - (1 - k) * 1.7, N.p.z); SG.root.rotation.set(0, Math.atan2(player.x - N.p.x, player.z - N.p.z), Math.sin(S.t * 31) * 0.06 * (1 - k)); sgSetOpacity(k < 0.02 ? 0 : (Math.random() < 0.85 ? Math.min(1, k * 1.3) : 0.2));
@@ -21216,6 +21222,18 @@ const URFUDA = {
       if (S.t > 4.5) { if (this.revOk()) this.revStart(); else this.summonEnd(); }
     }
   },
+  /* 2026-11-19 ひるんでいる時の動き（1枚目・2枚目・はじかれた時）：体を斜めに傾け、首から上がくるくる回って、般若と能面が入れ替わり続ける。少し後ろへ下がる */
+  stunFx(S, dt) {
+    const back = S.dfl ? 0 : smooth(0, 0.45, S.t) * 0.9; let nx = S.p0.x + S.away.x * back, nz = S.p0.z + S.away.z * back; const lv = S.p0.y > 1.6 ? 1 : 0; [nx, nz] = collide(nx, nz, 0.3, lv); URAH.pos.x = nx; URAH.pos.z = nz;
+    const dur = S.dur || 7, sh = Math.max(0, 1 - S.t / 2.5), wn = !S.dfl && dur > 4 ? smooth(dur - 1.7, dur - 1.3, S.t) : 0, out = 1 - smooth(dur - 0.45, dur, S.t), sd = S.side || (S.side = chance(0.5) ? 1 : -1);
+    URAH.roll = (0.32 * sd * smooth(0, 0.35, S.t) + Math.sin(S.t * 38) * 0.1 * sh + Math.sin(S.t * 2.1) * 0.05 + Math.sin(S.t * 46) * 0.13 * wn) * out;   /* 75番：ひるみが終わる約1.5秒前から、震えが強くなる */
+    URAH.pitch = -0.22 * smooth(0, 0.3, S.t) * out;
+    if (S.t < dur - 0.5) { URAH.headT += (3.0 + 2.8 * Math.abs(Math.sin(S.t * 1.9)) + wn * 4) * dt; } else if (!S.snap) { S.snap = 1; URAH.headT = Math.round(URAH.headA / Math.PI) * Math.PI; }   /* 最後は近い方の顔で止まる */
+    const f = Math.cos(URAH.headA) >= 0 ? 'noh' : 'hannya'; if (f !== URAH.face) { URAH.face = f; if (Math.random() < 0.35) try { SND.knock(URAH.head(), 0.35); } catch (e) { } }
+    if (wn > 0 && !S.warned) { S.warned = 1; try { URAH.scream(URAH.face, false); } catch (e) { } world.vhs = Math.max(world.vhs || 0, 0.3); }   /* 合図：短いうなり声 */
+    URAH.mouthSet(0.9 + 0.3 * Math.sin(S.t * 25) * Math.max(sh, wn));
+  },
+  stunSettle() { const n = Math.round(URAH.headT / Math.PI), off = Math.floor(n / 2) * Math.PI * 2; URAH.headA -= off; URAH.headT = n * Math.PI - off; URAH.face = ((n % 2) + 2) % 2 === 0 ? 'noh' : 'hannya'; },
   /* お面の表面の位置と向き（はじかれた時の光・コメントの判定に使う） */
   facePt(side) { const bn = URAH.bones[side === 'noh' ? 'KoOmote' : 'Hannya'], F = bn && this.mf(side), s = URAH.root.scale.x;
     if (!F) { const p = URAH.head(side); return { p, n: camera.position.clone().sub(p).normalize() }; }
@@ -21437,10 +21455,19 @@ Object.assign(URFUDA, {
       const P = R.pool, g = Math.min(1, t / 0.6); P.m.scale.setScalar(2.6 * (1 - Math.pow(1 - g, 3)) * (1 + Math.sin(world.t * 3.1) * 0.03)); P.gl.scale.setScalar(2.6 * g); P.m.rotation.z += 0.12 * dt; P.gl.material.opacity = 0.75 + Math.sin(world.t * 7.7) * 0.25;
       const s = smooth(0.4, 3.6, t); U.root.position.set(U.pos.x + Math.sin(t * 13) * 0.02 * (1 - s), U.pos.y - 0.25 - 1.3 * s, U.pos.z); U.root.rotation.z = 1.5 * R.side + Math.sin(t * 9) * 0.06 * (1 - s);
       if (t > 3.35 && !R.se) { R.se = true; winSe(); }   /* 2026-11-17 倒した音（床に消える瞬間に山） */
+      if (t > 3.62 && !R.win) { R.win = 1; this.victory(); }
       if (t > 3.8) { U.root.visible = false; U.on = false; U.st = 'off'; this.tags.forEach(x => x.m.visible = false); R.ph = 'after'; R.t2 = 0; this.friend(); }
       return;
     }
     if (R.ph === 'after') { const P = R.pool; if (P) { const k = Math.max(0, 1 - t / 8); P.m.scale.setScalar(Math.max(0.001, 2.6 * k)); P.gl.scale.setScalar(Math.max(0.001, 2.6 * k)); P.gl.material.opacity = k; if (k <= 0) { scene.remove(P.grp); for (const o of [P.m, P.gl]) { o.geometry.dispose(); o.material.dispose(); } R.pool = null; } } }
+  },
+  /* 2026-11-19 ナカヨシがオフタリサマを倒した：画面が一瞬白くなる → 夜なら逢魔が時の夕方に変わる → ゲームのBGMとして『月の光』をうっすら（音楽室のピアノの演出は止める） */
+  victory() {
+    const fl = $('#itemFlash'); if (fl) { fl.style.transition = 'none'; fl.style.opacity = '1'; void fl.offsetWidth; fl.style.transition = 'opacity 2.2s'; fl.style.opacity = '0'; }
+    try { if (F2.stopPiano) F2.stopPiano(true); F2.piano = false; if (F2.st) F2.st.piano = 'off'; } catch (e) { }
+    if (!OUMA.on) { try { OUMA.on = true; world.ouma = true; OUMA.build(); OUMA.k = -1; OUMA.vk = 0.55; OUMA.look(0.55); OUMA.crowT = rnd(20, 35); } catch (e) { if (TEST || DEV) console.warn('ouma', e); } }   /* 白い間に夕方へ。そこから少しずつ夕日が戻る */
+    else if (OUMA.bgm && A.ctx) { try { OUMA.bgm.g.gain.setTargetAtTime(0.0001, A.ctx.currentTime, 1.2); OUMA.bgmOff = true; } catch (e) { } }   /* 逢魔が時のBGMは月の光に入れかえる */
+    VBGM.start(); if (TEST || DEV) console.log('URFUDA victory');
   },
   /* もう襲わない：ふつうに歩き回り、たまにアリガトウ */
   friend() {
@@ -23896,8 +23923,8 @@ const NUI = {
   cm(k) { this.ckS = this.ckS || new Set(); if (this.ckS.has(k)) return; this.ckS.add(k); try { XCHAT.log(k); } catch (e) { } },   /* 2026-11-18 同じコメントは1本で1回まで */
   pos() { return this.base || V(0, -50, 0); },
   /* 反応してよい状態か（マイクがオン・ロッカーの回は開けた後） */
-  alive() { return this.ready && !!this.sp && world.state === 'play' && opt.mic && !!rec.mic && !!MIC.src && (!this.lk || this.opened); },
-  near(d = 2.0) { const p = this.pos(); return Math.hypot(player.x - p.x, player.z - p.z) < d && Math.abs(player.y - this.floorY) < 1.0; },
+  alive() { return this.ready && !!this.sp && (world.state === 'play' || world.state === 'piano') && opt.mic && !!rec.mic && !!MIC.src && (!this.lk || this.opened); },   /* 2026-11-19 ピアノを弾いている間も聞こえる */
+  near(d = 2.0) { const p = this.pos(), q = PIANO.on ? camera.position : player; return Math.hypot(q.x - p.x, q.z - p.z) < (PIANO.on ? d + 0.6 : d) && Math.abs(player.y - this.floorY) < 1.0; },
   seenNow() { const p = this.pos(); return this.root && this.root.visible && camera.position.distanceTo(p) < 6 && onScreen(p, 0.9) && clearLine(p, [this.root]); },
   tick(dt) {
     if (!this.ready || !this.sp) return; const r = this.root;
@@ -24823,6 +24850,13 @@ const PENSE = { r: null, lvl: 0, want: 0, last: 0,
     if (idle && this.lvl < 0.01 && performance.now() - this.last > 400) { try { r.s.stop(); } catch (e) { } this.r = null; } },
 };
 let JIYU_FILL = 0.14;   /* のぞいている間のページの明るさ */
+/* 2026-11-19 机の上にもう物が乗っているか（じゆうちょうを置かない）：机の天板より上にある小さな物を探す */
+function deskBusy(d, self) {
+  const g = d.g; g.updateMatrixWorld(true); const inv = g.matrixWorld.clone().invert(), top = 0.75, bb = new THREE.Box3(), c = V(); let hit = false;
+  scene.traverseVisible(o => { if (hit || !o.isMesh || (self && (o === self || o.parent === self || (self.children && self.getObjectById(o.id))))) return; bb.setFromObject(o); if (bb.isEmpty()) return; const sz = bb.getSize(V()); if (sz.x > 0.9 || sz.z > 0.9 || sz.y > 1.2) return;
+    bb.getCenter(c); const l = c.clone().applyMatrix4(inv), lo = bb.min.clone().applyMatrix4(inv); if (Math.abs(l.x) < 0.33 && Math.abs(l.z) < 0.27 && lo.y > top - 0.01 && lo.y < top + 0.25) hit = true; });
+  return hit;
+}
 const JIYU = {
   PW: 0.17, PH: 0.235, TW: 512, TH: 708, SX: 230, SW: 330,   /* 2026-11-18 書き込みはページの真ん中寄り（左右の端・下の端には書かない）。SX＝真ん中、SW＝使える幅 */ on: false, k: 0, g: null, placed: false,
   INK: '#2c2c31', RED: '#c22a22',
@@ -24883,7 +24917,7 @@ const JIYU = {
     this.grain(g, 0.4); L.art = c; L.artK = ks.slice(0, n); },
   place() {
     if (world.state !== 'play') return false; this.build(); const f = camFwd(); f.y = 0; f.normalize(); const by = Math.atan2(-f.x, -f.z);
-    let desk = null, best = 1.7; for (const rk in rooms) for (const d of (rooms[rk] && rooms[rk].desks) || []) { if (!d || !d.g) continue; const p = d.g.getWorldPosition(V()); if (Math.abs(p.y - (player.lv ? LH : 0)) > 1) continue; const dx = p.x - player.x, dz = p.z - player.z, dd = Math.hypot(dx, dz); if (dd > best || (f.x * dx + f.z * dz) / (dd || 1) < 0.3) continue; if (KOK.desk === d) continue; best = dd; desk = d; }
+    let desk = null, best = 1.7; for (const rk in rooms) for (const d of (rooms[rk] && rooms[rk].desks) || []) { if (!d || !d.g) continue; const p = d.g.getWorldPosition(V()); if (Math.abs(p.y - (player.lv ? LH : 0)) > 1) continue; const dx = p.x - player.x, dz = p.z - player.z, dd = Math.hypot(dx, dz); if (dd > best || (f.x * dx + f.z * dz) / (dd || 1) < 0.3) continue; if (KOK.desk === d || deskBusy(d, this.g)) continue; best = dd; desk = d; }
     if (desk) { desk.g.add(this.g); const dy = desk.g.getWorldQuaternion(new THREE.Quaternion()); const e = new THREE.Euler().setFromQuaternion(dy, 'YXZ'); this.g.position.set(0, 0.757, 0); this.g.rotation.y = by - e.y; this.desk = desk; }
     else { const [x, z] = collide(player.x + f.x * 0.75, player.z + f.z * 0.75, 0.2, player.lv); this.g.position.set(x, (player.lv ? LH : 0) + 0.004, z); this.g.rotation.y = by; scene.add(this.g); this.desk = null; }
     this.by = by; this.lv = player.lv; this.placed = true; this.fqUsed = false; this.placedAt = world.t; this.away = 0; this.rolled = false; this.wrote = 0; this.lastSeen = world.t; this.hintAsked = false; this.liveDone = false; this.pend = null; this.q = null; this.hurt = null; this.angry = false;
@@ -25048,10 +25082,10 @@ const JIYU = {
           else if (!this.firstDone && !this.blocks.some(b => !b.gone && !b.run) && this.peekT > (WF('jiyunow') ? 2 : this.firstT || (this.firstT = rnd(4, 8)))) { this.firstDone = true; if (WF('jiyunow') || Math.random() < 0.5) this.write(WF('jiyupat') && !this.fqUsed ? null : (Math.random() < 0.6 ? 'q' : 'draw'), true); }
           else if (!this.liveDone && this.peekT > 3 && (WF('jiyulive') ? this.peekT > 1.5 : Math.random() < dt * 0.006)) { this.liveDone = true; this.write('live', true); } } }
       this.reveal(dt); this.away = 0; this.lastSeen = world.t; }
-    else if (vis && d < 3.5) { this.away = 0; this.lastSeen = world.t; this.rolled = false; }
+    else if (vis && d < 3.5) { this.away = 0; this.lastSeen = world.t; this.rolled = false; this.nextRoll = 0; }
     else { this.away += dt; }
     /* 離れている間に書かれる（1回離れるごとに1回だけ抽選） */
-    if (!this.on && !this.rolled && this.away > this.waitT()) { this.rolled = true; const now = WF('jiyunow'); const pr = this.pend || this.hurt ? 0.85 : 0.6 + (world.ouma ? 0.15 : 0) + (this.monNear() ? 0.15 : 0) + (GIRL.inRoom(this.g && this.g.getWorldPosition(V())) ? 0.2 : 0);
+    if (!this.on && this.away > this.waitT() && world.t >= (this.nextRoll || 0)) { const now = WF('jiyunow'); this.nextRoll = world.t + (now ? 2 : 20); const pr = this.pend || this.hurt ? 0.85 : (GIRL.inRoom(this.g && this.g.getWorldPosition(V())) ? 0.5 : 0.25) + (world.ouma ? 0.1 : 0) + (this.monNear() ? 0.1 : 0);   /* 2026-11-19 離れている間、約20秒ごとに抽選（ふつう25%・女の子のいる教室50%） */
       if (now || Math.random() < pr) this.write(); }
   },
   waitT() { if (WF('jiyunow')) return 1.2; return (world.ouma ? 8 : 12) + (this.monNear() ? -4 : 0); },
@@ -25305,17 +25339,20 @@ const GIRL = {
     if (this.crane && this.crane.parent) this.crane.parent.remove(this.crane); this.stopCry(); if (this.ready) this.setOp(0); },
   /* 周が始まってから少しして、教室と隠れ方を決める（ナカヨシの周かどうかが決まった後） */
   setup() {
-    this.pend = false; if (WF('nogirl') || world.phanRun) return; this.on = true;
+    this.pend = false; const want = !WF('nogirl') && !world.phanRun && (WF('girl') || Math.random() < 0.3);   /* 2026-11-19 毎回だと面白くないので30% */
     const qr = this.q('girlroom'); this.room = this.ROOMS.includes(qr) ? qr : this.ROOMS[Math.floor(Math.random() * 4)]; const R = rooms[this.room], lv = this.room[0] === '2' ? 1 : 0, y0 = lv ? LH : 0; this.lv = lv;
-    const ds = (R && R.desks || []).filter(d => d && d.g); if (!ds.length) { this.on = false; return; }
+    const ds = (R && R.desks || []).filter(d => d && d.g); if (!ds.length) { this.on = false; return; } this.on = want;
     const xs = ds.map(d => d.x), zs = ds.map(d => d.z); this.bx = [Math.min(...xs) - 1.0, Math.max(...xs) + 1.0]; this.bz = [Math.min(...zs) - 1.3, Math.max(...zs) + 1.3]; this.cen = V((this.bx[0] + this.bx[1]) / 2, y0, (this.bz[0] + this.bz[1]) / 2);
     /* 赤い折り鶴：その教室の机の上（1つ） */
-    const cd = ds[Math.floor(Math.random() * ds.length)]; this.crane = this.crane || this.mkCrane(); cd.g.add(this.crane); this.crane.position.set(rnd(-0.15, 0.15), 0.755, rnd(-0.08, 0.08)); this.crane.rotation.set(0, rnd(0, 6.28), 0); this.craneDesk = cd;
+    const cd = ds[Math.floor(Math.random() * ds.length)]; this.crane = this.crane || this.mkCrane(); cd.g.add(this.crane); this.crane.position.set(rnd(-0.15, 0.15), 0.755, rnd(-0.08, 0.08)); this.crane.rotation.set(0, rnd(0, 6.28), 0); this.craneDesk = cd;   /* 折り鶴は毎周どこかの教室に（女の子がいない周は、ただ置いてあるだけ） */
+    if (!this.on) { if (TEST || DEV) console.log('GIRL off, crane', this.room); return; }
     /* 隠れ方 */
     const lks = lockers.filter(l => l.hinge && !l.locked && l.lv === lv && zoneOf(l.o.x, l.o.z, l.o.y + 1) === this.room);
     let pose = this.q('girlpose'); if (!['locker', 'desk', 'sit'].includes(pose)) pose = pickW([['locker', lks.length ? 0.34 : 0], ['desk', 0.33], ['sit', 0.33]]);
     if (pose === 'locker' && !lks.length) pose = 'desk'; this.pose = pose; this.st = 'hide'; this.seenT = 0; this.stare = 0;
-    if (pose === 'locker') { const lk = lks[Math.floor(Math.random() * lks.length)]; this.lk = lk; this.pos = lkP(lk, 0, 0, -0.2); this.yaw = lk.yaw + Math.PI; this.k = 'standing'; }
+    if (pose === 'locker') { const lk = lks[Math.floor(Math.random() * lks.length)]; this.lk = lk; this.pos = lkP(lk, 0, 0, -0.2); this.yaw = lk.yaw + Math.PI; this.k = 'standing';
+      /* 2026-11-19 女の子がいたロッカーには、じゆうちょうが必ず落ちている（自分で拾う） */
+      try { if (!ITEM.get('jiyu')) ITEM.add('jiyu', V(0, -50, 0), 1); const it = ITEM.get('jiyu'); it.taken = false; it.lk = lk; it.lv = lk.lv; it.spot = { type: 'locker', lk }; it.pos.copy(lkP(lk, 0.13, 0.16, -0.12)); ITEM.skin && ITEM.skin(it); this.jyIt = it; } catch (e) { if (TEST || DEV) console.warn('GIRL jiyu', e); } }
     else if (pose === 'desk') { const d = ds.filter(x => x !== cd)[Math.floor(Math.random() * Math.max(1, ds.length - 1))] || cd, sx = Math.random() < 0.5 ? 1 : -1; this.pos = V(d.x + sx * 0.5, y0, d.z + rnd(-0.1, 0.1)); this.yaw = sx > 0 ? -Math.PI / 2 : Math.PI / 2; this.k = 'crouching'; this.desk = d; }
     else { const cs = [[this.bx[0], this.bz[0]], [this.bx[1], this.bz[0]], [this.bx[0], this.bz[1]], [this.bx[1], this.bz[1]]].sort(() => Math.random() - 0.5); let p = null;
       for (const [cx, cz] of cs) { for (let s = 0; s < 6 && !p; s++) { const x = cx + Math.sign(this.cen.x - cx) * s * 0.25, z = cz + Math.sign(this.cen.z - cz) * s * 0.25; if (zoneOf(x, z, y0 + 1) !== this.room) continue; const [x2, z2] = collide(x, z, 0.35, lv); if (Math.hypot(x2 - x, z2 - z) < 0.05) p = V(x, y0, z); } if (p) break; }
@@ -25330,16 +25367,15 @@ const GIRL = {
   /* ── 毎フレーム */
   update(dt) {
     if (this.pend && world.t > 1.2) { this.pend = false; if (!this.ready) this.load().then(() => { if (world.state === 'play') this.setup(); }); else this.setup(); }
-    if (!this.on || !this.cur) return; const cp = camera.position;
+    const cp = camera.position;
     /* 折り鶴：映ったら */
     if (this.crane && this.crane.parent) { const p = this.crane.getWorldPosition(V()); if (rec.active && p.distanceTo(cp) < 4 && onScreen(p, 0.9) && clearLine(p.clone().setY(p.y + 0.05))) { this.craneSeenT += dt; if (this.craneSeenT > 0.6 && !this.craneFilmed) { this.craneFilmed = true; this.log('gCrane'); } } }
-    if (this.done) return;
+    if (this.done || !this.on || !this.cur) return;
     const h = this.head(), d = h.distanceTo(cp), same = Math.abs(this.pos.y - (player.lv ? LH : 0)) < 1, vis = this.pose === 'locker' && this.lk ? this.lkVis(h, d, same) : same && d < 14 && onScreen(h, 1.0) && clearLine(h, this.cur.H.meshes);
     if (this.st === 'hide') {
       /* 泣き声（座りこんでいる時）：近くにいる間、間をあけて繰り返す */
-      if (this.pose === 'sit') { this.cryT -= dt; if (this.cryT <= 0 && same && d < 13) { this.cryT = rnd(13.5, 17); this.cry(); } if (rec.active && same && d < 7 && this.cryOn) this.log('gCry'); }
-      /* ごくたまに笑い声（ロッカー・机の陰の時）。泣いている時は笑わない */
-      else { this.gigT -= dt; if (this.gigT <= 0) { this.gigT = WF('girlgig') ? rnd(6, 9) : rnd(75, 150); if (same && d < 14 && world.t > 8) this.giggle(this.pose === 'locker' ? 0.55 : 0.8); } }
+      /* 2026-11-19 泣き声はやめた。ごくたまに笑い声 */
+      { this.gigT -= dt; if (this.gigT <= 0) { this.gigT = WF('girlgig') ? rnd(6, 9) : rnd(75, 150); if (same && d < 14 && world.t > 8) this.giggle(this.pose === 'locker' ? 0.55 : 0.8); } }
       if (vis) { this.seenT += dt; if (rec.active && this.seenT > 0.35) this.log('gSeen'); } else this.seenT = Math.max(0, this.seenT - dt * 2);
       const zoomOn = zoomTarget >= 2;
       let hit = false;
@@ -25400,7 +25436,7 @@ Object.assign(EN, { 'かくれんぼの女の子をみつけた': 'Found the hid
   try { LABX.RAW.G.push('gx.gSeen.0', 'gx.gGone.0', 'gx.gCry.0'); LABX.RAW.K.push('gx.gCrane.2', 'gx.gSeen.1'); LABX.RAW.I.push('gx.gSeen.4'); LABX.L = null; } catch (e) { } }
 if (TEST && window.__G) Object.assign(window.__G, { GIRL });
 
-if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
+if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
