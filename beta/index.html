@@ -15226,7 +15226,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.29';
+const VERSION = '0.17.30';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -23705,7 +23705,7 @@ const NUI = {
   },
   /* 1周の始め：場所を決める（ほかのアイテムの後） */
   reset() {
-    this.stopTalk(); this.seenLog = false; this.busy = false; this.busyTo = 0; this.seg = null; this.pend = null; this.replies = 0; this.opened = false; this.lk = null; this.silT = 0; this.lastSay = -99; this.lastStare = -99; this.awT = 0; this.cur = null; this.lkHeard = new Set();
+    this.stopTalk(); this.seenLog = false; this.ckS = new Set(); this.busy = false; this.busyTo = 0; this.seg = null; this.pend = null; this.replies = 0; this.opened = false; this.lk = null; this.silT = 0; this.lastSay = -99; this.lastStare = -99; this.awT = 0; this.cur = null; this.lkHeard = new Set();
     if (!this.ready) { this.load().then(ok => { if (ok && world.state !== 'title') this.place(); }); return; }
     this.place();
   },
@@ -23729,6 +23729,7 @@ const NUI = {
     this.base = new THREE.Box3().setFromObject(n).getCenter(new THREE.Vector3());
     if (TEST || DEV) console.log('NUI spot', idx, s.slice(0, 3).map(v => +v.toFixed(2)).join(','));
   },
+  cm(k) { this.ckS = this.ckS || new Set(); if (this.ckS.has(k)) return; this.ckS.add(k); try { XCHAT.log(k); } catch (e) { } },   /* 2026-11-18 同じコメントは1本で1回まで */
   pos() { return this.base || V(0, -50, 0); },
   /* 反応してよい状態か（マイクがオン・ロッカーの回は開けた後） */
   alive() { return this.ready && !!this.sp && world.state === 'play' && opt.mic && !!rec.mic && !!MIC.src && (!this.lk || this.opened); },
@@ -23739,7 +23740,7 @@ const NUI = {
     if (this.lk && !this.opened && this.lk.hinge.rotation.y > 0.6) this.opened = true;
     r.visible = (this.floorY > LH - 0.5 ? F2G.visible : this.floorY > 1 ? true : F1G.visible) && !(this.lk && (HIDE.lk === this.lk || this.lk.hinge.rotation.y < 0.04));
     if (this.mix && this.talk && this.talk.isRunning()) this.mix.update(dt);
-    if (!this.seenLog && rec.active && this.seenNow() && camera.position.distanceTo(this.pos()) < 5) { this.seenLog = true; try { XCHAT.log('nui_seen'); } catch (e) { } }   /* 映った時のコメント（1周に1回） */
+    if (!this.seenLog && rec.active && this.seenNow() && camera.position.distanceTo(this.pos()) < 5) { this.seenLog = true; this.cm('nui_seen'); }   /* 映った時のコメント（1周に1回） */
     const live = this.alive() && this.near(2.0); this.listen(live);
     if (this.busy && this.cur && rec.active && this.seenNow()) { this.awT += dt; if (this.awT > 0.12) { award(this.cur === 'fake' ? 'nuiSelf' : 'nuiTalk', this.cur === 'fake' ? '自我を持ったぬいぐるみ' : 'ぬいぐるみに話しかける', this.cur === 'fake' ? 70 : 20); } } else this.awT = 0;
     // 黙って見つめられている：8秒
@@ -23769,7 +23770,7 @@ const NUI = {
     if (end < sr * 0.28) return; const buf = new Float32Array(end); let o = 0; for (const b of S.b) { if (o >= end) break; const k = Math.min(b.length, end - o); buf.set(b.subarray(0, k), o); o += k; }
     this.lastSay = world.t; this.f0 = this.pitch(buf, sr) || this.f0 || 170;
     if (this.pend) return; this.pend = setTimeout(() => { this.pend = null; if (!this.alive() || !this.near(2.6)) return; const fq = this.q(), FAKE = fq && fq.get('nuigurumi') === 'fake';
-      this.replies++; if (this.replies === 4) { try { XCHAT.log('nui_many'); } catch (e) { } } if (FAKE || Math.random() < 0.05) this.fake(); else this.mimic(buf, sr); }, rnd(350, 800));   /* 2026-11-18 教えていない言葉は1/20に（1/10→1/20） */
+      this.replies++; if (this.replies === 4) { NUI.cm('nui_many'); } if (FAKE || Math.random() < 0.05) this.fake(); else this.mimic(buf, sr); }, rnd(350, 800));   /* 2026-11-18 教えていない言葉は1/20に（1/10→1/20） */
   },
   pitch(x, sr) {   // 声の高さ（自己相関・数か所の中央値）
     const out = [], W = Math.round(sr * 0.04), lo = Math.round(sr / 400), hi = Math.round(sr / 75);
@@ -23806,7 +23807,7 @@ const NUI = {
     const b = ctx.createBuffer(1, len, sr), c = b.getChannelData(0); c.set(x.subarray(0, len)); const f = Math.min(len, Math.round(sr * 0.015)); for (let i = 0; i < f; i++) { c[i] *= i / f; c[len - 1 - i] *= i / f; }
     let pk = 0; for (let i = 0; i < len; i++) pk = Math.max(pk, Math.abs(c[i])); const norm = clamp(0.55 / (pk || 1), 0.5, 6);
     const dur = len / sr / rate, s = ctx.createBufferSource(); s.buffer = b; s.playbackRate.value = rate; const g = ctx.createGain(); g.gain.value = norm; s.connect(g); g.connect(this.chain(dur)); s.start(); s.onended = () => { try { s.disconnect(); g.disconnect(); } catch (e) { } };
-    this.begin('talk', dur); try { XCHAT.log('nui_talk'); } catch (e) { }   // 録った音はここで手放す（どこにも残さない）
+    this.begin('talk', dur); this.cm('nui_talk');   // 録った音はここで手放す（どこにも残さない）
   },
   chName() { const n = (world.yomi || world.chRaw || '').trim(); if (!n || !/^[ぁ-ゖァ-ヺー・\s]+$/.test(n)) return ''; return KANA.parse(n).some(m => m.id) ? n : ''; },
   pickLine() {
@@ -23822,7 +23823,7 @@ const NUI = {
   fake(line) {
     if (!A.ctx || this.busy || !KANA.ok()) return; line = line || this.pickLine(); const r0 = clamp(this.TARGET / this.kanaF0(), 0.8, 2.2);   /* かなの声も同じ高さの目安へ */
     const dest = this.chain(4), dur = KANA.speak(dest, line, A.ctx.currentTime + 0.02, { rate: () => r0 * rnd(0.97, 1.03), gain: 0.9, step: 1.05 });
-    if (TEST || DEV) console.log('NUI fake', line); if (dur > 0) { this.begin('fake', dur + 0.05); try { XCHAT.log('nui_fake'); } catch (e) { } }
+    if (TEST || DEV) console.log('NUI fake', line); if (dur > 0) { this.begin('fake', dur + 0.05); this.cm('nui_fake'); }
   },
   /* 近くでロッカーを開けた音もマネする */
   seMimic(lk) {
@@ -24070,7 +24071,138 @@ const SPH = {
 for (const ev of ['pointerup', 'keydown']) addEventListener(ev, e => { if (!SPH.viewOn) return; if (ev === 'keydown' && ['Escape', 'Tab'].includes(e.code)) return; if (SPH.close()) { e.stopPropagation(); e.preventDefault && ev === 'keydown' && e.preventDefault(); } }, true);
 { const P0 = PAD.press.bind(PAD); PAD.press = function (a) { if (SPH.viewOn) { SPH.close(); return; } if (SPH.shareOn && (a === 'act' || a === 'back')) { a === 'act' ? SPH.accept() : SPH.decline(); return; } return P0(a); }; }
 addEventListener('keydown', e => { if (!SPH.shareOn) return; if (e.code === KB.map.act || e.key === 'Enter') { SPH.accept(); e.preventDefault(); e.stopImmediatePropagation(); } else if (e.code === 'KeyQ' || e.key === 'Backspace') { SPH.decline(); e.preventDefault(); e.stopImmediatePropagation(); } }, true);   /* PC：E＝受け入れる・Q＝辞退 */
-if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH });
+/* =========================================================
+   2026-11-18 指示59：撮れ高を200種類に（「急に小声」をなくし、15個足す）
+   指示61の1：専用コメントのない撮れ高に2つずつ（この15個も）
+   どれも録画中・その物が映っている（聞こえている）時だけ。1周に1回まで（award がもともと1周1回）
+   ========================================================= */
+/* 「急に小声」（micHush）をなくす：一覧・表・説明・ヒントから外し、判定でも出さない。すでに取った分の記録・いいね・収益はそのまま */
+{ COL.LIST = COL.LIST.filter(x => x[0] !== 'micHush'); delete AW_TABLE.micHush; delete CHIP_DESC.micHush; delete AW_HINT.micHush; delete TKTXT.micHush;
+  const G0 = VOICE.give.bind(VOICE); VOICE.give = function (k, T) { if (k === 'micHush' || k === 'micQuiet') return; return G0(k, T); }; }
+const AW59 = {
+  /* [キー, タイトル, ランク, 点, 説明文, 伏字タイトル, 伏字説明文, ヒント, 英タイトル, 英説明, 英ヒント] */
+  DEF: [
+    ['tapRun', '出しっぱなしの水道', 'C', 15, '誰もいないはずの洗面所で、水が出しっぱなしになっていた。さっきまで、誰かがいたみたいに。', '出しっぱなしの■■', 'だれもいないはずの■■■で、■が出しっぱなしになっていた。さっきまで、だれかがいたみたいに。', '出しっぱなしの蛇口を撮る', 'The running tap', 'In a washroom that should be empty, the water was left running. As if someone had just been here.', 'film a tap left running'],
+    ['apEat', '揚げパン実食', 'C', 20, '心霊スポットで、給食の揚げパンをほおばった。砂糖が、カメラにまで落ちた気がする。', '■■■■実食', 'しんれいスポットで、きゅうしょくの■■■■をほおばった。■■が、カメラにまで落ちた気がする。', '録画中に、何かを食べる', 'Agepan taste test', 'You bit into a school-lunch agepan at a haunted spot. Some sugar may have landed on the camera.', 'eat something while recording'],
+    ['darkRec', '暗闇の中の撮影', 'C', 20, '明かりの消えた校舎で、何も映らない画面を10秒撮り続けた。映っていないだけかもしれない。', '■■の中の撮影', '明かりの消えた■■で、なにも映らない■■を10秒とりつづけた。映っていないだけかもしれない。', '真っ暗な中で撮り続ける', 'Filming in the dark', 'With the lights out, you kept filming a blank screen for 10 seconds. Maybe it just isn’t showing up.', 'keep filming in total darkness'],
+    ['bellRing', '鳴りひびく鈴', 'C', 15, '静まりかえった廊下に、鈴の音がひびいた。何かが、その音を聞いていた。', '鳴りひびく■', 'しずまりかえった■■に、■の音がひびいた。なにかが、その音を聞いていた。', '録画中に鈴を鳴らす', 'The ringing bell', 'A bell rang out in the silent hallway. Something was listening.', 'ring the bell while recording'],
+    ['buzzLure', 'ブザーでよそ見', 'C', 25, '防犯ブザーを鳴らすと、怪異はそちらへ顔を向けた。大きな音には、勝てないらしい。', '■■■でよそ見', 'ぼうはん■■■を鳴らすと、■■はそちらへ顔を向けた。大きな音には、勝てないらしい。', '怪異の近くでブザーを使う', 'Distracted by the buzzer', 'When the safety buzzer went off, the spirit turned toward it. It can’t resist loud noises.', 'use the buzzer near a spirit'],
+    ['ballLure', 'ボールで釣る', 'C', 25, '蹴ったボールが転がると、怪異はその音を追っていった。遊びたかったのかもしれない。', '■■■で釣る', 'けった■■■が転がると、■■はその音を追っていった。遊びたかったのかもしれない。', '怪異の近くでボールを蹴る', 'Lured by the ball', 'As the kicked ball rolled away, the spirit followed the sound. Maybe it wanted to play.', 'kick the ball near a spirit'],
+    ['candleOut', '消えるろうそく', 'C', 25, '手に持ったろうそくの火が、ふっと消えた。風は、吹いていなかった。', '消える■■■■', '手に持った■■■■の火が、ふっと消えた。■は、ふいていなかった。', 'ろうそくを持って、怪異に近づく', 'The candle goes out', 'The candle in your hand suddenly went out. There was no wind.', 'get close to a spirit holding a candle'],
+    ['tubeFlick', 'チカチカする蛍光灯', 'C', 15, '天井の蛍光灯が、チカチカとまたたいた。何かが起きる前は、いつもこうだ。', 'チカチカする■■■', '天井の■■■が、チカチカとまたたいた。なにかが起きる前は、いつもこうだ。', '明滅する明かりを撮る', 'The flickering light', 'The ceiling light flickered on and off. It always does this before something happens.', 'film a flickering light'],
+    ['farSteps', '遠くから来る足音', 'B', 40, 'どこか遠くから、重い足音が近づいてくる。まだ、姿は見えない。', '遠くから来る■■', 'どこか遠くから、おもい■■が近づいてくる。まだ、■は見えない。', '重い足音がしたら、その方向を撮る', 'Footsteps from afar', 'Heavy footsteps are coming closer from somewhere far away. Nothing in sight yet.', 'film toward the heavy footsteps'],
+    ['webShake', 'ふるえる蜘蛛の糸', 'B', 40, '道をふさぐ蜘蛛の糸にふれると、糸がふるえた。その糸の先から、何かがやってきた。', 'ふるえる■■の■', '道をふさぐ■■の■にふれると、■がふるえた。その■の先から、なにかがやってきた。', '道をふさぐ糸に触れる', 'The trembling web', 'When you touched the web blocking the way, it trembled. Something came from the other end.', 'touch a web blocking the way'],
+    ['passBack', '去っていく背中', 'B', 40, '隠れたロッカーのすき間から、通り過ぎていく背中を見送った。見つからなかった、はず。', '去っていく■■', 'かくれた■■■■のすき間から、通りすぎていく■■を見送った。見つからなかった、はず。', '隠れてやり過ごし、すき間から撮る', 'A back walking away', 'Through the gap in the locker, you watched a back pass by. You weren’t found. Probably.', 'hide, let it pass, and film through the gap'],
+    ['mannBonk', '壁に激突する内田くん', 'B', 40, '一直線に走ってきた内田くんが、そのまま壁に激突した。…痛くは、ないらしい。', '壁に激突する■■くん', 'いっちょくせんに走ってきた■■くんが、そのまま■に激突した。…いたくは、ないらしい。', '内田くんの突進を、壁の前でかわす', 'Uchida-kun hits the wall', 'Uchida-kun charged straight ahead and slammed right into the wall. ...It doesn’t seem to hurt.', 'dodge Uchida-kun’s charge in front of a wall'],
+    ['spFloor', '床を這うクモ女', 'A', 60, '床を這うクモ女が、こちらへ近づいてくる。足音は、ひとつもしない。', '床を這う■■■', 'ゆかを這う■■■が、こちらへ近づいてくる。■■は、ひとつもしない。', '床に現れたクモ女を撮り続ける', 'The Spider Woman on the floor', 'The Spider Woman crawls across the floor toward you. Not a single footstep.', 'keep filming the Spider Woman on the floor'],
+    ['apDanger', '怪異の前で揚げパン', 'S', 100, '怪異に追われながら、揚げパンを食べた。視聴者は、いったい何を見せられているのか。', '■■の前で■■■■', '■■に追われながら、■■■■を食べた。しちょうしゃは、いったいなにを見せられているのか。', '怪異の前で、何かを食べる', 'Agepan in front of a spirit', 'You ate an agepan while being chased. What exactly are the viewers watching?', 'eat something in front of a spirit'],
+    ['faceSwap', '入れ替わる顔', 'S', 100, '能面の顔が、般若の顔に入れ替わった。そこから先のことは、よく覚えていない。', '入れ替わる■', '■■の顔が、■■の顔に入れかわった。そこから先のことは、よく覚えていない。', 'オフタリサマの顔が変わる瞬間を撮る', 'The face that swaps', 'The Noh face turned into the Hannya face. You don’t remember much after that.', 'film the moment Ofutarisama’s face changes'],
+  ],
+  get(k) { return this.DEF.find(d => d[0] === k); },
+  give(k) { if (!rec.active || awarded.has(k)) return; const d = this.get(k); if (d) award(k, d[1], d[3]); },
+  reset() { this.t = {}; this.lure = null; this.web = null; },
+  seenP(p, maxD = 14) { try { return seen(p, { maxD }); } catch (e) { return false; } },
+  hold(key, cond, dt, need) { this.t = this.t || {}; this.t[key] = cond ? (this.t[key] || 0) + dt : 0; return this.t[key] >= need; },   /* 続けて need 秒 */
+  /* 怪異の頭と足元（見えている物だけ） */
+  mons() { const a = []; try { if (SG.ready && (SG.opacity ?? 0) > 0.2 && !WD.borrowed && womanOn()) a.push(['w', sgHead(V()), V(WD.pos.x, WD.pos.y || 0, WD.pos.z)]); } catch (e) { } try { if (urahShown()) a.push(['u', URAH.head(URAH.face), URAH.pos.clone()]); } catch (e) { } try { if (MANN.root && MANN.root.visible && !MANN.cap) a.push(['m', V(MANN.pos.x, MANN.pos.y + 1.4, MANN.pos.z), MANN.pos.clone()]); } catch (e) { } return a; },
+  onLure(kind, p) { if (!rec.active || !p) return; const L = this.lure; if (L && L.kind === kind && world.t - L.t < 12) { L.p = p.clone(); return; } const d0 = {}; for (const [n, , b] of this.mons()) d0[n] = Math.hypot(b.x - p.x, b.z - p.z); this.lure = { kind, p: p.clone(), t: world.t, d0 }; },
+  tick(dt) {
+    if (world.state !== 'play' || !rec.active) { if (world.state !== 'paused') this.t = {}; return; }
+    /* 出しっぱなしの水道 */ try { if (TAP.left && TAP.on && TAP.mesh && TAP.mesh.visible && this.hold('tap', this.seenP(TAP.mesh.position, 8), dt, 0.6)) this.give('tapRun'); } catch (e) { }
+    /* 暗闇の中の撮影（10秒続けて） */ if (this.hold('dark', !!world.dark, dt, 10)) this.give('darkRec');
+    /* ブザー・ボールで釣る：鳴らした・転がした所へ怪異が近づいていくのが映る */
+    { const L = this.lure; if (L) { if (world.t - L.t > 12) this.lure = null; else for (const [n, h, b] of this.mons()) { const d = Math.hypot(b.x - L.p.x, b.z - L.p.z); if (L.d0[n] !== undefined && L.d0[n] - d > 0.8 && this.seenP(h, 25)) { this.give(L.kind === 'buzz' ? 'buzzLure' : 'ballLure'); this.lure = null; break; } } } }
+    /* チカチカする蛍光灯 */ try { if (FL.active.some(a => a.L && a.L.pos && this.seenP(a.L.pos, 14))) this.give('tubeFlick'); } catch (e) { }
+    /* 遠くから来る足音：前兆の間に、音のする方を向いて撮る（1.5秒） */
+    try { let ok = false; if (URAH.on && URAH.st === 'wait' && URINT.om) { const p = URAH.npos(URAH.spawnK), f = camFwd(); f.y = 0; f.normalize(); const to = V(p.x - camera.position.x, 0, p.z - camera.position.z).normalize(); ok = f.dot(to) > 0.85; } if (this.hold('far', ok, dt, 1.5)) this.give('farSteps'); } catch (e) { }
+    /* ふるえる蜘蛛の糸：糸に触れてから8秒以内に、クモ女が映る */
+    try { const W = this.web; if (W) { if (world.t - W.t > 8) this.web = null; else if (SP.wrap && SP.wrap.visible && this.seenP(SP.pos.clone(), 16)) { this.give('webShake'); this.web = null; } } } catch (e) { }
+    /* 去っていく背中：隠れたロッカーのすき間から、通り過ぎていく逆さ女が見えている（0.5秒） */
+    try { const H = HIDE, ok = !!H.lk && H.ph === 'pass' && H.passed && H.ending !== 'opened' && SG.root && SG.root.visible && onScreen(sgHead(V()), 1.0) && camera.position.distanceTo(sgHead(V())) < 12; if (this.hold('pass', ok, dt, 0.5)) this.give('passBack'); } catch (e) { }
+    /* 床を這うクモ女（3秒撮り続ける） */ try { if (this.hold('spf', SP.st === 'fcrawl' && SP.wrap && SP.wrap.visible && this.seenP(SP.pos.clone(), 16), dt, 3)) this.give('spFloor'); } catch (e) { }
+  },
+};
+AW59.reset();
+for (const d of AW59.DEF) { AW_TABLE[d[0]] = [d[2], d[3]]; COL.LIST.push([d[0], d[1], d[3]]); CHIP_DESC[d[0]] = [d[4], d[9]]; AW_HINT[d[0]] = [d[7], d[10]]; TKTXT[d[0]] = [d[4], d[5], d[6]]; EN[d[1]] = d[8]; }
+/* 判定のつなぎ込み */
+{ const R0 = ITEM.reset.bind(ITEM); ITEM.reset = function () { R0(); try { AW59.reset(); } catch (e) { } }; }
+{ const U0 = SHOPFX.update.bind(SHOPFX); SHOPFX.update = function (dt) { U0(dt); try { AW59.tick(dt); } catch (e) { } }; }
+{ const R0 = ITEM.ring.bind(ITEM); ITEM.ring = function () { const r = R0(); try { AW59.give('bellRing'); } catch (e) { } return r; }; }
+{ const L0 = BUZZ.lure.bind(BUZZ); BUZZ.lure = function () { const r = L0(); try { AW59.onLure('buzz', this.on && this.on.p); } catch (e) { } return r; }; }
+{ const L0 = KBALL.lure.bind(KBALL); KBALL.lure = function (p) { const r = L0(p); try { AW59.onLure('ball', p); } catch (e) { } return r; }; }
+{ const U0 = HAND.update.bind(HAND); HAND.update = function (dt) { const c = this.item === 'candle' && world.state === 'play', n = c ? this.near() : 99; const r = U0(dt); try { if (c && n < 2.2 && this.item !== 'candle') AW59.give('candleOut'); } catch (e) { } return r; }; }
+{ const T0 = FWEB.touch.bind(FWEB); FWEB.touch = function (w) { const was = w && w.cool; const r = T0(w); try { if (w && w.cool !== was) AW59.web = { t: world.t }; } catch (e) { } return r; }; }
+{ const B0 = MANN.bonk.bind(MANN); MANN.bonk = function () { const sn = rec.active && this.root && this.root.visible && AW59.seenP(V(this.pos.x, this.pos.y + 1.2, this.pos.z), 18); const r = B0(); try { if (sn) AW59.give('mannBonk'); } catch (e) { } return r; }; }
+{ const S0 = URAH.swap.bind(URAH); URAH.swap = function (to, loud) { const from = this.face; const r = S0(to, loud); try { if (from === 'noh' && to === 'hannya' && this.root && this.root.visible && AW59.seenP(this.head(to), 20)) AW59.give('faceSwap'); } catch (e) { } return r; }; }
+{ const E0 = AGEPAN.eat.bind(AGEPAN); AGEPAN.eat = function () { let thr = false; try { thr = KEHAI.chasing() || CHATLOG.threat() || AW59.mons().some(([, h]) => AW59.seenP(h, 20)); } catch (e) { } const r = E0(); try { AW59.give('apEat'); if (thr) AW59.give('apDanger'); } catch (e) { } return r; }; }
+/* ── 61番の1：撮れ高のコメント（2つずつ）。同じコメントは1本で1回まで（もとの仕組み） ── */
+{ const C = [
+    ['ベッドの下でやり過ごす', ['足だけ見えてるの無理', "seeing only the feet, nope"], ['行った？行った？', 'is it gone? is it gone?']],
+    ['描き足されていくキャンバス', ['さっきより増えてない？', "didn't it get bigger?"], ['誰が描いてんの', "who's drawing that"]],
+    ['人知れぬ怪異「継ぎ接ぎのナカヨシ」を倒す', ['倒したああああ', 'YOU BEAT IT'], ['え、勝てるの！？', 'wait, you can win!?']],
+    ['撮れ高のヒントを入手', ['何て書いてあった？', 'what did it say?'], ['そのメモ誰が書いたの', 'who wrote that note']],
+    ['上からくるぞ', ['上ええええ', 'UP THERE'], ['天井はずるい', 'the ceiling is cheating']],
+    ['節水えらい', ['水止めたのえらい', 'good job turning off the water'], ['律儀ｗ', 'so diligent lol']],
+    ['出しっぱなしの水道', ['水出てる…誰かいた？', 'the water is running... was someone here?'], ['止めてあげて', 'turn it off']],
+    ['揚げパン実食', ['食べたｗｗ', 'you ate it lol'], ['それ食べて大丈夫なやつ？', 'is that safe to eat?']],
+    ['暗闇の中の撮影', ['何も見えん', "can't see anything"], ['暗すぎて音だけ怖い', 'so dark only the sound is scary']],
+    ['鳴りひびく鈴', ['鈴の音きれい…いや怖い', 'pretty bell... no, scary'], ['鳴らしちゃダメなやつでは', "aren't you not supposed to ring that"]],
+    ['ブザーでよそ見', ['ブザー効いてる！', 'the buzzer works!'], ['今のうちに逃げて', 'run while you can']],
+    ['ボールで釣る', ['ボール追いかけてったｗ', 'it chased the ball lol'], ['犬かな？', 'is it a dog?']],
+    ['消えるろうそく', ['火消えた…', 'the flame went out...'], ['近くにいるってこと？', 'does that mean it’s close?']],
+    ['チカチカする蛍光灯', ['電気チカチカしてる', 'the light is flickering'], ['これ何か来る前のやつ', 'this is the thing before something comes']],
+    ['遠くから来る足音', ['足音でかくない？', "aren't those footsteps loud?"], ['何か近づいてきてる', 'something is coming closer']],
+    ['ふるえる蜘蛛の糸', ['糸ゆれた', 'the web shook'], ['触っちゃダメだって', "you weren't supposed to touch it"]],
+    ['去っていく背中', ['行った…？', 'is it gone...?'], ['セーフ…？', 'safe...?']],
+    ['壁に激突する内田くん', ['激突ｗｗ', 'CRASH lol'], ['止まれなかったんかｗ', "couldn't stop, huh lol"]],
+    ['床を這うクモ女', ['床這ってる無理', 'crawling on the floor, nope'], ['動き速すぎ', 'way too fast']],
+    ['怪異の前で揚げパン', ['今食べる！？', 'NOW you eat!?'], ['余裕ありすぎて草', 'way too relaxed lol']],
+    ['入れ替わる顔', ['顔変わった！？', 'the face changed!?'], ['般若になった…', 'it became Hannya...']],
+  ];
+  C.forEach(([label, a, b], i) => { const ids = ['x61.' + i + '.1', 'x61.' + i + '.2']; CHAT_DICT.t[ids[0]] = a; CHAT_DICT.t[ids[1]] = b; if (CHAT_DICT.ev) CHAT_DICT.ev[label] = (CHAT_DICT.ev[label] || []).concat(ids); }); }
+/* ── 61番の2：スマホの通知・写真のポップへのコメント（ポップは画面に描いているので録画にも入る。映った時だけ） ── */
+{ const M = [
+    ['お母さん見てるｗ', 'mom is watching lol', '親フラきた', 'parent alert!'],
+    ['部屋入られてて草', 'lol she went in your room', '机の上の本…察し', 'the books on the desk... got it'],
+    ['歯医者ｗ', 'dentist lol', '早く帰って寝ろ', 'go home and sleep'],
+    ['親バレしてるｗ', 'your parents know lol', 'お父さん…', 'dad...'],
+    ['登録者1人増えたｗ', 'one more subscriber lol', 'お父さんこんにちは', 'hi dad'],
+    ['父よりｗ', '"from Dad" lol', '文面かたい', 'so formal'],
+    ['ばあちゃんｗｗ', 'grandma lol', '教えてあげて', 'go teach her'],
+    ['おこずかい草', 'pocket mony lol', 'ばあちゃん優しい', 'grandma is so sweet'],
+    ['彼氏いたんか', 'you have a boyfriend?', '今それどころじゃない', 'not the time'],
+    ['リア充じゃん', 'living the dream, huh', 'デート帰りに心霊スポット？', 'a haunted spot after a date?'],
+    ['重いｗ', 'clingy lol', 'たけし嫉妬してる', 'Takeshi is jealous'],
+    ['返してあげて', 'reply to him', 'たけし怖い', 'Takeshi is scary'],
+    ['田中わかってるｗ', 'Tanaka gets it lol', '身内にバレてる', 'your friends know'],
+    ['カラオケ動画見たい', 'I wanna see the karaoke video', 'やめてあげて', 'please don’t'],
+    ['返せｗ', 'pay him back lol', '3000円くらい返せよ', 'just pay back the 3000 yen'],
+    ['元カノ…？', 'an ex...?', 'たまたまって本当？', 'by chance, really?'],
+    ['何借りたの', 'what did you borrow', '元カノ確定', 'definitely an ex'],
+    ['サプリ飲んでるの草', 'lol you take supplements', '定期便ｗ', 'a subscription lol'],
+    ['思い出見せて', 'show us the memories', '1年前は平和だった', 'a year ago was peaceful'],
+    ['出会いアプリやってて草', 'lol you use a dating app', 'いいね3件はリアル', '3 likes feels real'],
+    ['サボってて草', 'skipping lessons lol', '英会話の通知うるさいよね', 'those English app alerts are so annoying'],
+  ];
+  const T = CHAT_DICT.t;
+  M.forEach((m, i) => { const a = 'sph.m.' + i + '.1', b = 'sph.m.' + i + '.2'; T[a] = [m[0], m[1]]; T[b] = [m[2], m[3]]; XCHAT.LIST['sph_m' + i] = [a, b]; });
+  const add = (k, list) => { XCHAT.LIST[k] = list.map((x, i) => { const id = 'sph.' + k + '.' + i; T[id] = x; return id; }); };
+  add('sph_tk', [['通知切っとけよ', 'turn off your notifications'], ['なぜカットしなかったｗ', "why didn't you cut that lol"], ['編集で消せよ', 'edit that out']]);
+  add('sph_sk1', [['さくこって誰？', 'who is Sakuko?'], ['知り合い？', 'someone you know?']]);
+  add('sph_sk2', [['連投こわ', 'the spam is creepy'], ['さくこしつこい', 'Sakuko is persistent']]);
+  add('sph_sk3', [['うしろ！？', 'BEHIND!?'], ['振り向くな', "don't turn around"]]);
+  add('sph_share', [['近くに誰かいる？', 'is someone nearby?'], ['受け取るな', "don't accept it"]]);
+  add('sph_photo', [['逆さま…？', 'upside down...?'], ['これ今撮られたやつ', 'that was just taken']]);
+  SPH.ck = new Set();
+  SPH.cm = function (k) { if (!k || this.ck.has(k)) return; this.ck.add(k); try { XCHAT.log(k); } catch (e) { } };   /* 同じコメントは1本で1回まで */
+  { const R0 = SPH.reset.bind(SPH); SPH.reset = function () { this.ck = new Set(); return R0(); }; }
+  { const B0 = SPH.banner.bind(SPH); SPH.banner = function (o) { const r = B0(o); try {
+      if (o.name === 'さくこ') { const L = this.SAKU; this.cm(o.text === L.first[0] ? 'sph_sk1' : o.text === L.last[0] ? 'sph_sk3' : 'sph_sk2'); }
+      else { const i = this.MSG.findIndex(m => m[3] === o.text); if (i >= 0) this.cm(Math.random() < 0.25 ? 'sph_tk' : 'sph_m' + i); }   /* ふだんのメッセージ・アプリの通知：2〜3割はつっこみに入れかえ */
+    } catch (e) { } return r; }; }
+  { const S0 = SPH.share.bind(SPH); SPH.share = function (on) { const r = S0(on); if (on) this.cm('sph_share'); return r; }; }
+  { const V0 = SPH.view.bind(SPH); SPH.view = function (on) { const r = V0(on); if (on) this.cm('sph_photo'); return r; }; } }
+if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
