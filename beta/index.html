@@ -13104,7 +13104,7 @@ function tick(now) {
   let mx = input.sx, my = input.sy;
   if (PAD.lx || PAD.ly) { mx = PAD.lx; my = PAD.ly; }   // 2026-11-14 コントローラーの左スティック
   if (KB.down('up')) my = -1; if (KB.down('down')) my = 1; if (KB.down('left')) mx = -1; if (KB.down('right')) mx = 1;
-  if (world.outro > 0 || world.capture || player.hidden || REVIVE.on || KOK.k > 0 || SCIRM.scope || world.jyK > 0) { mx = 0; my = 0; }   /* 2026-11-18 じゆうちょうをのぞいている間も歩けない */
+  if (world.outro > 0 || world.capture || player.hidden || REVIVE.on || KOK.k > 0 || SCIRM.scope || world.jyK > 0 || world.ptK > 0) { mx = 0; my = 0; }   /* 2026-11-18 じゆうちょうをのぞいている間も歩けない */
   const fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw), rx = Math.cos(player.yaw), rz = -Math.sin(player.yaw);
   const wsp = CONFIG.walkSpeed * PERM.speedMul() * CROUCH.spd() * (typeof CHBLOOD !== 'undefined' ? CHBLOOD.slow() * NWX.stag() : 1) * (typeof REDHAND !== 'undefined' ? REDHAND.slow() : 1) * (typeof DRINK !== 'undefined' ? DRINK.k() : 1);   /* 2026-11-15 赤い手に触れると一瞬遅くなる */   // シュン足：1.08倍。しゃがむと半分
   /* 2026-11-15 斜めでも前より速くならない（入力の大きさは1まで）。後ろへ歩く時は CONFIG.backMul 倍（前・横は1。間はなめらかに） */
@@ -13163,7 +13163,7 @@ function tick(now) {
   }
   { const want = gyro.on && gyro.got && opt.tilt && world.state === 'play' && Math.abs(gyro.pitch || 0) < 1.3 ? clamp(gyro.roll || 0, -0.6, 0.6) : 0; gyro.rollS = (gyro.rollS || 0) + (want - (gyro.rollS || 0)) * Math.min(1, dt * 14); }   /* 2026-11-18 スマホの傾きを画面に（左右35度まで・少しなめらかに）。真上・真下を向いた時は使わない */
   camera.rotation.set(lerp(player.pitch + shY, -1.2, outroP), player.yaw + shX + F2.yawOff, Math.sin(player.bob * 0.5) * 0.006 * walkAmt + outroP * 0.2 + gyro.rollS);
-  if (world.jyK > 0) JIYU.camRot();   /* 2026-11-18 じゆうちょう：ページの真上から見下ろす向き */
+  if (world.jyK > 0) JIYU.camRot(); if (world.ptK > 0) PAINT.camRot();   /* 2026-11-18 美術室のキャンバスも */   /* 2026-11-18 じゆうちょう：ページの真上から見下ろす向き */
   camera.updateMatrixWorld();
   // 鏡・ガラスに映る自分
   if (!world.avatarFrozen) {
@@ -13190,7 +13190,7 @@ function tick(now) {
   }
   for (const fx2 of allFixtures) { if (fx2.jig > 0) { fx2.jig -= dt; fx2.cover.position.y = -0.07 + Math.sin(fx2.jig * 90) * 0.006; } }
   // スマホのライト（一瞬弱まる演出）
-  if (!world.dark) { flashDip = Math.max(0, flashDip - dt); flash.intensity = (RED.on ? 0.75 : 1) * (SP.wrap && SP.wrap.visible && (SP.st === 'drop' || SP.st === 'latch' || SP.st === 'peel') ? clamp(camera.position.distanceTo(SP.wrap.position) / 2.4, 0.12, 1) : 1) * (woman.root.visible && woman.opacity > 0.5 ? clamp(camera.position.distanceTo(headWorld(woman, V())) / 2.2, 0.2, 1) : 1) * (MD.ph === 'face' ? 9 : CAP.on ? LIT.int * clamp(CAP.dist / 1.6, 0.1, 1) : flashDip > 0 ? 3 : player.hidden ? 1.2 : LIT.int) * (GOLDLIT && !CAP.on && MD.ph !== 'face' ? 1.35 : 1) * (world.jyK > 0 ? 1 - 0.8 * world.jyK : 1); /* 顔が白飛びしないように。じゆうちょうをのぞいている間は弱める */ }
+  if (!world.dark) { flashDip = Math.max(0, flashDip - dt); flash.intensity = (RED.on ? 0.75 : 1) * (SP.wrap && SP.wrap.visible && (SP.st === 'drop' || SP.st === 'latch' || SP.st === 'peel') ? clamp(camera.position.distanceTo(SP.wrap.position) / 2.4, 0.12, 1) : 1) * (woman.root.visible && woman.opacity > 0.5 ? clamp(camera.position.distanceTo(headWorld(woman, V())) / 2.2, 0.2, 1) : 1) * (MD.ph === 'face' ? 9 : CAP.on ? LIT.int * clamp(CAP.dist / 1.6, 0.1, 1) : flashDip > 0 ? 3 : player.hidden ? 1.2 : LIT.int) * (GOLDLIT && !CAP.on && MD.ph !== 'face' ? 1.35 : 1) * (world.jyK > 0 || world.ptK > 0 ? 1 - 0.8 * Math.max(world.jyK || 0, world.ptK || 0) : 1); /* 顔が白飛びしないように。じゆうちょうをのぞいている間は弱める */ }
   updateStalls(dt);
   updateInteractions();
   DIM.update(dt); applyLights(dt); FL.update(dt); STAIRBLINK.update(dt);
@@ -15242,7 +15242,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.44';
+const VERSION = '0.17.45';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -25057,7 +25057,133 @@ Object.assign(CHAT_DICT.t, { 'jy.l1': ['今書かれてる！？', 'is it writin
 try { LABX.RAW.I.push('jy.e3', 'jy.h3', 'jy.a4'); LABX.RAW.R.push('jy.e1', 'jy.s1', 'jy.e4'); LABX.RAW.K.push('jy.h2'); LABX.L = null; } catch (e) { }
 try { LABX.RAW.I.push('jy.g4'); LABX.RAW.R.push('jy.m1', 'jy.m2'); LABX.RAW.S.push('jy.m2'); LABX.L = null; } catch (e) { }
 
-if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
+/* =========================================================
+   2026-11-18 78番：美術室のキャンバスを、じゆうちょうと同じ方式に（3Dのキャンバスをのぞきこんで描く）
+   ・キャンバスを正面から画面いっぱいに見る。照明・モザイク・録画はそのまま（のぞいている間はモザイクを弱め、ライトをむらなく）
+   ・描いている間は歩けない。ゲームは止まらない（やめる＝すぐ戻る）
+   ・色6・太さ3・消しゴム・全部消す・完成・やめる。描く音は鉛筆の音（じゆうちょうと同じ）
+   ・新しい撮れ高「傑作を塗りつぶされる」（A60）：完成させた絵を見ていない間に、赤い大きな×と、垂れた筋が書かれる
+   ・確認用：?paintx（完成させて離れると、すぐ×が書かれる）
+   ========================================================= */
+Object.assign(PAINT, {
+  W: 400, H: 500, on: false, k: 0,
+  KEYS: ['1', '2', '3', '4', '5', '6'],
+  open(g) {
+    if (this.on || !g) return; if (world.selfie) SELF.set(false); this.g = g; this.on = true; this.isOpen = true; this.erase = false; this.col = this.col || this.COLS[0]; this.sz = this.sz || this.SIZES[1]; this.strokesN = 0;
+    const tg = this.tg = g.userData.cv3 || g.userData.cv; this.flip = !g.userData.cv3; this.meshes = []; tg.traverse(m => { if (m.isMesh) this.meshes.push(m); });
+    if (!this.cv) { this.cv = document.createElement('canvas'); this.cv.width = this.W; this.cv.height = this.H; this.x = this.cv.getContext('2d'); }
+    this.clear(); this.tx = new THREE.CanvasTexture(this.cv); this.tx.colorSpace = THREE.SRGBColorSpace; this.tx.flipY = this.flip; this.tx.anisotropy = 4;
+    for (const m of this.meshes) { if (!m.userData.origMat) m.userData.origMat = m.material; m.userData.prevMat = m.material; m.material = new THREE.MeshLambertMaterial({ map: this.tx }); }
+    /* キャンバスの中心・向き・大きさ（イーゼルから見た向きで） */
+    g.updateMatrixWorld(true); const inv = g.matrixWorld.clone().invert(), lo = V(1e9, 1e9, 1e9), hi = V(-1e9, -1e9, -1e9);
+    for (const m of this.meshes) { m.geometry.computeBoundingBox(); const b = m.geometry.boundingBox; for (let i = 0; i < 8; i++) { const p = V(i & 1 ? b.max.x : b.min.x, i & 2 ? b.max.y : b.min.y, i & 4 ? b.max.z : b.min.z).applyMatrix4(m.matrixWorld).applyMatrix4(inv); lo.min(p); hi.max(p); } }
+    const cL = lo.clone().add(hi).multiplyScalar(0.5), tilt = -0.08; this.cw = Math.max(0.2, hi.x - lo.x); this.ch = Math.max(0.2, (hi.y - lo.y) / Math.cos(tilt));
+    this.c = g.localToWorld(cL.clone()); const q = g.getWorldQuaternion(new THREE.Quaternion()); this.n = V(0, -Math.sin(tilt), Math.cos(tilt)).applyQuaternion(q).normalize(); this.up = V(0, Math.cos(tilt), Math.sin(tilt)).applyQuaternion(q).normalize();
+    this.ly0 = look.yaw; this.lp0 = look.pitch; this.y0 = player.yaw; this.p0 = player.pitch;
+    if (!this.fill) { this.fill = new THREE.PointLight(0xfff1dc, 0, 2.2, 2); scene.add(this.fill); } this.fill.position.copy(this.c).addScaledVector(this.n, 0.7);
+    try { if (document.pointerLockElement) document.exitPointerLock(); } catch (e) { } this.ui2(true); SND.rustle && SND.rustle(this.c, 0.3);
+    if (TEST || DEV) console.log('PAINT open', this.cw.toFixed(2), this.ch.toFixed(2), this.flip ? 'plane' : 'model');
+  },
+  /* やめる：描いた物は残さない（元のキャンバスに戻す） */
+  close(keep) { if (!this.on) return; this.on = false; this.isOpen = false; this.drawing = null; this.ui2(false); if (this.cur) this.cur.visible = false;
+    if (!keep && this.meshes) for (const m of this.meshes) { if (m.userData.prevMat) m.material = m.userData.prevMat; }
+    look.yaw = this.ly0 ?? look.yaw; look.pitch = this.lp0 ?? look.pitch; if (gyro.got) gyro.ref = gyro.acc - (this.ly0 - look.yaw); },
+  done() {
+    const g = this.g; if (!g || !this.on) { this.close(); return; }
+    const c = document.createElement('canvas'); c.width = this.W; c.height = this.H; c.getContext('2d').drawImage(this.cv, 0, 0); const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; tx.flipY = this.flip;
+    for (const m of this.meshes) { m.material = new THREE.MeshLambertMaterial({ map: tx }); (this.used || (this.used = [])).push(m); }
+    if (g === ARTRM.canvG) ARTRM.canvOn = false;   /* 描き足されていくキャンバスは、その周はもう描き足されない */
+    if (rec.active) { award('paintDone', '画伯の誕生', 30); if (KEHAI.chasing()) award('paintChase', '命をかけた芸術家', 50); }
+    SND.rustle && SND.rustle(this.c, 0.3); toast(LANG === 'en' ? 'Your painting is up on the canvas' : 'キャンバスに絵を描いた', 1500);
+    this.art = { g, c, tx, meshes: this.meshes.slice(), pos: this.c.clone(), n: this.n.clone(), at: world.t, away: 0, xed: false, seenX: 0 };   /* 傑作を塗りつぶされる：見ていない間に */
+    this.close(true); },
+  reset() { this.close(); for (const m of this.used || []) if (m.userData.origMat) { m.material = m.userData.origMat; m.userData.origMat = null; } this.used = []; this.art = null; this.k = 0; world.ptK = 0; },
+  clear() { const x = this.x; x.fillStyle = this.PAPER; x.fillRect(0, 0, this.W, this.H); const R = chatRng(5150), im = x.getImageData(0, 0, this.W, this.H), D = im.data; for (let i = 0; i < D.length; i += 4) { const n = (R() - 0.5) * 10; D[i] += n; D[i + 1] += n; D[i + 2] += n; } x.putImageData(im, 0, 0); if (this.tx) this.tx.needsUpdate = true; },   /* キャンバスの布のざらつき */
+  line(a, b) { const x = this.x; x.save(); x.lineCap = x.lineJoin = 'round'; if (this.erase) { x.strokeStyle = this.PAPER; x.lineWidth = this.sz * 2 + 6; x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0] + 0.01, b[1]); x.stroke(); }
+    else { x.strokeStyle = this.col; for (let p = 0; p < 2; p++) { x.globalAlpha = p ? 0.4 : 0.92; x.lineWidth = (p ? this.sz * 0.6 : this.sz) * 1.5; const o = p ? (Math.random() - 0.5) * 1.4 : 0; x.beginPath(); x.moveTo(a[0] + o, a[1] + o); x.lineTo(b[0] + o + 0.01, b[1] + o); x.stroke(); } }
+    x.restore(); this.tx.needsUpdate = true; },
+  /* 視点：キャンバスの正面から（幅に合わせ、上下はボタンにかからないように） */
+  look(dt) { this.k = clamp(this.k + (this.on ? dt / 0.55 : -dt / 0.45), 0, 1); world.ptK = this.k; if (!this.on && this.k <= 0) { if (this.k0) { this.k0 = 0; postMat.uniforms.pix.value = 4.5; } if (this.fill) this.fill.intensity = 0; return; } this.k0 = 1;
+    const e = this.k * this.k * (3 - 2 * this.k); postMat.uniforms.pix.value = 4.5 - 2.3 * e; if (this.fill) this.fill.intensity = 0.55 * e; if (this.on) { look.yaw = this.ly0; look.pitch = this.lp0; player.yaw = this.y0; player.pitch = this.p0; } },
+  cam(pos) { if (this.k <= 0 || !this.c) return; const e = this.k * this.k * (3 - 2 * this.k), t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), va = vpW() / vpH(), ca = camera.aspect, tv = t * Math.min(1, ca / va), TP = 70, BP = 132, av = Math.max(0.4, (vpH() - TP - BP) / vpH());
+    const d = Math.max((this.cw / 2) * 1.04 / (t * Math.min(ca, va)), this.ch / (2 * av * tv) * 1.02), H2 = d * tv, off = H2 * (1 - 2 * TP / vpH()) - this.ch / 2;
+    const want = this.c.clone().addScaledVector(this.n, d).addScaledVector(this.up, -off); this.camC = this.c.clone().addScaledVector(this.up, -off); pos.lerp(want, e); },
+  camRot() { const e = this.k * this.k * (3 - 2 * this.k), dc = this.dc || (this.dc = new THREE.PerspectiveCamera()); dc.position.copy(camera.position); dc.up.copy(this.up); dc.lookAt(this.camC || this.c); camera.quaternion.slerp(dc.quaternion, e); },
+  hit(cx, cy) { const [fx, fy] = toFrame(cx, cy); const va = vpW() / vpH(), ca = camera.aspect, nd = new THREE.Vector2((fx / vpW() * 2 - 1) * Math.min(1, va / ca), -(fy / vpH() * 2 - 1) * Math.min(1, ca / va)); const rc = this.rc || (this.rc = new THREE.Raycaster()); rc.setFromCamera(nd, camera); const h = rc.intersectObjects(this.meshes, false)[0]; if (!h || !h.uv) return null; return [h.uv.x * this.W, (this.flip ? 1 - h.uv.y : h.uv.y) * this.H]; },
+  down(p) { if (!p) return; this.drawing = { last: p }; this.line(p, p); this.strokesN++; },
+  move(p) { const s = this.drawing; if (!s || !p) return; const l = s.last, d = Math.hypot(p[0] - l[0], p[1] - l[1]); if (d < 1.5) return; this.line(l, p); s.last = p; PENSE.move(d * 0.8); },
+  lift() { this.drawing = null; },
+  /* ── 毎フレーム：描いている間の見た目、×を書かれる */
+  update2(dt) {
+    if (this.on) { this.padDraw(dt); if (this.usingP !== PAD.using) { this.usingP = PAD.using; this.uiSync2(); } }
+    const A0 = this.art; if (!A0) return; const cp = camera.position, d = cp.distanceTo(A0.pos), vis = d < 9 && onScreen(A0.pos, 1.05) && clearLine(cp.clone(), [], A0.pos.clone().addScaledVector(A0.n, 0.05));
+    if (!A0.xed) { if (vis && d < 6) A0.away = 0; else A0.away += dt;
+      if (!A0.rolled && A0.away > (WF('paintx') ? 1.2 : 14)) { A0.rolled = true; if (WF('paintx') || Math.random() < 0.4) this.xOut(A0); }
+      if (vis && d < 6) A0.rolled = A0.rolled && A0.away > 0; }
+    else if (rec.active && vis && d < 5) { A0.seenX += dt; if (A0.seenX > 0.6) { award('paintX', '傑作を塗りつぶされる', 60); if (!A0.cmX) { A0.cmX = 1; try { XCHAT.log('ptX'); } catch (e) { } } } }
+  },
+  /* 赤い大きな×と、×から垂れる筋 */
+  xOut(A0) { const c = A0.c, g = c.getContext('2d'), W = c.width, H = c.height, R = Math.random; g.save(); g.lineCap = 'round'; g.strokeStyle = '#a3120e';
+    const L = [[W * 0.12 + R() * 20, H * 0.12 + R() * 20, W * 0.88 - R() * 20, H * 0.84 - R() * 30], [W * 0.86 - R() * 20, H * 0.1 + R() * 20, W * 0.14 + R() * 20, H * 0.86 - R() * 30]];
+    for (const [a, b, e, f] of L) for (let p = 0; p < 3; p++) { g.globalAlpha = p ? 0.5 : 0.92; g.lineWidth = p ? 10 : 26; g.beginPath(); g.moveTo(a + (R() - 0.5) * 8, b + (R() - 0.5) * 8); const n = 10; for (let i = 1; i <= n; i++) g.lineTo(a + (e - a) * i / n + (R() - 0.5) * 14, b + (f - b) * i / n + (R() - 0.5) * 14); g.stroke(); }
+    g.globalAlpha = 0.85; for (let i = 0; i < 7; i++) { const t = R(), [a, b, e, f] = L[i % 2], x = a + (e - a) * t, y = b + (f - b) * t, len = 40 + R() * 160, w = 4 + R() * 7; const gr = g.createLinearGradient(0, y, 0, y + len); gr.addColorStop(0, 'rgba(150,12,10,.95)'); gr.addColorStop(1, 'rgba(110,6,6,.75)'); g.fillStyle = gr; g.beginPath(); g.moveTo(x - w / 2, y); g.lineTo(x + w / 2, y); g.lineTo(x + w * 0.3, y + len); g.arc(x, y + len, w * 0.45, 0, Math.PI); g.closePath(); g.fill(); }
+    g.restore(); A0.tx.needsUpdate = true; A0.xed = true; if (TEST || DEV) console.log('PAINT x'); },
+  /* ── ボタン（じゆうちょうと同じ見た目：右上＝やめる・完成、右下＝消しゴム・全部消す、左＝色と太さ） */
+  ui2(on) {
+    if (!this.el2) { const el = this.el2 = document.createElement('div'); el.id = 'ptUi'; const T = (j, e) => LANG === 'en' ? e : j;
+      el.innerHTML = `<div id="ptPad"></div><div class="jyRow"><button data-a="cancel" class="jyX"><i></i><span>${T('やめる', 'Cancel')}</span></button><button data-a="done" class="ptGo"><i></i><span>${T('完成', 'Done')}</span></button><button data-a="erase"><i></i><span>${T('消しゴム', 'Eraser')}</span></button><button data-a="clear"><i></i><span>${T('全部消す', 'Clear')}</span></button></div><div class="ptCols"></div><div class="jyTip"></div>`; document.body.appendChild(el);
+      const css = document.createElement('style'); css.textContent = '#ptUi{position:fixed;inset:0;z-index:2;display:none;pointer-events:none}#ptUi.show{display:block}#ptPad{position:absolute;inset:0;pointer-events:auto;touch-action:none}' +
+        '#ptUi .jyRow button{position:absolute;pointer-events:auto;width:60px;height:60px;border-radius:50%;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:1px;border:1.5px solid rgba(255,255,255,.6);background:rgba(12,12,14,.66);color:#fff;font:700 11px/1.15 system-ui,-apple-system,"Hiragino Sans",sans-serif;-webkit-tap-highlight-color:transparent}#ptUi .jyRow button span{display:block;width:100%;text-align:center;white-space:nowrap}#ptUi button i{display:block;width:100%;text-align:center;font-style:normal;font-size:9.5px;font-weight:800;color:#c9c4ba}#ptUi button i:empty{display:none}#ptUi .jyRow button.on{border-color:#ffd34d;color:#ffd34d;background:rgba(60,48,8,.75)}' +
+        '#ptUi .jyRow [data-a=cancel]{right:calc(env(safe-area-inset-right,0px) + 3px);top:calc(var(--sat,0px) + 156px);background:rgba(60,18,18,.8);border-color:rgba(255,160,150,.6)}#ptUi .jyRow [data-a=done]{right:calc(env(safe-area-inset-right,0px) + 3px);top:calc(var(--sat,0px) + 224px);background:rgba(18,60,30,.82);border-color:rgba(140,230,160,.7)}' +
+        '#ptUi .jyRow [data-a=erase]{right:calc(env(safe-area-inset-right,0px) + 12px);bottom:calc(var(--sab,0px) + 98px)}#ptUi .jyRow [data-a=clear]{right:calc(env(safe-area-inset-right,0px) + 12px);bottom:calc(var(--sab,0px) + 28px)}' +
+        '#ptUi .ptCols{position:absolute;left:calc(env(safe-area-inset-left,0px) + 8px);top:50%;transform:translateY(-42%);display:flex;flex-direction:column;align-items:center;gap:7px;pointer-events:auto}#ptUi .ptCols button{position:relative;width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,255,255,.55);padding:0;display:flex;align-items:center;justify-content:center;text-align:center;font:800 10px/1 system-ui,sans-serif;color:#fff;text-shadow:0 1px 2px #000;-webkit-tap-highlight-color:transparent}#ptUi .ptCols button.on{outline:3px solid #ffd34d;outline-offset:2px}#ptUi .ptCols .sz{background:rgba(12,12,14,.66)}#ptUi .ptCols .sz b{display:block;border-radius:50%;background:#fff}#ptUi .ptCols hr{width:26px;border:0;border-top:1px solid rgba(255,255,255,.35);margin:2px 0}' +
+        '#ptUi .jyTip{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--sab,0px) + 6px);text-align:center;font:600 11px system-ui,sans-serif;color:#c9c4ba;text-shadow:0 1px 2px #000;white-space:nowrap}html.ptOn #zoomRow,html.ptOn #crouchBtn,html.ptOn #actBtn,html.ptOn #stick{visibility:hidden}';
+      document.head.appendChild(css);
+      const cols = el.querySelector('.ptCols'); this.COLS.forEach((c, i) => { const b = document.createElement('button'); b.className = 'pc'; b.style.background = c; b.dataset.c = i; cols.appendChild(b); });
+      cols.appendChild(document.createElement('hr')); this.SIZES.forEach((s, i) => { const b = document.createElement('button'); b.className = 'sz'; b.dataset.s = i; b.innerHTML = `<b style="width:${[5, 10, 17][i]}px;height:${[5, 10, 17][i]}px"></b>`; cols.appendChild(b); });
+      const pad = el.querySelector('#ptPad'); for (const t of ['touchstart', 'touchmove', 'touchend', 'wheel', 'click', 'mousedown', 'contextmenu']) pad.addEventListener(t, e => { e.stopPropagation(); if (t !== 'touchstart' && t !== 'touchmove' && t !== 'touchend' && t !== 'wheel') e.preventDefault(); }, { passive: false });
+      pad.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (this.pid != null) return; this.pid = e.pointerId; try { pad.setPointerCapture(e.pointerId); } catch (er) { } PAD.setUsing && PAD.setUsing(false); this.down(this.hit(e.clientX, e.clientY)); });
+      pad.addEventListener('pointermove', e => { e.stopPropagation(); if (e.pointerId !== this.pid) return; const ev = e.getCoalescedEvents ? e.getCoalescedEvents() : [e]; for (const q of (ev.length ? ev : [e])) this.move(this.hit(q.clientX, q.clientY)); });
+      for (const t of ['pointerup', 'pointercancel']) pad.addEventListener(t, e => { e.stopPropagation(); if (e.pointerId !== this.pid) return; this.pid = null; this.lift(); });
+      el.querySelectorAll('button').forEach(b => { for (const t of ['pointerdown', 'touchstart', 'mousedown']) b.addEventListener(t, e => e.stopPropagation(), { passive: true }); b.addEventListener('click', e => { e.stopPropagation(); if (b.dataset.c !== undefined) this.act2('col', +b.dataset.c); else if (b.dataset.s !== undefined) this.act2('size', +b.dataset.s); else this.act2(b.dataset.a); }); });
+    }
+    this.el2.classList.toggle('show', !!on); document.documentElement.classList.toggle('ptOn', !!on); this.pid = null; if (on) this.uiSync2(); },
+  act2(a, v) { if (a === 'col') { this.col = this.COLS[v]; this.erase = false; } else if (a === 'size') this.sz = this.SIZES[v]; else if (a === 'erase') this.erase = !this.erase; else if (a === 'clear') this.clear(); else if (a === 'done') return this.done(); else if (a === 'cancel') return this.close(); this.uiSync2(); },
+  uiSync2() { if (!this.el2) return; const pad = PAD.using, showK = pad || FRAME.on, en = LANG === 'en', K = { cancel: pad ? PAD.of('back') : 'Esc', done: pad ? PAD.glyph(9) : 'Enter', erase: pad ? PAD.of('inv') : 'E', clear: pad ? PAD.glyph(8) : 'Del' };
+    this.el2.querySelectorAll('.jyRow button').forEach(b => { const a = b.dataset.a; b.querySelector('i').textContent = showK ? K[a] : ''; b.classList.toggle('on', a === 'erase' && !!this.erase); });
+    this.el2.querySelectorAll('.ptCols .pc').forEach((b, i) => { b.classList.toggle('on', !this.erase && this.COLS[i] === this.col); b.textContent = showK && !pad ? String(i + 1) : ''; });
+    this.el2.querySelectorAll('.ptCols .sz').forEach((b, i) => b.classList.toggle('on', this.SIZES[i] === this.sz));
+    this.el2.querySelector('.jyTip').style.bottom = FRAME.on || pad ? 'calc(var(--sab,0px) + 116px)' : '';   /* PCでは録画ボタンのキー表示と重ならないように */
+    this.el2.querySelector('.jyTip').textContent = pad ? (en ? `Stick: move brush / hold ${PAD.of('act')}: paint / ${PAD.glyph(4)}${PAD.glyph(5)}: color / ${PAD.of('selfie')}: size` : `スティックでペン・${PAD.of('act')}で描く・${PAD.glyph(4)}${PAD.glyph(5)}で色・${PAD.of('selfie')}で太さ`) : FRAME.on ? (en ? 'Drag to paint / 1-6 color / Z X C size' : 'ドラッグで描く・1〜6で色・Z X Cで太さ') : (en ? 'Trace to paint' : 'なぞると描ける'); },
+  key2(e) { if (!this.on) return false; const c = e.code; if (c === 'Escape' || c === 'KeyQ') { this.act2('cancel'); return true; } if (c === 'Enter' || c === 'NumpadEnter') { this.act2('done'); return true; } if (c === 'KeyE') { this.act2('erase'); return true; } if (c === 'Delete' || c === 'Backspace') { this.act2('clear'); return true; }
+    const dg = /^Digit([1-6])$/.exec(c); if (dg) { this.act2('col', +dg[1] - 1); return true; } const zi = ['KeyZ', 'KeyX', 'KeyC'].indexOf(c); if (zi >= 0) { this.act2('size', zi); return true; } return ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(c); },
+  /* コントローラー：スティックでペン・Aを押している間描く・LB/RBで色・Yで太さ・Xで消しゴム・ビューで全部消す・メニューで完成・Bでやめる */
+  padDraw(dt) { if (!PAD.using || !this.on) { if (this.cur) this.cur.visible = false; return; } const pp = this.pp || (this.pp = [this.W / 2, this.H / 2]); pp[0] = clamp(pp[0] + PAD.lx * 260 * dt, 6, this.W - 6); pp[1] = clamp(pp[1] + PAD.ly * 260 * dt, 6, this.H - 6);
+    if (!this.cur) { this.cur = new THREE.Mesh(new THREE.RingGeometry(0.006, 0.009, 16), new THREE.MeshBasicMaterial({ color: 0x3060ff, depthTest: false, transparent: true, toneMapped: false, fog: false })); this.cur.renderOrder = 9; scene.add(this.cur); }
+    const r = V().crossVectors(this.up, this.n).normalize(), c = this.c.clone().addScaledVector(r, (pp[0] / this.W - 0.5) * this.cw).addScaledVector(this.up, -(pp[1] / this.H - 0.5) * this.ch).addScaledVector(this.n, 0.01);
+    this.cur.position.copy(c); this.cur.lookAt(c.clone().add(this.n)); this.cur.visible = true; this.cur.material.color.set(this.erase ? 0xff8040 : 0x3060ff); },
+  padPoll2() { const g = PAD.get(); if (!g) return; const B = g.buttons.map(b => b && (b.pressed || b.value > 0.5)), M = PAD.map(), pr = this.padPrev || [], dn = i => B[i] && !pr[i];
+    PAD.lx = PAD.dz(g.axes[0] || 0); PAD.ly = PAD.dz(g.axes[1] || 0); if (PAD.lx || PAD.ly || B.some(Boolean)) PAD.setUsing(true);
+    const pen = !!B[M.act], pp = this.pp || (this.pp = [this.W / 2, this.H / 2]); if (pen && !this.drawing) this.down(pp.slice()); else if (pen && this.drawing) this.move(pp.slice()); else if (!pen && this.drawing) this.lift();
+    const ci = this.COLS.indexOf(this.col); if (dn(4)) this.act2('col', (ci + 5) % 6); if (dn(5)) this.act2('col', (ci + 1) % 6); if (dn(M.selfie)) this.act2('size', (this.SIZES.indexOf(this.sz) + 1) % 3);
+    if (dn(M.inv)) this.act2('erase'); if (dn(8)) this.act2('clear'); if (dn(9)) { this.padPrev = B; this.act2('done'); return; } if (dn(M.back)) { this.padPrev = B; this.act2('cancel'); return; } if (dn(M.rec)) PAD.press('rec'); this.padPrev = B; },
+});
+{ const C0 = KOK.cam.bind(KOK); KOK.cam = function (pos) { C0(pos); PAINT.cam(pos); }; }
+{ const L0 = KOK.look.bind(KOK); KOK.look = function (dt) { L0(dt); PAINT.look(dt); }; }
+{ const U0 = KOK.update.bind(KOK); KOK.update = function (dt) { U0(dt); try { if (world.state === 'play') PAINT.update2(dt); } catch (e) { if (TEST || DEV) console.warn('PAINT', e); } }; }
+{ const O0 = NEWWING.offer.bind(NEWWING); NEWWING.offer = function () { const r = O0(); if (PAINT.on) { actFn = null; actLabel = ''; } return r; }; }
+{ const P0 = PAD.poll.bind(PAD); PAD.poll = function (dt) { if (PAINT.on && world.state === 'play') { try { PAINT.padPoll2(); } catch (e) { } return; } return P0(dt); }; }
+{ const M0 = MLOCK.ok.bind(MLOCK); MLOCK.ok = function () { return !PAINT.on && M0(); }; }
+addEventListener('keydown', e => { if (!PAINT.on || world.state !== 'play') return; if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return; if (PAINT.key2(e)) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+Object.assign(AW_TABLE, { paintX: ['A', 60] }); COL.LIST.push(['paintX', '傑作を塗りつぶされる', 60]);
+Object.assign(CHIP_DESC, { paintX: ['キャンバスに描き上げた絵に、目を離したすきに、赤い大きな×が書かれていた。×からは、何かが垂れていた。', 'While you looked away, a big red X was scrawled over your finished painting. Something was dripping from it.'] });
+Object.assign(AW_HINT, { paintX: ['美術室のキャンバスに絵を描き上げ、離れてから戻って撮る', 'finish a painting in the art room, leave, then come back and film it'] });
+Object.assign(EN, { '傑作を塗りつぶされる': 'Masterpiece crossed out' });
+XCHAT.LIST.ptX = ['pt.x1', 'pt.x2', 'pt.x3', 'pt.x4'];
+Object.assign(CHAT_DICT.t, { 'pt.x1': ['傑作が…', 'the masterpiece...'], 'pt.x2': ['×されてるｗ', 'it got an X lol'], 'pt.x3': ['酷評すぎる', 'harsh review'], 'pt.x4': ['血みたいなの垂れてない？', 'is that blood dripping?'] });
+try { LABX.RAW.R.push('pt.x2'); LABX.RAW.S.push('pt.x3'); LABX.L = null; } catch (e) { }
+
+if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
