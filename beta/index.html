@@ -1517,7 +1517,7 @@ const EN = {
   '音が出ないときは、画面をもう一度タップしてください': 'If there is no sound, tap the screen again.',
   '歩いたり見回したりして、画角を決めてください': 'Walk and look around to frame the shot', 'ここに設置': 'Place here', 'やめる': 'Cancel', '定点カメラを設置した。怪異が映ると自動で録画します': 'Fixed camera placed. It records automatically when something appears.', '定点カメラを回収した。持ち物からまた置けます': 'Fixed camera picked up. You can place it again from your items.', '定点カメラを回収する': 'Pick up the fixed camera', '置く': 'Place', '設置中': 'In use',
   '定点カメラを置いた。怪異が映ると自動で録画します（15秒まで）': 'Fixed camera placed. It records automatically when something appears (up to 15s).', '定点カメラの容量がいっぱいになった': 'The fixed camera is full', '定点': 'CAM2',
-  '2台目のスマホを定点カメラに。持ち物から好きな場所に設置できる。画角に撮れ高が入ると自動で録画（15秒まで）する。所持しているとメモリーカードは出なくなる。': 'A second phone used as a fixed camera. Place it anywhere from your items. It records automatically when something worth filming enters the frame (up to 15s). Once owned, memory cards no longer appear.',
+  '2台目のスマホを定点カメラに。持ち物から好きな場所に設置できる。画角に入った現象を自動で録画し（15秒まで）、スマホで撮っていない時でも撮れ高になる。録画中に映ると、動画の画面が定点カメラに切り替わる。所持しているとメモリーカードは出なくなる。': 'A second phone used as a fixed camera. Place it anywhere from your items. It automatically records anything that enters the frame (up to 15s), and counts as a highlight even when your phone isn’t filming. If it catches something while you’re recording, the video cuts to the fixed camera. Once owned, memory cards no longer appear.', '外カメラで録画している間、画面の隅にインカメラの小窓が映る。自分のリアクションと背後の怪異も一緒に録画でき、小窓に映った現象も撮れ高になる（一部をのぞく）。': 'While recording with the rear camera, a small selfie window appears in the corner. Your reactions and anything behind you are recorded too, and most things caught in the window count as highlights.',
   'ワイプカメラ': 'Wipe camera', '定点カメラ': 'Fixed camera', 'ここに置く': 'Place here', '置いた': 'Placed', 'リングライト': 'Ring light', 'ガンマイク': 'Shotgun mic', '予備バッテリー': 'Spare battery',
   'ひろう': 'Pick up',
   'コントローラーをつなぎました': 'Controller connected', 'ボタンを押す…': 'Press a button…', '先にコントローラーをつないで、どれかボタンを押してください': 'Connect a controller and press any button first', 'つながっていません（PS・Xbox・Switchプロコンに対応）': 'Not connected (PS, Xbox, Switch Pro supported)', '録画の開始・停止': 'Start/stop recording', '調べる・開ける・隠れる': 'Examine / open / hide', 'インカメラ切り替え': 'Selfie camera', 'ズームを下げる': 'Zoom out', 'ズームを上げる': 'Zoom in', '持ち物': 'Items', '設定（一時停止）': 'Settings (pause)', '閉じる・戻る': 'Close / back',
@@ -13331,12 +13331,12 @@ const GEAR = {
   },
   // 毎フレーム、いつもの画面を描いた後
   after() {
-    const w = this.wipeOn(), f = FIXCAM.showInset();
+    const full = FIXCAM.full(), w = this.wipeOn() && !full, f = full;
     if (!w && !f) { if (this.wipe) this.wipe.ok = false; return; }
     this.init(); this.frame++;
+    if (f && this.frame % 2 === 0) { this.pass(this.fix, camera, focus.dist || 3); }   /* 切り替え中の小窓は、自分のスマホの映像 */
     if (this.frame % 2 === 0) {
       if (w) { const av = avatar.root.visible, sl = selfLight.intensity; SELF.pose(); selfLight.intensity = PERM.active('light') ? 1.3 : 0.55; avatar.root.visible = true; RING.hide(true); this.pass(this.wipe, selfCam, 0.6); avatar.root.visible = av; selfLight.intensity = sl; RING.hide(false); }
-      if (f) { const av = avatar.root.visible; avatar.root.visible = true; this.pass(this.fix, this.fixCam, 3); avatar.root.visible = av; }
     }
     // 小窓をキャンバスに描く（録画にも入る）
     renderer.setRenderTarget(null); const ac = renderer.autoClear; renderer.autoClear = false;
@@ -13344,7 +13344,8 @@ const GEAR = {
     const draw = (q, l, x) => { this.qW.visible = q === this.qW; this.qF.visible = q === this.qF; this.lW.visible = this.lF.visible = false; renderer.setViewport(x, H - top - wh, ww, wh); renderer.render(this.ov, this.ovCam);
       this.qW.visible = this.qF.visible = false; l.visible = true; renderer.setViewport(x + 6, H - top - Math.round(ww * 0.25) - 4, Math.round(ww * 0.62), Math.round(ww * 0.155)); renderer.render(this.ov, this.ovCam); l.visible = false; };
     if (w && this.wipe.ok) draw(this.qW, this.lW, W - ww - mx);
-    if (f && this.fix.ok) draw(this.qF, this.lF, mx);
+    if (f && this.fix.ok) { this.qF.material.uniforms.col.value.set(0xffffff); this.qW.visible = false; this.qF.visible = true; this.lW.visible = this.lF.visible = false; renderer.setViewport(mx, H - top - wh, ww, wh); renderer.render(this.ov, this.ovCam); this.qF.visible = false; }
+    if (f) { const lw = Math.round(W * 0.34), lh = Math.round(lw * 0.25); this.lF.visible = true; renderer.setViewport(Math.round(W - lw - mx), H - Math.round(H * 0.245) - lh, lw, lh); renderer.render(this.ov, this.ovCam); this.lF.visible = false; }   /* 「● CAM 2」：定点カメラの映像だと分かるように（右上のボタンの下） */
     renderer.setViewport(0, 0, W, H); renderer.autoClear = ac;
   },
 };
@@ -13354,7 +13355,7 @@ const GEAR = {
    ・置いたカメラに近づくと「回収する」。回収したら、また好きな場所に置き直せる（容量の15秒は1周で共通） */
 const FIXCAM = {
   placed: false, cap: 15, hitT: -99, recOn: false, mesh: null, framing: false,
-  reset() { this.placed = false; this.cap = 15; this.hitT = -99; this.recOn = false; if (this.mesh) this.mesh.visible = false; this.endFrame(true); this.ui(); },
+  reset() { this.placed = false; this.cap = 15; this.hitT = -99; this.recOn = false; this.fOn = false; this.fOff = undefined; if (this.mesh) this.mesh.visible = false; this.endFrame(true); this.ui(); },
   can() { return PERM.active('fixcam') && !this.placed && world.state !== 'title'; },
   model() {
     if (this.mesh) return this.mesh;
@@ -13414,7 +13415,8 @@ const FIXCAM = {
     if (this.led) this.led.visible = this.recOn ? (world.t * 2 % 1) < 0.6 : false;
     this.ui();
   },
-  showInset() { return this.placed && this.recOn && rec.active && world.state === 'play' && !world.selfie && !this.framing; },   // スマホでも録画中なら2カメ
+  showInset() { return this.placed && this.recOn && rec.active && world.state === 'play' && !world.selfie && !this.framing; },
+  full() { const on = this.showInset(); if (on && !this.fOn && world.t >= (this.fOff ?? -9) + 1.0) this.fOn = true; else if (!on && this.fOn) { this.fOn = false; this.fOff = world.t; } return this.fOn && on; },   // スマホでも録画中なら2カメ
   ui() { let el = $('#fixCap'); if (!el) { const c = $('#cap'); if (!c) return; el = document.createElement('div'); el.id = 'fixCap'; c.after(el); } el.style.display = this.placed ? '' : 'none'; document.body.classList.toggle('fixOn', !!this.placed); const s2 = Math.ceil(this.cap); el.textContent = `📹 ${TR('定点')} 0:${String(s2).padStart(2, '0')}${this.recOn ? ' ●' : ''}`; el.classList.toggle('rec', this.recOn); },
 };
 /* リングライト：鏡やインカメラに映る主人公の手元（両手の間）に付ける */
@@ -13449,11 +13451,12 @@ function render() {
   RING.update();   // 2026-11-14 リングライト（鏡に映る手元）
   PHAN.late();   // 2026-11-15 合体した化け物（女の体に人体模型とクモ女をくっつける）
   if (world.selfie) { SELF.pose(); cam = selfCam; avatar.root.visible = true; RING.hide(true); }
+  const fx = FIXCAM.full(), f0 = postMat.uniforms.focus.value; if (fx) { GEAR.init(); cam = GEAR.fixCam; cam.aspect = camera.aspect; cam.updateProjectionMatrix(); avatar.root.visible = true; postMat.uniforms.focus.value = 3; }   /* 2026-11-19 82番：定点カメラが映している間は、画面全体（録画にも入る）を定点カメラの映像に */
   postMat.uniforms.near.value = cam.near;   // 被写界深度の距離計算をそのカメラに合わせる
   renderer.setRenderTarget(rt); renderer.render(scene, cam); avatar.root.visible = av; RING.hide(false);
   LUM.grab();
   { const now = performance.now(); PIANO.ovUpdate(Math.min(0.1, (now - (PIANO.ovT || now)) / 1000)); PIANO.ovT = now; }   // 録画に入る鍵盤
-  renderer.setRenderTarget(null); renderer.render(postScene, postCam);
+  renderer.setRenderTarget(null); renderer.render(postScene, postCam); if (fx) postMat.uniforms.focus.value = f0;
   GEAR.after();   // 2026-11-14 ワイプカメラ・定点カメラの小窓
   CALL.after();   // 2026-11-15 着信の画面（録画にも入る）
 }
@@ -15188,8 +15191,8 @@ const PERM = {
     light: { name: 'リングライト', desc: '動画撮影の必需品。インカメラの明かりが強くなり、暗い所でも自分と背後が映りやすい。' },
     gunmic: { name: 'ガンマイク', desc: '狙った音を拾う外付けマイク。怪異の足音や声が少し遠くまで、方向も分かりやすく聞こえる。' },
     batt: { name: '大容量バッテリー', desc: '大容量のバッテリー。スマホの電池が少しゆっくり減る。' },
-    wipe: { name: 'ワイプカメラ', desc: '外カメラで録画している間、画面の隅にインカメラの小窓が映る。自分のリアクションと背後の怪異も一緒に録画できる。' },
-    fixcam: { name: '定点カメラ', desc: '2台目のスマホを定点カメラに。持ち物から好きな場所に設置できる。画角に撮れ高が入ると自動で録画（15秒まで）する。所持しているとメモリーカードは出なくなる。' },
+    wipe: { name: 'ワイプカメラ', desc: '外カメラで録画している間、画面の隅にインカメラの小窓が映る。自分のリアクションと背後の怪異も一緒に録画でき、小窓に映った現象も撮れ高になる（一部をのぞく）。' },
+    fixcam: { name: '定点カメラ', desc: '2台目のスマホを定点カメラに。持ち物から好きな場所に設置できる。画角に入った現象を自動で録画し（15秒まで）、スマホで撮っていない時でも撮れ高になる。録画中に映ると、動画の画面が定点カメラに切り替わる。所持しているとメモリーカードは出なくなる。' },
   },
   load() {
     if (this.d) return this.d; let d = null; try { d = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) { }
@@ -15264,7 +15267,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.52';
+const VERSION = '0.17.53';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -25443,7 +25446,11 @@ Object.assign(EN, { 'かくれんぼの少女の霊': 'The hide-and-seek little 
   try { LABX.RAW.G.push('gx.gSeen.0', 'gx.gGone.0', 'gx.gCry.0'); LABX.RAW.K.push('gx.gCrane.2', 'gx.gSeen.1'); LABX.RAW.I.push('gx.gSeen.4'); LABX.L = null; } catch (e) { } }
 if (TEST && window.__G) Object.assign(window.__G, { GIRL });
 
-if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
+/* 2026-11-19 83番：ワイプカメラ・定点カメラの説明文が、言葉の途中で折り返さないように（その2つの文の中の言葉だけ、見えない「つなぎ」の文字で一続きにする。全体に効くしくみではない） */
+{ const WJ = '\u2060', NBW = ['撮れ高', '定点カメラ', '切り替わる', '持ち物', 'インカメラ', 'リアクション', 'メモリーカード', '画面', '現象', '自動', '録画', 'スマホ', '怪異', '背後', '小窓', '所持', '設置', '外カメラ', '一部', '映った', '撮っていない', '入った', '映ると', '動画', '画角', '好きな', '場所'];
+  const nb = t => NBW.reduce((a, w) => a.split(w).join([...w].join(WJ)), t);
+  for (const id of ['wipe', 'fixcam']) { const D = PERM.DEFS[id]; if (!D) continue; const o = D.desc, n = nb(o); if (EN[o]) EN[n] = EN[o]; D.desc = n; } }
+if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
