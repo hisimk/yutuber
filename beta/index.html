@@ -5147,8 +5147,10 @@ const WD = {
       if (this.path.length) t = nodePos(this.path[0]); else if (this.extra) t = this.extra; else break;
       const dx = t.x - this.pos.x, dz = t.z - this.pos.z, d = Math.hypot(dx, dz);
       if (d > 0.01) { const h = Math.atan2(dx, dz); let dh = Math.atan2(Math.sin(h - this.heading), Math.cos(h - this.heading)); this.heading += clamp(dh, -5 * dt, 5 * dt); }
-      if (d <= move) { this.pos.set(t.x, t.y || 0, t.z); move -= d; if (this.path.length) { this.node = this.path.shift(); this.repathN = 0; } else { this.extra = null; this.repathN = 0; } }
-      else { const k = move / d; this.pos.x += dx * k; this.pos.z += dz * k; this.pos.y += ((t.y || 0) - this.pos.y) * k; move = 0; }
+      /* 2026-11-19 まっすぐ向かう時（道順なし）は、階段の上でなければ高さを変えない（古い目印が別の階だと、歩きながら床に沈む・浮く） */
+      const ty = this.path.length || stairZone(this.pos.x, this.pos.z) || stairZone(t.x, t.z) || Math.abs((t.y || 0) - this.pos.y) < 1 ? (t.y || 0) : this.pos.y;
+      if (d <= move) { this.pos.set(t.x, ty, t.z); move -= d; if (this.path.length) { this.node = this.path.shift(); this.repathN = 0; } else { this.extra = null; this.repathN = 0; } }
+      else { const k = move / d; this.pos.x += dx * k; this.pos.z += dz * k; this.pos.y += (ty - this.pos.y) * k; move = 0; }
     }
     return !this.path.length && !this.extra;
   },
@@ -15256,7 +15258,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.49';
+const VERSION = '0.17.50';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -21207,7 +21209,7 @@ const URFUDA = {
     const N = S.naka; if (N) {
       const k = smooth(0.4, 3.2, S.t); SG.root.position.set(N.p.x, N.p.y - (1 - k) * 1.7, N.p.z); SG.root.rotation.set(0, Math.atan2(player.x - N.p.x, player.z - N.p.z), Math.sin(S.t * 31) * 0.06 * (1 - k)); sgSetOpacity(k < 0.02 ? 0 : (Math.random() < 0.85 ? Math.min(1, k * 1.3) : 0.2));
       U.tear.value = S.t < 3.4 ? rnd(0.02, 0.2) : 0; world.vhs = Math.max(world.vhs || 0, 0.45);
-      if (S.t > 0.25 && !N.ch) { N.ch = 1; this.chant(N.p); }   /* 2026-11-18 73番：「ナ、カヨシ、ナカヨシ、ナカヨ、シ」 */
+      if (S.t > (S.chAt || 0.25) && !N.ch) { N.ch = 1; this.chant(N.p); }   /* 2026-11-18 73番：「ナ、カヨシ、ナカヨシ、ナカヨ、シ」 */
       if (S.t > 3.3 && !N.sc) { N.sc = 1; wdScreamLong(0, 0.7); }
       if (S.t > 2.2 && !N.sc2) { N.sc2 = 1; URAH.scream('hannya', true); jumpSting('jump_b', 0.8, 3); }
       if (rec.active && S.t > 1.0) award('urahSummon', 'ナカヨシ召喚の瞬間', 150);   /* 2026-11-16 召喚の瞬間に録画していればよい（映っているかは問わない） */
@@ -21255,7 +21257,9 @@ const URFUDA = {
     const cp = camera.position, vf = URAH.head('noh').distanceTo(cp) < URAH.head('hannya').distanceTo(cp) ? 'noh' : 'hannya';
     return this.tags.some(t => t.side === vf) ? null : vf; },
   summonStart() {
-    const S = this.st; world.invUntil = world.t + 5; if (DIR.active) DIR.end(DIR.active); if (CH.state !== 'off') CH.stop();
+    const S = this.st; world.invUntil = world.t + 5;
+    /* 2026-11-19 オフタリサマが呼ぶ：「ナ、ナカヨシ　キテ」（今の顔の声）。ナカヨシの連呼はそのあと */
+    let ln = 0; try { URAHV.busy = 0; ln = URAHV.say('x', URAH.face || 'noh', { text: 'な、なかよし　きて' }) || 0; } catch (e) { } S.chAt = Math.max(0.25, ln + 0.15); if (DIR.active) DIR.end(DIR.active); if (CH.state !== 'off') CH.stop();
     if (WD.borrowed) WD.release(false);
     /* 2026-11-18 73番：召喚する場所は、プレイヤーとオフタリサマの間の、オフタリサマ寄り（約1m）。プレイヤーが近すぎる時は、斜め前にずらす。壁に当たる時は近い所へ */
     const lv = S.p0.y > 1.6 ? 1 : 0, U0 = URAH.pos.clone(), tp = V(player.x - U0.x, 0, player.z - U0.z), D = tp.length(); if (D < 1e-3) tp.copy(S.away).negate(); tp.normalize(); let p = null;
@@ -21281,7 +21285,8 @@ const URFUDA = {
   summonEnd() {
     const S = this.st, p = S.naka.p; this.st = null; URAH.frozen = false; URAH.roll = 0; URAH.pitch = 0;
     const U = postMat.uniforms; U.tear.value = 0; WD.release(false); WD.pos.copy(p); WD.wait = 0; WD.noDetectUntil = 0; sgSetOpacity(1);
-    CH.start('chase'); CH.grace = 0.6; PHAN.trackT = 15; PHAN.wasCh = true; PHAN.nextHunt = world.t + rnd(14, 24);
+    CH.start('chase'); CH.grace = 0.6; CH.lastSeen.set(player.x, player.y, player.z); CH.seenAt = world.t; PHAN.trackT = 15;   /* 2026-11-19 目印を今のプレイヤーの位置に（前の追跡の目印が別の階に残っていると、そちらへ向かって床に沈んだ） */
+    PHAN.wasCh = true; PHAN.nextHunt = world.t + rnd(14, 24);
     URAH.toChase(); world.invUntil = world.t + 0.8; this.graceUntil = world.t + 1.5;   /* 召喚のあとも1.5秒は捕まえない */
   },
 };
@@ -21405,8 +21410,9 @@ Object.assign(URFUDA, {
     if (R.ph === 'turn') {   /* 2026-11-18 73番：その場でくるっと振り返る（約0.6秒）→ すぐ体当たりへ */
       const k = smooth(0.1, 0.7, R.t), ty = Math.atan2(dir.x, dir.z); let dy = ty - R.y0; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
       SG.root.position.copy(R.p); SG.root.rotation.set(0, R.y0 + dy * k, Math.sin(R.t * 17) * 0.04); WD.pos.copy(R.p);
-      if (R.t > 0.8) { R.ph = 'ram'; R.t = 0; } return; }
+      if (R.t > 0.8) { R.ph = 'ram'; R.t = 0; try { URAHV.busy = 0; R.vn = URAHV.say('x', 'noh', { text: 'どうして' }) || 1.0; } catch (e) { R.vn = 1; } } return; }   /* 2026-11-19 反撃された：能面「ドウシテ」→ 般若「ナンデ」 */
     if (R.ph === 'ram') {
+      if (R.vn && !R.vh && R.t > R.vn + 0.25) { R.vh = 1; try { URAHV.busy = 0; URAHV.say('x', 'hannya', { text: 'なんで', loud: true }); } catch (e) { } }
       /* 体当たり：少し下がって助走 → 体ごと突っ込む（約1.1秒で1回、5回） */
       const c = (R.t % 1.1) / 1.1, k = c < 0.55 ? -smooth(0, 0.55, c) : smooth(0.55, 0.78, c), gap = 2.1 - 1.55 * Math.max(0, k) + 0.5 * Math.min(0, k) * -1;
       const tp = up.clone().addScaledVector(dir, -gap); R.p.lerp(V(tp.x, R.p.y, tp.z), Math.min(1, dt * (k > 0 ? 18 : 6)));
