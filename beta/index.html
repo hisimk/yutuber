@@ -15242,7 +15242,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.43';
+const VERSION = '0.17.44';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -24737,7 +24737,7 @@ SFX_CREDITS.push({ id: 'jy_pencil', title: 'WritingPencil_6028_99_1_2.wav', auth
 const PENSE = { r: null, lvl: 0, want: 0, last: 0,
   move(dist, pos) { this.want = Math.min(1, this.want + dist / 120); this.last = performance.now(); this.pos = pos; if (!this.r) this.start(); },
   start() { try { if (!A.ctx) return; if (!hasSfx('jy_pencil')) { sfxDecode('jy_pencil'); return; } const r = playSfx('jy_pencil', this.pos ? { pos: this.pos.clone(), ref: 0.6, gain: 0 } : { ear: 0, gain: 0 }); if (!r) return; r.s.loop = true; r.s.loopStart = 0.04; r.s.loopEnd = 0.94; this.r = r; this.lvl = 0; } catch (e) { } },
-  tick(dt) { const r = this.r; if (!r) return; const idle = performance.now() - this.last > 90; if (idle) this.want = Math.max(0, this.want - dt * 6); this.lvl += (this.want - this.lvl) * Math.min(1, dt * 18); try { r.g.gain.setTargetAtTime(this.lvl * 1.1, A.ctx.currentTime, 0.02); } catch (e) { }
+  tick(dt) { const r = this.r; if (!r) return; const idle = performance.now() - this.last > 90; if (idle) this.want = Math.max(0, this.want - dt * 6); this.lvl += (this.want - this.lvl) * Math.min(1, dt * 18); try { r.g.gain.setTargetAtTime(this.lvl * 0.75, A.ctx.currentTime, 0.02);   /* 2026-11-18 少し小さく（1.1→0.75） */ } catch (e) { }
     if (idle && this.lvl < 0.01 && performance.now() - this.last > 400) { try { r.s.stop(); } catch (e) { } this.r = null; } },
 };
 let JIYU_FILL = 0.14;   /* のぞいている間のページの明るさ */
@@ -24759,6 +24759,7 @@ const JIYU = {
     few: [['ヘタ', 'bad'], ['よめない', "can't read it"], ['なに これ', 'what is this']], many: [['もっと かいて', 'write more'], ['じょうず', 'good']],
     odd: [['おなか すいた', "i'm hungry"], ['くつ かして', 'lend me your shoes'], ['きょう なんようび', 'what day is it'], ['あかい くつ', 'red shoes'], ['せんせい きた', 'teacher is coming']],
     run: [['にげて', 'run']],
+    hurt: [['なんで けすの', 'why did you erase it'], ['ひどい', 'that’s mean'], ['かなしい', 'that makes me sad'], ['けさないで', 'don’t erase it']],
     live: [['みてるよ', "i'm watching"], ['うしろ', 'behind you'], ['いっしょに かこ', "let's write together"]],
     locker: [['さっき ロッカーに かくれてたね', 'you were hiding in the locker'], ['ロッカー せまいでしょ', 'the locker is cramped, right']],
     ban: [['コメント けさないで', "don't delete the comments"]],
@@ -24787,32 +24788,36 @@ const JIYU = {
       const cv = this.mk(), tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 4;
       const geo = new THREE.PlaneGeometry(PW, PH, 10, 1), P = geo.attributes.position; for (let i = 0; i < P.count; i++) { const x = P.getX(i), u = sx > 0 ? (x + PW / 2) / PW : (PW / 2 - x) / PW; P.setZ(i, 0.011 * Math.pow(1 - u, 2.2) + 0.002); } P.needsUpdate = true; geo.computeVertexNormals();
       const m = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: tx })); m.rotation.x = -Math.PI / 2; m.position.set(sx * (PW / 2 + 0.001), 0.007, 0); g.add(m);
-      this.pg[k] = { cv, tx, m, paper: this.paper(sx > 0 ? 1 : -1), snap: null }; }
+      this.pg[k] = { cv, tx, m, paper: this.paper(sx > 0 ? 1 : -1), art: null }; }
     const fill = this.fill = new THREE.PointLight(0xfff1dc, 0, 0.9, 2); fill.position.set(PW / 2, 0.32, 0.02); g.add(fill);   /* のぞいている間だけ、ページ全体をむらなく照らす（白飛びさせない） */
     const cur = this.cur = new THREE.Mesh(new THREE.RingGeometry(0.0022, 0.0034, 16), new THREE.MeshBasicMaterial({ color: 0x3060ff, transparent: true, opacity: 0.9, depthTest: false, toneMapped: false, fog: false })); cur.rotation.x = -Math.PI / 2; cur.renderOrder = 9; cur.visible = false; g.add(cur);
-    this.gL = this.mk(); this.pL = this.mk(); this.strokes = []; this.blocks = []; this.y = 70; this.page = 1;
+    /* 2026-11-18 右のページは1枚の「インク」に、書いた順に重ねる（あとから書かれた赤い字は、先に書いた黒い線の上にのる）。めくらない */
+    this.ink = this.mk(); this.liveC = this.mk(); this.strokes = []; this.blocks = []; this.queue = []; this.liveB = null;
   },
+  /* 左のページ：いただいた絵をいくつか大きく（はじめから描いてある） */
+  leftArt() { const L = this.pg.L, c = this.mk(), g = c.getContext('2d'), R = Math.random, ks = Object.keys(JIYU_IMG).sort(() => R() - 0.5), n = 2 + (R() < 0.5 ? 1 : 0);
+    const spots = n === 2 ? [[0.5, 0.29, 300], [0.5, 0.71, 300]] : [[0.36, 0.22, 230], [0.66, 0.5, 250], [0.38, 0.79, 230]];
+    for (let i = 0; i < n; i++) { const [x, y, s] = spots[i]; this.drawPic(g, ks[i], (x + (R() - 0.5) * 0.06) * this.TW, (y + (R() - 0.5) * 0.04) * this.TH, s * (0.9 + R() * 0.15), chatRng((R() * 1e9) | 0)); }
+    this.grain(g, 0.4); L.art = c; L.artK = ks.slice(0, n); },
   place() {
     if (world.state !== 'play') return false; this.build(); const f = camFwd(); f.y = 0; f.normalize(); const by = Math.atan2(-f.x, -f.z);
     let desk = null, best = 1.7; for (const rk in rooms) for (const d of (rooms[rk] && rooms[rk].desks) || []) { if (!d || !d.g) continue; const p = d.g.getWorldPosition(V()); if (Math.abs(p.y - (player.lv ? LH : 0)) > 1) continue; const dx = p.x - player.x, dz = p.z - player.z, dd = Math.hypot(dx, dz); if (dd > best || (f.x * dx + f.z * dz) / (dd || 1) < 0.3) continue; if (KOK.desk === d) continue; best = dd; desk = d; }
     if (desk) { desk.g.add(this.g); const dy = desk.g.getWorldQuaternion(new THREE.Quaternion()); const e = new THREE.Euler().setFromQuaternion(dy, 'YXZ'); this.g.position.set(0, 0.757, 0); this.g.rotation.y = by - e.y; this.desk = desk; }
     else { const [x, z] = collide(player.x + f.x * 0.75, player.z + f.z * 0.75, 0.2, player.lv); this.g.position.set(x, (player.lv ? LH : 0) + 0.004, z); this.g.rotation.y = by; scene.add(this.g); this.desk = null; }
-    this.by = by; this.lv = player.lv; this.placed = true; this.placedAt = world.t; this.away = 0; this.rolled = false; this.wrote = 0; this.seenG = false; this.seenP = false; this.lastSeen = world.t; this.hintAsked = false; this.liveDone = false; this.pend = null; this.q = null;
-    if (WF('jiyufill')) this.write('word');
+    this.by = by; this.lv = player.lv; this.placed = true; this.fqUsed = false; this.placedAt = world.t; this.away = 0; this.rolled = false; this.wrote = 0; this.lastSeen = world.t; this.hintAsked = false; this.liveDone = false; this.pend = null; this.q = null; this.hurt = null; this.angry = false;
+    this.leftArt(); if (WF('jiyufill')) this.write('word');
     this.render(); SND.rustle && SND.rustle(this.pos(), 0.6); try { CHATLOG.add('jiyu', { w: 'put' }); } catch (e) { }
     if (TEST || DEV) console.log('JIYU place', desk ? 'desk' : 'floor');
     return true; },
   pos() { return this.g ? this.g.getWorldPosition(V()) : V(); },
   reset() { this.exit(true); if (this.g && this.g.parent) this.g.parent.remove(this.g); this.g = null; this.placed = false; this.desk = null; this.k = 0; world.jyK = 0; },
-  /* ── 書いた物を描き直す */
   render() {
-    if (!this.pg) return; const P = this.pg.R, g = P.cv.getContext('2d'); g.drawImage(P.paper, 0, 0); g.drawImage(this.gL, 0, 0); g.drawImage(this.pL, 0, 0); P.tx.needsUpdate = true;
-    const L = this.pg.L, gl = L.cv.getContext('2d'); gl.drawImage(L.paper, 0, 0); if (L.snap) gl.drawImage(L.snap, 0, 0); L.tx.needsUpdate = true; },
+    if (!this.pg) return; const P = this.pg.R, g = P.cv.getContext('2d'); g.drawImage(P.paper, 0, 0); g.drawImage(this.ink, 0, 0); if (this.liveB) g.drawImage(this.liveC, 0, 0); P.tx.needsUpdate = true;
+    const L = this.pg.L, gl = L.cv.getContext('2d'); gl.drawImage(L.paper, 0, 0); if (L.art) gl.drawImage(L.art, 0, 0); L.tx.needsUpdate = true; },
   stroke(g, pts, seed, col, w) {
     if (pts.length < 1) return; const R = chatRng(seed); g.save(); g.lineCap = g.lineJoin = 'round'; g.strokeStyle = col;
     for (let pass = 0; pass < 3; pass++) { g.globalAlpha = pass ? 0.45 : 0.9; g.lineWidth = pass ? w * 0.55 : w; const ox = (R() - 0.5) * 1.2, oy = (R() - 0.5) * 1.2; g.beginPath(); g.moveTo(pts[0][0] + ox, pts[0][1] + oy); if (pts.length === 1) g.lineTo(pts[0][0] + ox + 0.5, pts[0][1] + oy); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0] + ox + (R() - 0.5) * 0.6, pts[i][1] + oy + (R() - 0.5) * 0.6); g.stroke(); }
     g.restore(); },
-  redrawP() { const g = this.pL.getContext('2d'); g.clearRect(0, 0, this.TW, this.TH); for (const s of this.strokes) this.stroke(g, s.p, s.seed, this.INK, 3.8); this.grain(g, 0.45); },
   /* ── 赤い色鉛筆の字（1文字ずつ大きさ・傾き・位置をばらつかせる。震え・書き直しの跡・こすれ） */
   hand(g, text, x, y, size, R, upTo) {
     const chars = Array.from(text); let cx = x, n = 0; const font = s => `${R() < 0.5 ? 500 : 700} ${s.toFixed(1)}px "Hiragino Maru Gothic ProN","Zen Maru Gothic","Rounded Mplus 1c","Hiragino Sans","Noto Sans JP",sans-serif`;
@@ -24828,7 +24833,7 @@ const JIYU = {
     g.restore(); return n; },
   /* 絵（いただいた線画を赤く・少しかたむけて）／簡単な落書き */
   imgs: {},
-  img(k) { if (this.imgs[k]) return this.imgs[k]; const im = new Image(); im.onload = () => { if (this.blocks && this.blocks.some(b => b.pic === k)) { this.redrawG(); this.render(); } }; im.src = JIYU_IMG[k]; this.imgs[k] = im; return im; },
+  img(k) { if (this.imgs[k]) return this.imgs[k]; const im = new Image(); im.onload = () => { if (this.pg && this.pg.L.artK && this.pg.L.artK.includes(k) && !this.artOK) { this.artOK = true; this.leftArt(); this.render(); } }; im.src = JIYU_IMG[k]; this.imgs[k] = im; return im; },
   drawPic(g, k, x, y, s, R) {
     g.save(); g.translate(x, y); g.rotate((R() - 0.5) * 0.2);
     if (JIYU_IMG[k]) { const im = this.img(k); if (im.complete && im.naturalWidth) { const c = document.createElement('canvas'); c.width = c.height = 256; const t = c.getContext('2d'); t.drawImage(im, 0, 0, 256, 256); t.globalCompositeOperation = 'source-in'; t.fillStyle = this.RED; t.fillRect(0, 0, 256, 256); g.globalAlpha = 0.85; g.drawImage(c, -s / 2, -s / 2, s, s); g.globalAlpha = 0.35; g.drawImage(c, -s / 2 + 1.2, -s / 2 + 0.8, s, s); } }
@@ -24839,16 +24844,25 @@ const JIYU = {
       g.stroke(); }
     g.restore(); },
   /* ── 書き込みをページに足す（入りきらなければ、ページをめくる＝今のページは左へ） */
-  add(b) { const h = b.h; if (b.live && this.y + h > this.TH - 60) { b.y = 70 + Math.random() * Math.max(10, this.TH - h - 160); b.at = world.t; b.seed = (Math.random() * 1e9) | 0; this.blocks.push(b); this.redrawG(); this.render(); return b; }   /* 目の前で書かれる字は、入りきらなければ上から重ねて書く */
-    if (this.y + h > this.TH - 60) this.turn(); b.y = this.y; this.y += h + 16; b.at = world.t; b.seed = (Math.random() * 1e9) | 0; this.blocks.push(b); this.redrawG(); this.render(); return b; },
-  turn() { const L = this.pg.L, c = this.mk(), g = c.getContext('2d'); g.drawImage(this.gL, 0, 0); g.drawImage(this.pL, 0, 0); L.snap = c; this.blocks = []; this.strokes = []; this.y = 60; this.q = null; this.gL.getContext('2d').clearRect(0, 0, this.TW, this.TH); this.redrawP(); this.page++; },
-  redrawG() { const g = this.gL.getContext('2d'); g.clearRect(0, 0, this.TW, this.TH);
-    for (const b of this.blocks) { const R = chatRng(b.seed), cx = this.SX + (R() - 0.5) * 24, up = b.live ? b.shown : undefined;
-      if (b.kind === 'text') { let y = b.y + b.size * 0.6, used = 0; for (const ln of b.lines) { const n = this.hand(g, ln, cx + (R() - 0.5) * 30, y, b.size, R, up === undefined ? undefined : Math.max(0, up - used)); used += Array.from(ln).length; y += b.size * 1.35; } }
-      if (b.kind === 'pic') { this.drawPic(g, b.pic, cx, b.y + b.size / 2, b.size, R); if (b.cap) this.hand(g, b.cap, cx, b.y + b.size + 22, 30, R); }
-      if (b.yn) { const yy = b.y + b.h - 34, xs = [this.SX - this.SW * 0.27, this.SX + this.SW * 0.27]; b.reg = []; const lab = [this.t(['はい', 'yes']), this.t(['いいえ', 'no'])];
-        lab.forEach((l, i) => { if (up !== undefined && up < b.len) return; this.hand(g, l, xs[i], yy, 40, R); b.reg[i] = [xs[i], yy]; }); } }
-    this.grain(g, 0.42); },
+  /* ── 書き込み：置く場所を探す（空いている所。なければ上から重ねる）→ 1つの絵に描く → すぐ見せる／目の前で少しずつ */
+  alloc(h) { const busy = this.blocks.filter(b => !b.gone && !b.over).map(b => [b.y - 12, b.y + b.h + 12]); for (let y = 66; y + h <= this.TH - 60; y += 8) if (!busy.some(([a, c]) => y < c && y + h > a)) return { y, over: false }; return { y: 66 + Math.random() * Math.max(10, this.TH - h - 140), over: true }; },
+  drawBlock(b) { const c = this.mk(), g = c.getContext('2d'), R = chatRng(b.seed), cx = this.SX + (R() - 0.5) * 24;
+    if (b.kind === 'text') { let y = b.y + b.size * 0.6; for (const ln of b.lines) { this.hand(g, ln, cx + (R() - 0.5) * 30, y, b.size, R); y += b.size * 1.35; } }
+    if (b.kind === 'pic') { this.drawPic(g, b.pic, cx, b.y + b.size / 2, b.size, R); if (b.cap) this.hand(g, b.cap, cx, b.y + b.size + 22, 30, R); }
+    if (b.kind === 'fill') { for (let i = 0; i < b.n; i++) { const w = b.words[i % b.words.length], s = 26 + R() * 34; g.save(); g.translate(40 + R() * (this.TW - 120), 60 + R() * (this.TH - 130)); g.rotate((R() - 0.5) * 1.4); this.hand(g, w, 0, 0, s, R); g.restore(); } }
+    if (b.yn) { const yy = b.y + b.h - 34, xs = [this.SX - this.SW * 0.27, this.SX + this.SW * 0.27]; b.reg = []; [this.t(['はい', 'yes']), this.t(['いいえ', 'no'])].forEach((l, i) => { this.hand(g, l, xs[i], yy, 40, R); b.reg[i] = [xs[i], yy]; }); }
+    this.grain(g, 0.42); b.c = c; b.box = b.kind === 'fill' ? [0, 0, this.TW, this.TH] : [this.SX - this.SW / 2 - 20, b.y - 6, this.SX + this.SW / 2 + 20, b.y + b.h + 6]; return c; },
+  add(b, live) { const a = b.kind === 'fill' ? { y: 0, over: true } : this.alloc(b.h); b.y = a.y; b.over = a.over; b.at = world.t; b.seed = (Math.random() * 1e9) | 0; b.er = 0; b.scr = 0; this.drawBlock(b); this.blocks.push(b);
+    if (live && this.on) { b.done = false; this.queue.push(b); } else this.bake(b); return b; },
+  bake(b) { b.done = true; b.at = world.t; this.ink.getContext('2d').drawImage(b.c, 0, 0); this.render(); },
+  /* 目の前で少しずつ：字は左から右へ（1行ずつ）、絵は左上から右下へジグザグに見えてくる */
+  reveal(dt) { if (!this.liveB) { this.liveB = this.queue.shift() || null; if (!this.liveB) return; this.liveB.p = 0; const nb = this.liveB; this.cm(nb.kind === 'fill' ? 'jyAngry' : nb.run ? 'jyRun' : nb.hurtR ? 'jyHurt' : 'jyLive'); }
+    const b = this.liveB, dur = b.kind === 'pic' ? 3.2 : b.kind === 'fill' ? 6 : Math.max(0.8, (b.len || 4) * (b.run ? 0.14 : 0.3)); b.p = Math.min(1, b.p + dt / dur);
+    const g = this.liveC.getContext('2d'), [x0, y0, x1, y1] = b.box; g.clearRect(0, 0, this.TW, this.TH);
+    if (b.kind === 'pic' || b.kind === 'fill') { const rows = b.kind === 'fill' ? 10 : 7, rh = (y1 - y0) / rows; for (let r = 0; r < rows; r++) { const f = clamp(b.p * rows - r, 0, 1); if (f <= 0) break; const w = (x1 - x0) * f, xs = r % 2 ? x1 - w : x0; g.drawImage(b.c, xs, y0 + r * rh, w, rh + 1, xs, y0 + r * rh, w, rh + 1); } }
+    else { const n = b.lines.length + (b.yn ? 1 : 0), lh = (y1 - y0) / n; for (let r = 0; r < n; r++) { const f = clamp(b.p * n - r, 0, 1); if (f <= 0) break; const w = (x1 - x0) * f; g.drawImage(b.c, x0, y0 + r * lh, w, lh + 1, x0, y0 + r * lh, w, lh + 1); } }
+    PENSE.move(dt * 900, this.pos()); this.render();
+    if (b.p >= 1) { this.liveB = null; g.clearRect(0, 0, this.TW, this.TH); this.bake(b); } },
   textBlock(lines, size, extra) { let L = lines.map(p => typeof p === 'string' ? p : this.t(p)); const MAXW = this.SW - 30, wOf = t => Array.from(t).reduce((a, c) => a + (c === ' ' ? 0.5 : 0.95), 0);
     L = L.flatMap(t => { if (wOf(t) * size <= MAXW || !t.includes(' ')) return [t]; const sp = [...t.matchAll(/ /g)].map(m => m.index), mid = sp.reduce((b, i) => Math.abs(i - t.length / 2) < Math.abs(b - t.length / 2) ? i : b, sp[0]); return [t.slice(0, mid), t.slice(mid + 1)]; });   /* 長い行は、ことばの切れ目で2行に */
     size = Math.min(size, ...L.map(t => MAXW / Math.max(1, wOf(t)))); const b = Object.assign({ kind: 'text', lines: L, size, h: L.length * size * 1.35 + 10, len: L.join('').length }, extra || {}); if (b.yn) b.h += 76; return b; },
@@ -24856,17 +24870,22 @@ const JIYU = {
   hintText() {
     let bar = false, ran = false, fin = false, turn = false; try { bar = localStorage.getItem('yt_bar1_open') === '1' || localStorage.getItem('yt_bar2_open') === '1'; ran = localStorage.getItem('yt_mannran') === '1'; fin = localStorage.getItem('yt_mann_unlock') === '1'; turn = localStorage.getItem('yt_mannturn') === '1' || !!(COL.load().items['首が回る内田くん'] || {}).n; } catch (e) { }
     if (bar) return null; if (fin) return ['うちだくんに こわさせて', 'let uchida-kun break it']; if (ran) return ['うちだくん さがして', 'look for uchida-kun']; if (!turn) return ['うちだくんを じっと みて', 'stare at uchida-kun']; return ['うちだくん はしるよ', 'uchida-kun runs']; },
-  write(force) {
-    const W = this.W, pickL = a => a[Math.floor(Math.random() * a.length)], fq = (TEST || BETA) && new URLSearchParams(location.search).get('jiyupat'), kind0 = force || fq;
+  write(force, live) {
+    const W = this.W, pickL = a => a[Math.floor(Math.random() * a.length)], fq0 = (TEST || BETA) && new URLSearchParams(location.search).get('jiyupat'), fq = fq0 && !this.pend && !this.hurt && !this.fqUsed ? fq0 : null, kind0 = force || fq; if (fq && !force) this.fqUsed = true;   /* 確認用の指定は最初の1回だけ（答えを書いたら、ちゃんと返事が来るように） */
     let b = null, kind = kind0;
+    if (!kind && this.hurt) kind = 'hurt';
     if (!kind && this.pend) kind = 'reply';
     if (!kind) { const ev = []; if (this.hidRun === world.runId && !this.usedLk) ev.push('locker'); if (this.banEver() && !this.usedBan) ev.push('ban'); const hintOK = !this.hintAsked && this.hintText();
       kind = ev.length && Math.random() < 0.5 ? 'ev' : pickW([['word', 3.5], ['draw', 2], ['q', 3], ['hint', hintOK ? 1.6 : 0]].filter(x => x[1] > 0)); }
-    if (kind === 'reply') { const P = this.pend || { k: 'few' }; this.pend = null;
-      if (Math.random() < 0.15 && P.k !== 'hint') b = this.textBlock([pickL(W.odd)], 46, { reply: true, odd: true });   /* かみあわない */
+    if (kind === 'hurt') { this.hurt = null;   /* 書いた字を消された・塗りつぶされた：まれに怒って、紙いっぱいに */
+      if (!this.angry && (Math.random() < 0.18 || WF('jiyuangry'))) { this.angry = true; b = { kind: 'fill', words: Math.random() < 0.5 ? [this.t(['ユルサナイ', 'I WON’T FORGIVE YOU'])] : [this.t(['なんで', 'why']), this.t(['なんで', 'why']), this.t(['ユルサナイ', 'I WON’T FORGIVE YOU'])], n: 46, h: this.TH, angry: true };
+        try { playSfx('noise_rise_cut', { ear: 0, gain: 0.55 }); } catch (e) { } try { playSfx('horror_loop', { ear: 0, gain: 0.35, dur: 6.5 }); } catch (e) { } }
+      else b = this.textBlock([pickL(W.hurt)], 50, { reply: true, hurtR: true }); }
+    else if (kind === 'reply') { const P = this.pend || { k: 'few' }; this.pend = null;
+      if (Math.random() < 0.15 && P.k !== 'hint' && !(P.q && P.q.hint)) b = this.textBlock([pickL(W.odd)], 46, { reply: true, odd: true });   /* かみあわない */
       else if (P.k === 'yes' || P.k === 'no') { const q = P.q;
         if (q.hint) { if (P.k === 'yes') { const h = this.hintText(); b = this.textBlock([h || ['ないしょ', 'secret']], 44, { reply: true, talk: true }); } else b = this.textBlock(pickL(W.hint.no), 52, { reply: true, talk: true }); }
-        else { const r = q[P.k]; b = this.textBlock(r, r.length > 1 ? 42 : 50, { reply: true, talk: true }); if (P.k === 'yes' && q.next && W.qx[q.next]) { this.add(b); b = this.textBlock([W.qx[q.next].q], 46, { yn: true, q: W.qx[q.next] }); } } }
+        else { const r = q[P.k]; b = this.textBlock(r, r.length > 1 ? 42 : 50, { reply: true, talk: true }); if (P.k === 'yes' && q.next && W.qx[q.next]) { this.add(b, live); b = this.textBlock([W.qx[q.next].q], 46, { yn: true, q: W.qx[q.next] }); } } }
       else if (P.k === 'many') b = this.textBlock([pickL(W.many)], 50, { reply: true });
       else b = this.textBlock([pickL(W.few)], 54, { reply: true }); }
     else if (kind === 'word') b = this.textBlock([pickL(W.word)], 52);
@@ -24874,12 +24893,13 @@ const JIYU = {
     else if (kind === 'q') { const q = pickL(W.q); b = this.textBlock([q.q], 46, { yn: true, q }); }
     else if (kind === 'hint') { this.hintAsked = true; b = this.textBlock([W.hint.q], 46, { yn: true, q: { hint: true } }); }
     else if (kind === 'ev') { const ev = []; if (this.hidRun === world.runId && !this.usedLk) ev.push('locker'); if (this.banEver() && !this.usedBan) ev.push('ban'); const e = ev.length ? pickL(ev) : 'locker'; if (e === 'locker') this.usedLk = true; else this.usedBan = true; b = this.textBlock([pickL(W[e])], 42); }
-    else if (kind === 'run') b = this.textBlock([W.run[0], W.run[0]], 64, { live: true, run: true });
-    else if (kind === 'live') b = this.textBlock([pickL(W.live)], 52, { live: true });
-    if (!b) return null; if (b.yn) this.q = b; this.add(b); this.wrote++; this.ghostNew = true;
-    if (b.live) { b.shown = 0; this.liveB = b; }
-    if (TEST || DEV) console.log('JIYU write', kind, b.lines ? b.lines.join('/') : b.pic);
+    else if (kind === 'run') { b = this.textBlock([W.run[0], W.run[0]], 64, { run: true }); live = true; }
+    else if (kind === 'live') { b = this.textBlock([pickL(W.live)], 52); live = true; }
+    if (!b) return null; if (b.yn) this.q = b; this.add(b, live); this.wrote++;
+    if (TEST || DEV) console.log('JIYU write', kind, live ? 'live' : '', b.lines ? b.lines.join('/') : b.pic || 'fill');
     return b; },
+  /* コメント：録画中に、じゆうちょうが映っている時だけ（同じ種類は1周に1回） */
+  cm(k) { if (!rec.active || !(this.on || this.visNow)) return; this.cmSet = this.cmSet || new Set(); if (this.cmSet.has(k)) return; this.cmSet.add(k); try { XCHAT.log(k); } catch (e) { } },
   banEver() { try { return localStorage.getItem('yt_jy_ban') === '1'; } catch (e) { return false; } },
   /* ── ○×を読む（線の道すじで） */
   judge() {
@@ -24926,24 +24946,30 @@ const JIYU = {
   /* ── 毎フレーム */
   update(dt) {
     PENSE.tick(dt); if (!this.placed || !this.g) return; const p = this.pos(), cp = camera.position, d = cp.distanceTo(p);
-    const vis = player.lv === this.lv && d < 6 && onScreen(p, 1.05) && clearLine(cp.clone(), [], p.clone().setY(p.y + 0.05));
+    const vis = player.lv === this.lv && d < 6 && onScreen(p, 1.05) && clearLine(cp.clone(), [], p.clone().setY(p.y + 0.05)); this.visNow = vis && d < 2.5;
     /* 録画に映った：撮れ高・コメント */
     if (rec.active && (this.on || (vis && d < 2.2))) {
-      const gh = this.blocks.filter(b => !b.live || b.shown >= b.len); if (gh.length) { this.hT = (this.hT || 0) + dt; if (this.hT > 0.6) { award('jyHand', '幽霊の筆跡', 40); if (!this.cmG) { this.cmG = 1; try { XCHAT.log('jyGhost'); } catch (e) { } } }
+      const gh = this.blocks.filter(b => b.done && !b.gone); if (gh.length) { this.hT = (this.hT || 0) + dt; if (this.hT > 0.6) { award('jyHand', '幽霊の筆跡', 40); if (!this.cmG) { this.cmG = 1; try { XCHAT.log('jyGhost'); } catch (e) { } } }
         if (gh.some(b => b.talk)) { this.tT = (this.tT || 0) + dt; if (this.tT > 0.6) award('jyTalk', '幽霊との筆談', 60); } }
       if (this.strokes.length && !this.cmP) { this.pT = (this.pT || 0) + dt; if (this.pT > 1.2) { this.cmP = 1; try { XCHAT.log('jyMine'); } catch (e) { } } } }
     if (this.on) { this.peekT += dt; this.padDraw(dt); if (this.usingP !== PAD.using) { this.usingP = PAD.using; this.uiSync(); }
+      const idle = !this.drawing && world.t - (this.penAt || 0) > 1.3, busy = this.liveB || this.queue.length;
       /* 怪異が迫っている：「にげて」 */
-      if (!this.runDone && this.threat()) { this.runDone = true; this.write('run'); }
-      /* まれに、目の前で書かれていく */
-      if (!this.liveDone && this.peekT > 3 && !this.liveB && (WF('jiyulive') ? this.peekT > 1.5 : Math.random() < dt * 0.006)) { this.liveDone = true; this.write('live'); }
-      this.away = 0; this.lastSeen = world.t; }
+      if (!this.runDone && this.threat()) { this.runDone = true; this.write('run', true); }
+      /* 見ている前でも書かれる：○×への返事・消された時・はじめの質問や絵 */
+      else if (!busy && idle) {
+        if (this.liveAt && world.t > this.liveAt) { this.liveAt = 0; this.write(null, true); }
+        else if (!this.liveAt) {
+          const J = this.strokes.some(s => s.at > (this.readAt || 0)) ? this.judge() : null;
+          if (J && J.ans) { this.pend = { k: J.ans, q: this.q.q || {} }; this.q.answered = J.ans; this.q = null; this.readAt = world.t; this.liveAt = world.t + rnd(1.2, 2.6); }
+          else if (this.hurt) this.liveAt = world.t + rnd(1.0, 2.0);
+          else if (!this.firstDone && !this.blocks.some(b => !b.gone && !b.run) && this.peekT > (WF('jiyunow') ? 2 : this.firstT || (this.firstT = rnd(4, 8)))) { this.firstDone = true; if (WF('jiyunow') || Math.random() < 0.5) this.write(WF('jiyupat') && !this.fqUsed ? null : (Math.random() < 0.6 ? 'q' : 'draw'), true); }
+          else if (!this.liveDone && this.peekT > 3 && (WF('jiyulive') ? this.peekT > 1.5 : Math.random() < dt * 0.006)) { this.liveDone = true; this.write('live', true); } } }
+      this.reveal(dt); this.away = 0; this.lastSeen = world.t; }
     else if (vis && d < 3.5) { this.away = 0; this.lastSeen = world.t; this.rolled = false; }
     else { this.away += dt; }
-    /* 目の前で書かれていく字 */
-    const B = this.liveB; if (B) { B.tt = (B.tt || 0) + dt; const n = Math.min(B.len, Math.floor(B.tt / (B.run ? 0.16 : 0.32))); if (n !== B.shown) { B.shown = n; this.redrawG(); this.render(); PENSE.move(70, p); } if (B.shown >= B.len) { this.liveB = null; B.live = false; this.redrawG(); this.render(); } }
     /* 離れている間に書かれる（1回離れるごとに1回だけ抽選） */
-    if (!this.on && !this.rolled && this.away > this.waitT()) { this.rolled = true; const now = WF('jiyunow'); const pr = this.pend ? 0.8 : 0.6 + (world.ouma ? 0.15 : 0) + (this.monNear() ? 0.15 : 0);
+    if (!this.on && !this.rolled && this.away > this.waitT()) { this.rolled = true; const now = WF('jiyunow'); const pr = this.pend || this.hurt ? 0.85 : 0.6 + (world.ouma ? 0.15 : 0) + (this.monNear() ? 0.15 : 0);
       if (now || Math.random() < pr) this.write(); }
   },
   waitT() { if (WF('jiyunow')) return 1.2; return (world.ouma ? 8 : 12) + (this.monNear() ? -4 : 0); },
@@ -24951,13 +24977,18 @@ const JIYU = {
   threat() { try { if (KEHAI.chasing()) return true; for (const [q, on] of [[WD.pos, (SG.opacity ?? 0) > 0.3], [MANN.pos, MANN.st === 'run' || MANN.st === 'walk'], [SP.pos, SP.st === 'chase'], [URAH.pos, URAH.on && URAH.st !== 'off' && URAH.st !== 'wait']]) if (on && q && Math.abs((q.y || 0) - player.y) < 1.5 && Math.hypot(q.x - player.x, q.z - player.z) < 7) return true; } catch (e) { } return WF('jiyurun') && this.peekT > 2; },
   /* ── 書く（指・マウス） */
   hit(cx, cy) { const [fx, fy] = toFrame(cx, cy); const va = vpW() / vpH(), ca = camera.aspect, nd = new THREE.Vector2((fx / vpW() * 2 - 1) * Math.min(1, va / ca), -(fy / vpH() * 2 - 1) * Math.min(1, ca / va)); const rc = this.rc || (this.rc = new THREE.Raycaster()); rc.setFromCamera(nd, camera); const h = rc.intersectObject(this.pg.R.m, false)[0]; if (!h || !h.uv) return null; return [h.uv.x * this.TW, (1 - h.uv.y) * this.TH]; },
-  penDown(p) { if (!p) return; if (this.erase) { this.eraseAt(p, null); this.drawing = { er: true, last: p }; return; } const s = { p: [p], seed: (Math.random() * 1e9) | 0, at: world.t }; this.strokes.push(s); this.drawing = s; this.stroke(this.pL.getContext('2d'), s.p, s.seed, this.INK, 3.8); this.render(); },
-  penMove(p) { const s = this.drawing; if (!s || !p) return; if (s.er) { this.eraseAt(p, s.last); s.last = p; return; } const l = s.p[s.p.length - 1]; if (Math.hypot(p[0] - l[0], p[1] - l[1]) < 2.5) return; s.p.push(p); PENSE.move(Math.hypot(p[0] - l[0], p[1] - l[1])); this.stroke(this.pL.getContext('2d'), s.p.slice(-2), s.seed + s.p.length, this.INK, 3.8); this.render(); },
-  penUp() { const s = this.drawing; this.drawing = null; if (s && !s.er) { this.redrawP(); this.render(); } },
-  eraseAt(p, from) { const r = 16, out = []; let ch = false; for (const s of this.strokes) { let cur = []; for (const q of s.p) { const near = Math.hypot(q[0] - p[0], q[1] - p[1]) < r || (from && Math.hypot(q[0] - (p[0] + from[0]) / 2, q[1] - (p[1] + from[1]) / 2) < r); if (near) { ch = true; if (cur.length) out.push({ p: cur, seed: s.seed + out.length, at: s.at }); cur = []; } else cur.push(q); } if (cur.length) out.push({ p: cur, seed: s.seed + out.length, at: s.at }); }
-    if (ch) { this.strokes = out; this.redrawP(); this.render(); } },
-  clearMine() { this.strokes = []; this.redrawP(); this.render(); },
-  /* コントローラー：左スティックでペン先・Aを押している間だけ線・Xで消しゴム・Yで全部消す・Bで閉じる */
+  penDown(p) { if (!p) return; this.penAt = world.t; if (this.erase) { this.eraseAt(p, null); this.drawing = { er: true, last: p }; return; } const s = { p: [p], seed: (Math.random() * 1e9) | 0, at: world.t }; this.strokes.push(s); this.drawing = s; this.stroke(this.ink.getContext('2d'), s.p, s.seed, this.INK, 3.8); this.render(); },
+  penMove(p) { const s = this.drawing; if (!s || !p) return; this.penAt = world.t; if (s.er) { this.eraseAt(p, s.last); PENSE.move(Math.hypot(p[0] - s.last[0], p[1] - s.last[1]) * 0.6); s.last = p; return; } const l = s.p[s.p.length - 1]; if (Math.hypot(p[0] - l[0], p[1] - l[1]) < 2.5) return; s.p.push(p); PENSE.move(Math.hypot(p[0] - l[0], p[1] - l[1])); this.stroke(this.ink.getContext('2d'), s.p.slice(-2), s.seed + s.p.length, this.INK, 3.8); this.render(); },
+  penUp() { const s = this.drawing; this.drawing = null; this.penAt = world.t; if (s && !s.er) { this.scribbleCheck(s); let L = 0; for (const t of this.strokes) if (t.at > world.t - 20) for (let i = 1; i < t.p.length; i++) L += Math.hypot(t.p[i][0] - t.p[i - 1][0], t.p[i][1] - t.p[i - 1][1]); if (L > 1600) this.cm('jyScrib'); } },   /* ぐちゃぐちゃに描いた：コメントが反応 */
+  /* 消しゴム：自分の線も、赤い字も消せる（紙のインクを消す） */
+  eraseAt(p, from) { const r = 17, g = this.ink.getContext('2d'); g.save(); g.globalCompositeOperation = 'destination-out'; g.lineCap = 'round'; g.lineWidth = r * 2; g.beginPath(); g.moveTo((from || p)[0], (from || p)[1]); g.lineTo(p[0] + 0.01, p[1]); g.stroke(); g.restore();
+    const out = []; for (const s of this.strokes) { let cur = []; for (const q of s.p) { const near = Math.hypot(q[0] - p[0], q[1] - p[1]) < r || (from && Math.hypot(q[0] - (p[0] + from[0]) / 2, q[1] - (p[1] + from[1]) / 2) < r); if (near) { if (cur.length) out.push({ p: cur, seed: s.seed + out.length, at: s.at }); cur = []; } else cur.push(q); } if (cur.length) out.push({ p: cur, seed: s.seed + out.length, at: s.at }); } this.strokes = out;
+    const dl = from ? Math.hypot(p[0] - from[0], p[1] - from[1]) + 4 : 6; for (const b of this.blocks) { if (!b.done || b.gone || b.run && false) continue; const [x0, y0, x1, y1] = b.box; if (p[0] < x0 || p[0] > x1 || p[1] < y0 || p[1] > y1) continue; b.er += dl; if (b.er > (b.kind === 'fill' ? 900 : 160)) { b.gone = true; this.hurtBy('erase', b); } }
+    this.render(); },
+  /* 赤い字の上を、鉛筆でぐちゃぐちゃに塗りつぶした */
+  scribbleCheck(s) { for (const b of this.blocks) { if (!b.done || b.gone) continue; const [x0, y0, x1, y1] = b.box; let L = 0; for (let i = 1; i < s.p.length; i++) { const q = s.p[i], o = s.p[i - 1]; if (q[0] > x0 && q[0] < x1 && q[1] > y0 && q[1] < y1) L += Math.hypot(q[0] - o[0], q[1] - o[1]); } b.scr += L; const need = Math.max(260, (x1 - x0) * 1.6); if (b.scr > need) { b.gone = true; this.hurtBy('scribble', b); } } },
+  hurtBy(how, b) { this.cm('jyErase'); if (b.yn && this.q === b) this.q = null; if (!this.hurt) this.hurt = { how, at: world.t }; if (TEST || DEV) console.log('JIYU hurt', how, b.lines ? b.lines.join('/') : b.kind); },
+  /* コントローラー：左スティックでペン先・Aを押している間だけ線・Xで消しゴム・Bで閉じる */
   padDraw(dt) { if (!PAD.using || !this.on) { if (this.cur) this.cur.visible = false; return; } const pp = this.pp || (this.pp = [this.TW / 2, this.TH / 2]); pp[0] = clamp(pp[0] + PAD.lx * 330 * dt, 8, this.TW - 8); pp[1] = clamp(pp[1] + PAD.ly * 330 * dt, 8, this.TH - 8);
     const c = this.cur; c.visible = true; c.material.color.set(this.erase ? 0xff8040 : 0x3060ff); c.position.set(this.PW / 2 + 0.001 + (pp[0] / this.TW - 0.5) * this.PW, 0.022, (pp[1] / this.TH - 0.5) * this.PH); },
   padPoll() { const g = PAD.get(); if (!g) return; const B = g.buttons.map(b => b && (b.pressed || b.value > 0.5)), M = PAD.map(), pr = this.padPrev || [];
@@ -24965,15 +24996,14 @@ const JIYU = {
     PAD.lx = PAD.dz(g.axes[0] || 0); PAD.ly = PAD.dz(g.axes[1] || 0); if (PAD.lx || PAD.ly || B.some(Boolean)) PAD.setUsing(true);
     const pen = !!B[M.act]; const pp = this.pp || (this.pp = [this.TW / 2, this.TH / 2]);
     if (pen && !this.drawing) this.penDown(pp.slice()); else if (pen && this.drawing) this.penMove(pp.slice()); else if (!pen && this.drawing) this.penUp();
-    if (dn('inv')) this.act('erase'); if (dn('selfie')) this.act('clear'); if (dn('back')) this.act('close'); if (dn('rec')) PAD.press('rec');
+    if (dn('inv')) this.act('erase'); if (dn('back')) this.act('close'); if (dn('rec')) PAD.press('rec');
     this.padPrev = B; },
-  act(a) { if (a === 'erase') this.erase = !this.erase; else if (a === 'clear') this.clearMine(); else if (a === 'close') this.exit(); this.uiSync(); },
-  /* ── ボタン（画面の下・押すキー／ボタンの印つき） */
+  act(a) { if (a === 'erase') this.erase = !this.erase; else if (a === 'close') this.exit(); this.uiSync(); },
   ui(on) {
-    if (!this.el) { const el = this.el = document.createElement('div'); el.id = 'jyUi'; el.innerHTML = '<div id="jyPad"></div><div class="jyRow"><button data-a="erase"><i></i><span></span></button><button data-a="clear"><i></i><span></span></button><button data-a="close" class="jyX"><i></i><span></span></button></div><div class="jyTip"></div>'; document.body.appendChild(el);
+    if (!this.el) { const el = this.el = document.createElement('div'); el.id = 'jyUi'; el.innerHTML = '<div id="jyPad"></div><div class="jyRow"><button data-a="erase"><i></i><span></span></button><button data-a="close" class="jyX"><i></i><span></span></button></div><div class="jyTip"></div>'; document.body.appendChild(el);
       const css = document.createElement('style'); css.textContent = '#jyUi{position:fixed;inset:0;z-index:2;display:none;pointer-events:none}#jyUi.show{display:block}#jyPad{position:absolute;inset:0;pointer-events:auto;touch-action:none}' +
         '#jyUi .jyRow button{position:absolute;pointer-events:auto;width:60px;height:60px;border-radius:50%;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:1px;border:1.5px solid rgba(255,255,255,.6);background:rgba(12,12,14,.66);color:#fff;font:700 11px/1.15 system-ui,-apple-system,"Hiragino Sans",sans-serif;-webkit-tap-highlight-color:transparent}#jyUi .jyRow button span{display:block;width:100%;text-align:center;white-space:nowrap}#jyUi .jyRow button i{display:block;width:100%;text-align:center;font-style:normal;font-size:9.5px;font-weight:800;color:#c9c4ba;letter-spacing:.03em}#jyUi .jyRow button i:empty{display:none}#jyUi .jyRow button.on{border-color:#ffd34d;color:#ffd34d;background:rgba(60,48,8,.75)}#jyUi .jyRow button.on i{color:#ffd34d}' +
-        '#jyUi .jyRow [data-a=clear]{right:calc(env(safe-area-inset-right,0px) + 12px);bottom:calc(var(--sab,0px) + 28px)}#jyUi .jyRow [data-a=erase]{right:calc(env(safe-area-inset-right,0px) + 12px);bottom:calc(var(--sab,0px) + 98px)}#jyUi .jyRow .jyX{right:calc(env(safe-area-inset-right,0px) + 3px);top:calc(var(--sat,0px) + 156px);background:rgba(60,18,18,.8);border-color:rgba(255,160,150,.6)}' +
+        '#jyUi .jyRow [data-a=erase]{right:calc(env(safe-area-inset-right,0px) + 12px);bottom:calc(var(--sab,0px) + 28px)}#jyUi .jyRow .jyX{right:calc(env(safe-area-inset-right,0px) + 3px);top:calc(var(--sat,0px) + 156px);background:rgba(60,18,18,.8);border-color:rgba(255,160,150,.6)}' +
         '#jyUi .jyTip{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--sab,0px) + 6px);text-align:center;font:600 11px system-ui,sans-serif;color:#c9c4ba;text-shadow:0 1px 2px #000;white-space:nowrap}html.jyOn #zoomRow,html.jyOn #crouchBtn,html.jyOn #actBtn,html.jyOn #stick{visibility:hidden}';
       document.head.appendChild(css);
       const pad = el.querySelector('#jyPad'); for (const t of ['touchstart', 'touchmove', 'touchend', 'wheel', 'click', 'mousedown', 'contextmenu']) pad.addEventListener(t, e => { e.stopPropagation(); if (t !== 'touchstart' && t !== 'touchmove' && t !== 'touchend' && t !== 'wheel') e.preventDefault(); }, { passive: false });
@@ -24983,10 +25013,10 @@ const JIYU = {
       el.querySelectorAll('.jyRow button').forEach(b => { for (const t of ['pointerdown', 'touchstart', 'mousedown']) b.addEventListener(t, e => e.stopPropagation(), { passive: true }); b.addEventListener('click', e => { e.stopPropagation(); this.act(b.dataset.a); }); });
     }
     this.el.classList.toggle('show', !!on); document.documentElement.classList.toggle('jyOn', !!on); this.pid = null; if (on) this.uiSync(); },
-  uiSync() { if (!this.el) return; const pad = PAD.using, en = LANG === 'en', K = { erase: pad ? PAD.of('inv') : 'E', clear: pad ? PAD.of('selfie') : (en ? 'Del' : 'Del'), close: pad ? PAD.of('back') : 'Esc' }, T = { erase: en ? 'Eraser' : '消しゴム', clear: en ? 'Clear' : '全部消す', close: en ? 'Close' : '閉じる' }, showK = pad || FRAME.on;
+  uiSync() { if (!this.el) return; const pad = PAD.using, en = LANG === 'en', K = { erase: pad ? PAD.of('inv') : 'E', close: pad ? PAD.of('back') : 'Esc' }, T = { erase: en ? 'Eraser' : '消しゴム', close: en ? 'Close' : '閉じる' }, showK = pad || FRAME.on;
     this.el.querySelectorAll('.jyRow button').forEach(b => { const a = b.dataset.a; b.querySelector('i').textContent = showK ? K[a] : ''; b.querySelector('span').textContent = T[a]; b.classList.toggle('on', a === 'erase' && !!this.erase); });
     this.el.querySelector('.jyTip').textContent = pad ? (en ? `Left stick: move pen / hold ${PAD.of('act')}: write` : `左スティックでペンを動かす・${PAD.of('act')}を押している間 書く`) : FRAME.on ? (en ? 'Drag with the mouse to write' : 'マウスでドラッグして書く') : (en ? 'Trace the page to write' : 'なぞると書ける'); },
-  key(e) { if (!this.on) return false; const c = e.code; if (c === 'Escape' || c === 'KeyQ') { this.act('close'); return true; } if (c === 'KeyE') { this.act('erase'); return true; } if (c === 'Delete' || c === 'Backspace') { this.act('clear'); return true; } return ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(c); },
+  key(e) { if (!this.on) return false; const c = e.code; if (c === 'Escape' || c === 'KeyQ') { this.act('close'); return true; } if (c === 'KeyE') { this.act('erase'); return true; } return ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(c); },
 };
 /* ── 持ち物として */
 for (const k in JIYU_IMG) JIYU.img(k);   /* 絵は先に読み込んでおく */
@@ -25017,6 +25047,14 @@ Object.assign(EN, { '幽霊との筆談': 'Writing with a ghost', '幽霊の筆�
 XCHAT.LIST.jyGhost = ['jy.g1', 'jy.g2', 'jy.g3', 'jy.g4']; XCHAT.LIST.jyMine = ['jy.m1', 'jy.m2'];
 Object.assign(CHAT_DICT.t, { 'jy.g1': ['字がこわい', 'that handwriting is scary'], 'jy.g2': ['今書いた？', 'did that just get written?'], 'jy.g3': ['戻るまで3分もなかったよね', "you weren't gone even 3 minutes"], 'jy.g4': ['答えなくていいって', "you don't have to answer"],
   'jy.m1': ['何書いてんのｗ', 'what are you writing lol'], 'jy.m2': ['字きたな', 'messy handwriting'] });
+XCHAT.LIST.jyLive = ['jy.l1', 'jy.l2', 'jy.l3', 'jy.l4']; XCHAT.LIST.jyRun = ['jy.r1', 'jy.r2']; XCHAT.LIST.jyErase = ['jy.e1', 'jy.e2', 'jy.e3', 'jy.e4']; XCHAT.LIST.jyHurt = ['jy.h1', 'jy.h2', 'jy.h3']; XCHAT.LIST.jyAngry = ['jy.a1', 'jy.a2', 'jy.a3', 'jy.a4', 'jy.a5']; XCHAT.LIST.jyScrib = ['jy.s1', 'jy.s2', 'jy.s3'];
+Object.assign(CHAT_DICT.t, { 'jy.l1': ['今書かれてる！？', 'is it writing right now!?'], 'jy.l2': ['勝手に字が…', 'words are appearing by themselves...'], 'jy.l3': ['え、え、え', 'wait wait wait'], 'jy.l4': ['目の前で書いてる', "it's writing right in front of you"],
+  'jy.r1': ['にげてって書いてる！', 'it says RUN!'], 'jy.r2': ['後ろ！？', 'behind you!?'],
+  'jy.e1': ['消すなｗ', "don't erase it lol"], 'jy.e2': ['怒らせるな', "don't make her angry"], 'jy.e3': ['やめとけって', 'stop it'], 'jy.e4': ['塗りつぶしたｗ', 'you scribbled it out lol'],
+  'jy.h1': ['ほら怒った', 'see, now she’s mad'], 'jy.h2': ['かわいそう', 'poor thing'], 'jy.h3': ['謝って', 'apologize'],
+  'jy.a1': ['やばいやばい', 'this is bad this is bad'], 'jy.a2': ['紙いっぱい…', 'the whole page...'], 'jy.a3': ['ユルサナイって書いてる', 'it says I WON’T FORGIVE YOU'], 'jy.a4': ['逃げて', 'run'], 'jy.a5': ['怖すぎ', 'way too scary'],
+  'jy.s1': ['ぐちゃぐちゃで草', 'that scribble lol'], 'jy.s2': ['画伯…？', 'an artist...?'], 'jy.s3': ['何描いてんのｗ', 'what are you drawing lol'] });
+try { LABX.RAW.I.push('jy.e3', 'jy.h3', 'jy.a4'); LABX.RAW.R.push('jy.e1', 'jy.s1', 'jy.e4'); LABX.RAW.K.push('jy.h2'); LABX.L = null; } catch (e) { }
 try { LABX.RAW.I.push('jy.g4'); LABX.RAW.R.push('jy.m1', 'jy.m2'); LABX.RAW.S.push('jy.m2'); LABX.L = null; } catch (e) { }
 
 if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
