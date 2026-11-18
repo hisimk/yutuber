@@ -15242,7 +15242,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.45';
+const VERSION = '0.17.46';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -17898,6 +17898,24 @@ const SCIRM = {
 };
 
 /* ── 美術室 */
+/* 2026-11-18 美術室のキャンバスの絵：風景画は1枚だけ。ほかは白、静物画、肖像画をランダムに置く */
+const ARTPICS = {
+  brush(q, x, y, w, h, col, n, R) { q.fillStyle = col; for (let i = 0; i < n; i++) { q.globalAlpha = 0.18 + R() * 0.3; const a = x + R() * w, b = y + R() * h; q.beginPath(); q.ellipse(a, b, 3 + R() * 9, 1.5 + R() * 4, R() * 3.14, 0, 6.29); q.fill(); } q.globalAlpha = 1; },
+  white(c) { const q = c.getContext('2d'); q.fillStyle = '#f2eee4'; q.fillRect(0, 0, c.width, c.height); },
+  still(c) { const q = c.getContext('2d'), W = c.width, H = c.height, R = Math.random; q.fillStyle = '#3d3226'; q.fillRect(0, 0, W, H); this.brush(q, 0, 0, W, H * 0.65, '#5a4a36', 260, R);
+    q.fillStyle = '#6b4a2e'; q.fillRect(0, H * 0.66, W, H * 0.34); this.brush(q, 0, H * 0.66, W, H * 0.34, '#8a6440', 160, R);   /* 机 */
+    q.fillStyle = '#dcd4c4'; q.beginPath(); q.ellipse(W * 0.5, H * 0.72, W * 0.36, H * 0.05, 0, 0, 6.29); q.fill();   /* 布 */
+    q.fillStyle = '#4c6a7a'; q.beginPath(); q.moveTo(W * 0.4, H * 0.3); q.quadraticCurveTo(W * 0.3, H * 0.5, W * 0.38, H * 0.7); q.lineTo(W * 0.56, H * 0.7); q.quadraticCurveTo(W * 0.64, H * 0.5, W * 0.54, H * 0.3); q.closePath(); q.fill(); this.brush(q, W * 0.36, H * 0.34, W * 0.22, H * 0.34, '#6f93a3', 60, R);   /* 花びん */
+    for (const [x, y, r, c1] of [[0.28, 0.66, 0.075, '#a8261c'], [0.68, 0.67, 0.07, '#b8862a'], [0.76, 0.69, 0.06, '#9a2a1c']]) { q.fillStyle = c1; q.beginPath(); q.arc(W * x, H * y, W * r, 0, 6.29); q.fill(); q.fillStyle = 'rgba(255,240,220,.35)'; q.beginPath(); q.arc(W * (x - r * 0.35), H * y - W * r * 0.4, W * r * 0.3, 0, 6.29); q.fill(); }
+    for (let i = 0; i < 5; i++) { q.strokeStyle = '#3c5a2a'; q.lineWidth = 2; q.beginPath(); q.moveTo(W * 0.47, H * 0.3); q.lineTo(W * (0.3 + R() * 0.34), H * (0.08 + R() * 0.12)); q.stroke(); q.fillStyle = ['#e8e0d0', '#d8b0b8', '#e0c060'][i % 3]; q.beginPath(); q.arc(W * (0.3 + R() * 0.34), H * (0.07 + R() * 0.14), 6 + R() * 5, 0, 6.29); q.fill(); } },
+  portrait(c) { const q = c.getContext('2d'), W = c.width, H = c.height, R = Math.random; q.fillStyle = '#1e1c22'; q.fillRect(0, 0, W, H); this.brush(q, 0, 0, W, H, '#2e2a34', 240, R);
+    q.fillStyle = '#2a3346'; q.beginPath(); q.moveTo(W * 0.12, H); q.quadraticCurveTo(W * 0.2, H * 0.66, W * 0.5, H * 0.64); q.quadraticCurveTo(W * 0.8, H * 0.66, W * 0.88, H); q.fill();   /* 服 */
+    q.fillStyle = '#4a3428'; q.beginPath(); q.ellipse(W * 0.5, H * 0.42, W * 0.22, H * 0.2, 0, 0, 6.29); q.fill(); q.fillRect(W * 0.28, H * 0.42, W * 0.44, H * 0.22); this.brush(q, W * 0.28, H * 0.24, W * 0.44, H * 0.4, '#6a4a36', 70, R);   /* 後ろ髪 */
+    q.fillStyle = '#d8c8b4'; q.fillRect(W * 0.44, H * 0.5, W * 0.12, H * 0.16); q.beginPath(); q.ellipse(W * 0.5, H * 0.41, W * 0.15, H * 0.14, 0, 0, 6.29); q.fill();   /* 首と顔 */
+    q.fillStyle = '#4a3428'; q.beginPath(); q.ellipse(W * 0.5, H * 0.3, W * 0.17, H * 0.07, 0, 3.14, 6.29); q.fill(); q.fillRect(W * 0.33, H * 0.3, W * 0.34, H * 0.035);   /* 前髪 */
+    q.fillStyle = '#18161a'; for (const x of [0.43, 0.57]) { q.beginPath(); q.ellipse(W * x, H * 0.41, W * 0.025, H * 0.012, 0, 0, 6.29); q.fill(); }   /* 目（表情は描かない） */
+    q.strokeStyle = 'rgba(80,40,40,.6)'; q.lineWidth = 1.5; q.beginPath(); q.moveTo(W * 0.46, H * 0.48); q.lineTo(W * 0.54, H * 0.48); q.stroke(); },
+};
 const ARTRM = {
   built: false,
   build() {
@@ -17952,9 +17970,21 @@ const ARTRM = {
     this.canvT.needsUpdate = true; if (this.canvT2) this.canvT2.needsUpdate = true;
   },
   dollPose() { const r = () => rnd(-1.4, 1.4); for (const j of this.dollL) j.rotation.set(r(), 0, r() * 0.6); this.doll.rotation.set(rnd(-0.3, 0.3), rnd(0, 6), rnd(-0.3, 0.3)); },
+  dress() {
+    const es = this.easels.filter(g => g !== this.canvG); if (!es.length) return; const kinds = ['white', 'white'];
+    if (Math.random() < 0.75) kinds.push('still'); if (Math.random() < 0.75) kinds.push('portrait'); while (kinds.length < es.length - 1) kinds.push('white');
+    for (let i = kinds.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [kinds[i], kinds[j]] = [kinds[j], kinds[i]]; }
+    const li = Math.floor(Math.random() * es.length); let k = 0;
+    es.forEach((g, i) => { const tg = g.userData.cv3 || g.userData.cv, ms = []; tg.traverse(m => { if (m.isMesh) ms.push(m); }); const kind = i === li && g.userData.cv3 ? 'land' : (i === li ? 'still' : kinds[k++] || 'white');
+      for (const m of ms) { if (!m.userData.landMat) m.userData.landMat = m.material; m.userData.origMat = null; }
+      if (kind === 'land') { for (const m of ms) m.material = m.userData.landMat; }
+      else { const c = document.createElement('canvas'); c.width = 256; c.height = 320; ARTPICS[kind](c); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.flipY = !g.userData.cv3; const mt = new THREE.MeshLambertMaterial({ map: t }); for (const m of ms) m.material = mt; }
+      g.userData.pic = kind; });
+    if (TEST || DEV) console.log('ARTRM dress', es.map(g => g.userData.pic).join(','));
+  },
   reset() {
     PAINT.reset(); this.canvOn = WF('canvas3') || WF('canvas') || Math.random() < 0.5; this.handOn = WF('redhands') || Math.random() < 0.5;   /* 2026-11-16 キャンバスと赤い手形は、それぞれ周の最初に半分の確率で */
-    this.build(); BUSTX.reset(); DOLLX.reset(); this.stage = WF('canvas3') ? 3 : 0; this.canvasDraw(this.stage); this.bust.rotation.y = Math.PI * 0.85; this.bustTurned = false; this.bOff = 0; this.dollChanged = false; this.dOff = 0; this.cOff = 0;
+    this.build(); this.dress(); BUSTX.reset(); DOLLX.reset(); this.stage = WF('canvas3') ? 3 : 0; this.canvasDraw(this.stage); this.bust.rotation.y = Math.PI * 0.85; this.bustTurned = false; this.bOff = 0; this.dollChanged = false; this.dOff = 0; this.cOff = 0;
     for (const j of this.dollL) j.rotation.set(0, 0, 0); for (const j of this.dollLA || []) j.rotation.set(0, 0, 0); if (this.dollHead) this.dollHead.rotation.set(0, 0, 0); this.doll.rotation.set(0, 0, 0); this.in = false;
     for (const h of this.hands || []) h.parent && h.parent.remove(h); this.hands = []; this.handSt = 'wait'; this.handT = 0; this.stay = 0;
   },
@@ -18007,6 +18037,7 @@ const PROPS3D = {
       if (ea) for (const g of ARTRM.easels) { const o = ea.clone(), cv = o.getObjectByName('Canvas'); g.userData.cv.visible = false; g.userData.cv3 = cv; for (const c of [...g.children]) if (c !== g.userData.cv) g.remove(c); g.add(o);
         /* 描き足されていくキャンバスは、モデルのキャンバスに今までの絵を貼る */
         if (g === ARTRM.canvG && cv) { const t = new THREE.CanvasTexture(ARTRM.canvC); t.colorSpace = THREE.SRGBColorSpace; t.flipY = false; ARTRM.canvT2 = t; cv.traverse(m => { if (m.isMesh) m.material = new THREE.MeshLambertMaterial({ map: t }); }); } }
+      if (ea) ARTRM.dress();
       if (dl) { const g = ARTRM.dollG, o = dl.clone(); g.clear(); g.add(o); const n = k => o.getObjectByName(k); ARTRM.doll = n('Hips'); ARTRM.dollL = ['UpperArmL', 'UpperArmR', 'UpperLegL', 'UpperLegR'].map(n); ARTRM.dollLA = ['LowerArmL', 'LowerArmR'].map(n); ARTRM.dollHead = n('Head'); } }
   },
 };
@@ -25072,7 +25103,8 @@ Object.assign(PAINT, {
     if (this.on || !g) return; if (world.selfie) SELF.set(false); this.g = g; this.on = true; this.isOpen = true; this.erase = false; this.col = this.col || this.COLS[0]; this.sz = this.sz || this.SIZES[1]; this.strokesN = 0;
     const tg = this.tg = g.userData.cv3 || g.userData.cv; this.flip = !g.userData.cv3; this.meshes = []; tg.traverse(m => { if (m.isMesh) this.meshes.push(m); });
     if (!this.cv) { this.cv = document.createElement('canvas'); this.cv.width = this.W; this.cv.height = this.H; this.x = this.cv.getContext('2d'); }
-    this.clear(); this.tx = new THREE.CanvasTexture(this.cv); this.tx.colorSpace = THREE.SRGBColorSpace; this.tx.flipY = this.flip; this.tx.anisotropy = 4;
+    this.clear(); { const im = this.meshes[0] && this.meshes[0].material && this.meshes[0].material.map && this.meshes[0].material.map.image; if (im && (im.width || im.videoWidth)) try { this.x.drawImage(im, 0, 0, this.W, this.H); } catch (e) { } }   /* 2026-11-18 今の絵（風景画など）の上から塗れる */
+    this.tx = new THREE.CanvasTexture(this.cv); this.tx.colorSpace = THREE.SRGBColorSpace; this.tx.flipY = this.flip; this.tx.anisotropy = 4;
     for (const m of this.meshes) { if (!m.userData.origMat) m.userData.origMat = m.material; m.userData.prevMat = m.material; m.material = new THREE.MeshLambertMaterial({ map: this.tx }); }
     /* キャンバスの中心・向き・大きさ（イーゼルから見た向きで） */
     g.updateMatrixWorld(true); const inv = g.matrixWorld.clone().invert(), lo = V(1e9, 1e9, 1e9), hi = V(-1e9, -1e9, -1e9);
