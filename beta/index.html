@@ -15234,7 +15234,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.37';
+const VERSION = '0.17.38';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -17787,8 +17787,8 @@ const WING = {
     if (world.state !== 'play') return;
     if (player.lv === 1) {
       const fw = camFwd(), B1 = this.B[0], B2 = this.B[1];
-      if (!B1.open && Math.abs(player.x) < 1.3 && player.z < -31.8 && player.z > -33 && fw.z < -0.5) wOffer(TR('調べる'), () => toast(TR('重いものでふさがれているようだ'), 2200));
-      if (!B2.open && Math.abs(player.z + 31.5) < 1.5 && ((player.x > 10.2 && player.x < 11.4 && fw.x > 0.5) || (player.x > 12.2 && player.x < 13.4 && fw.x < -0.5))) wOffer(TR('調べる'), () => toast(TR('びくともしない…何か大きな力がいる'), 2200));
+      if (!B1.open && Math.abs(player.x) < 1.3 && player.z < -31.8 && player.z > -33 && fw.z < -0.5) wOffer(TR('調べる'), () => toast(TR('内側から何かが積んである…人の力ではどうにもならなさそう。'), 3200));   /* 2026-11-18 美術室の扉① */
+      if (!B2.open && Math.abs(player.z + 31.5) < 1.5 && ((player.x > 10.2 && player.x < 11.4 && fw.x > 0.5) || (player.x > 12.2 && player.x < 13.4 && fw.x < -0.5))) wOffer(TR('調べる'), () => toast(TR('怪しいバリケード。自分の力では突進してもビクともしなそうだ。'), 3200));   /* 2026-11-18 バリケード② */
     }
     const z = playerZone(); if (['2D', 'ART', 'SCI'].includes(z)) { if (!this.inWing) { this.inWing = true; let first = false; try { first = localStorage.getItem('yt_wing_in') !== '1'; localStorage.setItem('yt_wing_in', '1'); } catch (e) { } if (first || !this.inLogged) { this.inLogged = true; if (first) XCHAT.log('wingIn'); } } } else this.inWing = false;
   },
@@ -19648,6 +19648,7 @@ Object.assign(CHIP_DESC, {
   redHands: ['床に、赤い絵の具の手形がこちらへ向かって増えてきた。', 'Red paint handprints appeared on the floor, coming toward you.'], ductHand: ['ダクトの奥を、何かが這っていった。ライトの先に一瞬だけ手が見えた。', 'Something crawled deep in the duct. A hand showed for a moment in your light.'],
   paJack: ['放送室のマイクで、学校中に放送した。', 'You took over the school PA system.'], paIntruder: ['放送中の放送室に、怪異が入ってきた。', 'A monster came into the broadcast room while you were on air.'],
 });
+Object.assign(EN, { '内側から何かが積んである…人の力ではどうにもならなさそう。': 'Something is piled up on the other side... no human could move this.', '怪しいバリケード。自分の力では突進してもビクともしなそうだ。': 'A suspicious barricade. Even charging it yourself, it wouldn\'t budge.' });
 Object.assign(EN, { '闘牛士': 'Matador', 'バリケード突破': 'Through the barricade', '空っぽの台座': 'The empty stand', 'こちらを向く骸骨': 'The skeleton that turns', '瓶の中の目玉': 'The eye in the jar', '顕微鏡の向こうの目': 'An eye in the microscope', '首が回るフクロウ': 'The owl’s head turns', '石膏仮面でやり過ごす': 'Let it pass in a plaster mask', '振り向く石膏像': 'The bust that turns', '増えていくキャンバス': 'The painting that grows', 'ポーズを変えたデッサン人形': 'The doll that moved', '近づいてくる赤い手形': 'Red handprints coming closer', 'ダクトの奥の手': 'A hand in the duct', '校内放送ジャック': 'PA hijack', '放送中の乱入者': 'An intruder on air', '予備バッテリー': 'Spare battery', '石膏のお面': 'Plaster mask', '調べる': 'Inspect', 'びくともしない…何か大きな力がいる': "It won't budge... it needs something big.", '顕微鏡をのぞく': 'Look into the microscope', '格子を外す': 'Remove the grille', 'ダクトに入る': 'Enter the duct', 'しゃがめば入れそうだ': 'You could fit if you crouch', 'ダクトの中は狭くて暗い…': 'The duct is cramped and dark...', '下りる': 'Climb down', '鍵を開ける': 'Unlock', '放送する': 'Go on air', '放送をやめる': 'Stop broadcasting', 'マイクがオンになっていないので放送できません': "The mic isn't on, so you can't broadcast", 'お面にひびが入って、くずれた': 'The mask cracked and crumbled' });
 Object.assign(CHAT_DICT.t, {
   'wg.in.01': ['新エリアきた！', 'new area!!'], 'wg.in.02': ['ここ入れたんだ', 'you can go in here?'], 'wg.in.03': ['模型くんありがとう', 'thanks mannequin-kun'], 'wg.in.04': ['奥こんなに広いの', "it's so big back here"],
