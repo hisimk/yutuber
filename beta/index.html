@@ -939,6 +939,7 @@
       <div class="opt col" id="setVolRow"><div class="optTop"><div>音量<small>スピーカーから出る大きさ（録画の音は変わりません）</small></div><div class="val" id="volVal">100%</div></div><input class="rng" id="volRange" type="range" min="0" max="100" step="5" value="100"></div>
       <div class="opt col" id="setSensRow"><div class="optTop"><div>視点を動かす速さ<small>なぞった時・ドラッグした時の回りやすさ</small></div><div class="val" id="sensVal">×1.0</div></div><input class="rng" id="sensRange" type="range" min="0.4" max="2" step="0.1" value="1"></div>
       <div class="opt" id="setFearRow"><div>怖さ<small>「小」にすると、ジャンプスケアの描写と、取得できる撮れ高が減ります。</small></div><div class="seg" id="fearSeg"><button data-f="lo">小</button><button data-f="hi">大</button></div></div>
+      <div class="opt" id="setDiffRow"><div>難易度<small>ハード：怪異が早く出て足も速く、隠れていても見つかりやすい。赤いマントは効かない。報酬1.2倍。</small></div><div class="seg" id="diffSeg"><button data-d="normal">ふつう</button><button data-d="hard">ハード</button></div></div>
       <div class="opt" id="setFpsRow"><div>なめらかさ<small>60はなめらか（スマホが熱くなりやすい）</small></div><div class="seg" id="fpsSeg"><button data-f="30">30fps</button><button data-f="60">60fps</button></div></div>
       <div class="opt" id="setQualRow"><div>画質<small>重い時は「軽い」に（少し粗くなり、影が減ります）</small></div><div class="seg" id="qualSeg"><button data-q="std">標準</button><button data-q="lite">軽い</button></div></div>
       <div class="opt col" id="setGodRow"><div class="optTop"><div>神回の動画を端末に残す<small>動画はこの端末の中だけに保存され、外部には送られません。<span style="white-space:nowrap">1本あたり最大で約50MBです。</span></small></div></div><div class="seg" id="godSeg"><button data-g="3">上位3位まで</button><button data-g="1">1位だけ</button><button data-g="0">残さない</button></div><div id="godUse"></div></div>
@@ -5285,7 +5286,7 @@ const HIDE = {
     if (A.out) A.out.frequency.setTargetAtTime(1300, A.ctx.currentTime, 0.05);   // 金属扉越しにくぐもる
     // 隠れる成否は扉が閉じた瞬間に一度だけ
     // 2026-11-13 隠れたのがバレるか：追ってくる怪異との距離で決まる（近いほどバレやすい。入るところを見られたら必ず）。クモ女に追われていても同じ
-    const pFound = (d, seen) => seen ? 1 : clamp(1.15 - d / 7, 0.08, 0.95);
+    const pFound = (d, seen) => seen ? 1 : clamp(1.15 - d / (typeof DIFF !== 'undefined' && DIFF.hard() ? 10.5 : 7), 0.08, 0.95);   /* 2026-11-18 ハードは見つかる距離が1.5倍 */
     const spCh = typeof SP !== 'undefined' && SP.st === 'chase';
     if (CH.state === 'chase') {
       const d = distTo(WD.pos.x, WD.pos.z);
@@ -15186,7 +15187,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.25';
+const VERSION = '0.17.26';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -20646,7 +20647,7 @@ const SHOP = {
     el.onclick = e => { e.stopPropagation(); const c = '', f = n => n.toLocaleString(); { const b0 = $('#resBrk'); if (b0 && b0.classList.contains('show')) { b0.classList.remove('show'); return; } }   /* 2026-11-16 もう一度タップで閉じる */   /* 2026-11-16 内訳にコメントの分も */
       const brk = $('#resBrk') || (() => { const b = document.createElement('div'); b.id = 'resBrk'; document.body.appendChild(b); return b; })(), say = (m, ms) => { brk.innerHTML = m; brk.classList.add('show'); brk.onclick = ev => { ev.stopPropagation(); brk.classList.remove('show'); }; };   /* 結果画面の上に出す（toast は結果画面の下に隠れていた） */
       const P = (t, v) => `<div>${t} ＝ <b class="bkP">+${f(v)}${en ? ' yen' : '円'}</b></div>`;   /* 2026-11-16 プラスは緑・マイナスは赤 */
-      say((en ? P(`Likes ${f(L.likes)} × 0.8 × ${L.mul}`, L.likeY) + P(`Comments ${f(L.cm)} × ${L.per} × ${L.mul}`, L.cmtY) : P(`いいね ${f(L.likes)} × 0.8 × ${L.mul}倍`, L.likeY) + P(`コメント ${f(L.cm)}件 × ${L.per}円 × ${L.mul}倍`, L.cmtY)) + (L.tips ? `<div>${en ? 'Tips' : '投げ銭'} <b class="bkP">+${f(L.tips)}${en ? ' yen' : '円'}</b></div>` : '') + (L.neko ? `<div>${en ? 'White beckoning cat' : '白い招き猫'} <b class="bkP">+${f(L.neko)}${en ? ' yen' : '円'}</b></div>` : '') + (L.cap ? `<div>${en ? 'Medical bills' : '医療費'}${L.ins ? (en ? ' (insured, half)' : '（保険証で半額）') : ''} <b class="bkM">−${f(L.fee)}${en ? ' yen' : '円'}</b></div>` : '') + `<div class="bkT">${en ? 'Total' : '合計'} ${f(L.yen)}${en ? ' yen' : '円'}</div>`, 0); };
+      say((en ? P(`Likes ${f(L.likes)} × 0.8 × ${L.mul}`, L.likeY) + P(`Comments ${f(L.cm)} × ${L.per} × ${L.mul}`, L.cmtY) : P(`いいね ${f(L.likes)} × 0.8 × ${L.mul}倍`, L.likeY) + P(`コメント ${f(L.cm)}件 × ${L.per}円 × ${L.mul}倍`, L.cmtY)) + (L.tips ? `<div>${en ? 'Tips' : '投げ銭'} <b class="bkP">+${f(L.tips)}${en ? ' yen' : '円'}</b></div>` : '') + (L.neko ? `<div>${en ? 'White beckoning cat' : '白い招き猫'} <b class="bkP">+${f(L.neko)}${en ? ' yen' : '円'}</b></div>` : '') + (L.hardB ? `<div>${en ? 'Hard ×1.2' : 'ハード ×1.2'} <b class="bkP">+${f(L.hardB)}${en ? ' yen' : '円'}</b></div>` : '') + (L.cap ? `<div>${en ? 'Medical bills' : '医療費'}${L.ins ? (en ? ' (insured, half)' : '（保険証で半額）') : ''} <b class="bkM">−${f(L.fee)}${en ? ' yen' : '円'}</b></div>` : '') + `<div class="bkT">${en ? 'Total' : '合計'} ${f(L.yen)}${en ? ' yen' : '円'}</div>`, 0); };
   },
   /* ── スタート画面：所持金とショップのボタン */
   title() {
@@ -23384,7 +23385,7 @@ const HIDEX = {
     const sp = this.spot(), SPc = ['chase', 'fcrawl', 'land', 'jump', 'descend'];
     if (sp !== 'stall' && sp !== 'bed') { SP.hunt = null; this.was = sp; return; }
     if (this.was !== sp) { this.was = sp; SP.hunt = null;
-      if (SP.ready && SPc.includes(SP.st) && SP.lv === player.lv) { const saw = world.t - (SP.seenAt ?? -99) < 2; if (chance(saw ? 0.65 : 0.25) || WF('sphunt')) SP.hunt = { kind: sp, t: 0 }; if (TEST || DEV) console.log('SPHUNT', sp, SP.hunt ? 'hunt' : 'lost'); } }
+      if (SP.ready && SPc.includes(SP.st) && SP.lv === player.lv) { const saw = world.t - (SP.seenAt ?? -99) < 2; if (chance(DIFF.hard() ? (saw ? 0.85 : 0.45) : (saw ? 0.65 : 0.25)) || WF('sphunt')) SP.hunt = { kind: sp, t: 0 }; if (TEST || DEV) console.log('SPHUNT', sp, SP.hunt ? 'hunt' : 'lost'); } }
     const H = SP.hunt; if (!H) return; H.t += dt; if (!SPc.includes(SP.st)) return;
     const dH = Math.hypot(player.x - SP.pos.x, player.z - SP.pos.z);
     if (H.t > 14) { SP.hunt = null; return; }   /* 見つけられないまま、あきらめる */
@@ -23467,7 +23468,96 @@ Object.assign(EN, { 'ショップ（1/2）': 'Shop (1/2)' });
   rm(INV.ids, 'stick'); rm(ITEM_TIER.rare, 'stick'); for (const k of ['n', 'r', 'u']) if (LOCKX.TIER[k]) rm(LOCKX.TIER[k], 'stick'); rm(ITEM.LK_IDS, 'stick'); rm(YTAG.NOUSE, 'stick');
   try { const d = SHOP.load(); let ch = false; if (d.own && d.own.stick) { delete d.own.stick; ch = true; } for (const k of ['carry', 'fav']) if (Array.isArray(d[k]) && d[k].includes('stick')) { d[k] = d[k].filter(x => x !== 'stick'); ch = true; } if (ch) SHOP.save(); } catch (e) { }
   { const B0 = SHOP.beginRun.bind(SHOP); SHOP.beginRun = function () { const r = B0(); ITEM.have.stick = false; return r; }; } }
-if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG });
+/* =========================================================
+   2026-11-18 実況マイクは、使う時だけ取る（録画中・こっくりさん・放送室・隠れている間）
+   ・iPhoneはマイクを取っている間「通話モード」になり、端末の音量を0にしても音が少し残る。使っていない時はマイクを外して、メディアの音量に従わせる
+   ・取る時は、ボタンを押した時（録画・こっくりさん・隠れる・放送室に入る）に。外すのは、使わない状態が6秒続いた時（持ち物を開いて録画が止まるたびに外さないように）
+   ========================================================= */
+const MICR = { idle: 0,
+  need() { return rec.active || (typeof KOK !== 'undefined' && KOK.on) || (typeof BCAST !== 'undefined' && (BCAST.on || BCAST.inRoom())) || (typeof HIDEX !== 'undefined' && HIDEX.any()); },
+  want() { try { if (opt.mic && !rec.mic && world.state !== 'title') micOn(); } catch (e) { } },
+  tick(dt) { if (!opt.mic || !rec.mic) { this.idle = 0; return; } if (this.need() || (typeof SET !== 'undefined' && SET.open)) { this.idle = 0; return; } this.idle += dt; if (this.idle > 6) { this.idle = 0; try { micOff(); if (TEST || DEV) console.log('MIC released'); } catch (e) { } } },
+};
+setInterval(() => MICR.tick(0.5), 500);
+{ const S0 = startRec; startRec = function () { MICR.want(); return S0.apply(this, arguments); }; }
+for (const [o, k] of [[KOK, 'enter'], [HIDE, 'enter'], [UNDER, 'enter']]) { const f0 = o[k].bind(o); o[k] = function () { const r = f0.apply(this, arguments); MICR.want(); return r; }; }
+document.addEventListener('pointerup', () => { if (world.state === 'play' && MICR.need()) MICR.want(); }, true);   /* 個室の鍵・放送室など：画面に触れた時に、要るなら取る */
+/* =========================================================
+   2026-11-18 隠れている時（ロッカー・ベッドの下・トイレの個室）に大きな声を出すと、近くの怪異に気づかれる
+   ・隠れている時だけ。探索中・追われている時は、いくら叫んでも気づかれない。マイクがオフの人は今のまま
+   ・「声らしい音」（声の帯域・声の高さの周期がある）で、大きさが まわりの静けさ＋20dB 以上、かつ −28dB 以上が、1.2秒の間に合わせて0.35秒続いた時（家の生活音・物音では反応しにくく）
+     ハード：＋14dB・−34dB（小さめの声でも）
+   ・気づく怪異：近い順に1体（同じ階で、逆さ女・クモ女は10m以内、オフタリサマは12m以内）。内田くんは隠れたらあきらめるので気づかない
+   ・気づかれ方：ロッカーは外から扉を開けられる／ベッドの下はのぞき込まれる（逆さ女）・引きずり出される（クモ女）／個室は鍵を開けて入ってくる（逆さ女）・上から来る（クモ女）。オフタリサマは無理やり開ける
+   ・コメント「静かにしろw」など（録画中だけ）。撮れ高「隠れてるんですけど」「見つかるって！」は今まで通り別に取れる
+   確認用：?hearlog（判定の数字を開発ログに出す）
+   ========================================================= */
+const VHEAR = { floor: -60, acc: [], cool: 0, t: 0,
+  hard() { return typeof DIFF !== 'undefined' && DIFF.hard(); },
+  tick(dt) {
+    this.cool -= dt; if (!opt.mic || !rec.mic || world.state !== 'play' || typeof HIDEX === 'undefined' || !HIDEX.any() || !VOICE.attach()) { this.acc.length = 0; return; }
+    const f = VOICE.analyse(), now = world.t; if (!Number.isFinite(f.lv)) return;
+    this.floor = f.lv < this.floor ? this.floor + (f.lv - this.floor) * 0.3 : this.floor + (f.lv - this.floor) * 0.004;   /* まわりの静けさ（下がるのは速く、上がるのはゆっくり） */
+    const H = this.hard(), voice = f.band > 0.6 && f.per > 0.45, loud = f.lv > Math.max(H ? -34 : -28, this.floor + (H ? 14 : 20));
+    if (voice && loud) this.acc.push([now, dt]); while (this.acc.length && now - this.acc[0][0] > 1.2) this.acc.shift();
+    const sum = this.acc.reduce((a, x) => a + x[1], 0);
+    if ((TEST || DEV) && /[?&]hearlog\b/.test(location.search) && voice) console.log('HEAR', f.lv.toFixed(1), this.floor.toFixed(1), f.band.toFixed(2), f.per.toFixed(2), sum.toFixed(2));
+    if (sum >= 0.35 && this.cool <= 0) { this.acc.length = 0; this.cool = 25; this.notice(); }
+  },
+  notice() {
+    const sp = HIDEX.spot(), lv = player.lv, P = V(player.x, player.y, player.z), cand = [];
+    const dist = q => Math.hypot(q.x - P.x, q.z - P.z);
+    if (womanOn() && !WD.borrowed && !CAP.on && Math.abs((WD.pos.y || 0) - player.y) < 1.2 && dist(WD.pos) < 10) cand.push(['woman', dist(WD.pos)]);
+    if (SP.ready && SP.pos && SP.st && !['none', 'drop', 'latch', 'peel', 'sealed'].includes(SP.st) && SP.lv === lv && dist(SP.pos) < 10) cand.push(['spider', dist(SP.pos)]);
+    if (URAH.on && URAH.root && URAH.root.visible && !['cap', 'grab', 'stun', 'wait', 'off'].includes(URAH.st) && Math.abs(URAH.pos.y - player.y) < 1.2 && dist(URAH.pos) < 12) cand.push(['urah', dist(URAH.pos)]);
+    if (!cand.length) { if (TEST || DEV) console.log('HEAR nobody near'); return; }
+    const who = cand.sort((a, b) => a[1] - b[1])[0][0];
+    if (TEST || DEV) console.log('HEARD by', who, 'at', sp);
+    try { XCHAT.log('hideHeard'); } catch (e) { }
+    if (who === 'urah') { URAH.toGrab(); return; }
+    if (sp === 'locker') { if (['in', '', 'approach', 'pass'].includes(HIDE.ph)) { HIDE.ending = 'found'; HIDE.foundBy = who; HIDE.beginFound(); } return; }
+    if (who === 'woman') {
+      CH.state = 'off'; CH.start('chase'); CH.grace = 0.4; CH.lastSeen.set(player.saved ? player.saved.x : player.x, player.y, player.saved ? player.saved.z : player.z);
+      if (sp === 'bed' || sp === 'under') { UNDER.by = 'woman'; UNDER.ph = 'found'; if (UNDER.back) CH.lastSeen.set(UNDER.back.x, player.y, UNDER.back.z); }
+      if (sp === 'stall' && world.inStall) CH.lastSeen.set(9.9, 0, world.inStall.zc);
+      return; }
+    if (who === 'spider') { if (SP.st !== 'chase' && SP.startChase) SP.startChase(); SP.seenAt = world.t; if (sp === 'stall' || sp === 'bed') { SP.hunt = { kind: sp, t: 0 }; HIDEX.was = sp; } }
+  },
+};
+setInterval(() => { try { VHEAR.tick(0.1); } catch (e) { } }, 100);
+XCHAT.LIST.hideHeard = ['hh.0', 'hh.1', 'hh.2', 'hh.3', 'hh.4', 'hh.5', 'hh.6'];
+Object.assign(CHAT_DICT.t, { 'hh.0': ['静かにしろw', 'shhh lol'], 'hh.1': ['声デカいって', "you're way too loud"], 'hh.2': ['今のは聞こえたろ', 'it definitely heard that'], 'hh.3': ['自分から居場所教えてて草', "you just told it where you are lmao"], 'hh.4': ['なんで叫んだ', 'why would you yell'], 'hh.5': ['バレたぞ', "you're found"], 'hh.6': ['隠れる意味ｗ', "what's the point of hiding lol"] });
+/* =========================================================
+   2026-11-18 難易度（ふつう／ハード）。スタート画面の設定でだけ変えられる（ゲーム中は表示だけ）。周の始まりに決まり、その周の間は変わらない
+   ・ハード：怪異が早く出る（1体目は電池の使用量の目安が半分、オフタリサマは約0.55倍の時間）／追う速さ1.2倍（逆さ女・クモ女・内田くん・オフタリサマ）
+     隠れていても見つかりやすい（近づかれると見つかる距離1.5倍）／隠れている時の声に敏感／赤いマントは効かない／報酬1.2倍
+   ・2体目の怪異が出る条件・撮れ高・ランクの記録は、ふつうと同じ
+   確認用：?hard（その周だけハード）
+   ========================================================= */
+const DIFF = { KEY: 'yt_diff',
+  get() { if ((TEST || BETA) && /[?&]hard\b/.test(location.search)) return 'hard'; try { return localStorage.getItem(this.KEY) === 'hard' ? 'hard' : 'normal'; } catch (e) { return 'normal'; } },
+  set(v) { try { localStorage.setItem(this.KEY, v); } catch (e) { } this.sync(); },
+  hard() { return world.state === 'title' ? this.get() === 'hard' : !!world.hardRun; },
+  base: null,
+  apply() { const B = this.base || (this.base = { wm: CONFIG.womanChaseMul, wx: CONFIG.womanChaseMax, sm: CONFIG.spiderChaseMul, sx: CONFIG.spiderChaseMax, st: Object.assign({}, CONFIG.stalker), md: MANN_DASH.speed, hk: URAH_CFG.hannyaK.slice(), nk: URAH_CFG.nohK.slice(), hd: CONFIG.hideMinDist });
+    const k = world.hardRun ? 1.2 : 1; CONFIG.womanChaseMul = B.wm * k; CONFIG.womanChaseMax = B.wx * k; CONFIG.spiderChaseMul = B.sm * k; CONFIG.spiderChaseMax = B.sx * k;
+    CONFIG.stalker.startSpeed = B.st.startSpeed * k; CONFIG.stalker.maxSpeed = B.st.maxSpeed * k; MANN_DASH.speed = B.md * k; URAH_CFG.hannyaK = B.hk.map(x => x * k); URAH_CFG.nohK = B.nk.map(x => x * k);
+    CONFIG.hideMinDist = B.hd * (world.hardRun ? 1.5 : 1); },
+  sync() { const v = this.get(), ttl = world.state === 'title';
+    { const sm = document.querySelector('#setDiffRow small'); if (sm) sm.innerHTML = LANG === 'en' ? 'Hard: monsters appear sooner and move faster, and find you more easily when hiding. The red cape does not work. Rewards ×1.2.' : ['ハード：', '怪異が早く出て、', '足も速い。', '隠れていても', '見つかりやすい。', '赤いマントは', '効かない。', '報酬1.2倍。'].map(t => `<span style="white-space:nowrap">${t}</span>`).join(''); }   /* 言葉の途中で折り返さない */ for (const b of document.querySelectorAll('#diffSeg button')) { b.classList.toggle('on', b.dataset.d === v); b.disabled = !ttl; } const r = $('#setDiffRow'); if (r) r.classList.toggle('diffRO', !ttl); },
+};
+for (const b of document.querySelectorAll('#diffSeg button')) b.addEventListener('click', e => { e.stopPropagation(); if (world.state !== 'title') return; DIFF.set(b.dataset.d); });
+{ const st = document.createElement('style'); st.textContent = `#setDiffRow{flex-direction:column;align-items:stretch;gap:8px}#setDiffRow .seg{display:flex;width:100%}#setDiffRow .seg button{flex:1;white-space:nowrap}#setDiffRow.diffRO .seg{pointer-events:none;opacity:.55}#setDiffRow.diffRO .seg button:not(.on){display:none}.resHard{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:6px;background:#b3201a;color:#fff;font-size:12px;font-weight:800;letter-spacing:.08em;vertical-align:middle}`; document.head.appendChild(st); }
+{ const S0 = SET.show.bind(SET); SET.show = function () { const r = S0.apply(this, arguments); try { DIFF.sync(); } catch (e) { } return r; }; }
+{ const D0 = ENEMY.decide.bind(ENEMY); ENEMY.decide = function () { world.hardRun = DIFF.get() === 'hard'; DIFF.apply(); const r = D0.apply(this, arguments); const q = new URLSearchParams(location.search);
+    if (world.hardRun && !((TEST || BETA || DEV) && q.get('enemyat') !== null) && world.enemyAt) world.enemyAt *= 0.5; if (TEST || DEV) console.log('DIFF', world.hardRun ? 'hard' : 'normal', (world.enemyAt || 0).toFixed(1)); return r; }; }
+{ const R0 = URAH.reset.bind(URAH); URAH.reset = function () { const r = R0.apply(this, arguments); try { if (world.hardRun && this.st === 'wait' && new URLSearchParams(location.search).get('urahat') === null) this.at *= 0.55; } catch (e) { } return r; }; }
+{ const T0 = CAPE.try.bind(CAPE); CAPE.try = function (kind) { if (world.hardRun) return false; return T0(kind); }; }   /* ハードは赤いマントが効かない */
+{ const E0 = SHOP.endRun.bind(SHOP); SHOP.endRun = function (likes) { const was = this.ended === world.runId, L = E0(likes); try { if (!was && L && world.hardRun && L.yen > 0) { const b = Math.round(L.yen * 0.2); const d = this.load(); d.yen += b; this.save(); L.yen += b; L.hardB = b; } } catch (e) { } return L; }; }
+{ const R0 = SHOP.showRes.bind(SHOP); SHOP.showRes = function () { const r = R0.apply(this, arguments); try { const h = $('#resHeadL'); let b = $('#resHardTag'); if (!b) { b = document.createElement('span'); b.id = 'resHardTag'; b.className = 'resHard'; b.textContent = 'HARD'; $('#resTitle').after(b); } b.style.display = world.hardRun ? '' : 'none'; } catch (e) { } return r; }; }
+Object.assign(EN, { '難易度': 'Difficulty', 'ふつう': 'Normal', 'ハード': 'Hard', 'ハード：怪異が早く出て足も速く、隠れていても見つかりやすい。赤いマントは効かない。報酬1.2倍。': 'Hard: monsters appear sooner and move faster, and find you more easily when hiding. The red cape does not work. Rewards ×1.2.' });
+{ const lang = $('#setLang'), dr = $('#setDiffRow'); if (lang && dr) lang.before(dr); }
+if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, MICR });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
