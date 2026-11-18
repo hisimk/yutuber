@@ -5762,7 +5762,8 @@ defEvent('zoomNear', {
           if (!sc) SND.scream();
           postMat.uniforms.tear.value = rnd(0.2, 0.5); postMat.uniforms.stat.value = 0.5; this.flashT = 0.05; world.vhs = Math.max(world.vhs, 0.5 + k * 0.4);
           this.next = this.t + (this.ji === this.jumps.length ? 0.14 : rnd(0.2, 0.28));
-          if (this.ji === this.jumps.length) { this.final = true; focus.override = 0.35; jumpSting('jump_a', 1, 4); }   // 顔がレンズいっぱいになる瞬間
+          if (this.ji === 1) jumpSting('jump_a', 1, 4);   /* 2026-11-18 びっくり音は、近づいて一気に加速した瞬間（最初のひと跳び）に */
+          if (this.ji === this.jumps.length) { this.final = true; focus.override = 0.35; }   // 顔がレンズいっぱいになる瞬間
         }
         this.flashT = (this.flashT || 0) - dt; if (this.flashT <= 0) { postMat.uniforms.stat.value = 0; postMat.uniforms.tear.value *= 0.7; }
         if (accum('rush', seen(hp, { maxD: 16 }), dt, 0.18)) award('semari', 'ズームで迫り来る女子の霊', 100);
@@ -15233,7 +15234,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.33';
+const VERSION = '0.17.34';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -15282,9 +15283,10 @@ const NOTE = {
   next() {
     const el = this.el(), o = this.q.shift(); this.cur = o || null; if (!o) { el.classList.remove('show'); return; }
     const en = LANG === 'en', body = (o.body || []).map(p => `<p>${p}</p>`).join(''), long = (o.body || []).join('').replace(/<[^>]+>/g, '').length > 48;
-    el.innerHTML = `<div class="nbx">${o.x ? `<button class="nbX" type="button" aria-label="${en ? 'Close' : '閉じる'}">×</button>` : ''}<div class="nbH">${en ? 'Notice' : 'お知らせ'}</div>${o.sub ? `<div class="nbS">${o.sub}</div>` : ''}<div class="nbB${long ? ' long' : ''}">${body}</div>${o.note ? `<div class="nbN">${o.note}</div>` : ''}<button class="nbOk" type="button">${en ? 'Got it' : 'わかった'}</button></div>`;
+    el.innerHTML = `<div class="nbx">${o.x ? `<button class="nbX" type="button" aria-label="${en ? 'Close' : '閉じる'}">×</button>` : ''}<div class="nbH">${en ? 'Notice' : 'お知らせ'}</div>${o.sub ? `<div class="nbS">${o.sub}</div>` : ''}<div class="nbB${long ? ' long' : ''}">${body}</div>${o.note ? `<div class="nbN">${o.note}</div>` : ''}<button class="nbOk" type="button">${en ? 'Got it' : 'わかった'}</button>${o.alt ? `<button class="nbOk nbAlt" type="button">${o.alt}</button>` : ''}</div>`;   /* 2026-11-18 o.alt：2つ目のボタン（押しても「わかった」と同じ） */
     this.wrap(el.querySelector('.nbx')); el.classList.add('show'); el.querySelector('.nbx').scrollTop = 0;
     el.querySelector('.nbOk').onclick = e => { e.stopPropagation(); const f = o.ok; this.cur = null; if (f && f() === 'stay') return; this.next(); };
+    { const b2 = el.querySelector('.nbAlt'); if (b2) b2.onclick = e => { e.stopPropagation(); const f = o.ok; this.cur = null; if (f && f() === 'stay') return; this.next(); }; }
     const x = el.querySelector('.nbX'); if (x) x.onclick = e => { e.stopPropagation(); const f = o.x; this.cur = null; if (f) f(); this.next(); };
     this.se();
   },
@@ -24298,7 +24300,12 @@ const LABX = {
 };
 /* 2026-11-18 65番：ゲームが終わったら（捕まった・帰った）追跡の曲・心臓の音を止める。リザルトを出す時も念のため */
 setInterval(() => { try { if ((runOver() || world.state === 'title') && (CBGM.src || (HEART.g && HEART.g.gain.value > 0.001))) chaseAudioStop(); } catch (e) { } }, 150);
-{ const S0 = showResult; showResult = function (...a) { chaseAudioStop(); return S0.apply(this, a); }; }
+{ const S0 = showResult; showResult = function (...a) { chaseAudioStop(); const r = S0.apply(this, a); try { ARARE.notice(); } catch (e) { } return r; }; }
+/* 2026-11-18 コメント欄が荒れてきた時だけ、リザルトでお知らせ（ちょい荒れ・大荒れに上がった時に1回。落ち着いたらまた出せる）。ボタンは「わかった」「わからない」（どちらも同じ） */
+ARARE.notice = function () { const st = (CHAT.cur && CHAT.cur.ar) || 1, d = this.load(); if (st < 2) { if (d.noted) { d.noted = 0; this.save(); } return; }
+  if (!this.force() && (d.noted | 0) >= st) return; if (this.force() && this.notedF) return; this.notedF = 1; d.noted = st; this.save(); const en = LANG === 'en';
+  setTimeout(() => NOTE.show({ body: en ? ['The comment section is getting heated!', 'Be careful not to delete comments too randomly!'] : ['コメント欄が荒れてきました！', '無作為に消しすぎないように気をつけてください！'], alt: en ? "Don't get it" : 'わからない' }), 900); };
+{ const st = document.createElement('style'); st.textContent = '#notePop .nbAlt{margin-top:8px;background:transparent;color:#ddd;border:1px solid rgba(255,255,255,.35);box-shadow:none}'; document.head.appendChild(st); }
 if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
