@@ -941,6 +941,7 @@
       <div class="opt col volX" id="setVolFxRow"><div class="optTop"><div>効果音<small>足音・怪異の声・物が壊れる音・環境音など</small></div><div class="val" id="vFxVal">100%</div></div><input class="rng" id="vFx" data-k="fx" type="range" min="0" max="100" step="5" value="100"></div>
       <div class="opt col volX" id="setVolUiRow"><div class="optTop"><div>画面の操作音<small>ボタン・メニューの音（動かすと試しに鳴ります）</small></div><div class="val" id="vUiVal">100%</div></div><input class="rng" id="vUi" data-k="ui" type="range" min="0" max="100" step="5" value="100"></div>
       <div class="opt col" id="setSensRow"><div class="optTop"><div>視点を動かす速さ<small>なぞった時・ドラッグした時の回りやすさ</small></div><div class="val" id="sensVal">×1.0</div></div><input class="rng" id="sensRange" type="range" min="0.4" max="2" step="0.1" value="1"></div>
+      <div class="opt col" id="setGsRow"><div class="optTop"><div>ジャイロの感度<small>スマホを動かした時の、視点の動く量</small></div><div class="val" id="gsVal">×1.0</div></div><input class="rng" id="gsRange" type="range" min="0.5" max="2" step="0.1" value="1"></div>
       <div class="opt" id="setFearRow"><div>怖さ<small>「小」にすると、ジャンプスケアの描写と、取得できる撮れ高が減ります。</small></div><div class="seg" id="fearSeg"><button data-f="lo">小</button><button data-f="hi">大</button></div></div>
       <div class="opt" id="setDiffRow"><div>難易度<small>ハード：怪異が早く出て足も速く、隠れていても見つかりやすい。赤いマントは効かない。報酬1.2倍。</small></div><div class="seg" id="diffSeg"><button data-d="normal">ふつう</button><button data-d="hard">ハード</button></div></div>
       <div class="opt" id="setFpsRow"><div>なめらかさ<small>60はなめらか（スマホが熱くなりやすい）</small></div><div class="seg" id="fpsSeg"><button data-f="30">30fps</button><button data-f="60">60fps</button></div></div>
@@ -1537,7 +1538,7 @@ const EN = {
   '・赤いボタンで録画開始／停止。持ち帰れるのは通算120秒（画面上の「残容量」で残りが分かります）': '• The red button starts/stops recording. You can bring back 120 seconds in total (see “Storage” at the top)',
   '・電池は録画中に早く減ります。玄関まで自分の足で戻ること': '• The battery drains faster while recording. Walk back to the entrance yourself',
   '・イヤホン推奨': '• Headphones recommended',
-  '音量': 'Volume', 'スピーカーから出る大きさ（録画の音は変わりません）': 'Speaker volume (does not change the recording)', '視点を動かす速さ': 'Look speed', 'なぞった時・ドラッグした時の回りやすさ': 'How fast the view turns when you swipe or drag',
+  '音量': 'Volume', 'スピーカーから出る大きさ（録画の音は変わりません）': 'Speaker volume (does not change the recording)', '視点を動かす速さ': 'Look speed', 'ジャイロの感度': 'Gyro sensitivity', 'スマホを動かした時の、視点の動く量': 'How much the view moves when you move your phone', 'なぞった時・ドラッグした時の回りやすさ': 'How fast the view turns when you swipe or drag',
   'オーディオ（PC）': 'Audio (PC)', '音の出力先': 'Audio output', 'ヘッドホンやスピーカーを選べます': 'Choose headphones or speakers', 'いつもの出力（パソコンの設定）': 'System default', '出力': 'Output', '前に選んだ出力': 'Previously selected output',
   'このブラウザでは選べません（Chrome・Edgeで選べます）': 'Not available in this browser (works in Chrome / Edge)', '名前が出ない時は、実況マイクを一度オンにすると表示されます': 'If names are missing, turn on the commentary mic once', 'その出力先は使えませんでした': 'That output could not be used',
   '電子ピアノ（MIDI）': 'Digital piano (MIDI)', 'USBでつないだ電子ピアノで音楽室のピアノを弾けます': 'Play the music-room piano with a USB digital piano', 'つないだ機器すべて': 'All connected devices', 'このブラウザでは使えません（Chrome・Edgeで使えます）': 'Not available in this browser (works in Chrome / Edge)',
@@ -4050,6 +4051,10 @@ function jumpSting(id, gain = 1, dur) { if (typeof KEHAI !== 'undefined') KEHAI.
    見失う（search）と徐々に小さく、追跡が終わるとさらに消えていく
    ========================================================= */
 const CBGM = { src: null, g: null, t0: 0, lock: 0, BPM: 130, OFF: 0.09, HEART: 1.3 };   /* 2026-11-15 HEART：心臓の鼓動と赤い脈動の速さ（曲の拍の何倍か） */
+/* 2026-11-18 65番：ゲームが終わった（捕まった・帰った）あとは、学校の音を戻さない・追跡の曲と心臓の音をはっきり止める */
+function runOver() { return ['over', 'end', 'ending'].includes(world.state); }
+function chaseAudioStop() { try { if (CBGM.src) { try { CBGM.src.stop(); } catch (e) { } } if (CBGM.g) { try { CBGM.g.gain.cancelScheduledValues(0); CBGM.g.gain.value = 0; CBGM.g.disconnect(); } catch (e) { } } CBGM.src = null; CBGM.g = null; CBGM.lock = 0;
+    if (HEART.g) { try { HEART.g.gain.cancelScheduledValues(0); HEART.g.gain.value = 0; } catch (e) { } } HEART.next = 0; HEART.k = 0; } catch (e) { } }
 function cbgmUpdate(dt) {
   const U = postMat.uniforms;
   if (CH.state === 'off') CBGM.selfSeen = false;   // 追跡ごとに一度だけ、インカメラに映った瞬間の効果音
@@ -4339,8 +4344,8 @@ function onOri(ev) {
   _eu.setFromQuaternion(gyro.q, 'YXZ');
   const y = _eu.y, p = _eu.x;
   if (!gyro.got) { gyro.got = true; gyro.last = y; gyro.acc = 0; gyro.ref = 0; look.yaw = player.yaw; look.pitch = 0; }
-  if (Math.abs(p) < 1.38) { let dy = y - gyro.last; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); gyro.acc += dy; gyro.last = y; } else gyro.last = y;
-  gyro.pitch = p; gyro.roll = _eu.z;   /* 2026-11-18 ななめの傾き */
+  if (Math.abs(p) < 1.38) { let dy = y - gyro.last; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); gyro.acc += dy * (opt.gsens || 1); gyro.last = y; } else gyro.last = y;   /* 2026-11-18 ジャイロの感度 */
+  gyro.pitch = clamp(p * (opt.gsens || 1), -1.5, 1.5); gyro.roll = _eu.z;   /* 2026-11-18 ななめの傾き */
 }
 function enableGyro() {
   const start = () => {
@@ -9416,7 +9421,7 @@ const ITEM = {
     const M = this.modal; if (!M || (!force && (M.ask || performance.now() - M.at < 450))) return;   // すぐ閉じないように（鈴の確認はボタンで）
     this.modal = null; $('#itemModal').classList.remove('show', 'ask'); $('#imBtns').innerHTML = '';
     world.state = 'play'; lastT = performance.now();
-    if (A.ctx) { A.master.gain.cancelScheduledValues(A.ctx.currentTime); A.master.gain.setTargetAtTime(M.masterV, A.ctx.currentTime, 0.1); }
+    if (A.ctx && !runOver()) { A.master.gain.cancelScheduledValues(A.ctx.currentTime); A.master.gain.setTargetAtTime(M.masterV, A.ctx.currentTime, 0.1); }
     if (M.wasRec) startRec();
     if (M.it.id === 'hmemo' && typeof HMEMO !== 'undefined') HMEMO.got();   // 2026-11-16 かすれたメモ：読み終えたら撮れ高のヒント
     if (M.it.id === 'battery') { this.seCharge(); world.battery = Math.min(100, world.battery + 30); }
@@ -13817,15 +13822,15 @@ $('#overVideo').addEventListener('click', () => { $('#over').classList.remove('s
 
 /* ---------- 開始 ---------- */
 const opt = { gyro: !FRAME.on, mic: true, tilt: true };   /* 2026-11-18 tilt：ジャイロの時、スマホの傾き（ななめ）も画面に反映（最初はオン） */
-opt.fps = 30; opt.bright = 0; opt.vol = 1; opt.sens = 1; opt.sink = ''; opt.midi = false; opt.midiIn = ''; opt.screen = 'win'; opt.quality = 'std';
+opt.fps = 30; opt.bright = 0; opt.vol = 1; opt.sens = 1; opt.gsens = 1; opt.sink = ''; opt.midi = false; opt.midiIn = ''; opt.screen = 'win'; opt.quality = 'std';
 try {
   const sv = JSON.parse(localStorage.getItem('yt_settings') || '{}');
   // 2026-11-13 ジャイロと実況マイクは最初からオン（PCにジャイロはないのでオフ）。この版より前に保存した設定も一度だけ新しい初期値にそろえる
   if (sv.v === 2) { opt.gyro = !!sv.gyro; opt.mic = !!sv.mic; } else { opt.gyro = !FRAME.on; opt.mic = true; } if (typeof sv.bright === 'number') opt.bright = sv.bv === 2 ? sv.bright : Math.max(-5, Math.min(5, sv.bright + 2));   /* 前の目盛りで保存した値は、見た目の明るさが変わらないよう+2して引き継ぐ */
-  if (typeof sv.tilt === 'boolean') opt.tilt = sv.tilt; if (typeof sv.vol === 'number') opt.vol = clamp(sv.vol, 0, 1); for (const k of ['bgm', 'fx', 'ui']) if (typeof sv['v_' + k] === 'number') opt['v_' + k] = clamp(sv['v_' + k], 0, 1); if (typeof sv.sens === 'number') opt.sens = clamp(sv.sens, 0.4, 2);
+  if (typeof sv.tilt === 'boolean') opt.tilt = sv.tilt; if (typeof sv.vol === 'number') opt.vol = clamp(sv.vol, 0, 1); for (const k of ['bgm', 'fx', 'ui']) if (typeof sv['v_' + k] === 'number') opt['v_' + k] = clamp(sv['v_' + k], 0, 1); if (typeof sv.sens === 'number') opt.sens = clamp(sv.sens, 0.4, 2); if (typeof sv.gsens === 'number') opt.gsens = clamp(sv.gsens, 0.5, 2);
   /* 2026-11-17 音の出力先の設定はなくした（パソコン・ブラウザの設定で変える）。前に選んだ出力も使わない */ if (sv.midi) opt.midi = true; if (typeof sv.midiIn === 'string') opt.midiIn = sv.midiIn; if (sv.screen === 'full') opt.screen = 'full'; if (sv.quality === 'lite') opt.quality = 'lite'; if (sv.fps === 60) opt.fps = 60;
 } catch (e) { }
-function saveOpts() { try { localStorage.setItem('yt_settings', JSON.stringify({ v: 2, bv: 2, gyro: opt.gyro, tilt: opt.tilt, mic: opt.mic, bright: opt.bright, vol: opt.vol, v_bgm: opt.v_bgm ?? 1, v_fx: opt.v_fx ?? 1, v_ui: opt.v_ui ?? 1, sens: opt.sens, sink: opt.sink, midi: opt.midi, midiIn: opt.midiIn, screen: opt.screen, quality: opt.quality, fps: opt.fps })); } catch (e) { } }
+function saveOpts() { try { localStorage.setItem('yt_settings', JSON.stringify({ v: 2, bv: 2, gyro: opt.gyro, tilt: opt.tilt, mic: opt.mic, bright: opt.bright, vol: opt.vol, v_bgm: opt.v_bgm ?? 1, v_fx: opt.v_fx ?? 1, v_ui: opt.v_ui ?? 1, sens: opt.sens, gsens: opt.gsens ?? 1, sink: opt.sink, midi: opt.midi, midiIn: opt.midiIn, screen: opt.screen, quality: opt.quality, fps: opt.fps })); } catch (e) { } }
 const brightK = v => Math.pow(1.09, v - 2);   /* 2026-11-17 本人の判断：前の「-2」の明るさを、新しい「0」（基準）に */   // 明るさ：-5〜+5 の段階 → 画面の中間の明るさの持ち上げ量
 postMat.uniforms.bright.value = brightK(opt.bright);
 /* 2026-11-14 画質：標準／軽い（重いPC向け）。軽い＝描画の解像度を下げ、影を切り、ぼかしの回数を減らす。
@@ -13870,7 +13875,7 @@ const SET = {
     $('#settings').classList.remove('show', 'bright');
     if (this.paused) {
       this.paused = false; world.state = 'play';
-      if (A.ctx) { A.master.gain.cancelScheduledValues(A.ctx.currentTime); A.master.gain.setTargetAtTime(this.masterV, A.ctx.currentTime, 0.08); }
+      if (A.ctx && !runOver()) { A.master.gain.cancelScheduledValues(A.ctx.currentTime); A.master.gain.setTargetAtTime(this.masterV, A.ctx.currentTime, 0.08); }
       if (this.wasRec) startRec(); this.wasRec = false;
     }
   },
@@ -13882,6 +13887,7 @@ const SET = {
     $('#volRange').value = Math.round(opt.vol * 100); $('#volVal').textContent = Math.round(opt.vol * 100) + '%';
     for (const [id, k] of [['vBgm', 'bgm'], ['vFx', 'fx'], ['vUi', 'ui']]) { const v = Math.round(VOLX.get(k) * 100); $('#' + id).value = v; $('#' + id + 'Val').textContent = v + '%'; }
     $('#sensRange').value = opt.sens; $('#sensVal').textContent = '×' + opt.sens.toFixed(1);
+    { const g = opt.gsens ?? 1; $('#gsRange').value = g; $('#gsVal').textContent = '×' + g.toFixed(1); $('#setGsRow').style.display = opt.gyro && !FRAME.on ? '' : 'none'; }   /* ジャイロがオンの時だけ */
     $('#setMidiRow').classList.toggle('on', !!opt.midi);
     for (const b of document.querySelectorAll('#fpsSeg button')) b.classList.toggle('on', +b.dataset.f === opt.fps);
     for (const b of document.querySelectorAll('#qualSeg button')) b.classList.toggle('on', b.dataset.q === opt.quality);
@@ -14206,6 +14212,7 @@ $('#volRange').addEventListener('input', e => { opt.vol = (+e.target.value) / 10
 $('#volRange').addEventListener('change', saveOpts);
 $('#sensRange').addEventListener('input', e => { opt.sens = +e.target.value; SET.sync(); });
 $('#sensRange').addEventListener('change', saveOpts);
+$('#gsRange').addEventListener('input', e => { opt.gsens = +e.target.value; SET.sync(); }); $('#gsRange').addEventListener('change', saveOpts);
 /* 2026-11-13 PC：音の出力先（Chrome・Edgeなど、選べるブラウザだけ） */
 const AUDIO_OUT = {
   ok() { return !!(window.AudioContext && AudioContext.prototype.setSinkId && navigator.mediaDevices && navigator.mediaDevices.enumerateDevices); },
@@ -14567,7 +14574,7 @@ const INV = {
     if (ITEM.fxQ.length && typeof ACC !== 'undefined') { const q = ITEM.fxQ.slice(); ITEM.fxQ = []; setTimeout(() => { for (const [i, o] of q) try { ACC.fx(i, o); } catch (e) { } }, 60); } else ITEM.fxQ = [];   /* サングラスの演出は、閉じてから */
     $('#invScore').classList.remove('show');
     world.state = 'play'; lastT = performance.now();
-    if (A.ctx) { A.master.gain.cancelScheduledValues(A.ctx.currentTime); A.master.gain.setTargetAtTime(this.masterV, A.ctx.currentTime, 0.08); }
+    if (A.ctx && !runOver()) { A.master.gain.cancelScheduledValues(A.ctx.currentTime); A.master.gain.setTargetAtTime(this.masterV, A.ctx.currentTime, 0.08); }
     if (this.wasRec) startRec(); this.wasRec = false;
   },
   badge() { const n = world.state === 'title' ? 0 : this.owned().length + PERM.owned().length, c = $('#invCnt'); c.textContent = n; c.classList.toggle('on', n > 0); },
@@ -15226,7 +15233,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.32';
+const VERSION = '0.17.33';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -17475,6 +17482,8 @@ const SMASH = {
 /* ── 振り返ったら戸棚が全部開いていた */
 /* 2026-11-15 保健室の低い白い戸棚（C の a）は、入口の南側（人体模型のすぐ前・走り出す通り道）から、入口の北側（入口と高い戸棚 b の間）へ移した */
 const CAB = {
+  /* 2026-11-18 64番：録音のきしみ（swivel_creak・Joseph SARDIN・CC0）を、木の戸棚らしく少し低く・ゆっくり。戸棚の位置から（違う階は小さく・こもらせる）。録音が読めない時は鳴らさない */
+  creak(c) { try { if (!A.ctx) return; const F = URSTEP.fall(c), go = () => playSfx('swivel_creak', { pos: c.clone(), ref: 1.2, roll: 1.0, gain: 1.1 * (F.other ? 0.35 : 1), rate: 0.78, lowpass: F.lp || 5000 }); if (!(hasSfx('swivel_creak') && go())) sfxDecode('swivel_creak').then(go).catch(() => { }); } catch (e) { } },
   sets: {}, built: false, plan: null,
   SPOTS: { C: [[-1.82, -12.22, -Math.PI / 2, 'a'], [-1.85, -11.3, -Math.PI / 2, 'b']], R2: [[11.55, -17.66, 0, 'a'], [12.55, -17.7, 0, 'b']], R3: [[11.55, -18.34, Math.PI, 'a'], [12.55, -18.3, Math.PI, 'b']], LIB: [[-3.3, -16.66, 0, 'a'], [-2.35, -16.7, 0, 'b']] },
   build() {
@@ -17510,7 +17519,7 @@ const CAB = {
       if (vis && d < 8) { this.seen = true; if (rec.active && seen(c, { maxD: 8 })) this.seenClosed = true; this.away = 0; return; }
       if (!this.seen) return;
       this.away += dt; if (!this.awayT) this.awayT = rnd(2, 4);
-      if (this.away >= this.awayT && !onScreen(c, 1.3)) { this.setOpen(S, 1); this.st = 'open'; if (TEST || DEV) console.log('CAB open'); }   // 音はしない
+      if (this.away >= this.awayT && !onScreen(c, 1.3)) { this.setOpen(S, 1); this.st = 'open'; this.creak(c); if (TEST || DEV) console.log('CAB open'); }   /* 2026-11-18 64番：開いた瞬間に「きぃぃぃ」（音で気づいて振り返れる） */
     } else if (this.st === 'open') {
       if (vis && rec.active && seen(c, { maxD: 9 }) && this.seenClosed) { award('cabOpen', '第六感が告げた、開いた戸棚', 70); this.st = 'done'; }
     }
@@ -21704,7 +21713,7 @@ CHAT_DICT.c.ending_cutoff = ['ec.cut.01', 'ec.cut.02', 'ec.cut.03', 'ec.cut.04',
   kl.addEventListener('click', e => { e.stopPropagation(); $('#settings').classList.add('keys'); try { KEYUI.draw(); } catch (_) { } box.scrollTop = 0; });
   pl.addEventListener('click', e => { e.stopPropagation(); $('#settings').classList.add('pad'); try { PADUI.draw(); } catch (_) { } box.scrollTop = 0; });
   pane('setKeysPane', en ? 'Key controls' : 'キー操作', keys); pane('setPadPane', en ? 'Controller' : 'コントローラー', pad);
-  const order = [head(en ? 'Controls' : '操作'), ...ids(['setGyro', 'setTilt', 'setSensRow']), kl, pl,
+  const order = [head(en ? 'Controls' : '操作'), ...ids(['setGyro', 'setTilt', 'setGsRow', 'setSensRow']), kl, pl,
     head(en ? 'Sound' : '音'), ...ids(['setVolRow', 'setVolBgmRow', 'setVolFxRow', 'setVolUiRow', 'setMicRow', 'setMidiRow']),   /* 2026-11-18 音量を4つに */
     head(en ? 'Display' : '画面'), ...ids(['setFpsRow', 'setQualRow', 'setBright', 'setScreenRow']),
     head(en ? 'Data & more' : 'データ・その他'), ...ids(['setGodRow', 'setLang', 'setTut', 'setCol', 'setNotice', 'setXfer', 'setReset', 'verSet', 'setHome', 'setClose'])];
@@ -24287,7 +24296,10 @@ const LABX = {
   nickK(kind, id) { if (!id) return 1; if (this.has(id, 'P')) return kind === 'p' ? 3 : 1; if (this.has(id, 'R')) return kind === 'f' ? 3 : 1; return 1; },
   count() { this.init(); const T = CHAT_DICT.t, c = { P: 0, R: 0, K: 0, S: 0, I: 0, N: 0, G: 0 }; for (const id in T) for (const x of this.labs(id)) c[x]++; return c; },
 };
-if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX });
+/* 2026-11-18 65番：ゲームが終わったら（捕まった・帰った）追跡の曲・心臓の音を止める。リザルトを出す時も念のため */
+setInterval(() => { try { if ((runOver() || world.state === 'title') && (CBGM.src || (HEART.g && HEART.g.gain.value > 0.001))) chaseAudioStop(); } catch (e) { } }, 150);
+{ const S0 = showResult; showResult = function (...a) { chaseAudioStop(); return S0.apply(this, a); }; }
+if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
