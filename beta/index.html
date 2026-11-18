@@ -3370,7 +3370,7 @@ function initAudio() {
   A.bgmG.connect(A.bgmSh); A.bgmSh.connect(A.comp); VOLX.mirror(A.master.gain, A.bgmSh.gain);
   A.master.connect(A.fxG); A.fxG.connect(A.comp); A.comp.connect(A.makeup); A.makeup.connect(A.lim); A.lim.connect(A.out); A.out.connect(A.spk);
   A.rec = ctx.createMediaStreamDestination ? ctx.createMediaStreamDestination() : null;
-  if (A.rec) A.out.connect(A.rec);
+  if (A.rec) { A.rlp = ctx.createBiquadFilter(); A.rlp.type = 'lowpass'; A.rlp.frequency.value = 20000; A.rtap = ctx.createGain(); A.out.connect(A.rlp); A.rlp.connect(A.rtap); A.rtap.connect(A.rec); }   /* 2026-11-19 86番：録画に入るゲーム音の通り道（定点カメラの映像の間だけ、遠くでこもった音にする） */
   A.bus = ctx.createGain(); A.bus.gain.value = A.fxVol * A.FX_BASE; A.bus.connect(A.master);
   A.verb = ctx.createConvolver(); A.verb.buffer = makeIR(2.3);
   A.send = ctx.createGain(); A.send.gain.value = 0.5; A.bus.connect(A.send); A.send.connect(A.verb);
@@ -4532,7 +4532,7 @@ const SIDE = {
   pick() { if (this.mime === null) this.mime = this.MIMES.find(m => { try { return MediaRecorder.isTypeSupported(m); } catch (e) { return false; } }) || ''; return this.mime; },
   ensure() {   // ゲーム音＝A.recに入る音のうちマイク以外（A.out）。マイク音＝rec.micGainの後ろ（録画中だけ1、結果カードでは0のまま）
     if (!A.ctx || !A.rec || !A.out) return false;
-    if (!A.recG) { A.recG = A.ctx.createMediaStreamDestination(); A.out.connect(A.recG); A.recM = A.ctx.createMediaStreamDestination(); }
+    if (!A.recG) { A.recG = A.ctx.createMediaStreamDestination(); (A.rtap || A.out).connect(A.recG); A.recM = A.ctx.createMediaStreamDestination(); }
     if (rec.micGain && rec.micGain !== this.mg) { try { rec.micGain.connect(A.recM); this.mg = rec.micGain; } catch (e) { } }
     return true;
   },
@@ -4616,14 +4616,22 @@ function vidFilesOf(blobs, msg) {
   const use = st && st.ok ? st.blobs : blobs, mp4 = /mp4/i.test(use[0].type || ''), ext = mp4 ? 'mp4' : 'webm', fst = fileStamp(), many = use.length > 1;
   return use.map((b, i) => new File([b], `yutuber_${fst}${many ? '_' + (i + 1) : ''}.${ext}`, { type: mp4 ? 'video/mp4' : 'video/webm' }));
 }
-function recSetup() { rec.available = !!(window.MediaRecorder && canvas.captureStream); if (!rec.available) return; rec.mime = MIMES.find(m => { try { return MediaRecorder.isTypeSupported(m); } catch (e) { return false; } }) || ''; if (TEST && /[?&]webm/.test(location.search)) rec.mime = 'video/webm;codecs=vp8,opus'; if (TEST && /[?&]segs/.test(location.search)) rec.mode = 'segments'; }   // 確認用：?webm でWebM録画、?segs で分割録画
+function recSetup() { rec.available = !!(window.MediaRecorder && canvas.captureStream && document.createElement('canvas').captureStream); if (!rec.available) return; rec.mime = MIMES.find(m => { try { return MediaRecorder.isTypeSupported(m); } catch (e) { return false; } }) || ''; if (TEST && /[?&]webm/.test(location.search)) rec.mime = 'video/webm;codecs=vp8,opus'; if (TEST && /[?&]segs/.test(location.search)) rec.mode = 'segments'; }   // 確認用：?webm でWebM録画、?segs で分割録画
+/* 2026-11-19 86番：録画は「録画用の画面」から録る（ゲーム画面を毎フレーム写す）。定点カメラへの切り替えは録画用の画面にだけ描き、プレイ中の画面には出さない */
+const RECV = {
+  cv: null, g: null,
+  ensure() { if (!this.cv) { this.cv = document.createElement('canvas'); this.g = this.cv.getContext('2d', { alpha: false }); } if (this.cv.width !== canvas.width || this.cv.height !== canvas.height) { this.cv.width = canvas.width; this.cv.height = canvas.height; } return this.cv; },
+  want() { const r = rec.recorder; return !!r && r.state === 'recording'; },
+  copy() { if (!this.cv) return; try { this.ensure(); this.g.drawImage(canvas, 0, 0); } catch (e) { } },
+};
 function makeRecorder() {
-  const vt = canvas.captureStream(30).getVideoTracks(); const at = A.rec ? A.rec.stream.getAudioTracks() : [];
+  const vt = RECV.ensure().captureStream(30).getVideoTracks(); const at = A.rec ? A.rec.stream.getAudioTracks() : [];
   const r = new MediaRecorder(new MediaStream([...vt, ...at]), rec.mime ? { mimeType: rec.mime, videoBitsPerSecond: 3_000_000 } : { videoBitsPerSecond: 3_000_000 });
   r._chunks = []; r.ondataavailable = ev => { if (ev.data && ev.data.size) r._chunks.push(ev.data); }; return SIDE.wrap(r);
 }
 function startRec() {
   if (world.state !== 'play' || world.dark || rec.time >= CONFIG.recMaxSec - 0.05) return;
+  if (rec.ghost) RECG.stop();   /* 2026-11-19 86番：定点カメラだけの録画の区間を閉じてから、自分の録画を始める */
   rec.active = true; CHATLOG.segStart();   // チャット用：録画の区間の頭
   if (rec.available) recSizeLock = true;   /* 2026-11-14 この回の録画が終わるまで描画の大きさを固定 */
   if (rec.available) {
@@ -4676,7 +4684,7 @@ const ENDCARD = {
         let t0 = 0;
         const step = now => {
           if (!t0) t0 = now; const t = (now - t0) / 1000; this.draw(g, W, H, t, { lost, total, top, imgs, noise, money }); tex.needsUpdate = true;
-          renderer.setRenderTarget(null); renderer.render(sc, cam);
+          renderer.setRenderTarget(null); renderer.render(sc, cam); RECV.copy();
           if (t < this.dur) { requestAnimationFrame(step); return; }
           tex.dispose(); done();
         };
@@ -4737,6 +4745,7 @@ const ENDCARD = {
 /* 2026-11-16 捕まった時の結果の下の行：「〇〇に襲われた」 */
 function capMeta() { const k = world.capBy || ''; return k === 'spider' ? 'クモ女に襲われた' : k === 'mann' ? '人体模型に襲われた' : k === 'urah' ? 'オフタリサマに襲われた' : k === 'woman' ? (typeof PHAN !== 'undefined' && PHAN.on ? '継ぎ接ぎのナカヨシに襲われた' : '逆さ女に襲われた') : '怪異に襲われた'; }
 function finalizeRec() {
+  if (rec.ghost) RECG.stop();   /* 2026-11-19 86番：定点カメラだけの録画を先に締める */
   CHATLOG.finish();   // チャット用：録画の終わりと結末（結果カードが入るか）
   if (ENDCARD.will()) {   // 2026-11-14 結果画面を先に出す（結果カードは画面の裏で録画し、保存する動画にだけ入る）
     showResult(null);
@@ -13200,6 +13209,7 @@ function tick(now) {
   // 電池
   if (!world.dark) {
     { const use = (rec.active ? CONFIG.battery.recPerSec : CONFIG.battery.idlePerSec) * rawDt * (PERM.active('batt') ? 0.9 : 1);   /* 2026-11-14 予備バッテリー */ world.battery -= use; world.batUsed = (world.batUsed || 0) + use; }
+    if (rec.ghost && !rec.active) { rec.time += rawDt; CONFIG.recMaxSec += rawDt; }   /* 2026-11-19 86番：定点カメラだけの録画は、動画の時間だけ進めて、残りの容量は減らさない */
     if (rec.active) { rec.time += rawDt; /* 実時間で数える（動画とずれないように） */ if (rec.time >= CONFIG.recMaxSec) { rec.time = CONFIG.recMaxSec; stopRec('full'); toast('撮影できる時間を使い切りました（探索は続けられます）'); } }
     if (!world.chime30 && (world.batUsed || 0) > 70) { world.chime30 = true; world.redAt = world.t + 1.5; if (typeof KEHAI !== 'undefined') KEHAI.pre('red', 'darken', 1.5);   /* 2026-11-15 気配の音：赤くなる1.5秒前から鳴らす */   /* 電池を合計70%ぶん使ったら（モバイルバッテリーで回復しても数え直さない） */ playSfx('chime_30', { dest: A.paOut }); }   // 残量30%未満に初めてなった時に一度だけ
     if (world.battery <= 0) { world.battery = 0; batteryDead(); }
@@ -13331,10 +13341,9 @@ const GEAR = {
   },
   // 毎フレーム、いつもの画面を描いた後
   after() {
-    const full = FIXCAM.full(), w = this.wipeOn() && !full, f = full;
-    if (!w && !f) { if (this.wipe) this.wipe.ok = false; return; }
+    const w = this.wipeOn(), f = false;
+    if (!w) { if (this.wipe) this.wipe.ok = false; return; }
     this.init(); this.frame++;
-    if (f && this.frame % 2 === 0) { this.pass(this.fix, camera, focus.dist || 3); }   /* 切り替え中の小窓は、自分のスマホの映像 */
     if (this.frame % 2 === 0) {
       if (w) { const av = avatar.root.visible, sl = selfLight.intensity; SELF.pose(); selfLight.intensity = PERM.active('light') ? 1.3 : 0.55; avatar.root.visible = true; RING.hide(true); this.pass(this.wipe, selfCam, 0.6); avatar.root.visible = av; selfLight.intensity = sl; RING.hide(false); }
     }
@@ -13344,15 +13353,30 @@ const GEAR = {
     const draw = (q, l, x) => { this.qW.visible = q === this.qW; this.qF.visible = q === this.qF; this.lW.visible = this.lF.visible = false; renderer.setViewport(x, H - top - wh, ww, wh); renderer.render(this.ov, this.ovCam);
       this.qW.visible = this.qF.visible = false; l.visible = true; renderer.setViewport(x + 6, H - top - Math.round(ww * 0.25) - 4, Math.round(ww * 0.62), Math.round(ww * 0.155)); renderer.render(this.ov, this.ovCam); l.visible = false; };
     if (w && this.wipe.ok) draw(this.qW, this.lW, W - ww - mx);
-    if (f && this.fix.ok) { this.qF.material.uniforms.col.value.set(0xffffff); this.qW.visible = false; this.qF.visible = true; this.lW.visible = this.lF.visible = false; renderer.setViewport(mx, H - top - wh, ww, wh); renderer.render(this.ov, this.ovCam); this.qF.visible = false; }
-    if (f) { const lw = Math.round(W * 0.34), lh = Math.round(lw * 0.25); this.lF.visible = true; renderer.setViewport(Math.round(W - lw - mx), H - Math.round(H * 0.245) - lh, lw, lh); renderer.render(this.ov, this.ovCam); this.lF.visible = false; }   /* 「● CAM 2」：定点カメラの映像だと分かるように（右上のボタンの下） */
     renderer.setViewport(0, 0, W, H); renderer.autoClear = ac;
   },
+  /* 録画用の画面にだけ：「● CAM 2」（定点カメラの映像だと分かるように。右上） */
+  camLabel() { this.init(); const ac = renderer.autoClear; renderer.autoClear = false; for (const m of [this.qW, this.qF, this.lW]) m.visible = false; const mx = Math.round(W * 0.035), lw = Math.round(W * 0.34), lh = Math.round(lw * 0.25);
+    this.lF.visible = true; renderer.setViewport(Math.round(W - lw - mx), H - Math.round(H * 0.245) - lh, lw, lh); renderer.render(this.ov, this.ovCam); this.lF.visible = false; renderer.setViewport(0, 0, W, H); renderer.autoClear = ac; },
 };
 /* 定点カメラ（2台目のスマホ）
    ・持ち物の「置く」で、画角を決める画面（いつものスマホの画面から、インカメラ・電池・持ち物・ズームなどを消したもの）。
      歩いたり見回したりして画角を決め、「ここに設置」で、小さな三脚から伸びた棒の先にスマホを付けて置く
    ・置いたカメラに近づくと「回収する」。回収したら、また好きな場所に置き直せる（容量の15秒は1周で共通） */
+/* 2026-11-19 86番：自分のスマホで録画していない時に、定点カメラが映したら、その映像を録画に入れる（動画の中では、その時間の順に自分の映像の合間に入る）。
+   ・マイクは入れない。ゲーム音は遠くでこもった音（定点カメラの場所の音は作れないため）
+   ・動画の時間は進むが、残りの録画容量は減らさない。85番の「人がいない時の現象」も、この同じしくみで入る */
+const RECG = {
+  start() { if (rec.ghost || rec.active || !rec.available) return; rec.ghost = true; recSizeLock = true; CHATLOG.segStart();
+    try { if (rec.mode === 'pause') { if (!rec.recorder) { rec.recorder = makeRecorder(); rec.recorder.start(500); } else if (rec.recorder.state === 'paused') rec.recorder.resume(); } else { rec.recorder = makeRecorder(); rec.recorder.start(500); } } catch (e) { rec.ghost = false; return; }
+    if (rec.micGain) rec.micGain.gain.setTargetAtTime(0, A.ctx.currentTime, 0.01); if (TEST || DEV) console.log('RECG start', rec.time.toFixed(1)); },
+  stop() { if (!rec.ghost) return; rec.ghost = false; CHATLOG.segStop();
+    if (rec.recorder) { try { if (rec.mode === 'pause') { if (rec.recorder.state === 'recording') rec.recorder.pause(); } else { const r = rec.recorder; rec.recorder = null; r.onstop = () => rec.segs.push(new Blob(r._chunks, { type: r.mimeType || rec.mime })); r.stop(); } } catch (e) { } }
+    if (TEST || DEV) console.log('RECG stop', rec.time.toFixed(1)); },
+  tick() { const want = FIXCAM.placed && FIXCAM.recOn && !rec.active && world.state === 'play' && !FIXCAM.framing && !world.dark && !world.capture; if (want && !rec.ghost) this.start(); else if (!want && rec.ghost) this.stop();
+    /* 録画に入るゲーム音・マイク：定点カメラの映像の間だけ、遠くの音に・マイクなし */
+    const fx = FIXCAM.full() && RECV.want(); if (A.ctx && A.rlp && fx !== this.fxA) { this.fxA = fx; const t = A.ctx.currentTime; A.rlp.frequency.setTargetAtTime(fx ? 2200 : 20000, t, 0.05); A.rtap.gain.setTargetAtTime(fx ? 0.45 : 1, t, 0.05); if (rec.micGain) rec.micGain.gain.setTargetAtTime(fx || !rec.active ? 0 : 1, t, 0.02); } },
+};
 const FIXCAM = {
   placed: false, cap: 15, hitT: -99, recOn: false, mesh: null, framing: false,
   reset() { this.placed = false; this.cap = 15; this.hitT = -99; this.recOn = false; this.fOn = false; this.fOff = undefined; if (this.mesh) this.mesh.visible = false; this.endFrame(true); this.ui(); },
@@ -13375,7 +13399,7 @@ const FIXCAM = {
     if (!PERM.active('fixcam') || this.placed || this.framing || world.state !== 'play') return;
     this.framing = true; this.wasRec = rec.active; if (rec.active) stopRec('pause'); if (world.selfie) SELF.set(false); setZoom(1); zoom = 1;
     $('#hud').classList.add('fixMode'); let el = $('#fixUI'); if (!el) { el = document.createElement('div'); el.id = 'fixUI'; $('#hud').appendChild(el); for (const ev of ['pointerdown', 'pointerup', 'touchstart']) el.addEventListener(ev, e => e.stopPropagation()); }
-    el.innerHTML = `<div class="fxT">📹 ${TR('定点カメラ')}<small>${TR('歩いたり見回したりして、画角を決めてください')}</small></div><div class="fxFrame"></div><div class="fxB"><button type="button" class="fxNo">${TR('やめる')}${FRAME.on || PAD.using ? ` <span style="display:inline-block;min-width:18px;padding:0 4px;border:1px solid currentColor;border-radius:5px;font-size:11px;line-height:16px">${PAD.using ? PAD.of('back') : 'Q'}</span>` : ''}</button><button type="button" class="fxGo">${TR('ここに設置')}</button></div>`;
+    el.innerHTML = `<div class="fxT">${TR('定点カメラ')}<small>${TR('歩いたり見回したりして、画角を決めてください')}</small></div><div class="fxFrame"></div><div class="fxB"><button type="button" class="fxNo">${TR('やめる')}${FRAME.on || PAD.using ? ` <span style="display:inline-block;min-width:18px;padding:0 4px;border:1px solid currentColor;border-radius:5px;font-size:11px;line-height:16px">${PAD.using ? PAD.of('back') : 'Q'}</span>` : ''}</button><button type="button" class="fxGo">${TR('ここに設置')}</button></div>`;
     el.querySelector('.fxGo').addEventListener('click', e => { e.stopPropagation(); this.place(); });
     el.querySelector('.fxNo').addEventListener('click', e => { e.stopPropagation(); this.endFrame(); });
   },
@@ -13407,17 +13431,17 @@ const FIXCAM = {
   tick(dt) {
     if (this.framing && (world.state !== 'play' || world.capture)) this.endFrame(true);
     if (this.framing) { if (world.selfie) SELF.set(false); if (zoomTarget !== 1) setZoom(1); }   // 画角を決める間は、インカメラ・ズームは使えない
-    if (!this.placed || world.state !== 'play') { this.recOn = false; return; }
+    if (!this.placed || world.state !== 'play') { this.recOn = false; if (rec.ghost) RECG.stop(); return; }
     if (world.t >= (this.mvT || 0)) { this.mvT = world.t + 0.25; this.mv = this.monsterInView(); }   /* 2026-11-17 判定は0.25秒ごと（軽く） */
     const hit = world.t - this.hitT < 0.6 || this.mv; if (hit) this.holdUntil = world.t + 3;   /* 2026-11-17 映ったら最低3秒は2カメに切り替えたまま（ちらつかない） */
     this.recOn = this.cap > 0 && !(world.t < (this.cutUntil || 0)) && (hit || world.t < (this.holdUntil || 0));   // 2026-11-15 cutUntil：映像がノイズで途切れる
     if (this.recOn) { this.cap = Math.max(0, this.cap - dt); if (this.cap <= 0) toast(TR('定点カメラの容量がいっぱいになった'), 2000); }
     if (this.led) this.led.visible = this.recOn ? (world.t * 2 % 1) < 0.6 : false;
-    this.ui();
+    this.ui(); RECG.tick();
   },
   showInset() { return this.placed && this.recOn && rec.active && world.state === 'play' && !world.selfie && !this.framing; },
-  full() { const on = this.showInset(); if (on && !this.fOn && world.t >= (this.fOff ?? -9) + 1.0) this.fOn = true; else if (!on && this.fOn) { this.fOn = false; this.fOff = world.t; } return this.fOn && on; },   // スマホでも録画中なら2カメ
-  ui() { let el = $('#fixCap'); if (!el) { const c = $('#cap'); if (!c) return; el = document.createElement('div'); el.id = 'fixCap'; c.after(el); } el.style.display = this.placed ? '' : 'none'; document.body.classList.toggle('fixOn', !!this.placed); const s2 = Math.ceil(this.cap); el.textContent = `📹 ${TR('定点')} 0:${String(s2).padStart(2, '0')}${this.recOn ? ' ●' : ''}`; el.classList.toggle('rec', this.recOn); },
+  full() { const on = this.placed && this.recOn && world.state === 'play' && !this.framing && (rec.active ? !world.selfie : !!rec.ghost); if (on && !this.fOn && world.t >= (this.fOff ?? -9) + 1.0) this.fOn = true; else if (!on && this.fOn) { this.fOn = false; this.fOff = world.t; } return this.fOn && on; },   // スマホでも録画中なら2カメ
+  ui() { let el = $('#fixCap'); if (!el) { const c = $('#cap'); if (!c) return; el = document.createElement('div'); el.id = 'fixCap'; c.after(el); } el.style.display = this.placed ? '' : 'none'; document.body.classList.toggle('fixOn', !!this.placed); const s2 = Math.ceil(this.cap); el.textContent = `${TR('定点')} 0:${String(s2).padStart(2, '0')}${this.recOn ? ' ●' : ''}`; el.classList.toggle('rec', this.recOn); },
 };
 /* リングライト：鏡やインカメラに映る主人公の手元（両手の間）に付ける */
 const RING = {
@@ -13451,14 +13475,20 @@ function render() {
   RING.update();   // 2026-11-14 リングライト（鏡に映る手元）
   PHAN.late();   // 2026-11-15 合体した化け物（女の体に人体模型とクモ女をくっつける）
   if (world.selfie) { SELF.pose(); cam = selfCam; avatar.root.visible = true; RING.hide(true); }
-  const fx = FIXCAM.full(), f0 = postMat.uniforms.focus.value; if (fx) { GEAR.init(); cam = GEAR.fixCam; cam.aspect = camera.aspect; cam.updateProjectionMatrix(); avatar.root.visible = true; postMat.uniforms.focus.value = 3; }   /* 2026-11-19 82番：定点カメラが映している間は、画面全体（録画にも入る）を定点カメラの映像に */
+  const fx = FIXCAM.full() && RECV.want();
+  if (fx) {   /* 2026-11-19 86番：定点カメラが映している間は、録画用の画面にだけ定点カメラの映像（＋「CAM 2」）を描く。プレイ中の画面は、このあと いつも通りに描き直す */
+    GEAR.init(); const C = GEAR.fixCam, U = postMat.uniforms, f0 = U.focus.value, n0 = U.near.value, av0 = avatar.root.visible; C.aspect = camera.aspect; C.updateProjectionMatrix(); avatar.root.visible = true; RING.hide(true);
+    U.focus.value = 3; U.near.value = C.near; renderer.setRenderTarget(rt); renderer.render(scene, C); renderer.setRenderTarget(null); renderer.render(postScene, postCam); GEAR.camLabel(); RECV.copy();
+    U.focus.value = f0; U.near.value = n0; avatar.root.visible = av0; RING.hide(world.selfie);
+  }
   postMat.uniforms.near.value = cam.near;   // 被写界深度の距離計算をそのカメラに合わせる
   renderer.setRenderTarget(rt); renderer.render(scene, cam); avatar.root.visible = av; RING.hide(false);
   LUM.grab();
   { const now = performance.now(); PIANO.ovUpdate(Math.min(0.1, (now - (PIANO.ovT || now)) / 1000)); PIANO.ovT = now; }   // 録画に入る鍵盤
-  renderer.setRenderTarget(null); renderer.render(postScene, postCam); if (fx) postMat.uniforms.focus.value = f0;
-  GEAR.after();   // 2026-11-14 ワイプカメラ・定点カメラの小窓
+  renderer.setRenderTarget(null); renderer.render(postScene, postCam);
+  GEAR.after();   // 2026-11-14 ワイプカメラの小窓
   CALL.after();   // 2026-11-15 着信の画面（録画にも入る）
+  if (!fx && RECV.want()) RECV.copy();   /* 録画用の画面へ（いつもの映像） */
 }
 /* 2026-11-15 タイトル画面の背景：校舎の紹介映像（ゲームの3Dの校舎をそのまま撮る。動画ファイルは使わない）
    ・決めた場所を、1か所6〜8秒ずつ、ゆっくりパン／前進。次の場所へは暗転でつなぎ、最後まで行ったら最初から
@@ -13621,7 +13651,7 @@ function showResult(blobs) {
   const evs = evidence.slice().sort((a, b) => a.t - b.t);
   if (!evs.length) list.innerHTML = '<div class="ev none">撮れ高なし。次は仕込みをするべき？</div>';
   for (const e of evs) { const r = rankOf(e), d = document.createElement('div'); d.className = 'ev r-' + r.toLowerCase(); d.style.setProperty('--rc', RANK_COL[r]);
-    d.innerHTML = `<span class="t">${fmt(e.t)}</span><span class="n">${e.cam === 'fix' ? '📹' : ''}${tjw(e.label)}</span><span class="p"><i class="like"></i>${e.pts}</span><span class="rk${r === 'PH' ? ' ph' : r === 'SS' ? ' ss' : r === 'S' ? ' s' : ''}"><small>レア</small><b>${rkTxt(r)}</b>${r === 'SS' ? '<i class="spk s1"></i><i class="spk s2"></i><i class="spk s3"></i>' : r === 'S' ? '<i class="spk s1"></i><i class="spk s2"></i>' : ''}</span>${fresh.has(COL.base(e.label)) ? '<span class="newTag">NEW</span>' : ''}`;
+    d.innerHTML = `<span class="t">${fmt(e.t)}</span><span class="n">${e.cam === 'fix' ? `<small style="color:#ff8a80;font-weight:700;margin-right:3px">${TR('定点')}</small>` : ''}${tjw(e.label)}</span><span class="p"><i class="like"></i>${e.pts}</span><span class="rk${r === 'PH' ? ' ph' : r === 'SS' ? ' ss' : r === 'S' ? ' s' : ''}"><small>レア</small><b>${rkTxt(r)}</b>${r === 'SS' ? '<i class="spk s1"></i><i class="spk s2"></i><i class="spk s3"></i>' : r === 'S' ? '<i class="spk s1"></i><i class="spk s2"></i>' : ''}</span>${fresh.has(COL.base(e.label)) ? '<span class="newTag">NEW</span>' : ''}`;
     d.addEventListener('click', () => seekTo(e.t)); list.appendChild(d); RANK_IO && RANK_IO.observe(d); }
   attachVideo(blobs || [], !blobs);
   $('#saveMsg').textContent = ''; $('#result').classList.add('show'); $('#result').scrollTop = 0;
@@ -15267,7 +15297,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.53';
+const VERSION = '0.17.54';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -25450,7 +25480,7 @@ if (TEST && window.__G) Object.assign(window.__G, { GIRL });
 { const WJ = '\u2060', NBW = ['撮れ高', '定点カメラ', '切り替わる', '持ち物', 'インカメラ', 'リアクション', 'メモリーカード', '画面', '現象', '自動', '録画', 'スマホ', '怪異', '背後', '小窓', '所持', '設置', '外カメラ', '一部', '映った', '撮っていない', '入った', '映ると', '動画', '画角', '好きな', '場所'];
   const nb = t => NBW.reduce((a, w) => a.split(w).join([...w].join(WJ)), t);
   for (const id of ['wipe', 'fixcam']) { const D = PERM.DEFS[id]; if (!D) continue; const o = D.desc, n = nb(o); if (EN[o]) EN[n] = EN[o]; D.desc = n; } }
-if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
+if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, CONFIG, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
