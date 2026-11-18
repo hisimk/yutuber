@@ -9221,7 +9221,7 @@ const ITEM = {
       /* 鍵付きロッカー：レア以上が確定 */
       if (this.lockLk) { const fq = TEST && qs.get('lockin'); const id = fq || take(Math.random() < (this.lockLk.red ? 0.5 : 0.2) * (OU ? 1.3 : 1) ? 'u' : 'r', true); if (id) { used.add(id); this.lockItem = id; this.lockGot = [id]; setAt(id, { type: 'lockin' }); if (id === 'money4') this.get(id).yen = pickW([[500, 0.6], [1000, 0.4]]); } }
       /* ロッカー */
-      const nl = all ? lkPool.length : Math.max(0, pickW(OU ? [[1, 0.1], [2, 0.35], [3, 0.4], [4, 0.15]] : [[0, 0.12], [1, 0.38], [2, 0.38], [3, 0.12]]) - (this.memoLk ? 1 : 0));
+      const nl = all ? lkPool.length : Math.max(0, pickW(OU ? [[1, 0.1], [2, 0.35], [3, 0.4], [4, 0.15]] : [[0, 0.12], [1, 0.38], [2, 0.38], [3, 0.12]]) - (this.memoLk ? 1 : 0) + (world.wingOpen && !all ? 1 : 0));   /* 2026-11-18 マップが広がった後は、ロッカーを1か所ふやす */
       for (let i = 0; i < nl && lkPool.length; i++) { const lk = pickW(lkPool.map(l => [l, l.red ? 1.6 : 1])); lkPool.splice(lkPool.indexOf(lk), 1); const sp = { type: 'locker', lk };
         if (!all && (Math.random() < 0.4 || WF('money'))) { if (!money(sp)) { const id = take(tierFor(true, lk.red), true); if (id) setAt(id, sp); } } else { const id = take(tierFor(true, lk.red), true); if (id) setAt(id, sp); else money(sp); } }
       /* ほかの場所（布団・フタはひと手間かかる場所） */
@@ -9230,10 +9230,11 @@ const ITEM = {
       let no = all ? 8 : pickW(OU ? [[1, 0.3], [2, 0.45], [3, 0.25]] : [[0, 0.2], [1, 0.5], [2, 0.3]]);
       if (world.maze && MAZE.itemP) { const id = take(tierFor(false)); if (id) { setAt(id, { type: 'floor', p: MAZE.itemP.clone(), lv: 1 }); no--; } }   /* 迷路の日は、迷路の中に必ず1つ */
       for (let i = 0; i < no; i++) { const sp = pickSp(); if (!sp) break; const id = take(tierFor(!!HARD[sp.type])); if (id) setAt(id, sp); }
+      if (world.wingOpen && !all) { const sp = pool.table.length ? pool.table.splice(Math.floor(Math.random() * pool.table.length), 1)[0] : pickSp(); if (sp) { const id = take(tierFor(false)); if (id) setAt(id, sp); else money(sp); } }   /* 2026-11-18 マップが広がった後は、ロッカー以外も1つふやす（新しい棟の理科室・美術室の机の上を優先） */
       if ((WF('hmemo') || all) && avail('hmemo')) { const sp = pickSp(); if (sp) { used.add('hmemo'); setAt('hmemo', sp); } }
-      /* 2026-11-18 揚げパン：ほかの抽選とは別に、半分の周で1個（ロッカー・トイレのフタ・机の上）。?agepan はスタート地点の近くの床に */
+      /* 2026-11-18 揚げパン：ほかの抽選とは別に、4〜5周に1個（ロッカー・トイレのフタ・机の上）。?agepan はスタート地点の近くの床に */
       if (this.get('agepan')) { if (WF('agepan')) setAt('agepan', { type: 'floor', p: V(0.5, 0.1, 1.7), lv: 0 });
-        else if (Math.random() < 0.5 || WF('agepanrun')) { const c = []; if (lkPool.length) c.push(['locker', 1]); if (pool.lid.length) c.push(['lid', 1]); if (pool.desk.length) c.push(['desk', 1]); const fq = TEST && qs.get('agepanat'); const tp = fq && c.some(x => x[0] === fq) ? fq : c.length ? pickW(c) : null;
+        else if (Math.random() < 0.22 || WF('agepanrun')) {   /* 2026-11-18 4〜5周に1個（0.5→0.22） */ const c = []; if (lkPool.length) c.push(['locker', 1]); if (pool.lid.length) c.push(['lid', 1]); if (pool.desk.length) c.push(['desk', 1]); const fq = TEST && qs.get('agepanat'); const tp = fq && c.some(x => x[0] === fq) ? fq : c.length ? pickW(c) : null;
           if (tp === 'locker') { const lk = lkPool.splice(Math.floor(Math.random() * lkPool.length), 1)[0]; setAt('agepan', { type: 'locker', lk }); } else if (tp === 'lid') setAt('agepan', pool.lid.splice(0, 1)[0]); else if (tp === 'desk') setAt('agepan', pool.desk.splice(Math.floor(Math.random() * pool.desk.length), 1)[0]); } }
       /* トイレのフタ：たまにお金 */
       if (pool.lid.length && (Math.random() < (OU ? 0.5 : 0.3) || WF('money'))) money(pool.lid.splice(0, 1)[0]);
@@ -15185,7 +15186,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.24';
+const VERSION = '0.17.25';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -23433,6 +23434,39 @@ const HIDEX = {
       for (const st of pool.slice(0, n)) { st.angle = 0; st.hinge.rotation.y = 0; setStall(st, true, false, true); }
       if (TEST || DEV) console.log('STALLS', stalls.map(st => st.occupied ? 'K' : st.target === 0 ? 'C' : 'o').join('')); } catch (e) { console.warn('STALLS', e); }
     return r; }; }
+/* =========================================================
+   2026-11-18 スタート画面：新人のうちから、ショップと持ち物のボタンを灰色で見せる（押すとお知らせ）／所持金も最初から
+   ・ショップ（2ページ）：①ランクを上げると開く・いいねを稼ぐとランクが上がる ②ランクが上がると、ずっと使える撮影機材がもらえる（心霊アーカイブのランク一覧と同じく、次のランクから先は伏せる）
+   ・持ち物：ショップで買ったり、探索で拾ったりした道具が入る（持っている物が1つでもあれば、ふつうに開ける）
+   ========================================================= */
+const TLOCK = {
+  bagHas() { try { const d = SHOP.load(); return Object.values(d.own || {}).some(v => v > 0) || Object.values(d.look || {}).some(Boolean) || ECON.items.some(it => SHOP.has(it[0])); } catch (e) { return false; } },
+  shopPop() {
+    const en = LANG === 'en', need = Number(YRANK[1][2]).toLocaleString(), ri = yrankIdx(ACH.load().total);
+    const gear = i => { const id = PERM.RANK[i]; return id && PERM.DEFS[id] ? TR(PERM.DEFS[id].name) : ''; };
+    const rows = [1, 2, 3, 4, 5].filter(i => i <= ri + 1).map(i => `<div class="tlR"><span>${yrankName(i)}</span><b>${gear(i)}</b></div>`).join('') + `<div class="tlR"><span>${en ? 'Higher ranks' : 'この先のランク'}</span><b>？？？</b></div>`;
+    NOTE.show({ sub: en ? 'Shop (1/2)' : 'ショップ（1/2）', body: en ? ['The <b class="nY">shop</b> opens when your rank goes up.', 'Earn <b class="nY">likes</b> on your videos to rank up.', `Next rank: ${need} lifetime likes`] : ['<b class="nY">ショップ</b>は、ランクが上がると開きます。', 'ランクは、動画で<b class="nY">いいね</b>を稼ぐと上がります。', `次のランクまで：いいね累計 ${need}`] });
+    NOTE.show({ sub: en ? 'Rank rewards (2/2)' : 'ランクのごほうび（2/2）', body: [en ? 'Each new rank gives you <b class="nY">filming gear</b> you can keep using.' : 'ランクが上がるごとに、ずっと使える<b class="nY">撮影機材</b>がもらえます。', `<div class="tlList">${rows}</div>`] });
+  },
+  bagPop() { const en = LANG === 'en'; NOTE.show({ sub: en ? 'Items' : '持ち物', body: en ? ['Tools you <b class="nY">buy in the shop</b> or <b class="nY">find while exploring</b> go here.', 'Bring them into your next run.'] : ['<b class="nY">ショップで買ったり</b>、<b class="nY">探索で拾ったり</b>した道具が、ここに入ります。', '次の撮影に持って入れます。'] }); },
+  sync() {
+    const sb = $('#shopBtn'), bb = $('#bagBtn'), row = $('#shopRow'); if (!sb || !bb) return; const open = SHOP.open_(), bagOpen = open || this.bagHas();
+    sb.style.display = ''; bb.style.display = ''; sb.classList.toggle('tLock', !open); bb.classList.toggle('tLock', !bagOpen); if (row) row.style.display = '';
+    const y = $('#yenLine'); if (y && !y.innerHTML.trim()) { const en = LANG === 'en'; y.innerHTML = `<span><img class="uiIc" src="${UI_ICON.yen}" alt="">${en ? 'Money' : '所持金'}</span><b>${SHOP.load().yen.toLocaleString()}${en ? ' yen' : '円'}</b>`; }
+    if (!this.hooked) { this.hooked = true;
+      sb.addEventListener('click', e => { if (!sb.classList.contains('tLock')) return; e.stopImmediatePropagation(); e.stopPropagation(); ensureAudio(); this.shopPop(); }, true);
+      bb.addEventListener('click', e => { if (!bb.classList.contains('tLock')) return; e.stopImmediatePropagation(); e.stopPropagation(); ensureAudio(); this.bagPop(); }, true); }
+  },
+};
+{ const st = document.createElement('style'); st.textContent = `#shopRow .tLock{opacity:.42;filter:grayscale(1);border-color:#555!important;color:#aaa!important}.tlList{margin-top:6px;display:flex;flex-direction:column;gap:4px;font-size:.92em}.tlR{display:flex;justify-content:space-between;gap:10px;padding:5px 9px;border-radius:8px;background:rgba(255,255,255,.06)}.tlR span{color:#ffd34d;white-space:nowrap}.tlR b{font-weight:600;text-align:right}`; document.head.appendChild(st); }
+{ const T0 = SHOP.title.bind(SHOP); SHOP.title = function () { const r = T0.apply(this, arguments); try { TLOCK.sync(); } catch (e) { console.warn('TLOCK', e); } return r; }; try { SHOP.title(); } catch (e) { } }
+Object.assign(EN, { 'ショップ（1/2）': 'Shop (1/2)' });
+/* 2026-11-18 こわれかけの自撮り棒はなくした（ショップに並べない・拾えない・持ち込めない。前に買った分も持ち物から消す） */
+{ const rm = (a, id) => { const i = a.indexOf(id); if (i >= 0) a.splice(i, 1); };
+  { const i = ECON.items.findIndex(x => x[0] === 'stick'); if (i >= 0) ECON.items.splice(i, 1); }
+  rm(INV.ids, 'stick'); rm(ITEM_TIER.rare, 'stick'); for (const k of ['n', 'r', 'u']) if (LOCKX.TIER[k]) rm(LOCKX.TIER[k], 'stick'); rm(ITEM.LK_IDS, 'stick'); rm(YTAG.NOUSE, 'stick');
+  try { const d = SHOP.load(); let ch = false; if (d.own && d.own.stick) { delete d.own.stick; ch = true; } for (const k of ['carry', 'fav']) if (Array.isArray(d[k]) && d[k].includes('stick')) { d[k] = d[k].filter(x => x !== 'stick'); ch = true; } if (ch) SHOP.save(); } catch (e) { }
+  { const B0 = SHOP.beginRun.bind(SHOP); SHOP.beginRun = function () { const r = B0(); ITEM.have.stick = false; return r; }; } }
 if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
