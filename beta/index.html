@@ -2118,7 +2118,8 @@ const flash = new THREE.SpotLight(0xfff0da, 3, 7.5, 0.5, 0.56, 1.35);
 // 主人公のライト（調整画面の値。端末に保存）
 const LIT_DEF = { int: 3, dist: 7.5, angle: 0.5, pen: 0.56, decay: 1.35 };   // 2026-11-12 調整画面で決めた値
 const LIT = Object.assign({}, LIT_DEF); try { Object.assign(LIT, JSON.parse(localStorage.getItem('gekou_lit1') || '{}')); } catch (e) { }
-function litApply() { flash.distance = LIT.dist; flash.angle = LIT.angle; flash.penumbra = LIT.pen; flash.decay = LIT.decay; }
+let GOLDLIT = false;   /* 2026-11-18 金色のスマホ：ライトが明るく・遠くまで */
+function litApply() { flash.distance = LIT.dist * (GOLDLIT ? 1.45 : 1); flash.angle = LIT.angle; flash.penumbra = LIT.pen; flash.decay = LIT.decay; }
 litApply();
 flash.position.set(0.04, -0.06, 0.02); camera.add(flash); flash.target.position.set(0, -0.02, -1); camera.add(flash.target);
 const screenGlow = new THREE.PointLight(0xc8d6ff, 0.5, 1.4, 2); screenGlow.position.set(0, -0.08, -0.28); camera.add(screenGlow);
@@ -9246,7 +9247,6 @@ const ITEM = {
       if (this.keyAt !== 'lib') pool.lib.push({ type: 'lib', p: V(-8.75, LH + 0.14, -10.45) }); pool.lib.push({ type: 'lib', p: V(-8.75, LH + 0.14, -15.55) });
       pool.stairs.push({ type: 'stairs', p: V(-3.25, 0.13, -6.85) });
       for (const [x, y, z, lv, wing] of [[24.9, 0.1, -29.55, 0, 0], [20.5, 0.1, -19.0, 0, 0], [0.2, 0.1, -32.5, 0, 0], [0.2, LH + 0.1, -32.5, 1, 0], [21.5, 0.1, -32.6, 0, 0], [29.0, LH + 0.1, -31.6, 1, 1]]) if (!wing || world.wingOpen) pool.floor.push({ type: 'floor', p: V(x, y, z), lv });
-      for (let i = 0; i < 3; i++) pool.lid.push({ type: 'lid', L: null });
       if (world.wingOpen) { try { for (const p of SCIRM.spots()) pool.table.push({ type: 'floor', p: p.setY(LH + 0.9), lv: 1 }); } catch (e) { } for (const [x, z] of [[6.2, -36.1], [10.4, -36.1], [6.2, -38.7], [10.4, -38.7]]) pool.table.push({ type: 'floor', p: V(x + rnd(-0.5, 0.5), LH + 0.86, z + rnd(-0.25, 0.25)), lv: 1 }); }
       for (const id of this.LK_IDS.concat(this.MONEY, ['omamori'])) { const it = this.get(id); if (!it) continue; it.lk = null; it.spot = null; it.taken = true; it.s.visible = false; }
       const setAt = (id, sp) => { const it = this.get(id); if (!it) return false; it.taken = false; it.spot = sp;
@@ -9261,17 +9261,21 @@ const ITEM = {
       const avail = id => !!this.get(id) && !used.has(id) && !(YTAG.KEEP.includes(id) && (SHOP.has(id) || this.have[id])) && !(id === 'memcard' && PERM.has('fixcam')) && !(id === 'hmemo' && !hmOK);
       const T = LOCKX.TIER, WT = LOCKX.WT;
       const take = (tier, inLocker) => { const order = tier === 'u' ? ['u', 'r', 'n'] : tier === 'r' ? ['r', 'u', 'n'] : ['n', 'r']; for (const t of order) { const c = T[t].filter(id => avail(id) && (inLocker || id !== 'omamori')); if (c.length) { const id = pickW(c.map(x => [x, WT[x] ?? 1])); used.add(id); return id; } } return null; };
-      const tierFor = (hard, red) => { const r = Math.random(), k = OU ? 1.4 : 1, u = (hard ? 0.04 : 0.01) * (red ? 1.6 : 1) * k, ra = (hard ? 0.2 : 0.07) * (red ? 1.3 : 1) * k; return r < u ? 'u' : r < u + ra ? 'r' : 'n'; };
+      const tierFor = (hard, red) => LOCKX.tier(hard, red, OU);   /* 2026-11-18 レア度の決め方は LOCKX.tier にまとめた */
       let mi = 0; const money = (sp, hi) => { if (mi >= this.MONEY.length) return false; const id = this.MONEY[mi++]; setAt(id, sp); this.get(id).yen = pickW(hi ? [[100, 0.4], [500, 0.4], [1000, 0.2]] : [[10, 0.36], [50, 0.25], [100, 0.2], [500, 0.12], [1000, 0.07]]); return true; };
       /* 鍵付きロッカー：レア以上が確定 */
-      if (this.lockLk) { const fq = TEST && qs.get('lockin'); const id = fq || take(Math.random() < (this.lockLk.red ? 0.5 : 0.2) * (OU ? 1.3 : 1) ? 'u' : 'r', true); if (id) { used.add(id); this.lockItem = id; this.lockGot = [id]; setAt(id, { type: 'lockin' }); if (id === 'money4') this.get(id).yen = pickW([[500, 0.6], [1000, 0.4]]); } }
+      if (this.lockLk) { const fq = TEST && qs.get('lockin'); const id = fq || take(Math.random() < LOCKX.lockU(this.lockLk.red, OU) ? 'u' : 'r', true); if (id) { used.add(id); this.lockItem = id; this.lockGot = [id]; setAt(id, { type: 'lockin' }); if (id === 'money4') this.get(id).yen = pickW([[500, 0.6], [1000, 0.4]]); } }
       /* ロッカー */
-      const nl = all ? lkPool.length : Math.max(0, pickW(OU ? [[1, 0.1], [2, 0.35], [3, 0.4], [4, 0.15]] : [[0, 0.12], [1, 0.38], [2, 0.38], [3, 0.12]]) - (this.memoLk ? 1 : 0) + (world.wingOpen && !all ? 1 : 0));   /* 2026-11-18 マップが広がった後は、ロッカーを1か所ふやす */
-      for (let i = 0; i < nl && lkPool.length; i++) { const lk = pickW(lkPool.map(l => [l, l.red ? 1.6 : 1])); lkPool.splice(lkPool.indexOf(lk), 1); const sp = { type: 'locker', lk };
-        if (!all && (Math.random() < 0.4 || WF('money'))) { if (!money(sp)) { const id = take(tierFor(true, lk.red), true); if (id) setAt(id, sp); } } else { const id = take(tierFor(true, lk.red), true); if (id) setAt(id, sp); else money(sp); } }
+      /* 2026-11-18 ロッカー1か所ずつに「中身が入っている確率」を決める（ふだん・新しい棟の後・逢魔が時・赤いロッカーで変わる。数字は LOCKX.FILL） */
+      const FILL = LOCKX.fill(OU), filled = [];
+      for (const lk of lkPool.slice()) { if (!all && !(Math.random() < (lk.red ? FILL.red : FILL.lk)) && !WF('lkfill')) continue; lkPool.splice(lkPool.indexOf(lk), 1); const sp = { type: 'locker', lk }; filled.push(sp);
+        if (!all && (Math.random() < LOCKX.MONEY_P || WF('money'))) { if (!money(sp)) { const id = take(tierFor(true, lk.red), true); if (id) setAt(id, sp); } } else { const fi = TEST && qs.get('lkitem'); const id = fi && avail(fi) ? (used.add(fi), fi) : take(tierFor(true, lk.red), true); if (id) setAt(id, sp); else money(sp); } }
+      /* トイレのフタ：1つずつ、ロッカーと同じ確率で中身が入る（入らなかったフタは、揚げパンの置き場所の候補に残す） */
+      { const NL = Math.max(1, (typeof stalls !== 'undefined' && stalls.length) || 3);
+        for (let i = 0; i < NL; i++) { const sp = { type: 'lid', L: null }; if (all || Math.random() < FILL.lid || WF('lidfill')) { if (!all && (Math.random() < LOCKX.MONEY_P * 0.8 || WF('money'))) { if (!money(sp)) { const id = take(tierFor(true)); if (id) setAt(id, sp); } } else { const fi = TEST && qs.get('liditem'); const id = fi && avail(fi) ? (used.add(fi), fi) : take(tierFor(true)); if (id) setAt(id, sp); else money(sp); } } else pool.lid.push(sp); } }
       /* ほかの場所（布団・フタはひと手間かかる場所） */
-      const W = { bed: 1.2, desk: 2, lib: 1.2, stairs: 0.8, floor: 2.5, lid: 1.2, table: 1.5 }, HARD = { bed: 1, lid: 1 };
-      const pickSp = () => { const types = Object.keys(pool).filter(t => pool[t].length && (!force || t === force)); if (!types.length) return null; const tp = pickWr(Math.random, types.map(t => [t, W[t]])); return pool[tp].splice(Math.floor(Math.random() * pool[tp].length), 1)[0]; };
+      const W = { bed: 1.2, desk: 2, lib: 1.2, stairs: 0.8, floor: 2.5, lid: 0, table: 1.5 }, HARD = { bed: 1, lid: 1 };   /* 2026-11-18 トイレのフタは上でまとめて決める */
+      const pickSp = () => { const types = Object.keys(pool).filter(t => pool[t].length && W[t] > 0 && (!force || t === force)); if (!types.length) return null; const tp = pickWr(Math.random, types.map(t => [t, W[t]])); return pool[tp].splice(Math.floor(Math.random() * pool[tp].length), 1)[0]; };
       let no = all ? 8 : pickW(OU ? [[1, 0.3], [2, 0.45], [3, 0.25]] : [[0, 0.2], [1, 0.5], [2, 0.3]]);
       if (world.maze && MAZE.itemP) { const id = take(tierFor(false)); if (id) { setAt(id, { type: 'floor', p: MAZE.itemP.clone(), lv: 1 }); no--; } }   /* 迷路の日は、迷路の中に必ず1つ */
       for (let i = 0; i < no; i++) { const sp = pickSp(); if (!sp) break; const id = take(tierFor(!!HARD[sp.type])); if (id) setAt(id, sp); }
@@ -9281,8 +9285,8 @@ const ITEM = {
       if (this.get('agepan')) { if (WF('agepan')) setAt('agepan', { type: 'floor', p: V(0.5, 0.1, 1.7), lv: 0 });
         else if (Math.random() < 0.22 || WF('agepanrun')) {   /* 2026-11-18 4〜5周に1個（0.5→0.22） */ const c = []; if (lkPool.length) c.push(['locker', 1]); if (pool.lid.length) c.push(['lid', 1]); if (pool.desk.length) c.push(['desk', 1]); const fq = TEST && qs.get('agepanat'); const tp = fq && c.some(x => x[0] === fq) ? fq : c.length ? pickW(c) : null;
           if (tp === 'locker') { const lk = lkPool.splice(Math.floor(Math.random() * lkPool.length), 1)[0]; setAt('agepan', { type: 'locker', lk }); } else if (tp === 'lid') setAt('agepan', pool.lid.splice(0, 1)[0]); else if (tp === 'desk') setAt('agepan', pool.desk.splice(Math.floor(Math.random() * pool.desk.length), 1)[0]); } }
-      /* トイレのフタ：たまにお金 */
-      if (pool.lid.length && (Math.random() < (OU ? 0.5 : 0.3) || WF('money'))) money(pool.lid.splice(0, 1)[0]);
+      /* 2026-11-18 封印のお札：ロッカー・トイレのフタを1か所開けた時に約1%（空いている所から。1周に1枚まで） */
+      LUCKFUDA.place(lkPool, pool.lid, all);
       if (TEST || DEV) console.log('HIDDEN ITEMS', this.LK_IDS.concat(this.MONEY, ['omamori']).filter(id => this.get(id) && this.get(id).spot).map(id => id + '@' + this.get(id).spot.type + (this.get(id).lk && this.get(id).lk.red ? '(red)' : '')).join(','), 'LOCKER', this.lockLk ? (this.lockLk.red ? 'red ' : '') + this.lockItem : 'none'); }
     this.eq = { eye: null, head: null, mouth: null }; this.eqT = {}; this.fxQ = []; this.tootN = 0; this.snakeDone = false; this.snakeRoll = undefined; this.bellT = 0.3; this.fluteT = undefined; if (this.fluteSrc) this.fluteStop(); CONFIG.recMaxSec = 120;
     if (typeof ACC !== 'undefined') { try { ACC.reset(); ACC.fxReset && ACC.fxReset(); } catch (e) { } }
@@ -13185,7 +13189,7 @@ function tick(now) {
   }
   for (const fx2 of allFixtures) { if (fx2.jig > 0) { fx2.jig -= dt; fx2.cover.position.y = -0.07 + Math.sin(fx2.jig * 90) * 0.006; } }
   // スマホのライト（一瞬弱まる演出）
-  if (!world.dark) { flashDip = Math.max(0, flashDip - dt); flash.intensity = (RED.on ? 0.75 : 1) * (SP.wrap && SP.wrap.visible && (SP.st === 'drop' || SP.st === 'latch' || SP.st === 'peel') ? clamp(camera.position.distanceTo(SP.wrap.position) / 2.4, 0.12, 1) : 1) * (woman.root.visible && woman.opacity > 0.5 ? clamp(camera.position.distanceTo(headWorld(woman, V())) / 2.2, 0.2, 1) : 1) * (MD.ph === 'face' ? 9 : CAP.on ? LIT.int * clamp(CAP.dist / 1.6, 0.1, 1) : flashDip > 0 ? 3 : player.hidden ? 1.2 : LIT.int); /* 顔が白飛びしないように */ }
+  if (!world.dark) { flashDip = Math.max(0, flashDip - dt); flash.intensity = (RED.on ? 0.75 : 1) * (SP.wrap && SP.wrap.visible && (SP.st === 'drop' || SP.st === 'latch' || SP.st === 'peel') ? clamp(camera.position.distanceTo(SP.wrap.position) / 2.4, 0.12, 1) : 1) * (woman.root.visible && woman.opacity > 0.5 ? clamp(camera.position.distanceTo(headWorld(woman, V())) / 2.2, 0.2, 1) : 1) * (MD.ph === 'face' ? 9 : CAP.on ? LIT.int * clamp(CAP.dist / 1.6, 0.1, 1) : flashDip > 0 ? 3 : player.hidden ? 1.2 : LIT.int) * (GOLDLIT && !CAP.on && MD.ph !== 'face' ? 1.35 : 1); /* 顔が白飛びしないように */ }
   updateStalls(dt);
   updateInteractions();
   DIM.update(dt); applyLights(dt); FL.update(dt); STAIRBLINK.update(dt);
@@ -15237,7 +15241,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.40';
+const VERSION = '0.17.41';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -20650,7 +20654,7 @@ Object.assign(ITEM.defs, {
   wneko: { name: '白い招き猫', desc: '商売繁盛のご利益があるらしい。持ち込むと、収益がほんの少し増える。なくならない。', size: 0.2 },
   bneko: { name: '黒い招き猫', desc: '何かを招き寄せるらしい。持ち込むと、怪奇現象が少し起きやすくなり、怪異にも見つかりやすくなる。なくならない。', size: 0.2 },
   beads: { name: '数珠', desc: '持って入った周の間、追われている時に見失ってもらいやすくなる。使ってもなくならない。', size: 0.18 },
-  goldphone: { name: '金色のスマホ', desc: '伝説の記念品。手に持っているスマホが金色になる（鏡やインカメラに映る自分のスマホ）。見た目だけ。', size: 0.18 },
+  goldphone: { name: '金色のスマホ', desc: '伝説の記念品。スマホのライトが明るくなり、遠くまで照らせる。手に持っているスマホも金色になる。', size: 0.18 },
   goldframe: { name: '伝説のサムネイル枠', desc: '伝説の記念品。撮影後の結果カードの枠が金色になる。見た目だけ。', size: 0.18 },
 });
 if (!ITEM.defs.battery.act) ITEM.defs.battery.act = '充電する'; if (ITEM.defs.sparebat && !ITEM.defs.sparebat.act) ITEM.defs.sparebat.act = '充電する';
@@ -22718,7 +22722,7 @@ const TDOLL = { on() { try { return (SHOP.carried || []).includes('tdoll') || SH
 ITEM.defs.tdoll = { name: 'トモダチ人形', desc: '持ち込むと顔が2つある怪異が出やすくなると言われる人形。', size: 0.24 };
 ITEM_ICON2.tdoll = ITEM_IMG.tdoll = 'data:image/webp;base64,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';
 ECON.items.push(['tdoll', 0, 99, 'use']); YTAG.KEEP.push('tdoll'); INV.ids.push('tdoll'); ITEM_TIER.ultra.push('tdoll'); LOCKX.TIER.u.push('tdoll'); LOCKX.WT.tdoll = 0.3; ITEM.LK_IDS.push('tdoll');
-Object.assign(EN, { 'トモダチ人形': 'Friend Doll', '持ち込むと顔が2つある怪異が出やすくなると言われる人形。': 'A doll said to draw out the two-faced monster when you bring it in.', '大容量バッテリー': 'Large battery', '大容量のバッテリー。スマホの電池が少しゆっくり減る。': 'A large-capacity battery. Your phone battery drains a little slower.', '伝説の記念品。手に持っているスマホが金色になる（鏡やインカメラに映る自分のスマホ）。見た目だけ。': 'A legendary keepsake. The phone in your hand turns gold (seen in mirrors and the selfie camera). Looks only.', '伝説の記念品。撮影後の結果カードの枠が金色になる。見た目だけ。': 'A legendary keepsake. The frame of your result card turns gold. Looks only.', 'その周の間、クモ女が自分に近づきにくくなる。ほかの怪異には効かない。': 'For this run, the Spider Woman is less likely to come near you. No effect on other monsters.', '怪異に気づかれやすくなる。一度つけるとその周では外せない。代わりに怪奇現象も起きやすくなる。': 'Monsters notice you more easily. Once worn, it stays on for the run. In return, strange events happen more often.', '石膏仮面でやり過ごす': 'Let it pass in a plaster mask' });
+Object.assign(EN, { 'トモダチ人形': 'Friend Doll', '持ち込むと顔が2つある怪異が出やすくなると言われる人形。': 'A doll said to draw out the two-faced monster when you bring it in.', '大容量バッテリー': 'Large battery', '大容量のバッテリー。スマホの電池が少しゆっくり減る。': 'A large-capacity battery. Your phone battery drains a little slower.', '伝説の記念品。スマホのライトが明るくなり、遠くまで照らせる。手に持っているスマホも金色になる。': 'A legendary keepsake. Your phone light gets brighter and reaches farther. The phone in your hand turns gold too.', '伝説の記念品。撮影後の結果カードの枠が金色になる。見た目だけ。': 'A legendary keepsake. The frame of your result card turns gold. Looks only.', 'その周の間、クモ女が自分に近づきにくくなる。ほかの怪異には効かない。': 'For this run, the Spider Woman is less likely to come near you. No effect on other monsters.', '怪異に気づかれやすくなる。一度つけるとその周では外せない。代わりに怪奇現象も起きやすくなる。': 'Monsters notice you more easily. Once worn, it stays on for the run. In return, strange events happen more often.', '石膏仮面でやり過ごす': 'Let it pass in a plaster mask' });
 /* =========================================================
    2026-11-17 殴り書きのメモ（3枚）：逆さ女が書いた、攻略のヒントと世界観。撮れ高にはしない
    ・1枚目：バリケードの手前（確定）／2枚目：人体模型を一度でも走らせたら、保健室の人体模型の前／3枚目：新しい棟の赤いロッカーの中（確定）
@@ -24684,7 +24688,37 @@ XCHAT.LIST.urDeflect = ['uf.d1', 'uf.d2', 'uf.d3', 'uf.d4'];
 Object.assign(CHAT_DICT.t, { 'uf.d1': ['そっちはもう貼ってある', 'that one already has a charm'], 'uf.d2': ['反対の顔だって', 'the OTHER face!'], 'uf.d3': ['はじかれた！？', 'it bounced off!?'], 'uf.d4': ['同じ顔に貼ってどうする', 'why the same face'] });
 Object.assign(EN, { '弾かれた！': 'Deflected!', 'お札を貼る': 'Apply charm' });
 { const css = document.createElement('style'); css.textContent = '#dflTx{position:absolute;left:50%;top:calc(var(--sat,0px) + 128px);transform:translateX(-50%);z-index:30;pointer-events:none;font:900 30px/1 system-ui,-apple-system,"Hiragino Sans",sans-serif;letter-spacing:.06em;color:#fff7d6;text-shadow:0 0 10px rgba(255,200,60,.9),0 0 22px rgba(255,170,0,.6),0 2px 3px #000;opacity:0;white-space:nowrap}#dflTx.show{animation:dflIn 1.5s ease-out forwards}@keyframes dflIn{0%{opacity:0;transform:translateX(-50%) scale(1.8)}12%{opacity:1;transform:translateX(-50%) scale(.92)}20%{transform:translateX(-50%) scale(1.04)}28%{transform:translateX(-50%) scale(1)}75%{opacity:1}100%{opacity:0;transform:translateX(-50%) translateY(-8px)}}'; document.head.appendChild(css); }
-if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
+/* ===== 2026-11-18 ロッカー・トイレのフタの中身を増やす（入っている確率・ショップの道具・まれに封印のお札・レア度） =====
+   入っている確率（1か所ずつ）：LOCKX.FILL。レア度：LOCKX.TIER_P。数字はここだけ変えればよい
+   確認用：?lkfill（ロッカー全部に入れる）／?lidfill（トイレのフタ全部に入れる）／?lkitem=id・?liditem=id（ロッカー・フタに入れる物を決める。例 ?lkfill&lkitem=salt、?lidfill&liditem=beads）／?luckfuda（ロッカーに封印のお札）／?luckfuda=lid（トイレのフタに） */
+Object.assign(LOCKX, {
+  FILL: { base: 0.12, wing: 0.165, ouma: 0.215, redK: 2.3, lidK: 1.1 },   /* 紙切れ（楽譜）・揚げパン・封印のお札の分を足して、仕上がりが 15%／20%／25% になるように */
+  MONEY_P: 0.3,                                                           /* 中身が入った所のうち、お金の割合（前は40%） */
+  TIER_P: { hard: { u: 0.06, r: 0.24 }, easy: { u: 0.012, r: 0.08 }, red: { u: 2.0, r: 1.35 }, ouma: { u: 2.2, r: 1.6 } },
+  fill(OU) { const F = this.FILL, b = OU ? F.ouma : world.wingOpen ? F.wing : F.base; return { lk: b, red: Math.min(0.75, b * F.redK), lid: Math.min(0.9, b * F.lidK) }; },
+  tier(hard, red, OU) { const P = this.TIER_P, T = hard ? P.hard : P.easy, ku = (red ? P.red.u : 1) * (OU ? P.ouma.u : 1), kr = (red ? P.red.r : 1) * (OU ? P.ouma.r : 1), u = Math.min(0.4, T.u * ku), r = Math.min(0.55, T.r * kr), x = Math.random(); return x < u ? 'u' : x < u + r ? 'r' : 'n'; },
+  lockU(red, OU) { return Math.min(0.9, (red ? 0.7 : 0.35) * (OU ? 1.3 : 1)); },   /* 鍵付きロッカーの激レア（前は20%・赤50%） */
+});
+/* ショップの道具も、ロッカー・トイレのフタから出る（かなり絞る。こわれかけの自撮り棒は消したので入れない） */
+LOCKX.TIER.n.push('buzzer', 'spray', 'bkey'); LOCKX.TIER.r.push('drink', 'drinkG'); LOCKX.TIER.u.push('salt', 'beads');
+Object.assign(LOCKX.WT, { buzzer: 0.45, spray: 0.45, bkey: 0.35, drink: 0.5, drinkG: 0.3, salt: 0.45, beads: 0.3 });
+for (const id of ['buzzer', 'spray', 'bkey', 'drink', 'drinkG', 'salt', 'beads']) if (!ITEM.LK_IDS.includes(id)) ITEM.LK_IDS.push(id);
+{ const rm = id => { const i = ITEM_TIER.rare.indexOf(id); if (i >= 0) ITEM_TIER.rare.splice(i, 1); }; rm('spray'); rm('bkey'); if (!ITEM_TIER.rare.includes('drink')) ITEM_TIER.rare.push('drink'); }   /* 拾った時の光り方：ふつう（防犯ブザー・虫よけスプレー・脱出口の鍵）／レア（栄養ドリンク・G）／激レア（盛り塩・数珠） */
+{ const R0 = ITEM.reset.bind(ITEM); ITEM.reset = function () { for (const id of ITEM.LK_IDS) if (ITEM.defs[id] && !ITEM.get(id)) ITEM.add(id, V(0, -50, 0), 0); return R0.apply(this, arguments); }; }
+/* 封印のお札（まれ）：ロッカー・トイレのフタを1か所開けた時に約1% */
+const LUCKFUDA = { P: 0.01,
+  place(lks, lids, all) { const I = ITEM; if (!this.it) { this.it = I.add('ofuda', V(0, -50, 0), 0); this.it.luck = true; } const it = this.it; it.taken = true; it.s.visible = false; it.spot = null; it.lk = null;
+    if (all || world.phanRun) return; const q = (TEST || BETA) && location.search.match(/[?&]luckfuda(?:=(\w+))?/);
+    const c = []; for (const lk of lks) c.push({ type: 'locker', lk }); for (const sp of lids) c.push(sp);
+    let sp = null; if (q) sp = c.find(x => x.type === (q[1] === 'lid' ? 'lid' : 'locker')) || null; else for (const x of c) if (Math.random() < this.P) { sp = x; break; }
+    if (!sp) return; it.taken = false; it.spot = sp;
+    if (sp.type === 'locker') { lks.splice(lks.indexOf(sp.lk), 1); it.lk = sp.lk; it.lv = sp.lk.lv; it.pos.copy(lkP(sp.lk, rnd(-0.08, 0.08), 0.62 + 0.13, -0.2)); it.s.rotation.set(0, sp.lk.yaw + Math.PI, 0); }
+    else { lids.splice(lids.indexOf(sp), 1); it.lk = null; it.lv = 0; it.pos.set(0, -50, 0); it.s.rotation.set(-Math.PI / 2, 0, rnd(-0.6, 0.6)); }
+    if (TEST || DEV) console.log('LUCKFUDA', sp.type); } };
+{ const S0 = ITEM.shown.bind(ITEM); ITEM.shown = function (it) { if (it.luck) { if (it.taken || !it.spot) return false; const sp = it.spot; if (sp.type === 'locker') return !!it.lk && !HIDE.lk && it.lk.hinge.rotation.y > 0.6; if (sp.type === 'lid') return !!sp.L && sp.L.a > 0.8; return false; } return S0(it); }; }
+/* 金色のスマホ：周の始まりに、ライトを明るく・遠くまで */
+{ const B0 = SHOP.beginRun.bind(SHOP); SHOP.beginRun = function () { const r = B0(); GOLDLIT = !!this.load().look.goldphone || WF('goldlit'); litApply(); return r; }; }
+if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
