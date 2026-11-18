@@ -1796,7 +1796,7 @@ const RACK = {
         SND.thud(p, 1.6); SND.clatter(p); SND.knock && SND.knock(p, 1.4);
         playSfx('locker_close', { pos: p, ref: 1.2, gain: 1.1 }) || playSfx('metal_rattle', { pos: p, ref: 1.2, gain: 1, dur: 0.8 });
         world.vhs = Math.max(world.vhs || 0, 0.45);
-        if (rec.active && seen(p, { maxD: 6 })) award('rackFall', '突然倒れたコート掛け', 20);
+        if (seen(p, { maxD: 6 })) award('rackFall', '突然倒れたコート掛け', 20);
       }
       this.hits++;
       if (this.hits < 3 && this.v > 1.2) { this.v = -this.v * 0.22; if (this.hits === 2) { const p = coatRack.localToWorld(V(0, 1.2, 0)); SND.knock && SND.knock(p, 0.4); } }
@@ -7353,7 +7353,7 @@ const POLT = {
       else if (a.kind === 'jolt') { const s = (1 - k) * 0.025 * Math.sin(a.t * 70); d.g.position.x = d.x + s; d.g.rotation.y = a.r0 + s * 2; if (k >= 1 && !a.done) { a.done = 1; moveDesk(d, a.dx, a.dz); } d.g.userData.refreshInstances?.(); }
       else if (a.kind === 'tilt') { const r = k < 0.55 ? smooth(0, 0.55, k) * 0.16 : (1 - smooth(0.55, 0.75, k)) * 0.16; d.g.rotation.x = r * a.sgn; if (k > 0.72 && !a.hit) { a.hit = 1; SND.knock(V(d.x, (d.y || 0) + 0.2, d.z), 0.9); SND.kata(V(d.x, (d.y || 0) + 0.4, d.z), 0.5); } d.g.userData.refreshInstances?.(); }
       else if (a.kind === 'turn') { d.g.rotation.y = a.r0 + smooth(0, 1, k) * a.dr; d.g.userData.refreshInstances?.(); }
-      if (rec.active && seen(V(d.x, (d.y || 0) + 0.75, d.z), { maxD: 12 })) award('polter', 'ひとりでに動く机', 25);
+      if (seen(V(d.x, (d.y || 0) + 0.75, d.z), { maxD: 12 })) award('polter', 'ひとりでに動く机', 25);
       if (k >= 1) { if (a.kind === 'tilt') d.g.rotation.x = 0; this.anim = null; }
       return;
     }
@@ -7496,7 +7496,7 @@ const STREETFIG = {
     if (world.fog) { this.mesh.visible = false; this.show = 0; return; }   // 2026-11-15 霧の日は起きない
     if (this.show > 0) {
       this.show -= dt; this.mesh.position.x += Math.sin(world.t * 9) * 0.0008;
-      if (rec.active && seen(V(this.lamp.p.x, 1.1, this.lamp.p.z), { maxD: 30 })) award('streetFig' + this.n, '街灯の下に立つ人影', 40);
+      if (seen(V(this.lamp.p.x, 1.1, this.lamp.p.z), { maxD: 30 })) award('streetFig' + this.n, '街灯の下に立つ人影', 40);
       if (this.show <= 0) { this.mesh.visible = false; streetSpot.intensity *= 1; }
       return;
     }
@@ -7935,7 +7935,7 @@ F2.updChair = function (dt) {
     const u = clamp(t / 3.6, 0, 1), k = 1 - Math.pow(1 - u, 2.6);   // 最初が速く、最後はゆっくり
     this.seat.rotation.y = S.cA * k;
     if (!S.sq2 && t > 1.6) { S.sq2 = 1; chairSqueak(V(-3.0, 0.55, -15.6), 0.35); }
-    if (rec.active && seen(V(-3.0, 0.6, -15.6), { maxD: 7 })) award('f2chair', '誰もいない椅子の座面が回った', 30);
+    if (seen(V(-3.0, 0.6, -15.6), { maxD: 7 })) award('f2chair', '誰もいない椅子の座面が回った', 30);
     if (t > 3.7) S.chair = 'done';
   }
 };
@@ -7990,7 +7990,7 @@ F2.updLib = function (dt) {
     for (const c of this.crows) { if (!c.fly || !c.o.visible) continue; any = true; const f = c.fly; if (S.ct < f.at) continue; f.t += dt;
       const a = Math.sin(f.t * 32) * 0.9; if (c.wl) c.wl.rotation.z = a; if (c.wr) c.wr.rotation.z = -a;
       c.o.position.addScaledVector(f.dir, dt * (1.5 + f.t * 3)); c.o.rotation.y = Math.atan2(f.dir.x, f.dir.z);
-      if (rec.active && seen(c.o.position, { maxD: 10, ignore: glassPanes })) award('f2crows', '窓辺から一斉に飛び立つカラス', 30);
+      if (seen(c.o.position, { maxD: 10, ignore: glassPanes })) award('f2crows', '窓辺から一斉に飛び立つカラス', 30);
       if (f.t > 2.2) c.o.visible = false; }
     if (!any) S.crows = 'done';
   }
@@ -8020,7 +8020,7 @@ F2.updLib = function (dt) {
     } else if (b.st === 'fall') {
       b.vy -= 9.8 * dt; b.o.position.y += b.vy * dt; b.o.position.z += b.vz * dt;
       b.o.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(V(1, 0, 0), -dt * b.spin)).premultiply(new THREE.Quaternion().setFromAxisAngle(V(0, 1, 0), b.ry * dt));
-      if (rec.active && seen(b.o.position, { maxD: 9 })) award('f2books', '棚から一冊ずつ落ちる本', 35);
+      if (seen(b.o.position, { maxD: 9 })) award('f2books', '棚から一冊ずつ落ちる本', 35);
       b.o.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(b.o);
       if (bb.min.y <= Y2 + 0.004) {
         b.o.quaternion.setFromEuler(new THREE.Euler(-Math.PI / 2, rnd(0, 6), 0, 'YXZ')); b.o.updateMatrixWorld(true);
@@ -8036,13 +8036,13 @@ F2.updLib = function (dt) {
     if (S.pgap > 0) { S.pgap -= dt; if (S.pgap <= 0) { this.page.visible = true; S.pt = 0; S.pdur = rnd(0.22, 0.75); playSfx('page_turn', { pos: this.book.position, ref: 0.6, roll: 1.1, dur: S.pdur + 0.1, rate: rnd(0.9, 1.15) }); } }
     else {
       this.hinge.rotation.z = smooth(0, S.pdur, S.pt) * Math.PI;
-      if (rec.active && seen(this.book.position, { maxD: 5 })) award('f2pages', 'ひとりでにめくれる本のページ', 30);
+      if (seen(this.book.position, { maxD: 5 })) award('f2pages', 'ひとりでにめくれる本のページ', 30);
       if (S.pt >= S.pdur) { S.pn++; this.page.visible = false; this.hinge.rotation.z = 0; S.pgap = S.pn >= 10 ? 0 : rnd(0.04, 0.35); if (S.pn >= 10) { this.page.visible = true; S.page = 'done'; } }   // 次のページに戻す瞬間は1フレーム隠す
     }
   }
   if (S.lchair === 'run') {
     S.lt += dt; const k = smooth(0, 0.45, S.lt); this.libChair.position.copy(S.lp0).add(V(Math.sin(0.4) * S.ld * k, 0, Math.cos(0.4) * S.ld * k)); this.libChair.updateMatrixWorld(true); this.libChair.userData.refreshInstances?.(); const c = this.libChair.userData.col; if (c) { c.x0 = this.libChair.position.x - 0.25; c.x1 = c.x0 + 0.5; c.z0 = this.libChair.position.z - 0.25; c.z1 = c.z0 + 0.5; }
-    if (rec.active && seen(this.libChair.position.clone().setY(Y2 + 0.5), { maxD: 8 })) award('f2libChair', '通路の椅子がひとりでに動いた', 25);
+    if (seen(this.libChair.position.clone().setY(Y2 + 0.5), { maxD: 8 })) award('f2libChair', '通路の椅子がひとりでに動いた', 25);
     if (S.lt > 0.5) S.lchair = 'done';
   }
 };
@@ -8076,7 +8076,7 @@ F2.updMusic = function (dt) {
   } else if (S.piano === 'play') {
     if (player.lv !== 1 || d > 20) { this.stopPiano(false); S.piano = 'wait'; return; }
     const slit = glassPanes.concat(this.slitGlass ? [this.slitGlass] : []);
-    if (rec.active && seen(pc.clone().setY(Y2 + 1.0), { maxD: 13, ignore: slit })) award('f2piano', '誰もいない部屋で鳴るピアノ', 70);   // 2026-11-13 鳴っている間に映したら
+    if (seen(pc.clone().setY(Y2 + 1.0), { maxD: 13, ignore: slit })) award('f2piano', '誰もいない部屋で鳴るピアノ', 70);   // 2026-11-13 鳴っている間に映したら
     if (f2vis(pc.clone().setY(Y2 + 0.95), 12, slit, 0.85)) { this.stopPiano(false); S.piano = 'silent'; S.pt = 0; S.pwait = 2 + f2rng('piano')() * 2; hush(S.pwait + 1.2, 0.15); }
   } else if (S.piano === 'silent') {
     S.pt += dt; f2hold(5);
@@ -8124,7 +8124,7 @@ F2.updVase = function (dt) {
     if (S.vt > 0.7) { S.vase = 'fall'; S.vt = 0; S.vy = 0; S.vx = 0.55; }
   } else if (S.vase === 'fall') {
     S.vt += dt; S.vy -= 9.8 * dt; v.position.x += S.vx * dt; v.position.y += S.vy * dt; v.rotation.z -= dt * 6;
-    if (rec.active && seen(v.position.clone().setY(v.position.y + 0.1), { maxD: 7 })) award('f2vase', '机から落ちて割れた一輪挿し', 40);
+    if (seen(v.position.clone().setY(v.position.y + 0.1), { maxD: 7 })) award('f2vase', '机から落ちて割れた一輪挿し', 40);
     if (v.position.y <= d.y + 0.01) {   // 床に触れた瞬間に割れる。破片と茎は残す
       v.visible = false; const fp = V(v.position.x, d.y, v.position.z);
       if (this.shards) { this.shards.position.set(fp.x, d.y + 0.003, fp.z); this.shards.rotation.y = rnd(0, 6); this.shards.visible = true; const F = this; TRACE.add('f2vase', '机から落ちて割れた一輪挿し', 40, () => F.shards.position.clone().setY(F.shards.position.y + 0.05), { maxD: 5, alive: () => F.shards.visible }); }
@@ -8461,7 +8461,7 @@ SP.updFloor = function (dt, fp) {
   if (this.st === 'descend') {   // 糸を垂らしながら、ゆっくり降りる
     this.pos.y = Math.max(this.descTo, this.pos.y - dt * 0.42);
     this.apply(); this.showThread(this.ceilY);
-    if (rec.active && seen(fp, { maxD: 10, margin: 1.05 })) award('spDescend', '糸で降りてくるクモ女', 80);
+    if (seen(fp, { maxD: 10, margin: 1.05 })) award('spDescend', '糸で降りてくるクモ女', 80);
     if (this.pos.y <= this.descTo + 1e-3 && this.t > 1) { this.st = 'land'; this.t = 0; this.P0 = this.pos.clone(); this.Q0 = this.wrap.quaternion.clone(); spPlay('PeelAway', 0.15); }
     return;
   }
@@ -8751,14 +8751,14 @@ HP.update = function (dt) {
     { const H = this; TRACE.add('hpFirst', '窓に増えていく赤い手形', 60, () => H.firstP, { maxD: 9, ignore: () => H.cell ? [H.cell.g] : [] }); }
     if (TEST || DEV) console.log('HANDPRINT', this.multi ? 'multi' : 'single');
   } else if (this.st === 'first') {
-    this.t += dt; if (rec.active && seen(this.firstP, { maxD: 9, ignore: [this.cell.g] })) award('hpFirst', '窓に増えていく赤い手形', 60);
+    this.t += dt; if (seen(this.firstP, { maxD: 9, ignore: [this.cell.g] })) award('hpFirst', '窓に増えていく赤い手形', 60);
     if (this.t > (this.wait || (this.wait = rnd(1.0, 1.8)))) {   // 一拍待つ
       if (!this.multi) { this.st = 'done'; return; }
       this.st = 'barrage'; this.t = 0; this.left = 14 + ((Math.random() * 13) | 0); this.next = 0;
     }
   } else if (this.st === 'barrage') {
     this.t += dt; this.next -= dt; world.quietUntil = Math.max(world.quietUntil, world.t + 6);
-    if (this.next <= 0 && this.left > 0) { const p = this.strike(false); this.left--; this.next = chance(0.3) ? rnd(0.04, 0.08) : rnd(0.09, 0.26); if (rec.active && seen(p, { maxD: 9, ignore: [this.cell.g] })) award('hpFirst', '窓に増えていく赤い手形', 60); }
+    if (this.next <= 0 && this.left > 0) { const p = this.strike(false); this.left--; this.next = chance(0.3) ? rnd(0.04, 0.08) : rnd(0.09, 0.26); if (seen(p, { maxD: 9, ignore: [this.cell.g] })) award('hpFirst', '窓に増えていく赤い手形', 60); }
     if (this.left <= 0) this.st = 'done';
   }
 };
@@ -9018,7 +9018,7 @@ HANDS.update = function (dt) {
       if (hit) this.touch(s, T);
       else if (camera.position.distanceTo(T) < 0.9 && s.st === 'grope') { s.st = 'back'; s.t = 0; this.snd('in', base); }   // 近づかれたら、引っ込む
     }
-    if ((s.st === 'grope' || s.st === 'out') && rec.active && seen(T, { maxD: 7 })) { s.got = true; award('hand', '壁から伸びる長い腕', 20); }
+    if ((s.st === 'grope' || s.st === 'out') && seen(T, { maxD: 7 })) { s.got = true; award('hand', '壁から伸びる長い腕', 20); }
   }
 };
 HANDS.touch = function (s, T) {
@@ -10500,7 +10500,7 @@ defEvent('nurse', {
     this.t += dt;
     if (this.st === 'back') {
       const bp = V(-7.1, 1.2, -13.5);
-      if (rec.active && seen(bp, { maxD: 9 })) { this.seenBack = true; award('nurseBack', '保健室の奥に立つ背中', 30); }
+      if (seen(bp, { maxD: 9 })) { this.seenBack = true; award('nurseBack', '保健室の奥に立つ背中', 30); }
       else if (onScreen(bp, 0.9) && clearLine(bp)) this.seenBack = true;
       if (Math.hypot(player.x + 7.1, player.z + 13.5) < 2.7) {   // 近づくと、すっと消える
         this.st = 'fade'; this.t = 0;
@@ -10782,7 +10782,7 @@ const MANN = {
         }
       }
     }
-    for (const pc of this.pcs) if (pc.on && pc.organ && !pc.got && rec.active && seen(pc.m.getWorldPosition(t), { maxD: 6, margin: 0.95 })) { pc.got = true; award('mannOrgan' + this.pcs.indexOf(pc), '落ちた臓器', 10); }
+    for (const pc of this.pcs) if (pc.on && pc.organ && !pc.got && seen(pc.m.getWorldPosition(t), { maxD: 6, margin: 0.95 })) { pc.got = true; award('mannOrgan' + this.pcs.indexOf(pc), '落ちた臓器', 10); }
   },
   face(h, dt, rate) { const d = Math.atan2(Math.sin(h - this.heading), Math.cos(h - this.heading)); this.heading += clamp(d, -rate * dt, rate * dt); },
   toPlayer() { return Math.atan2(player.x - this.pos.x, player.z - this.pos.z); },
@@ -10883,7 +10883,7 @@ const MANN = {
       this.jumpWin();
       this.apply(); if (!this.inAir) this.stepTick(dt, 6.5);
       if (rec.active && accum('mannRun', seen(this.head(), { maxD: 18, ignore: glassPanes }), dt, 0.25)) award('mannRun', '逃げた内田くんを追え', 50);
-      if (Math.hypot(player.x - this.pos.x, player.z - this.pos.z) < 0.65 && player.lv === this.lv() && Math.abs(player.y - this.pos.y) < 1 && !this.inAir) { const c = V(this.pos.x, 1.0, this.pos.z); this.burst(); if (rec.active && seen(c, { maxD: 6 })) award('mannBurst', '致命傷で済んだ内田くん', 70); return; }
+      if (Math.hypot(player.x - this.pos.x, player.z - this.pos.z) < 0.65 && player.lv === this.lv() && Math.abs(player.y - this.pos.y) < 1 && !this.inAir) { const c = V(this.pos.x, 1.0, this.pos.z); this.burst(); if (seen(c, { maxD: 6 })) award('mannBurst', '致命傷で済んだ内田くん', 70); return; }
       if (!this.path.length) {   // 放送室の扉の裏で待つ（かくれんぼ1）
         this.st = 'bcWait'; this.t = 0; this.pos.y = 0; this.tilt = 0; this.heading = -Math.PI / 2; this.apply(); this.play(null); this.rattleStop();
         if (ITEM.bcOpen) this.bcCrouch();   /* 2026-11-17 放送室の扉がもう開いていたら、部屋の奥でうずくまって待つ */
@@ -13366,6 +13366,44 @@ const GEAR = {
 /* 2026-11-19 86番：自分のスマホで録画していない時に、定点カメラが映したら、その映像を録画に入れる（動画の中では、その時間の順に自分の映像の合間に入る）。
    ・マイクは入れない。ゲーム音は遠くでこもった音（定点カメラの場所の音は作れないため）
    ・動画の時間は進むが、残りの録画容量は減らさない。85番の「人がいない時の現象」も、この同じしくみで入る */
+/* 2026-11-19 85番：プレイヤーがいない時に、定点カメラの前だけで起きる現象（まれに・1周に1回まで）
+   ・置いてから WAIT 秒たち、プレイヤーが離れている（別の階か FAR m 以上）時に、画角の中にある物で1つだけ起こす
+   ・抽選は1周に1回（回収して置き直しても引き直さない）。容量が残っていないと起きない
+   ・起きるもの：机がひとりでに動く（ひとりでに動く机）／黒板に正の字が書き足される（ひとりでに増えていく正の字）
+   ・数字はここだけ変えればよい。確認用：?fxev（必ず起きる・待ち時間を短く） */
+const FXEV = {
+  CFG: { P: 0.25, WAIT: [20, 30], FAR: 15, TRY: 30 },
+  reset() { this.rolled = false; this.hit = false; this.done = false; this.at = 0; this.tries = 0; this.run = null; },
+  tick(dt) {
+    const F = FIXCAM, C = this.CFG, q = WF('fxev'); if (!F.placed || this.done || world.state !== 'play') { if (!F.placed) this.at = 0; this.step(dt); return; }
+    if (!this.at) this.at = world.t + (q ? 3 : rnd(C.WAIT[0], C.WAIT[1]));
+    if (!this.rolled) { this.rolled = true; this.hit = q || (Math.random() < C.P && !awarded.has('fixGirl')); if (TEST || DEV) console.log('FXEV roll', this.hit); }   /* 1周に1回だけ引く */
+    if (!this.hit || world.t < this.at || F.cap < 2) { this.step(dt); return; }
+    const fp = GEAR.fixCam.position, away = Math.abs((player.y || 0) - (fp.y - 1.2)) > 1.6 || Math.hypot(player.x - fp.x, player.z - fp.z) > C.FAR || q;
+    if (!away) { this.step(dt); return; }
+    this.tries++; if (this.tries > C.TRY * 4) { this.done = true; return; }   /* 画角の中に起こせる物がない時は、しばらく探してあきらめる */
+    if (this.pick()) { this.done = true; if (TEST || DEV) console.log('FXEV go', this.run && this.run.k); }
+    this.step(dt);
+  },
+  /* 画角の中にある物を探す */
+  pick() {
+    const F = FIXCAM, can = [];
+    if (TALLY.on && TALLY.n < 5 && F.sees(TALLY.p, 10, [])) can.push(['tally']);
+    const R = []; for (const k in rooms) for (const d of (rooms[k] && rooms[k].desks) || []) if (d && d.g && d.col) R.push(d); for (const r of [typeof SCIRM !== 'undefined' && SCIRM, typeof ARTRM !== 'undefined' && ARTRM]) if (r && r.movers) R.push(...r.movers);
+    const ds = R.filter(d => F.sees(V(d.x, (d.y || 0) + 0.75, d.z), 11, d.g.children)); if (ds.length && !POLT.anim) can.push(['desk', pick(ds)]);
+    if (!can.length) return false; const c = pick(can); this.run = { k: c[0], d: c[1], t: 0 }; FIXCAM.hitT = world.t + 0.5; return true;
+  },
+  step(dt) {
+    const R = this.run; if (!R) return; R.t += dt; FIXCAM.hitT = world.t;   /* 起きている間は、定点カメラが録る */
+    if (R.k === 'tally') { if (R.t > 0.6 * (TALLY.n + 1) && TALLY.n < 5) { TALLY.stroke(TALLY.n++); if (TALLY.n >= 5) TALLY.done = world.t; } if (TALLY.n >= 5 && R.t > 4.2) this.run = null; return; }
+    if (R.k === 'desk' && !R.go) { R.go = 1; const d = R.d, kind = pick(['slide', 'jolt', 'turn']), p = V(d.x, (d.y || 0) + 0.1, d.z), A2 = { d, t: 0, kind, id: POLT.n++, x0: d.x, z0: d.z, r0: d.g.rotation.y };
+      if (kind === 'slide') { A2.dur = rnd(0.45, 0.7); A2.dx = rnd(-0.08, 0.08); A2.dz = (chance(0.5) ? 1 : -1) * rnd(0.22, 0.38); playSfx('chair_pull', { pos: p, ref: 1.0, roll: 1.1 }) || SND.scrape(p, A2.dur, 0.9); }
+      else if (kind === 'jolt') { A2.dur = 0.3; A2.dx = rnd(-0.05, 0.05); A2.dz = rnd(-0.07, 0.07); SND.knock(p, 0.8); SND.scrape(p, 0.18, 0.7); }
+      else { A2.dur = rnd(0.5, 0.8); A2.dr = (chance(0.5) ? 1 : -1) * rnd(0.25, 0.5); playSfx('chair_pull', { pos: p, ref: 1.0, roll: 1.1, rate: 0.9 }) || SND.scrape(p, A2.dur, 0.8); }
+      POLT.anim = A2; }
+    if (R.k === 'desk' && R.t > 3.5) this.run = null;
+  },
+};
 const RECG = {
   start() { if (rec.ghost || rec.active || !rec.available) return; rec.ghost = true; recSizeLock = true; CHATLOG.segStart();
     try { if (rec.mode === 'pause') { if (!rec.recorder) { rec.recorder = makeRecorder(); rec.recorder.start(500); } else if (rec.recorder.state === 'paused') rec.recorder.resume(); } else { rec.recorder = makeRecorder(); rec.recorder.start(500); } } catch (e) { rec.ghost = false; return; }
@@ -13379,7 +13417,7 @@ const RECG = {
 };
 const FIXCAM = {
   placed: false, cap: 15, hitT: -99, recOn: false, mesh: null, framing: false,
-  reset() { this.placed = false; this.cap = 15; this.hitT = -99; this.recOn = false; this.fOn = false; this.fOff = undefined; if (this.mesh) this.mesh.visible = false; this.endFrame(true); this.ui(); },
+  reset() { this.placed = false; this.cap = 15; this.hitT = -99; this.recOn = false; this.fOn = false; this.fOff = undefined; FXEV.reset(); if (this.mesh) this.mesh.visible = false; this.endFrame(true); this.ui(); },
   can() { return PERM.active('fixcam') && !this.placed && world.state !== 'title'; },
   model() {
     if (this.mesh) return this.mesh;
@@ -13431,13 +13469,13 @@ const FIXCAM = {
   tick(dt) {
     if (this.framing && (world.state !== 'play' || world.capture)) this.endFrame(true);
     if (this.framing) { if (world.selfie) SELF.set(false); if (zoomTarget !== 1) setZoom(1); }   // 画角を決める間は、インカメラ・ズームは使えない
-    if (!this.placed || world.state !== 'play') { this.recOn = false; if (rec.ghost) RECG.stop(); return; }
+    if (!this.placed || world.state !== 'play') { this.recOn = false; if (rec.ghost) RECG.stop(); if (world.state === 'play') FXEV.tick(dt); return; }
     if (world.t >= (this.mvT || 0)) { this.mvT = world.t + 0.25; this.mv = this.monsterInView(); }   /* 2026-11-17 判定は0.25秒ごと（軽く） */
     const hit = world.t - this.hitT < 0.6 || this.mv; if (hit) this.holdUntil = world.t + 3;   /* 2026-11-17 映ったら最低3秒は2カメに切り替えたまま（ちらつかない） */
     this.recOn = this.cap > 0 && !(world.t < (this.cutUntil || 0)) && (hit || world.t < (this.holdUntil || 0));   // 2026-11-15 cutUntil：映像がノイズで途切れる
     if (this.recOn) { this.cap = Math.max(0, this.cap - dt); if (this.cap <= 0) toast(TR('定点カメラの容量がいっぱいになった'), 2000); }
     if (this.led) this.led.visible = this.recOn ? (world.t * 2 % 1) < 0.6 : false;
-    this.ui(); RECG.tick();
+    this.ui(); FXEV.tick(dt); RECG.tick();
   },
   showInset() { return this.placed && this.recOn && rec.active && world.state === 'play' && !world.selfie && !this.framing; },
   full() { const on = this.placed && this.recOn && world.state === 'play' && !this.framing && (rec.active ? !world.selfie : !!rec.ghost); if (on && !this.fOn && world.t >= (this.fOff ?? -9) + 1.0) this.fOn = true; else if (!on && this.fOn) { this.fOn = false; this.fOff = world.t; } return this.fOn && on; },   // スマホでも録画中なら2カメ
@@ -15297,7 +15335,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.55';
+const VERSION = '0.17.56';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -17938,7 +17976,7 @@ const SCIRM = {
     /* 空っぽの台座：台座と足あとの両方 */
     /* 2026-11-17 撮れ高「空っぽの台座」と足あとはなくした */
     /* 骸骨：見ていない間に少しずつこちらを向く */
-    if (inR) { const vis = onScreen(this.skelH, 1.05) && clearLine(this.skelH); if (!vis && nearLook(this.skelH)) { this.offT += dt; if (this.offT > 1.5) { this.offT = 0; const to = Math.atan2(cp.x - this.skel.position.x, cp.z - this.skel.position.z); const d = Math.atan2(Math.sin(to - this.skel.rotation.y), Math.cos(to - this.skel.rotation.y)); if (Math.abs(d) > 0.1) { this.skel.rotation.y += clamp(d, -0.6, 0.6); this.skelTurned = true; } } } else { this.offT = 0; if (this.skelTurned && rec.active && seen(this.skelH, { maxD: 12 })) award('skelTurn', 'こちらを向く骸骨', 40); if (this.skelTurned && !this.glinted && this.eyeFill && seen(this.skelH, { maxD: 12 })) { this.glinted = true; this.glint = 0.45; } } }   /* 2026-11-16 向き切ったら、目のくぼみの奥が一瞬光る */
+    if (inR) { const vis = onScreen(this.skelH, 1.05) && clearLine(this.skelH); if (!vis && nearLook(this.skelH)) { this.offT += dt; if (this.offT > 1.5) { this.offT = 0; const to = Math.atan2(cp.x - this.skel.position.x, cp.z - this.skel.position.z); const d = Math.atan2(Math.sin(to - this.skel.rotation.y), Math.cos(to - this.skel.rotation.y)); if (Math.abs(d) > 0.1) { this.skel.rotation.y += clamp(d, -0.6, 0.6); this.skelTurned = true; } } } else { this.offT = 0; if (this.skelTurned && seen(this.skelH, { maxD: 12 })) award('skelTurn', 'こちらを向く骸骨', 40); if (this.skelTurned && !this.glinted && this.eyeFill && seen(this.skelH, { maxD: 12 })) { this.glinted = true; this.glint = 0.45; } } }   /* 2026-11-16 向き切ったら、目のくぼみの奥が一瞬光る */
     if (this.glint > 0 && this.eyeFill) { this.glint -= dt; const k = Math.max(0, Math.sin(Math.PI * this.glint / 0.45)); this.eyeFill.dark.emissive.setRGB(k * 0.9, k * 0.85, k * 0.7); }
     /* 瓶の目玉：こちらを目で追う */
     if (nearLook(this.jarP)) { const e = this.eyeObj, lp = e.worldToLocal(cp.clone()), l = lp.length(); const tx = clamp(Math.atan2(lp.x, lp.z), -0.9, 0.9), ty = clamp(-Math.atan2(lp.y, Math.hypot(lp.x, lp.z)), -0.7, 0.7); this.eyePiv.rotation.y += (tx - this.eyePiv.rotation.y) * Math.min(1, dt * 6); this.eyePiv.rotation.x += (ty - this.eyePiv.rotation.x) * Math.min(1, dt * 6);
@@ -18051,7 +18089,7 @@ const ARTRM = {
     BUSTX.update(dt); DOLLX.update(dt);   /* 2026-11-16 石膏像は近くでじっと見ると落ちて割れる／デッサン人形は見ている間に関節が動く */
     /* キャンバス：部屋の中でも、しばらく目を離すと描き足される */
     { const cP = this.canvG.localToWorld(V(0, 1.15, 0.1)), vis = onScreen(cP, 1.05) && clearLine(cP); if (!vis && this.canvOn && this.stage < 3 && nearLook(cP)) { this.cOff += dt; if (this.cOff > 4) { this.cOff = 0; this.stage++; this.canvasDraw(this.stage); } } else this.cOff = 0;
-      if (this.stage >= 3 && vis && rec.active && seen(cP, { maxD: 8 })) award('canvasGrow', '描き足されていくキャンバス', 60); }
+      if (this.stage >= 3 && vis && seen(cP, { maxD: 8 })) award('canvasGrow', '描き足されていくキャンバス', 60); }
     /* 赤い絵の具の手形：床に、こちらへ向かって増えてくる */
     if (this.handSt === 'wait' && this.handOn && this.stay > 6) { this.handSt = 'run'; this.handT = 0; const a = V(rnd(3, 4), 0, -39.9), b = V(player.x, 0, player.z); this.hA = a; this.hB = b; this.hN = 0; if (!this.hTex) this.hTex = WB.tex(64, 64, (x) => { x.fillStyle = 'rgba(170,16,16,.9)'; x.beginPath(); x.ellipse(32, 40, 13, 15, 0, 0, 7); x.fill(); for (let i = 0; i < 4; i++) { x.save(); x.translate(20 + i * 8, 26); x.rotate((i - 1.5) * 0.18); x.fillRect(-2.5, -18, 5, 18); x.restore(); } x.save(); x.translate(46, 40); x.rotate(0.9); x.fillRect(-2.5, -14, 5, 14); x.restore(); }); }
     else if (this.handSt === 'run') { this.handT += dt; const L0 = this.hA.distanceTo(this.hB), n = Math.floor(this.handT / 0.7);
@@ -18212,7 +18250,7 @@ const DUCT = {
   update(dt) {
     if (world.state !== 'play' || !world.inDuct) return;
     if (this.handPlan && !this.handDone && this.s > 2.6) { this.handDone = true; this.handT = 0; const p = V(27.5, 2.76, -31.15); this.hand.position.copy(p); this.hand.rotation.y = Math.PI / 2; this.hand.visible = true; for (let i = 0; i < 5; i++) setTimeout(() => SND.scrape && SND.scrape(p.clone(), 0.15, 0.35), i * 180); }
-    if (this.hand.visible) { this.handT += dt; this.hand.position.x += dt * 0.9; if (rec.active && seen(this.hand.position, { maxD: 8 })) award('ductHand', 'ダクトの奥の手', 60); if (this.handT > 0.5) this.hand.visible = false; }
+    if (this.hand.visible) { this.handT += dt; this.hand.position.x += dt * 0.9; if (seen(this.hand.position, { maxD: 8 })) award('ductHand', 'ダクトの奥の手', 60); if (this.handT > 0.5) this.hand.visible = false; }
     if (this.s > this.L - 0.45) wOffer(TR('通気口のふたを押し外して下りる'), () => this.exit());
   },
 };
@@ -19038,7 +19076,7 @@ const URAH = {
     if (zn === 'R2' || zn === 'R3') { const R = rooms[zn]; if (!R.urBox) { const xs = R.desks.map(d => d.x), zs = R.desks.map(d => d.z); R.urBox = [Math.min(...xs) - 0.55, Math.max(...xs) + 0.55, Math.min(...zs) - 0.5, Math.max(...zs) + 0.5]; }
       const B = R.urBox; if (this.pos.x > B[0] && this.pos.x < B[1] && this.pos.z > B[2] && this.pos.z < B[3]) ty = 0.74; }
     this.cy += (ty - this.cy) * Math.min(1, dt * (ty > this.cy ? 7 : 4));
-    if (this.cy > 0.4 && rec.active && seen(this.head(this.face), { maxD: 9 })) award('urahDesk', '机の上を這ってくるオフタリサマ', 70);
+    if (this.cy > 0.4 && seen(this.head(this.face), { maxD: 9 })) award('urahDesk', '机の上を這ってくるオフタリサマ', 70);
   },
   gaitOn() { return (this.st === 'walk' || this.st === 'chase' || this.st === 'alert' || this.st === 'prey') && this.root.visible && !this.manual; },
   apply() {
@@ -19883,7 +19921,7 @@ const TALLY = {
   },
   update(dt) {
     if (!this.on || world.state !== 'play') return;
-    if (this.n >= 5) { if (world.t - this.done < 6 && rec.active && seen(this.p, { maxD: 9 })) award('chalk', 'ひとりでに増えていく正の字', 40); return; }   // 5本目まで書き終わった黒板を録画
+    if (this.n >= 5) { if (world.t - this.done < 6 && seen(this.p, { maxD: 9 })) award('chalk', 'ひとりでに増えていく正の字', 40); return; }   // 5本目まで書き終わった黒板を録画
     if (player.lv !== this.lv || Math.hypot(player.x - this.chalk.position.x, player.z - this.chalk.position.z) > 2.6) { this.t = Math.min(this.t, 0); return; }
     this.t += dt; if (this.t < 0.75) return; this.t = 0; this.stroke(this.n++);
     if (this.n >= 5) this.done = world.t;
@@ -19918,7 +19956,7 @@ const BROOMEV = {
       return;
     }
     if (this.st === 'stop') { this.t += dt; const g = this.g; g.rotation.x += ((Math.PI / 2 - 0.05) * this.dir - g.rotation.x) * Math.min(1, dt * 6); if (this.t > 0.4 && !this.fallSnd) { this.fallSnd = 1; SND.knock(g.position.clone(), 1.0); SND.thud(g.position.clone(), 0.4); }
-      if (rec.active && seen(this.hair.position.clone().setY(0.05), { maxD: 7 })) award('broom', '掃除の時間', 40); if (this.t > 30) this.st = 'off'; }
+      if (seen(this.hair.position.clone().setY(0.05), { maxD: 7 })) award('broom', '掃除の時間', 40); if (this.t > 30) this.st = 'off'; }
   },
 };
 /* =========================================================
@@ -20587,7 +20625,7 @@ const BUSTX = {
     const b = A2.bust; this.t += dt;
     if (this.st === 'tip') { const u = clamp(this.t / 0.9, 0, 1); b.rotation.x = Math.sin(u * Math.PI * 2.5) * 0.05 * (1 - u) + u * u * 0.5; b.position.z = u * u * 0.12; if (u >= 1) { this.st = 'fall'; this.t = 0; this.v = 0; } }
     else if (this.st === 'fall') { this.v += 9.8 * dt; b.position.y -= this.v * dt; b.position.z += dt * 0.8; b.rotation.x += dt * 4; if (b.position.y <= 0.12) this.crash(); }
-    else if (this.st === 'done') { if (this.t < 2.5 && rec.active && seen(this.cp, { maxD: 9 })) award('bustTurn', '壊れる石膏像', 40); }
+    else if (this.st === 'done') { if (this.t < 2.5 && seen(this.cp, { maxD: 9 })) award('bustTurn', '壊れる石膏像', 40); }
   },
   crash() {
     const A2 = ARTRM, b = A2.bust, g = b.parent; b.updateMatrixWorld(true); const c = b.getWorldPosition(V()); c.y = LH + 0.05; this.cp = c.clone(); b.visible = false; this.st = 'done'; this.t = 0;
@@ -20605,7 +20643,7 @@ const DOLLX = {
     if (!vis) return; this.t += dt; if (this.t < 0.45) return; this.t = 0;
     const L = A2.dollL, cp = camera.position, d = A2.doll; d.updateMatrixWorld(true);
     const steps = [() => L[2].rotation.set(-0.9, 0, 0.2), () => L[3].rotation.set(-1.3, 0, -0.25), () => { L[0].rotation.set(0.2, 0, 2.6); const la = A2.dollLA && A2.dollLA[0]; if (la) la.rotation.set(0, 0, 2.3); }, () => { const j = L[1], wp = j.getWorldPosition(V()), dir = cp.clone().sub(wp).normalize(); const pq = j.parent.getWorldQuaternion(new THREE.Quaternion()).invert(); const q = new THREE.Quaternion().setFromUnitVectors(V(0, -1, 0), dir.applyQuaternion(pq)); j.quaternion.copy(q); }, () => { if (A2.dollHead) A2.dollHead.rotation.set(0.3, 0, 0.6); d.rotation.z += 0.25; }];
-    if (this.i < steps.length) { steps[this.i++](); if (A.ctx) nb(panAt(p, 0.6, 1.4, undefined, 1), { t: A.ctx.currentTime, f: rnd(2600, 3400), q: 7, peak: 0.25, d: 0.03 }); if (rec.active && seen(p, { maxD: 6 })) award('dollPose', 'ポーズを変えたデッサン人形', 30); }
+    if (this.i < steps.length) { steps[this.i++](); if (A.ctx) nb(panAt(p, 0.6, 1.4, undefined, 1), { t: A.ctx.currentTime, f: rnd(2600, 3400), q: 7, peak: 0.25, d: 0.03 }); if (seen(p, { maxD: 6 })) award('dollPose', 'ポーズを変えたデッサン人形', 30); }
     else this.st = 'done';
   },
 };
@@ -25485,7 +25523,7 @@ if (TEST && window.__G) Object.assign(window.__G, { GIRL });
 { const WJ = '\u2060', NBW = ['撮れ高', '定点カメラ', '切り替わる', '持ち物', 'インカメラ', 'リアクション', 'メモリーカード', '画面', '現象', '自動', '録画', 'スマホ', '怪異', '背後', '小窓', '所持', '設置', '外カメラ', '一部', '映った', '撮っていない', '入った', '映ると', '動画', '画角', '好きな', '場所'];
   const nb = t => NBW.reduce((a, w) => a.split(w).join([...w].join(WJ)), t);
   for (const id of ['wipe', 'fixcam']) { const D = PERM.DEFS[id]; if (!D) continue; const o = D.desc, n = nb(o); if (EN[o]) EN[n] = EN[o]; D.desc = n; } }
-if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, CONFIG, ITEM_TIER, NEWWING, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
+if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
