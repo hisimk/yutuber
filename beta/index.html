@@ -15234,7 +15234,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.36';
+const VERSION = '0.17.37';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -23976,7 +23976,7 @@ const SPH = {
     try { if (!A.ctx) return; const s = () => playSfx('sp_notif', { ear: 0, gain: 0.9 }); if (!(hasSfx('sp_notif') && s())) sfxDecode('sp_notif').then(s); } catch (e) { }
     try { if (navigator.vibrate) navigator.vibrate(60); } catch (e) { }
   },
-  geo() { const W = innerWidth, H = innerHeight, w = Math.min(W * 0.92, 520), h = w * 0.24, top = Math.max(H * 0.12, 64); return { W, H, w, h, top, left: (W - w) / 2 }; },
+  geo() { let r = null; try { r = renderer.domElement.getBoundingClientRect(); } catch (e) { } const W = r && r.width || innerWidth, H = r && r.height || innerHeight, w = Math.min(W * 0.92, 520), h = w * 0.24, top = Math.max(H * 0.12, 64); return { W, H, w, h, top, left: (W - w) / 2, ox: r ? r.left : 0, oy: r ? r.top : 0 }; },   /* 2026-11-18 ゲームの画面（PCでは真ん中の枠）に合わせる */
   drawBan() {
     const B = this.ban; if (!B) return; const k = 2, cw = 360, ch = Math.round(cw * 0.24), c = this.bc, g = c.getContext('2d'); c.width = cw * k; c.height = ch * k; g.setTransform(k, 0, 0, k, 0, 0); g.clearRect(0, 0, cw, ch);
     const en = LANG === 'en'; g.fillStyle = 'rgba(236,236,240,0.94)'; g.beginPath(); g.roundRect ? g.roundRect(1, 1, cw - 2, ch - 2, 18) : g.rect(1, 1, cw - 2, ch - 2); g.fill();
@@ -24320,6 +24320,81 @@ ARARE.notice = function () { const st = (CHAT.cur && CHAT.cur.ar) || 1, d = this
   CHATGEN.make = function (o) { const all = CHAT_DICT.c.aw_bargain.slice(); let last = null; try { last = localStorage.getItem(KEY); } catch (e) { } if (last && all.length > 1) CHAT_DICT.c.aw_bargain = all.filter(id => id !== last);
     let items; try { items = M0(o); } finally { CHAT_DICT.c.aw_bargain = all; }
     try { const hit = (items || []).find(x => typeof x[2] === 'string' && x[2].startsWith('context.aw_bargain.')); if (hit) localStorage.setItem(KEY, hit[2]); } catch (e) { } return items; }; }
+/* =========================================================
+   2026-11-18 指示68：通知・写真の共有の不具合
+   1. 通知の帯が出ない：キャンバスの大きさを最初に決めておき、あとで変えない（テクスチャの大きさがずれて映らなかった）。アイコンも先に読み込む
+   2. ぼやける：画面には、同じ位置にくっきりした表示（HTML）を重ねる。録画には今までどおりキャンバスの絵が入る
+   3. ?sphoto=warp の時は、逆さ女も出す
+   ========================================================= */
+{ const I0 = SPH.init.bind(SPH);
+  SPH.init = function () {
+    const first = !this.ov; I0(); if (!first) return;
+    this.bc.width = 720; this.bc.height = Math.round(720 * 0.24); this.sc.width = 720; this.sc.height = 300; this.btex.needsUpdate = true; this.stex.needsUpdate = true;
+    for (const k in SPH_ICON) this.icon(k);
+    const ban = this.hit.querySelector('.ban'), shr = this.hit.querySelector('.shr');
+    ban.innerHTML = '<img class="ic" alt=""><b class="nm"></b><span class="tm"></span><span class="tx"></span>';
+    shr.insertAdjacentHTML('afterbegin', '<svg class="sic" viewBox="0 0 40 40"><path d="M14 22a8 8 0 0 1 12 0M10 18a14 14 0 0 1 20 0M6 14a20 20 0 0 1 28 0" fill="none" stroke="#4ea3ff" stroke-width="2.6" stroke-linecap="round"/><circle cx="20" cy="26" r="2.6" fill="#4ea3ff"/></svg><b class="st"></b><span class="sx"></span>');
+    shr.querySelector('[data-a=no]').innerHTML = '<span></span>'; shr.querySelector('[data-a=yes]').innerHTML = '<span></span>';
+    const fr = document.createElement('div'); fr.className = 'pfr'; this.hit.appendChild(fr); this.pfr = fr;
+    const st = document.createElement('style');
+    st.textContent = `#sphHit .ban{box-sizing:border-box;background:rgba(236,236,240,.96);color:#111;overflow:hidden;font-family:-apple-system,"Hiragino Sans",sans-serif;will-change:transform,opacity}
+#sphHit .ban .ic{position:absolute;left:3.3%;top:50%;transform:translateY(-50%);height:46%;aspect-ratio:1;border-radius:22%}
+#sphHit .ban .nm{position:absolute;left:17.2%;top:20%;font-weight:700;white-space:nowrap}
+#sphHit .ban .tm{position:absolute;right:3.9%;top:22%;color:#777}
+#sphHit .ban .tx{position:absolute;left:17.2%;right:3.9%;top:52%;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sphHit .shr{box-sizing:border-box;background:rgba(28,30,34,.96);color:#f2f2f2;font-family:-apple-system,"Hiragino Sans",sans-serif}
+#sphHit .shr .sic{position:absolute;left:4%;top:9%;width:11%;height:auto}
+#sphHit .shr .st{position:absolute;left:17.2%;top:12%;font-weight:700;white-space:nowrap}
+#sphHit .shr .sx{position:absolute;left:17.2%;right:3%;top:30%;color:#c8c8c8;white-space:nowrap}
+#sphHit .shr button{display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-family:inherit;bottom:12%;height:26.7%;width:41.7%}
+#sphHit .shr button[data-a=no]{left:6.1%;background:#4a4c52}#sphHit .shr button[data-a=yes]{right:6.1%;left:auto;background:#2f7cf6}
+#sphHit .pfr{position:absolute;display:none;box-sizing:border-box;border:3px solid #f4f4f0;pointer-events:none}#sphHit.photo .pfr{display:block}`;
+    document.head.appendChild(st);
+  };
+}
+Object.assign(SPH, {
+  /* 帯：キャンバスの大きさは変えずに描き直す（アイコンが届いたら、もう一度描く） */
+  drawBan() {
+    const B = this.ban; if (!B || !this.bc) return; const c = this.bc, k = c.width / 360, cw = 360, ch = c.height / k, g = c.getContext('2d'); g.setTransform(k, 0, 0, k, 0, 0); g.clearRect(0, 0, cw, ch);
+    const en = LANG === 'en'; g.fillStyle = 'rgba(236,236,240,0.94)'; g.beginPath(); g.roundRect ? g.roundRect(1, 1, cw - 2, ch - 2, 18) : g.rect(1, 1, cw - 2, ch - 2); g.fill();
+    const im = this.ICON[B.icon]; if (im && im.complete && im.naturalWidth) g.drawImage(im, 12, (ch - 40) / 2, 40, 40);
+    g.textAlign = 'left'; g.fillStyle = '#111'; g.font = '700 14px -apple-system,"Hiragino Sans",sans-serif'; g.fillText(en ? B.nameEn : B.name, 62, 32);
+    g.fillStyle = '#777'; g.font = '12px -apple-system,"Hiragino Sans",sans-serif'; g.textAlign = 'right'; g.fillText(en ? 'now' : '今', cw - 14, 31);
+    g.textAlign = 'left'; g.fillStyle = '#222'; g.font = '13px -apple-system,"Hiragino Sans",sans-serif'; let t = en ? B.textEn : B.text; const mw = cw - 62 - 14; if (g.measureText(t).width > mw) { while (t.length > 1 && g.measureText(t + '…').width > mw) t = t.slice(0, -1); t += '…'; } g.fillText(t, 62, 56);
+    this.btex.needsUpdate = true; B.drawn = true;
+    const el = this.hit && this.hit.querySelector('.ban'); if (el && el.querySelector('.nm')) { el.querySelector('.ic').src = (im && im.src) || SPH_ICON[B.icon] || SPH_ICON.msg; el.querySelector('.nm').textContent = en ? B.nameEn : B.name; el.querySelector('.tm').textContent = en ? 'now' : '今'; el.querySelector('.tx').textContent = en ? B.textEn : B.text; }
+  },
+  drawShare() {
+    if (!this.sc) return; const c = this.sc, k = c.width / 360, cw = 360, ch = 150, g = c.getContext('2d'); g.setTransform(k, 0, 0, k, 0, 0); g.clearRect(0, 0, cw, ch); const en = LANG === 'en';
+    g.fillStyle = 'rgba(28,30,34,0.93)'; g.beginPath(); g.roundRect ? g.roundRect(1, 1, cw - 2, ch - 2, 22) : g.rect(1, 1, cw - 2, ch - 2); g.fill();
+    g.strokeStyle = '#4ea3ff'; g.lineWidth = 2.2; for (const r of [6, 11, 16]) { g.beginPath(); g.arc(34, 38, r, -2.4, -0.75); g.stroke(); } g.fillStyle = '#4ea3ff'; g.beginPath(); g.arc(34, 38, 2.5, 0, 7); g.fill();
+    g.fillStyle = '#f2f2f2'; g.font = '700 15px -apple-system,"Hiragino Sans",sans-serif'; g.textAlign = 'left'; g.fillText(en ? 'Photo sharing' : '写真の共有', 62, 34);
+    g.fillStyle = '#c8c8c8'; g.font = '13px -apple-system,"Hiragino Sans",sans-serif'; g.fillText(en ? 'A nearby device wants to share a photo.' : '近くの端末が写真を共有しようとしています', 62, 58);
+    const btn = (x, label, col) => { g.fillStyle = col; g.beginPath(); g.roundRect ? g.roundRect(x, 92, 150, 40, 12) : g.rect(x, 92, 150, 40); g.fill(); g.fillStyle = '#fff'; g.font = '700 14px -apple-system,"Hiragino Sans",sans-serif'; g.textAlign = 'center'; g.fillText(label, x + 75, 117); };
+    btn(22, en ? 'Decline' : '辞退', '#4a4c52'); btn(188, en ? 'Accept' : '受け入れる', '#2f7cf6'); this.stex.needsUpdate = true;
+    const el = this.hit && this.hit.querySelector('.shr'); if (el && el.querySelector('.st')) { el.querySelector('.st').textContent = en ? 'Photo sharing' : '写真の共有'; el.querySelector('.sx').textContent = en ? 'A nearby device wants to share a photo.' : '近くの端末が写真を共有しようとしています'; el.querySelector('[data-a=no] span').textContent = en ? 'Decline' : '辞退'; el.querySelector('[data-a=yes] span').textContent = en ? 'Accept' : '受け入れる'; }
+  },
+});
+/* 帯は描けてから出す */
+{ const B0 = SPH.banner.bind(SPH); SPH.banner = function (o) { this.init(); const r = B0(o); try { if (this.ban) { const im = this.ICON[o.icon]; this.drawBan(); if (im && !im.complete) im.addEventListener('load', () => { if (this.ban && this.ban.icon === o.icon) this.drawBan(); }, { once: true }); } } catch (e) { } return r; }; }
+/* 画面のくっきりした表示：毎フレーム、録画用の絵と同じ位置・同じ動きに合わせる */
+{ const A0 = SPH.after.bind(SPH); SPH.after = function () {
+    if (this.ban && !this.ban.drawn) { this.bq && (this.bq.visible = false); }
+    const B = this.ban; if (this.bq && B && !B.drawn) { const keep = this.ban; this.ban = null; A0(); this.ban = keep; } else A0();
+    if (!this.ov || !this.hit) return; const G = this.geo(), f = G.w / 360;
+    const be = this.hit.querySelector('.ban');
+    if (B && B.drawn && !this.viewOn) { const slideIn = Math.min(1, B.t / 0.25), dyIn = (1 - slideIn) * -(G.top + G.h), dx = B.dx + (B.out ? Math.sign(B.dx || 0) * G.W * (B.out - 1) : 0), dy = B.dy + dyIn + (B.out && !B.dx ? -(G.top + G.h) * Math.min(1, B.out - 1) : 0);
+      be.style.display = 'block'; be.style.left = (G.ox + G.left) + 'px'; be.style.top = (G.oy + G.top) + 'px'; be.style.width = G.w + 'px'; be.style.height = G.h + 'px'; be.style.borderRadius = (18 * f) + 'px'; be.style.transform = `translate(${dx}px,${dy}px)`; be.style.opacity = B.out ? Math.max(0, 2 - B.out) : 1;
+      be.querySelector('.nm').style.fontSize = (14 * f) + 'px'; be.querySelector('.tm').style.fontSize = (12 * f) + 'px'; be.querySelector('.tx').style.fontSize = (13 * f) + 'px'; be.style.pointerEvents = B.out ? 'none' : 'auto'; }
+    else be.style.display = 'none';
+    const se = this.hit.querySelector('.shr');
+    if (this.shareOn) { const h = G.w * 150 / 360; se.style.display = 'block'; se.style.left = (G.ox + G.left) + 'px'; se.style.top = (G.oy + G.top) + 'px'; se.style.width = G.w + 'px'; se.style.height = h + 'px'; se.style.borderRadius = (22 * f) + 'px'; se.querySelector('.st').style.fontSize = (15 * f) + 'px'; se.querySelector('.sx').style.fontSize = (13 * f) + 'px'; se.querySelectorAll('button').forEach(b => { b.style.fontSize = (14 * f) + 'px'; b.style.borderRadius = (12 * f) + 'px'; }); }
+    else se.style.display = 'none';
+    const on = !!this.viewOn && !!this.pm && !!this.pm.map; this.hit.classList.toggle('photo', on);
+    if (on) { const pw = 1.36, ph = pw * (G.W / G.H) / (this.pa || G.W / G.H), w = pw / 2 * G.W, h = ph / 2 * G.H, cy = G.H / 2 - 0.06 / 2 * G.H; const s = this.pfr.style; s.left = (G.ox + G.W / 2 - w / 2 - 3) + 'px'; s.top = (G.oy + cy - h / 2 - 3) + 'px'; s.width = (w + 6) + 'px'; s.height = (h + 6) + 'px'; }
+  }; }
+/* 3. ?sphoto=warp：逆さ女も出す */
+{ const R0 = SPH.reset.bind(SPH); SPH.reset = function () { const r = R0(); try { const fp = this.q('sphoto'); if (fp && fp[1] === 'warp') { world.womanUp = true; world.sealedWoman = false; } } catch (e) { } return r; }; }
 if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
