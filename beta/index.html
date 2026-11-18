@@ -15242,7 +15242,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.46';
+const VERSION = '0.17.47';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -20221,13 +20221,14 @@ const PHAN = {
     }
   },
   partsOff() {
-    if (!this.parts) return; for (const P of this.parts) { P.par.add(P.o); P.o.position.copy(P.pos); P.o.quaternion.copy(P.q); if (P.pv.parent) P.pv.parent.remove(P.pv); } this.parts = null;
+    if (this.fz) this.fz.g.visible = false; if (!this.parts) return; for (const P of this.parts) { P.par.add(P.o); P.o.position.copy(P.pos); P.o.quaternion.copy(P.q); if (P.pv.parent) P.pv.parent.remove(P.pv); } this.parts = null;
   },
   // ── 描く直前：逆さ女の体に、クモ女の顔・人体模型の手足と頭をくっつける（新しいモデルは作らない）
   // ふだん：逆さ女の顔の場所にクモ女の顔、その下に逆さ女の顔。捕まった時の顔は、これまでどおり
   late() {
     const show = this.on && SG.ready && SG.root.visible && this.mode !== 'gone' && this.mode !== 'done';
     const a = show ? (SG.opacity ?? 1) : 0, Hb = SG.bones && SG.bones.Head;
+    if (this.fz) this.fz.g.visible = false;
     if (Hb && world.phanRun) { if (!this.h0) this.h0 = Hb.position.clone(); Hb.position.copy(this.h0); }
     if (MANN.ready && world.phanRun) {
       if (this.on && !this.parts) this.partsOn();
@@ -20245,13 +20246,29 @@ const PHAN = {
           w.scale.setScalar(0.7); w.position.set(0, 0, 0); w.quaternion.identity(); w.updateMatrixWorld(true);
           const fb = SP.face.getWorldPosition(V()), fc = spFacePos(V()), front = fc.clone().sub(fb); front.y *= 0.3;
           if (front.lengthSq() > 1e-8) { w.quaternion.premultiply(new THREE.Quaternion().setFromUnitVectors(front.normalize(), fwd)); w.updateMatrixWorld(true); }
-          const tgt = hw.clone().addScaledVector(fwd, 0.06); tgt.y += 0.06; w.position.add(tgt.sub(spFacePos(V()))); w.updateMatrixWorld(true);
-          // 逆さ女の顔は、クモ女の顔の下へずらす
-          const ww = Hb.getWorldPosition(V()); ww.y -= 0.3; ww.addScaledVector(fwd, 0.04); Hb.position.copy(Hb.parent.worldToLocal(ww)); Hb.updateMatrixWorld(true);
+          /* 2026-11-18 74番：2つの顔が重ならないように、クモ女の顔は頭の右上へ、逆さ女の顔は左下へ。互いに外へ傾け（Vの字）、間を肌の肉と縫い目でつなぐ */
+          const rt = V(Math.cos(SG.root.rotation.y), 0, -Math.sin(SG.root.rotation.y)), SPR = this.FUSE_R ?? 0.13, SPU = this.FUSE_U ?? 0.03, TL = this.FUSE_T ?? 0.42;
+          w.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(fwd, -TL)); w.updateMatrixWorld(true);
+          const tgt = hw.clone().addScaledVector(fwd, 0.05).addScaledVector(rt, SPR); tgt.y += SPU; w.position.add(tgt.sub(spFacePos(V()))); w.updateMatrixWorld(true);
+          const ww = Hb.getWorldPosition(V()); ww.y -= this.FUSE_D ?? 0.2; ww.addScaledVector(rt, -(this.FUSE_L ?? 0.09)); ww.addScaledVector(fwd, 0.02); Hb.position.copy(Hb.parent.worldToLocal(ww)); Hb.updateMatrixWorld(true);
+          this.fuse(spFacePos(V()), Hb.getWorldPosition(V()).add(V(0, 0.06, 0)), fwd, a);
         }
         for (const m of this.spMats) { const tr = a < 0.995; if (m.transparent !== tr) { m.transparent = tr; m.needsUpdate = true; } m.opacity = a; }
       }
     }
+  },
+  /* 2つの顔をつなぐ肉（肌の色の膨らみ）と、継ぎ接ぎの縫い目 */
+  fuse(p1, p2, fwd, a) {
+    if (!this.fz) { const g = new THREE.Group(), M = new THREE.MeshLambertMaterial({ color: 0xb9a594, transparent: true }), D = new THREE.MeshLambertMaterial({ color: 0x2a1512, transparent: true });
+      const b = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), M); g.add(b); const st = []; for (let i = 0; i < 5; i++) { const m = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.06, 0.006), D); g.add(m); st.push(m); }
+      const sm = new THREE.Mesh(new THREE.BoxGeometry(1, 0.007, 0.006), D); g.add(sm); scene.add(g); this.fz = { g, b, st, sm, M, D }; }
+    const F = this.fz, vis = a > 0.02 && !CAP.on; F.g.visible = vis; if (!vis) return;
+    const mid = p1.clone().add(p2).multiplyScalar(0.5).addScaledVector(fwd, -0.035), ax = p2.clone().sub(p1), L = ax.length(); ax.normalize();
+    F.g.position.copy(mid); F.g.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(ax, V().crossVectors(fwd, ax).normalize(), fwd));
+    F.b.scale.set(L * 0.52, 0.085, 0.075);
+    F.sm.scale.x = L * 0.8; F.sm.position.set(0, 0, 0.074);   /* 縫い目の線 */
+    F.st.forEach((m, i) => { m.position.set(((i + 0.5) / F.st.length - 0.5) * L * 0.75, 0, 0.073); m.rotation.z = 0.15 * (i % 2 ? 1 : -1); });
+    for (const m of [F.M, F.D]) m.opacity = a;
   },
   // ── 確認用の小さな画面（?phantest）
   panel() {
@@ -21168,14 +21185,16 @@ const URFUDA = {
     /* ひるむ：のけぞって震えながら、少し後ろへ下がる */
     for (const t of this.tags) if (t.pulse) t.pulse = Math.max(0, t.pulse - dt * 2.5); this.dfxTick(dt);
     const back = S.dfl ? 0 : smooth(0, 0.45, S.t) * 0.9; let nx = S.p0.x + S.away.x * back, nz = S.p0.z + S.away.z * back; const lv = S.p0.y > 1.6 ? 1 : 0; [nx, nz] = collide(nx, nz, 0.3, lv); URAH.pos.x = nx; URAH.pos.z = nz;
-    const sh = Math.max(0, 1 - S.t / 2.5); URAH.roll = Math.sin(S.t * 38) * 0.12 * sh + Math.sin(S.t * 2.1) * 0.04; URAH.pitch = -0.35 * smooth(0, 0.3, S.t) * (S.k === 'stun' ? (1 - smooth((S.dur || 7) - 1.5, S.dur || 7, S.t)) : 1);
-    URAH.mouthSet(0.9 + 0.3 * Math.sin(S.t * 25) * sh);
-    if (S.k === 'stun') { if (S.t > (S.dur || 7)) { if (S.dfl) this.graceUntil = world.t + 1.2; this.st = null; URAH.frozen = false; URAH.roll = 0; URAH.pitch = 0; URAH.toChase(); } return; }
+    const sh = Math.max(0, 1 - S.t / 2.5), dur = S.dur || 7, wn = S.k === 'stun' && !S.dfl ? smooth(dur - 1.7, dur - 1.3, S.t) : 0; URAH.roll = Math.sin(S.t * 38) * 0.12 * sh + Math.sin(S.t * 2.1) * 0.04 + Math.sin(S.t * 46) * 0.13 * wn;   /* 2026-11-18 75番：ひるみが終わる約1.5秒前から、震えが強くなる */
+    if (wn > 0 && !S.warned) { S.warned = 1; try { URAH.scream(URAH.face, false); } catch (e) { } world.vhs = Math.max(world.vhs || 0, 0.3); }   /* 合図：短いうなり声 */ URAH.pitch = -0.35 * smooth(0, 0.3, S.t) * (S.k === 'stun' ? (1 - smooth((S.dur || 7) - 1.5, S.dur || 7, S.t)) : 1);
+    URAH.mouthSet(0.9 + 0.3 * Math.sin(S.t * 25) * Math.max(sh, wn));
+    if (S.k === 'stun') { if (S.t > (S.dur || 7)) { this.graceUntil = world.t + 1.5;   /* 2026-11-18 75番：ひるみが終わった直後の1.5秒は捕まえない（追いかけ始めるのはよい） */ this.st = null; URAH.frozen = false; URAH.roll = 0; URAH.pitch = 0; URAH.toChase(); } return; }
     /* 召喚：ナカヨシが床から立ち上がる */
     const N = S.naka; if (N) {
       const k = smooth(0.4, 3.2, S.t); SG.root.position.set(N.p.x, N.p.y - (1 - k) * 1.7, N.p.z); SG.root.rotation.set(0, Math.atan2(player.x - N.p.x, player.z - N.p.z), Math.sin(S.t * 31) * 0.06 * (1 - k)); sgSetOpacity(k < 0.02 ? 0 : (Math.random() < 0.85 ? Math.min(1, k * 1.3) : 0.2));
       U.tear.value = S.t < 3.4 ? rnd(0.02, 0.2) : 0; world.vhs = Math.max(world.vhs || 0, 0.45);
-      if (S.t > 0.4 && !N.sc) { N.sc = 1; wdScreamLong(0, 0.9); }
+      if (S.t > 0.25 && !N.ch) { N.ch = 1; this.chant(N.p); }   /* 2026-11-18 73番：「ナ、カヨシ、ナカヨシ、ナカヨ、シ」 */
+      if (S.t > 3.3 && !N.sc) { N.sc = 1; wdScreamLong(0, 0.7); }
       if (S.t > 2.2 && !N.sc2) { N.sc2 = 1; URAH.scream('hannya', true); jumpSting('jump_b', 0.8, 3); }
       if (rec.active && S.t > 1.0) award('urahSummon', 'ナカヨシ召喚の瞬間', 150);   /* 2026-11-16 召喚の瞬間に録画していればよい（映っているかは問わない） */
       if (S.t > 4.5) { if (this.revOk()) this.revStart(); else this.summonEnd(); }
@@ -21224,10 +21243,14 @@ const URFUDA = {
   summonStart() {
     const S = this.st; world.invUntil = world.t + 5; if (DIR.active) DIR.end(DIR.active); if (CH.state !== 'off') CH.stop();
     if (WD.borrowed) WD.release(false);
-    /* 召喚する場所：オフタリサマの横（壁に当たらない方） */
-    const side = V(-S.away.z, 0, S.away.x), lv = S.p0.y > 1.6 ? 1 : 0; let p = null;
-    for (const sg of [1, -1]) { const q = S.p0.clone().addScaledVector(side, 1.5 * sg); if (!segBlocked(S.p0.x, S.p0.z, q.x, q.z, lv)) { p = q; break; } }
+    /* 2026-11-18 73番：召喚する場所は、プレイヤーとオフタリサマの間の、オフタリサマ寄り（約1m）。プレイヤーが近すぎる時は、斜め前にずらす。壁に当たる時は近い所へ */
+    const lv = S.p0.y > 1.6 ? 1 : 0, U0 = URAH.pos.clone(), tp = V(player.x - U0.x, 0, player.z - U0.z), D = tp.length(); if (D < 1e-3) tp.copy(S.away).negate(); tp.normalize(); let p = null;
+    const rot = (v, a) => V(v.x * Math.cos(a) + v.z * Math.sin(a), 0, -v.x * Math.sin(a) + v.z * Math.cos(a));
+    const angs = D > 2.0 ? [0, 0.35, -0.35, 0.7, -0.7, 1.1, -1.1] : [0.9, -0.9, 1.2, -1.2, 0.6, -0.6], dists = D > 2.0 ? [Math.min(1.0, D * 0.45), 0.8, 1.2, 0.6] : [1.0, 0.8, 1.2];
+    for (const dd of dists) { for (const a of angs) { const q = U0.clone().addScaledVector(rot(tp, a), dd); if (!segBlocked(U0.x, U0.z, q.x, q.z, lv, 0.3) && Math.hypot(q.x - player.x, q.z - player.z) > 0.75) { p = q; break; } } if (p) break; }
+    if (!p) { const side = V(-S.away.z, 0, S.away.x); for (const sg of [1, -1]) { const q = S.p0.clone().addScaledVector(side, 1.5 * sg); if (!segBlocked(S.p0.x, S.p0.z, q.x, q.z, lv)) { p = q; break; } } }
     if (!p) p = S.p0.clone().addScaledVector(S.away, 1.2);
+    if (TEST || DEV) console.log('URFUDA summon at', p.x.toFixed(2), p.z.toFixed(2), 'D', D.toFixed(2));
     p.y = lv ? LH : 0;
     /* 化け物の周に切り替える（ほかの怪異は、ナカヨシの体の一部になる） */
     world.phanRun = true; world.mannRun = false; world.sealedWoman = false;
@@ -21237,11 +21260,15 @@ const URFUDA = {
     WD.borrow(); WD.pos.copy(p); WD.path = []; WD.extra = null; sgPlay('Walk', 0); sgSetOpacity(0); S.naka = { p };
     try { XCHAT.log('urSummon'); } catch (e) { }
   },
+  /* 名前を途切れ途切れに連呼（かな1音ずつの録音。ナカヨシの位置から） */
+  chant(p) { try { if (!A.ctx || !(KANA.ok && KANA.ok())) return; const pn = panAt(V(p.x, p.y + 1.3, p.z), 1.3, 1.2, undefined, 0), g = A.ctx.createGain(); g.gain.value = 1.0; g.connect(pn);
+      const F = [['な', 0.32], ['か', 0.03], ['よ', 0.03], ['し', 0.26], ['な', 0.03], ['か', 0.03], ['よ', 0.03], ['し', 0.3], ['な', 0.03], ['か', 0.03], ['よ', 0.42], ['し', 0]].map(([m, gap]) => ({ m, gap }));
+      const len = SPV.speakFrags(g, F, A.ctx.currentTime + 0.05); freeLater(len + 2, pn, g); } catch (e) { if (TEST || DEV) console.warn('chant', e); } },
   summonEnd() {
     const S = this.st, p = S.naka.p; this.st = null; URAH.frozen = false; URAH.roll = 0; URAH.pitch = 0;
     const U = postMat.uniforms; U.tear.value = 0; WD.release(false); WD.pos.copy(p); WD.wait = 0; WD.noDetectUntil = 0; sgSetOpacity(1);
     CH.start('chase'); CH.grace = 0.6; PHAN.trackT = 15; PHAN.wasCh = true; PHAN.nextHunt = world.t + rnd(14, 24);
-    URAH.toChase(); world.invUntil = world.t + 0.8;
+    URAH.toChase(); world.invUntil = world.t + 0.8; this.graceUntil = world.t + 1.5;   /* 召喚のあとも1.5秒は捕まえない */
   },
 };
 Object.assign(AW_TABLE, { urahFuda: ['SS', 500], urahSummon: ['SS', 150], urahEscape: ['A', 50] });
@@ -21353,7 +21380,7 @@ Object.assign(URFUDA, {
   revOk() { try { return PHAN.load().st === 9 || WF('nakarev'); } catch (e) { return false; } },
   revStart() {
     const p = this.st.naka.p; this.st = null; URAH.st = 'revenge'; URAH.frozen = true; world.invUntil = world.t + 999;
-    sgSetOpacity(1); sgPlay('Walk', 0); this.rv = { t: 0, ph: 'ram', n: 0, k: 0, seenT: 0, p: p.clone(), hitAt: 0 };
+    sgSetOpacity(1); sgPlay('Walk', 0); this.rv = { t: 0, ph: 'turn', n: 0, k: 0, seenT: 0, p: p.clone(), hitAt: 0, y0: SG.root.rotation.y };
     PHAN.tintSlow = true; PHAN.tintK = 0.6; try { XCHAT.log('urRev'); } catch (e) { }
     if (TEST || DEV) console.log('URFUDA revenge');
   },
@@ -21361,6 +21388,10 @@ Object.assign(URFUDA, {
     const R = this.rv; if (!R) return; R.t += dt; const U = URAH, up = U.pos.clone(), dir = V(up.x - R.p.x, 0, up.z - R.p.z); const d = Math.max(0.01, dir.length()); dir.multiplyScalar(1 / d);
     /* 撮れていれば「最高の撮れ高」 */
     if (rec.active && (seen(U.head('noh'), { maxD: 16, margin: 1.15 }) || seen(sgHead(V()), { maxD: 16, margin: 1.15 }))) { R.seenT += dt; if (R.seenT > 3) award('urahRevenge', '最高の撮れ高', 1000); }
+    if (R.ph === 'turn') {   /* 2026-11-18 73番：その場でくるっと振り返る（約0.6秒）→ すぐ体当たりへ */
+      const k = smooth(0.1, 0.7, R.t), ty = Math.atan2(dir.x, dir.z); let dy = ty - R.y0; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+      SG.root.position.copy(R.p); SG.root.rotation.set(0, R.y0 + dy * k, Math.sin(R.t * 17) * 0.04); WD.pos.copy(R.p);
+      if (R.t > 0.8) { R.ph = 'ram'; R.t = 0; } return; }
     if (R.ph === 'ram') {
       /* 体当たり：少し下がって助走 → 体ごと突っ込む（約1.1秒で1回、5回） */
       const c = (R.t % 1.1) / 1.1, k = c < 0.55 ? -smooth(0, 0.55, c) : smooth(0.55, 0.78, c), gap = 2.1 - 1.55 * Math.max(0, k) + 0.5 * Math.min(0, k) * -1;
