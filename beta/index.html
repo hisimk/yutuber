@@ -15226,7 +15226,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.30';
+const VERSION = '0.17.31';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -24202,7 +24202,67 @@ for (const d of AW59.DEF) { AW_TABLE[d[0]] = [d[2], d[3]]; COL.LIST.push([d[0], 
     } catch (e) { } return r; }; }
   { const S0 = SPH.share.bind(SPH); SPH.share = function (on) { const r = S0(on); if (on) this.cm('sph_share'); return r; }; }
   { const V0 = SPH.view.bind(SPH); SPH.view = function (on) { const r = V0(on); if (on) this.cm('sph_photo'); return r; }; } }
-if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT });
+/* =========================================================
+   2026-11-18 指示63：コメントを消しすぎると、コメント欄がしばらく荒れる
+   ・BANした時に不満をためる：善良（やさしい／乱暴でも厳しくもない）＋2・それ以外のふつう＋1・乱暴か厳しい＋0・文句や喧嘩のコメント＋1
+     荒らし（■■■）・ナカヨシの周のコメントは数えない（ナカヨシの段階のしくみとは別）
+   ・不満15以上＝ちょい荒れ／30以上＝大荒れ。BANせずに動画を1本終えるたびに3ずつ減る
+   ・ちょい荒れ：厳しい・乱暴な言い方が少し増え、BANへの文句が混ざる（これまでの動画を見てきた人の言い方）
+     大荒れ：怒っている人・コメントどうしの喧嘩（↑で返す）も出る。投げ銭は ちょい荒れ0.6倍・大荒れ0.25倍
+   ・画面のお知らせでは伝えない（コメントの様子で気づく）。いいね・収益は変えない
+   ・62番（コメントのラベル）はまだ入っていないので、言い方は文から簡単に見分けている（62番が入ったら、そのラベルに置きかえる）
+   ・確認用：?araare=2（ちょい荒れ）／?araare=3（大荒れ）
+   ========================================================= */
+const ARARE = {
+  KEY: 'yt_arare_v1', T2: 15, T3: 30,
+  load() { if (!this.d) { try { this.d = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) { } if (!this.d || typeof this.d.s !== 'number') this.d = { s: 0, b: 0 }; } return this.d; },
+  save() { try { localStorage.setItem(this.KEY, JSON.stringify(this.d)); } catch (e) { } },
+  force() { const m = (TEST || BETA || DEV) && location.search.match(/[?&]araare=(\d)/); return m ? +m[1] : 0; },
+  stage() { const f = this.force(); if (f) return clamp(f, 1, 3); const s = this.load().s; return s >= this.T3 ? 3 : s >= this.T2 ? 2 : 1; },
+  /* 言い方（62番のラベルの代わり）：厳しい・乱暴／やさしい */
+  HARSH: /(しろ|しろよ|しな(よ|さい)?$|すんな|するな|やめろ|うるさ|うるせ|つまら|つまん|下手|ヘタ|へたくそ|クソ|くそ|ゴミ|ざこ|雑魚|ふざけ|帰れ|引退|飽き|ダサ|だっさ|キモ|きも[いっ]|うざ|ウザ|おっせ|遅すぎ|何やって|なにやって|いい加減|まじめにやれ|だろ$|だろが|じゃねえ|じゃねー|ねーよ|調子乗|イキって|萎え|しょーも|しょうもな|見てらんね|ふざけんな|ビビりすぎ|ビビりかよ|何してんの|なにしてんの|はよ|早よ|はやく行け|早く行け|もういい|いい加減に)/,
+  KIND: /(がんば|頑張|えらい|偉い|すごい|上手|うま[いっ]|ナイス|かわい|可愛|ありがと|大丈夫|無理しない|気をつけ|応援|好き|最高|天才|おつ|乙|よかった|安心|助かった|優し|やさし|グッジョブ|いい判断|頼もし|神プレイ|お疲れ)/,
+  tone(t) { t = String(t || ''); const h = this.HARSH.test(t), k = this.KIND.test(t); return { h, k }; },
+  pts(x) { if (typeof x[2] === 'string' && /^x\.ar\./.test(x[2])) return 1; const t = x.length >= 5 ? x[3] : x[2]; if (typeof t !== 'string' || /^¥[\d,]+$/.test(t)) return 0; const T = this.tone(t); return T.h ? (T.k ? 1 : 0) : 2; },
+  onBan(D, i) { const x = D.items && D.items[i]; if (!x || x[1] === -1 || D.ph || (D.phIdx || []).includes(i)) return; const p = this.pts(x); const d = this.load(); d.s = Math.min(60, d.s + p); d.b = (d.b | 0) + 1; this.save(); if (TEST || DEV) console.log('ARARE ban +' + p, d.s); },
+  /* 動画を1本作るたび：前の動画でBANしなかったら3減らす */
+  onVideo() { const d = this.load(), id = world.runId || ''; if (d.run === id) return; d.run = id; if (d.v) { if (!(d.b | 0)) d.s = Math.max(0, d.s - 3); } d.v = 1; d.b = 0; this.save(); },   /* 同じ動画は二度数えない */
+  /* 文句・怒り・喧嘩（日本語・英語） */
+  L: {
+    harsh: [['テンポ悪くない？', 'the pacing is kinda slow'], ['もっと奥行けよ', 'go deeper already'], ['ビビりすぎだろ', "you're way too scared"], ['画面暗すぎて見えん', "too dark, can't see"], ['うーん…', 'hmm...'], ['前の方が面白かった', 'it was better before'], ['で？', 'and?'], ['引き伸ばしすぎ', 'stop dragging it out'], ['リアクション薄くない？', 'kinda weak reactions'], ['早く進めて', 'move it along']],
+    comp: [['最近普通のコメントまで消されてる', 'lately even normal comments get deleted'], ['前の動画のコメントも消えてた', 'comments on the last video were gone too'], ['都合悪いコメント消してるでしょ', "you're deleting comments you don't like"], ['最近コメント消しすぎじゃない？', 'deleting way too many comments lately?'], ['前に書いたコメント消されてたんだけど', 'my comment from before got deleted'], ['前の動画、コメント欄スカスカだった', 'the last video’s comments were almost empty']],
+    angry: [['検閲チャンネル', 'censorship channel'], ['もう見るのやめるわ', "I'm done watching"], ['最近ここのコメ欄こわ', 'this comment section is scary lately'], ['前はこんなチャンネルじゃなかった', 'this channel used to be different'], ['登録解除しようかな', 'thinking of unsubscribing']],
+    fight: [[['消されて当然だろ', 'they deserved to be deleted'], ['↑お前が言うな', '↑look who’s talking'], ['↑↑喧嘩すんな', '↑↑stop fighting']],
+      [['嫌なら見なきゃいいのに', "if you don't like it, don't watch"], ['↑そういう問題じゃない', "↑that's not the point"], ['↑↑ここで揉めるなよ', "↑↑don't fight here"]],
+      [['コメント消すのは自由でしょ', "deleting comments is their call"], ['↑限度があるだろ', '↑there are limits'], ['↑↑動画見ようぜ', "↑↑let's just watch the video"]],
+      [['信者きもすぎ', 'the fans are so cringe'], ['↑じゃあ来るなよ', "↑then don't come here"], ['↑↑コメ欄が本編', '↑↑the comments are the real show']]],
+    /* 大荒れの時だけ：外から眺めて面白がる人・長文で怒る人 */
+    meta: [['荒れすぎで草', 'lol this is getting heated'], ['コメ欄のほうが怖い', 'the comments are scarier than the video'], ['今日のコメ欄治安悪すぎ', 'the comment section is wild today'], ['ポップコーン用意した', 'grabbed my popcorn'], ['動画よりコメ欄見ちゃう', "I'm watching the comments more than the video"]],
+    long: [['前から思ってたけど、気に入らないコメントを片っ端から消すのってどうなの？みんな普通に楽しんで書いてるだけなのに、消されたら書く気なくなるよ。正直がっかりしてる', "I've been thinking this for a while: is it really okay to delete every comment you don't like? People are just having fun writing here. Getting deleted makes us not want to comment. Honestly disappointed."],
+      ['昔からずっと見てるけど、最近のこのチャンネルは本当に変わった。動画は好きだったのに、コメントを消されるたびに見てる側が悪いみたいに感じる。もう少し視聴者のことも考えてほしい', "I've watched since the early days, but this channel has really changed. I liked the videos, but every deleted comment makes it feel like it's the viewers' fault. Please think about us a little."]],
+  },
+  /* コメント欄を荒らす（動画1本分） */
+  apply(d) {
+    const st = this.stage(); d.ar = st; if (st < 2 || !d.items || !d.items.length) return; const R = chatRng((d.seed ^ 0xa4a4e) >>> 0), U = Math.max(6, (d.users || []).length || 12), end = d.end ? d.end.R + (d.end.ec ? 3 : -0.2) : 1e9, T = t => Math.round(t * 100) / 100;
+    const norm = d.items.filter(x => x[1] !== -1 && typeof x[2] === 'string' && !/^¥/.test(x[2]) && !(d.phSet && d.phSet.has(x))), L = this.L, out = [], used = new Set();
+    const tmax = Math.min(end, Math.max(...d.items.map(x => x[0]), 10)), at = () => 3 + R() * Math.max(1, tmax - 5), one = (pool, id) => { const c = pool.filter(l => !used.has(l[0])); if (!c.length) return null; const l = c[Math.floor(R() * c.length)]; used.add(l[0]); return l; };
+    /* やさしい言い方を少し減らして、厳しい言い方を足す */
+    const kindRm = st === 3 ? 0.3 : 0.15; const rm = new Set(norm.filter(x => this.tone(x.length >= 5 ? x[3] : x[2]).k && R() < kindRm));
+    const nh = Math.max(1, Math.round(norm.length * (st === 3 ? 0.12 : 0.06))); for (let i = 0; i < nh; i++) { const l = one(L.harsh); if (l) out.push([T(at()), Math.floor(R() * U), 'x.ar.h' + i, l[0], l[1]]); }
+    const nc = st === 3 ? 3 : 2 + (R() < 0.5 ? 1 : 0); for (let i = 0; i < nc; i++) { const l = one(L.comp); if (l) out.push([T(at()), Math.floor(R() * U), 'x.ar.c' + i, l[0], l[1]]); }
+    if (st === 3) { for (let i = 0; i < 2 + (R() < 0.5 ? 1 : 0); i++) { const l = one(L.angry); if (l) out.push([T(at()), Math.floor(R() * U), 'x.ar.a' + i, l[0], l[1]]); }
+      { const l = one(L.meta); if (l) out.push([T(at()), Math.floor(R() * U), 'x.ar.m0', l[0], l[1]]); } if (R() < 0.6) { const l = one(L.long); if (l) out.push([T(at()), Math.floor(R() * U), 'x.ar.l0', l[0], l[1]]); }
+      const fs = L.fight.slice().sort(() => R() - 0.5).slice(0, 1 + (R() < 0.5 ? 1 : 0)); fs.forEach((F, j) => { let t = at(); F.forEach((l, k) => { if (t <= end) out.push([T(t), Math.floor(R() * U), 'x.ar.f' + j + k, l[0], l[1]]); t += 1.6 + R() * 2.4; }); }); }
+    d.items = d.items.filter(x => !rm.has(x)).concat(out.filter(x => x[0] <= end)).sort((a, b) => a[0] - b[0]);
+    if (TEST || DEV) console.log('ARARE stage', st, 'add', out.length, 'rm', rm.size);
+  },
+};
+{ const B0 = CHAT.build.bind(CHAT); CHAT.build = function (P) { try { ARARE.onVideo(); } catch (e) { } const d = B0(P); try { d.ph = !!world.phanRun; if (!d.ph) { const ph = new Set((d.phIdx || []).map(i => d.items[i])); d.phSet = ph; ARARE.apply(d); delete d.phSet; d.phIdx = d.items.map((x, i) => ph.has(x) ? i : -1).filter(i => i >= 0); } } catch (e) { console.warn('荒れ', e); } return d; }; }   /* ナカヨシの周は荒らさない・数えない */
+{ const B0 = ChatView.prototype.ban; ChatView.prototype.ban = function (i, el) { try { if (!(this.data.ban || []).includes(i)) ARARE.onBan(this.data, i); } catch (e) { } return B0.call(this, i, el); }; }
+{ const R0 = TIPS.rate.bind(TIPS); TIPS.rate = function () { const s = ARARE.stage(); return R0() * (s === 3 ? 0.25 : s === 2 ? 0.6 : 1); }; }
+{ const R0 = TIPS.reset.bind(TIPS); TIPS.reset = function () { const r = R0(); try { const s = ARARE.stage(); if (s >= 2 && this.pend) this.pend = this.pend.filter(() => Math.random() < (s === 3 ? 0.2 : 0.6)); } catch (e) { } return r; }; }
+{ const K0 = RESET.keys.bind(RESET); RESET.keys = function () { return K0().concat([ARARE.KEY]); }; }
+if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
