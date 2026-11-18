@@ -2918,6 +2918,20 @@ function setOpacity(H, a) {
   H.opacity = a;
   H.root.visible = a > 0.01 && (!H.glb || H.ready);
   for (const m of H.mats) { const tr = a < 0.995; if (m.transparent !== tr) { m.transparent = tr; m.needsUpdate = true; } m.opacity = a; m.depthWrite = a > 0.6; }
+  depthPre(H, a < 0.995 && a > 0.01);
+}
+/* 2026-11-18 80番：薄くなっている間は、先に形の奥行きだけを描いてから、色を半透明で描く。
+   いちばん手前の面（髪・服）だけが薄くなり、内側の頭の肌などが透けて見えない（髪が先に消えて「ハゲ」に見えない）。
+   奥行きの板は、ふつうの物を全部描いた後（renderOrder 900）に描くので、後ろの壁などは消えない */
+function depthPre(H, on) {
+  if (!H.meshes || !H.meshes.length || (H.glb && !H.ready)) return;
+  if (!H.pre) { if (!on) return; H.pre = [];
+    for (const o of H.meshes) { if (!o.parent || o.userData.pre) continue; const src = [].concat(o.material)[0], dm = new THREE.MeshBasicMaterial({ colorWrite: false, side: src && src.side || THREE.FrontSide });
+      if (src && src.map) { dm.map = src.map; dm.alphaTest = 0.5; }
+      let d; if (o.isSkinnedMesh) { d = new THREE.SkinnedMesh(o.geometry, dm); d.bind(o.skeleton, o.bindMatrix); d.bindMode = o.bindMode; } else d = new THREE.Mesh(o.geometry, dm);
+      if (o.morphTargetInfluences) { d.morphTargetInfluences = o.morphTargetInfluences; d.morphTargetDictionary = o.morphTargetDictionary; }
+      d.position.copy(o.position); d.quaternion.copy(o.quaternion); d.scale.copy(o.scale); d.renderOrder = 900; d.frustumCulled = false; d.castShadow = false; d.receiveShadow = false; d.layers.mask = o.layers.mask; d.userData.pre = 1; d.visible = false; o.parent.add(d); H.pre.push([o, d]); } }
+  for (const [o, d] of H.pre) { d.visible = on && o.visible; d.layers.mask = o.layers.mask; }
 }
 function headWorld(H, out = V()) { return H.skull.getWorldPosition(out); }
 function aimHead(H, target) {
@@ -15242,7 +15256,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.47';
+const VERSION = '0.17.48';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
