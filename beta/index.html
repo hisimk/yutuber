@@ -10853,7 +10853,7 @@ const MANN = {
     const c = at ? at.clone() : V(this.pos.x, fy + 1.0, this.pos.z); this.wreck = { x: c.x, z: c.z, lv: player.lv };   // 2026-11-15 バラバラになった場所（屈伸煽り用）
     if (this.mixer) this.mixer.stopAllAction(); this.cur = ''; this.rattleStop(); this.st = 'gone';   // 姿勢はそのまま（止めるだけ）
     this.dropParts(null, power, fy, push); this.col.on = false;
-    if (this.finalHunt) { this.finalHunt = false; PERM.later('shun', 1800); }   // 2026-11-14 かくれんぼFINALでバラバラに：シュン足を入手
+    if (this.finalHunt) { this.finalHunt = false; }   // 2026-11-19 123番：かくれんぼFINALでバラバラになっても、シュン足はもらえない
     this.clatter(c, 1.6); setTimeout(() => SND.knock(c, 0.8), 140); setTimeout(() => SND.knock(c, 0.5), 320);
     world.vhs = Math.max(world.vhs || 0, 0.7); noiseHit(0.5);
   },
@@ -10980,7 +10980,7 @@ const MANN = {
       this.jumpWin();
       this.apply(); if (!this.inAir) this.stepTick(dt, 6.5);
       if (rec.active && accum('mannRun', seen(this.head(), { maxD: 18, ignore: glassPanes }), dt, 0.25)) award('mannRun', '逃げた内田くんを追え', 50);
-      if (Math.hypot(player.x - this.pos.x, player.z - this.pos.z) < 0.65 && player.lv === this.lv() && Math.abs(player.y - this.pos.y) < 1 && !this.inAir) { const c = V(this.pos.x, 1.0, this.pos.z); this.burst(); if (seen(c, { maxD: 6 })) award('mannBurst', '致命傷で済んだ内田くん', 70); return; }
+      if (Math.hypot(player.x - this.pos.x, player.z - this.pos.z) < 0.65 && player.lv === this.lv() && Math.abs(player.y - this.pos.y) < 1 && !this.inAir) { const c = V(this.pos.x, 1.0, this.pos.z); this.burst(); if (seen(c, { maxD: 6 })) award('mannBurst', '致命傷で済んだ内田くん', 70); if (world.wingOpen && !world.phanRun && !PERM.has('shun') && (chance(PERM.DROP.shun) || ((TEST || BETA) && /[?&]shundrop\b/.test(location.search)))) PERM.later('shun', 1800); return; }   /* 2026-11-19 123番：バリケードを壊したあとの周で、走ってきた内田くんにぶつかって大破させたら30%でシュン足 */
       if (!this.path.length) {   // 放送室の扉の裏で待つ（かくれんぼ1）
         this.st = 'bcWait'; this.t = 0; this.pos.y = 0; this.tilt = 0; this.heading = -Math.PI / 2; this.apply(); this.play(null); this.rattleStop();
         if (ITEM.bcOpen) this.bcCrouch();   /* 2026-11-17 放送室の扉がもう開いていたら、部屋の奥でうずくまって待つ */
@@ -11533,8 +11533,8 @@ const OFUDA = {
   },
   end() {
     this.on = false; this.mesh.visible = false;
-    if (this.kind === 'woman') { sgSetOpacity(0); WD.release(true); ITEM.banishWoman(); if (!world.phanRun) { world.sealedWoman = true; if (!PERM.has('cape') && (chance(0.1) || /[?&]capedrop\b/.test(location.search))) PERM.later('cape', 900); } }   /* 2026-11-16 逆さ女を封じたら10%で赤いマント（ナカヨシの周は対象外。確認用 ?capedrop） */   /* 2026-11-15 封じた敵は、その周はもう出ない */
-    else { SP.wrap.visible = false; SP.st = 'none'; SP.noChaseUntil = world.t + 40; SP.lastDrop = world.t + 30; SP.spawnAt = world.t + rnd(40, 70); if (!world.phanRun) world.sealedSpider = true; if (chance(0.1) || /[?&]spdrop\b/.test(location.search)) PERM.later('spider', 900); }   // 2026-11-14 倒したら10%でスパイダーセンス
+    if (this.kind === 'woman') { sgSetOpacity(0); WD.release(true); ITEM.banishWoman(); if (!world.phanRun) { world.sealedWoman = true; if (!PERM.has('cape') && (chance(PERM.DROP.cape) || /[?&]capedrop\b/.test(location.search))) PERM.later('cape', 900); } }   /* 2026-11-16 逆さ女を封じたら10%で赤いマント（ナカヨシの周は対象外。確認用 ?capedrop） */   /* 2026-11-15 封じた敵は、その周はもう出ない */
+    else { SP.wrap.visible = false; SP.st = 'none'; SP.noChaseUntil = world.t + 40; SP.lastDrop = world.t + 30; SP.spawnAt = world.t + rnd(40, 70); if (!world.phanRun) world.sealedSpider = true; if (!PERM.has('spider') && (chance(PERM.DROP.spider) || /[?&]spdrop\b/.test(location.search))) PERM.later('spider', 900); }   // 2026-11-14 倒したら10%でスパイダーセンス
   },
   // 運命：ベートーベンの額縁が落ちる
   fall() {
@@ -15346,11 +15346,13 @@ const TRACE = {
 /* =========================================================
    2026-11-14 永続アイテム（一度入手したら、ずっと持った状態で始まる）
    ・持ち物の画面でタップすると効果のオン・オフ。オンの物はリザルトの「再撮影」の下にアイコンを出す
-   ・シュン足：歩く速さ1.08倍（かくれんぼFINALでバラバラになった時に入手）
-   ・スパイダーセンス：怪異が始まる2秒前、30%の確率で録画ボタンのまわりが赤く光る（クモ女を倒した時に10%で入手）
-   ・赤いマント：捕まっても1周に1度だけ、スタート地点に戻ってやり直せる（入手方法は未定。確認用 ?perm=all）
+   ・シュン足：歩く速さ1.2倍（バリケードを壊したあとの周で、走り出した内田くんにぶつかって大破させた時に PERM.DROP.shun で入手。確認用 ?shundrop）
+   ・スパイダーセンス：怪異が始まる2秒前、30%の確率で録画ボタンのまわりが赤く光る（クモ女をお札で封じた時に PERM.DROP.spider で入手。確認用 ?spdrop）
+   ・赤いマント：捕まっても1周に1度だけ、スタート地点に戻ってやり直せる（逆さ女をお札で封じた時に PERM.DROP.cape で入手。ナカヨシの周は対象外。確認用 ?capedrop）
+   ・2026-11-19 123番：出る確率は PERM.DROP にまとめた。もう持っている時は出ない
    ========================================================= */
 const PERM = {
+  DROP: { shun: 0.30, spider: 0.33, cape: 0.33 },   /* 2026-11-19 123番：だいじなものが出る確率 */
   KEY: 'yt_perm_v1', ORDER: ['shun', 'spider', 'cape', 'light', 'gunmic', 'batt', 'wipe', 'fixcam'], d: null,
   RANK: { 1: 'light', 2: 'gunmic', 3: 'batt', 4: 'wipe', 5: 'fixcam' },   // 2026-11-14 ランクで手に入る配信機材（駆け出し・中堅・人気）
   DEFS: {
@@ -15436,7 +15438,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.88';
+const VERSION = '0.17.89';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
