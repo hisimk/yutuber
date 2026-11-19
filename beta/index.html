@@ -15506,7 +15506,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.19';
+const VERSION = '0.18.20';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -26411,9 +26411,24 @@ const AWT = {
   trig(k, pk) {
     const S = { lastSecond: () => { if (!rec.active) startRec(); rec.time = Math.max(rec.time, CONFIG.recMaxSec - 10); toast('録画の残りを10秒にしました', 1600); }, battery1: () => { this.lowBat = true; world.battery = 2; toast('電池を2%にしました', 1600); }, chaseBlood: () => { this.lowBat = true; world.battery = 15; toast('電池を15%にしました', 1600); }, wallEyes: () => { const M = MINOR; M.eyOn = 0; M.eyDone = false; M.eyT = 99; M.eyForce = true; for (const e of M.WEYE.list) e.m.visible = false; toast('壁に目を開かせます', 1400); } };
     if (S[k]) { S[k](); return; }
-    const id = this.EVK[k]; const e = id && EV[id]; if (!e) return;
-    if (!this.tp(pk)) return;
-    setTimeout(() => { try { if (DIR.active) DIR.end(DIR.active); e.done = false; e.planned = true; if (e.ready && !e.ready()) { toast('今は起こせません（少し動いてからもう一度）', 1800); return; } DIR.start(e); toast('起こしました', 1000); } catch (err) { console.warn('AWT trig', err); toast('起こせませんでした', 1400); } }, 350);
+    const id = this.EVK[k]; const e = id && EV[id]; if (!e) return; if (world.state !== 'play') { toast('ゲーム中に押してください', 1400); return; }
+    /* 2026-11-19 現象ごとに「起こせる場所・向き」へ移動してから始める。自分の操作が要る物は、やることを出す */
+    const NEED = { toilet: '個室に入って鍵をかけてから、もう一度押してください', innerLock: '個室に入って鍵をかけてから、もう一度押してください', mirror: '洗面台の蛇口を閉めて、鏡が見える向きのまま、すぐ押してください', knock: '閉まった個室を1回ノックしてから押してください', steps: '教室の戸に向かって歩きながら押してください' };
+    const Y = Math.PI, C = { puddle: () => [[PUD.x + 1.6, PUD.z, 0, Math.PI / 2], [PUD.x - 1.6, PUD.z, 0, -Math.PI / 2], [PUD.x, PUD.z + 1.6, 0, 0]], basinBlood: [[5.6, -2.7, 0, Y / 2]], peek: [[0, -26, 0, 0], [0, -28, 0, 0]], board: [[0, -9, 0, 0], [0, -12, 0, 0]],
+      blackout: [[21.6, -18, 0, -Y / 2], [21.6, -24, 0, -Y / 2]], mic: [[21.6, -18, 0, -Y / 2]], runner: [[21.6, -18, 0, -Y / 2], [21.6, -12, 0, -Y / 2]], fireDoor: [[13, -31.5, 0, -Y / 2], [15, -31.5, 0, -Y / 2]], footprints: [[6, -2.5, 0, Y / 2], [7.5, -1, 0, Y / 2]], toiletBleed: [[6, -2, 0, Y / 2]],
+      cornerFace: [[-1.2, -27, 0, 0], [-1.2, -28.5, 0, 0], [-1.2, -29.4, 0, 0], [0, -28, 0, 0], [6, -32.6, 0, Y / 2], [4.5, -32.6, 0, Y / 2], [6, -30.4, 0, Y / 2]], nurse: [[0.5, -13.5, 0, 0], [0.5, -16, 0, Y]], paCall: [], zoomNear: [],
+      lookBack: () => { const sp = e.spot && e.spot.p; if (!sp) return []; const lv = sp.y > 1.6 ? 1 : 0, out = []; for (const [dx, dz] of [[0, 9], [0, -9], [9, 0], [-9, 0], [0, 7], [0, -7], [7, 0], [-7, 0], [0, 12], [0, -12]]) out.push([sp.x + dx, sp.z + dz, lv, Math.atan2(dx, dz)]); return out; } };
+    if (NEED[id] && !(e.ready && e.ready())) { toast(NEED[id], 3200); return; }
+    if (id === 'basinBlood' && typeof water !== 'undefined' && water.on) { toast('出しっぱなしの蛇口を止めてから、もう一度押してください', 3200); return; }
+    world.distSinceBig = Math.max(world.distSinceBig || 0, 99); if (id === 'nurse') world.nurseCall = true;
+    try { if (typeof STAY !== 'undefined' && STAY.ok) { const o = STAY.ok; STAY.ok = () => true; setTimeout(() => { STAY.ok = o; }, 9000); } } catch (er) { }
+    const sav = [player.x, player.z, player.lv, player.y, player.camY, look.yaw, look.pitch], put = c => { player.x = c[0]; player.z = c[1]; player.lv = c[2]; player.y = player.camY = c[2] ? LH : 0; look.yaw = c[3]; look.pitch = 0; };
+    let cands = C[id]; cands = typeof cands === 'function' ? cands() : cands; if (!cands || !cands.length) { const p = this.PL[pk]; cands = p ? [[p[1], p[2], p[3], p[4]]] : []; }
+    if (DIR.active) DIR.end(DIR.active); e.done = false; e.planned = true;
+    let i = 0; const tryNext = () => { if (i >= cands.length) { player.x = sav[0]; player.z = sav[1]; player.lv = sav[2]; player.y = sav[3]; player.camY = sav[4]; look.yaw = sav[5]; look.pitch = sav[6]; toast('起こせませんでした（この現象は今の周では起こせないかもしれません）', 2600); return; }
+      put(cands[i++]); setTimeout(() => { let ok = false; try { ok = !e.ready || e.ready(); } catch (er) { } if (!ok) { tryNext(); return; } try { DIR.start(e); toast('起こしました', 1000); } catch (er) { console.warn('AWT trig', er); toast('起こせませんでした', 1400); } }, 450); };
+    if (!cands.length) { try { if (!e.ready || e.ready()) { DIR.start(e); toast('起こしました', 1000); } else toast('起こせませんでした', 1600); } catch (er) { } return; }
+    tryNext();
   },
   css() {
     const st = document.createElement('style'); st.textContent = `
