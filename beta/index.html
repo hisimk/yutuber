@@ -15507,7 +15507,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.16';
+const VERSION = '0.18.17';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -26420,7 +26420,7 @@ const AWT = {
     const st = document.createElement('style'); st.textContent = `
 #awtTab{position:fixed;left:6px;top:calc(var(--sat,0px) + 132px);z-index:9000;padding:7px 10px;white-space:nowrap;border-radius:10px;border:1px solid #ffcc00;background:rgba(0,0,0,.72);color:#ffcc00;font:700 13px system-ui;max-width:46vw;text-align:left}
 #awtPan{position:fixed;left:6px;right:6px;top:calc(var(--sat,0px) + 174px);bottom:calc(var(--sab,0px) + 150px);z-index:9000;display:none;flex-direction:column;gap:6px;overflow:auto;padding:8px;border-radius:12px;background:rgba(10,10,12,.93);border:1px solid #444;color:#eee;font:13px/1.45 system-ui;-webkit-overflow-scrolling:touch}
-#awtPan.on{display:flex} @media (min-width:900px){#awtPan{left:auto;width:430px;bottom:20px}}
+#awtPan.on{display:flex} #awtPan.awtPC{left:auto;right:14px;top:14px;bottom:14px;width:var(--awtW,420px);font-size:14px} #awtPan.awtPC.awtNarrow{right:6px;width:300px} #awtTab.awtPC{left:auto;right:14px;top:auto;bottom:14px;display:none}
 .awtIt{border:1px solid #333;border-radius:10px;padding:7px 8px;background:#151518} .awtIt.got{border-color:#3d8a5a;background:#122017}
 .awtH{display:flex;gap:6px;align-items:baseline;flex-wrap:wrap} .awtH b{font-size:14px} .awtRk{font:700 11px system-ui;padding:1px 6px;border-radius:6px;background:#333;color:#ffcc00} .awtSt{margin-left:auto;font-weight:700;color:#888} .got .awtSt{color:#5fd38a}
 .awtHow{color:#ccc;margin:3px 0} .awtPl{color:#8ab4ff;font-size:12px}
@@ -26438,10 +26438,12 @@ const AWT = {
 #awtMenu>*,#awtTxt>*{max-width:900px;margin-left:auto;margin-right:auto} #awtTxt .tw{overflow-x:auto;-webkit-overflow-scrolling:touch} #awtTxt table{min-width:760px}`;
     document.head.appendChild(st);
   },
+  host() { return FRAME.on ? document.documentElement : document.body; },   /* PCは枠（縮んで表示される）の外に置く */
   stop(el) { for (const ev of ['pointerdown', 'pointerup', 'pointermove', 'touchstart', 'touchend', 'touchmove', 'click', 'mousedown', 'mouseup', 'wheel', 'keydown']) el.addEventListener(ev, e => e.stopPropagation()); },
   panel() {
-    const tab = document.createElement('button'); tab.id = 'awtTab'; document.body.appendChild(tab); this.tab = tab;
-    const pan = document.createElement('div'); pan.id = 'awtPan'; document.body.appendChild(pan); this.pan = pan;
+    const host = this.host(); const tab = document.createElement('button'); tab.id = 'awtTab'; host.appendChild(tab); this.tab = tab;
+    const pan = document.createElement('div'); pan.id = 'awtPan'; host.appendChild(pan); this.pan = pan;
+    if (FRAME.on) { pan.classList.add('awtPC', 'on'); tab.classList.add('awtPC'); const fit = () => { const r = FRAME.x + FRAME.W * FRAME.k, w = Math.min(460, innerWidth - r - 28); document.documentElement.style.setProperty('--awtW', Math.max(300, w) + 'px'); pan.classList.toggle('awtNarrow', w < 300); }; fit(); addEventListener('resize', fit); }   /* 2026-11-19 PCは、ゲームの枠の外の右側に一覧を出す */
     this.stop(tab); this.stop(pan); tab.addEventListener('click', () => { pan.classList.toggle('on'); this.draw(); });
     pan.addEventListener('click', e => this.onClick(e)); pan.addEventListener('input', e => this.onInput(e));
     if (!/[?&]test\b/.test(location.search) || /[?&]awopen\b/.test(location.search)) pan.classList.add('on');
@@ -26458,7 +26460,7 @@ const AWT = {
   },
   txtHtml(k) { const t = this.texts(k), E = s => this.esc(s); return `<dl><dt>名前</dt><dd>${E(t.nm)} <span class="e">${E(t.nmE)}</span>（${this.rank(k)}・${this.pts(k)}いいね）</dd><dt>ヒント</dt><dd>${E(t.hint)}<br><span class="e">${E(t.hintE)}</span></dd><dt>説明文</dt><dd>${E(t.desc)}<br><span class="e">${E(t.descE)}</span></dd><dt>伏せ字（かすれたメモ）</dt><dd>${E(t.tkT)}<br>${E(t.tkD)}</dd></dl>`; },
   draw() {
-    const r = this.round(); if (!r || !this.tab) return; const s = this.stat(this.n);
+    const r = this.round(); if (!r || !this.tab) return; const s = this.stat(this.n); if (FRAME.on) this.tab.style.display = this.pan.classList.contains('on') ? 'none' : 'block';
     this.tab.textContent = `テスト 第${this.n}回　${s.g}/${s.all} ${this.pan.classList.contains('on') ? '▲' : '▼'}`;
     if (!this.pan.classList.contains('on')) return;
     const open = new Set([...this.pan.querySelectorAll('.awtTx.on')].map(x => x.dataset.k)); const sc = this.pan.scrollTop;
@@ -26471,8 +26473,8 @@ const AWT = {
   },
   onClick(ev) {
     const b = ev.target.closest('button'); if (!b) return; const a = b.dataset.a, k = b.dataset.k; const r = this.round();
-    if (a === 'go') { const e = r.list.find(x => x[0] === k); if (this.tp(e[1])) { this.pan.classList.remove('on'); this.draw(); } return; }
-    if (a === 'trig') { const e = r.list.find(x => x[0] === k); this.trig(k, e[1]); this.pan.classList.remove('on'); this.draw(); return; }
+    if (a === 'go') { const e = r.list.find(x => x[0] === k); if (this.tp(e[1])) { if (!FRAME.on) this.pan.classList.remove('on'); this.draw(); } return; }
+    if (a === 'trig') { const e = r.list.find(x => x[0] === k); this.trig(k, e[1]); if (!FRAME.on) this.pan.classList.remove('on'); this.draw(); return; }
     if (a === 'ok' || a === 'ng') { const A = this.A(k); A.ok = A.ok === a ? '' : a; this.save(); this.draw(); return; }
     if (a === 'tok' || a === 'tng') { const A = this.A(k), v = a === 'tok' ? 'ok' : 'ng'; A.tok = A.tok === v ? '' : v; this.save(); this.draw(); return; }
     if (a === 'tw') { const A = this.A(k), w = b.dataset.w; A.tw = A.tw || []; const i = A.tw.indexOf(w); if (i >= 0) A.tw.splice(i, 1); else A.tw.push(w); if (A.tw.length && A.tok !== 'ng') A.tok = 'ng'; this.save(); this.draw(); return; }
@@ -26481,12 +26483,12 @@ const AWT = {
     if (a === 'menu') { this.menu(); return; }
     if (a === 'next') { location.href = this.url(this.n + 1); return; }
     if (a === 'close') { this.pan.classList.remove('on'); this.draw(); return; }
-    if (a === 'start') { const g = $('#goBtn'); if (g) g.click(); this.pan.classList.remove('on'); this.draw(); return; }
+    if (a === 'start') { const g = $('#goBtn'); if (g) g.click(); if (!FRAME.on) this.pan.classList.remove('on'); this.draw(); return; }
   },
   onInput(ev) { const t = ev.target; if (!t.dataset || !t.dataset.k) return; const A = this.A(t.dataset.k); if (t.dataset.a === 'm') A.m = t.value; if (t.dataset.a === 'tm') A.tm = t.value; clearTimeout(this.svT); this.svT = setTimeout(() => this.save(), 300); },
   /* ── 回の一覧 */
   menu() {
-    let m = $('#awtMenu'); if (!m) { m = document.createElement('div'); m.id = 'awtMenu'; document.body.appendChild(m); this.stop(m); m.addEventListener('click', e => this.menuClick(e)); }
+    let m = $('#awtMenu'); if (!m) { m = document.createElement('div'); m.id = 'awtMenu'; this.host().appendChild(m); this.stop(m); m.addEventListener('click', e => this.menuClick(e)); }
     const d = this.load(); let all = 0, got = 0;
     const rows = this.R.map((r, i) => { const s = this.stat(i + 1); all += s.all; got += s.g; const items = r.items.map(id => this.itemName(id)).join('・') || 'なし';
       return `<div class="awtRd${d.last === i + 1 ? ' cur' : ''}"><div><b>第${i + 1}回　${this.esc(r.t)}</b>　<span class="p">${s.g}/${s.all}</span>　OK ${s.ok}・NG ${s.ng}</div><div class="m">怪異：${this.esc(r.mon)}　持ち物：${this.esc(items)}</div><div class="m">${r.list.map(e => this.esc(this.name(e[0]))).join('／')}</div><div class="awtB"><button data-a="go" data-n="${i + 1}">はじめる</button></div></div>`; }).join('');
@@ -26516,7 +26518,7 @@ const AWT = {
   /* ── 全部の文章の一覧（遊ばなくても見られる） */
   txtPage(order) {
     this.tOrd = order || this.tOrd || 'round';
-    let p = $('#awtTxt'); if (!p) { p = document.createElement('div'); p.id = 'awtTxt'; document.body.appendChild(p); this.stop(p); p.addEventListener('click', e => this.txtClick(e)); p.addEventListener('input', e => this.onInput(e)); }
+    let p = $('#awtTxt'); if (!p) { p = document.createElement('div'); p.id = 'awtTxt'; this.host().appendChild(p); this.stop(p); p.addEventListener('click', e => this.txtClick(e)); p.addEventListener('input', e => this.onInput(e)); }
     const keys = this.tOrd === 'round' ? this.R.flatMap(r => r.list.map(e => e[0])) : COL.LIST.map(e => e[0]).filter(k => this.roundOf(k));
     const E = s => this.esc(s);
     const rows = keys.map(k => { const t = this.texts(k), a = this.load().a[k] || {}, w = a.tw || [], W = (id, l) => `<button data-a="tw" data-k="${k}" data-w="${id}" class="${w.includes(id) ? 'sel' : ''}">${l}</button>`;
