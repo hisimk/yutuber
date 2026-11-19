@@ -8453,7 +8453,7 @@ SP.update = function (dt) {
   } else if (this.st === 'drop') {
     const k = clamp(this.t / 0.42, 0, 1), e = k * k * (3 - 2 * k);
     const [P1, Q1] = this.latchPose(); this.wrap.position.lerpVectors(this.P0, P1, e); this.wrap.quaternion.slerpQuaternions(this.Q0, Q1, e); this.wrap.updateMatrixWorld(true);
-    if (k >= 1) { this.st = 'latch'; this.t = 0; spPlay('FaceLatch', 0.05); }
+    if (k >= 1) { this.st = 'latch'; this.t = 0; spPlay('FaceLatch', 0.05); try { BZCAP.go('spider'); } catch (e) { } }   /* 2026-11-19 99番 */
   } else if (this.st === 'latch') {
     const [P1, Q1] = this.latchPose(); this.wrap.position.copy(P1); this.wrap.quaternion.copy(Q1); this.wrap.updateMatrixWorld(true);
     this.legsToFace(this.t);
@@ -15399,7 +15399,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.66';
+const VERSION = '0.17.67';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -25723,7 +25723,23 @@ Object.assign(EN, { 'ボールで窓ガラスを割った': 'Smashed a window wi
 /* 2026-11-19 95番：「部屋の隅に立つ子（定点カメラにだけ）」→「部屋の隅に立つ子」。コレクションの回数・歴代の神回の撮れ高名を引きつぐ */
 Object.assign(COL.RENAME, { '部屋の隅に立つ子（定点カメラにだけ）': '部屋の隅に立つ子' });
 { const L0 = ACH.load.bind(ACH), RN = { '部屋の隅に立つ子（定点カメラにだけ）': '部屋の隅に立つ子' }; ACH.load = function () { const d = L0(); if (d && !d._fg95) { for (const b of d.best || []) for (const e of b.ev || []) if (RN[e[0]]) e[0] = RN[e[0]]; d._fg95 = 1; this.save(); } return d; }; }
-if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
+/* =========================================================
+   2026-11-19 99番：防犯ブザーを手に持ったまま襲われたら、4秒だけ手元で鳴る（演出だけ。捕まるのは今と同じ）
+   対象：逆さ女・天井の逆さ女（CAP.start）、クモ女（しがみついた時）、内田くん（MANN.capture）、オフタリサマ（URAH.capture）
+   ========================================================= */
+const BZCAP = { DUR: 4, on: null,
+  go(who) { if (HAND.item !== 'buzzer' || this.on) return; this.on = { t: 0, nx: 0, k: false }; if (TEST || DEV) console.log('BZCAP', who);
+    try { if (rec.active) XCHAT.log('capBuzz'); } catch (e) { }
+    const tick = () => { const B = this.on; if (!B) return; const now = performance.now(); B.t0 = B.t0 || now; const t = (now - B.t0) / 1000; if (t > this.DUR) { this.on = null; return; }
+      if (t >= B.nx) { B.nx = t + 0.13; B.k = !B.k; const fade = t > this.DUR - 0.6 ? (this.DUR - t) / 0.6 : 1; if (A.ctx) try { const p = camera.localToWorld(V(0.12, -0.2, -0.35)); tn(panAt(p, 2.2, 0.9, undefined, 1), { t: A.ctx.currentTime, type: 'square', f0: B.k ? 3300 : 2700, f1: B.k ? 3300 : 2700, dur: 0.11, peak: 0.2 * fade }); } catch (e) { } }
+      requestAnimationFrame(tick); };
+    requestAnimationFrame(tick); },
+};
+{ const C0 = CAP.start.bind(CAP); CAP.start = function () { try { if (!this.on) BZCAP.go(CAP.ceil ? 'ceil' : 'cap'); } catch (e) { } return C0(...arguments); }; }
+{ const M0 = MANN.capture.bind(MANN); MANN.capture = function () { try { BZCAP.go('mann'); } catch (e) { } return M0(...arguments); }; }
+{ const U0 = URAH.capture.bind(URAH); URAH.capture = function () { try { BZCAP.go('urah'); } catch (e) { } return U0(...arguments); }; }
+{ const J = [['ブザー鳴ってて草', 'the buzzer’s going off lol'], ['防犯ブザーは効かんのよ', 'safety buzzers don’t work on ghosts'], ['鳴らしても無駄で草', 'ringing it won’t help lmao'], ['誰か来てくれー', 'somebody help!']]; XCHAT.LIST.capBuzz = J.map((x, i) => 'cbz.' + i); J.forEach((x, i) => { CHAT_DICT.t['cbz.' + i] = x; }); }
+if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
