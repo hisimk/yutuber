@@ -15438,7 +15438,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.89';
+const VERSION = '0.17.90';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -25405,7 +25405,9 @@ const JIYU = {
   look(dt) {
     this.k = clamp(this.k + (this.on ? dt / 0.55 : -dt / 0.45), 0, 1); world.jyK = this.k; if (!this.on && this.k <= 0) { if (this.k0) { this.k0 = 0; postMat.uniforms.pix.value = 4.5; } return; } this.k0 = 1;
     const e = this.k * this.k * (3 - 2 * this.k); postMat.uniforms.pix.value = 4.5 - 2.3 * e; if (this.fill) this.fill.intensity = JIYU_FILL * e;
-    if (this.on) { look.yaw = this.ly0; look.pitch = this.lp0; player.yaw = this.y0; player.pitch = this.p0; } },
+    if (this.on) { look.yaw = this.ly0; look.pitch = this.lp0; player.yaw = this.y0; player.pitch = this.p0; }
+    /* 2026-11-19 のぞいている間はページにピントを合わせる（机の上だと、ピントが机を素通りして床に合い、ぼやけていた） */
+    if (this.k > 0.05) { focus.override = camera.position.distanceTo(this.pos()); this.fo = 1; } else if (this.fo) { this.fo = 0; focus.override = null; } },
   camRot() { const e = this.k * this.k * (3 - 2 * this.k), dc = this.dc || (this.dc = new THREE.PerspectiveCamera()); dc.position.copy(camera.position); dc.up.set(-Math.sin(this.by), 0, -Math.cos(this.by)); dc.lookAt(camera.position.x, camera.position.y - 1, camera.position.z); camera.quaternion.slerp(dc.quaternion, e); },
   cam(pos) { if (this.k <= 0 || !this.pg) return; const e = this.k * this.k * (3 - 2 * this.k), m = this.pg.R.m; m.updateMatrixWorld(); const c = m.getWorldPosition(V()), up = V(-Math.sin(this.by), 0, -Math.cos(this.by));
     const t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), va = vpW() / vpH(), ca = camera.aspect, tv = t * Math.min(1, ca / va), TP = 70, BP = 132, av = Math.max(0.4, (vpH() - TP - BP) / vpH()), d = Math.max((this.PW / 2) * 1.02 / (t * Math.min(ca, va)), this.PH / (2 * av * tv) * 1.01), H2 = d * tv, off = H2 * (1 - 2 * TP / vpH()) - this.PH / 2;   /* 2026-11-18 幅に合わせる。上は残り時間の帯の下から、下は録画ボタンの上まで */   /* 描画は object-fit:cover：見えている所に合わせる */
