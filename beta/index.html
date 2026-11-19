@@ -15495,7 +15495,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.13';
+const VERSION = '0.18.14';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -15641,7 +15641,7 @@ const RKLIST = {
       const right = i < ri ? cui('rkDone') : i === ri ? cui('rkNow') : i === ri + 1 ? `${cui('rkReq', r[2])}<br><b class="rkNd">${cui('rkNeed', r[2] - tot)}</b>` : cui('rkReq', r[2]);   /* 2026-11-19 先のランクも、名前・ごほうび・必要ないいねを見せる（先の楽しみ） */
       const name = yrankName(i);
       const gi = PERM.rankItem(i), cv = ECON.carry[Math.min(i, ECON.carry.length - 1)], cup = i > 0 && cv > ECON.carry[Math.min(i - 1, ECON.carry.length - 1)], mul = `<span class="rkBd"><small class="rkM">${cui('rkMul', r[3].toFixed(2))}</small><small class="rkC${cup ? ' up' : ''}">${cui('rkCarry', cv)}${cup ? '<i>+1</i>' : ''}</small></span>`;   /* 133番：コメント量と持ち込み枠を札のように並べる（持ち込みが増えるランクは +1） */
-      const gear = i === 0 ? '' : gi ? `<span class="rkG${PERM.has(gi) ? ' got' : ''}" data-gear="${gi}" data-r="${i}"><img src="${PERM_IMG[gi]}" alt="">${PERM.has(gi) ? cui('rkGot') : cui('rkGet')}${TR(PERM.DEFS[gi].name)}</span>` : `<span class="rkG"><i>？</i>${cui('rkGet')}${cui('rkHidden')}</span>`;   // 2026-11-14 入手できる配信機材の予告
+      const gear = i === 0 ? '' : gi ? `<span class="rkG${PERM.has(gi) ? ' got' : ''}" data-gear="${gi}" data-r="${i}"><img src="${PERM_IMG[gi]}" alt=""><span>${PERM.has(gi) ? cui('rkGot') : cui('rkGet')}<span style="white-space:nowrap">${TR(PERM.DEFS[gi].name)}</span></span></span>` : `<span class="rkG"><i>？</i>${cui('rkGet')}${cui('rkHidden')}</span>`;   // 2026-11-14 入手できる配信機材の予告
       return `<li class="${cls}"><span class="rkI">${i + 1}</span><span class="rkN">${name}${mul}${gear}</span><span class="rkR" style="text-align:right">${right}</span></li>`;
     }).reverse().join('');
     el.innerHTML = `<div class="rkBox"><h4>${cui('rkList')}</h4><div class="rkMerit"><b>${cui('rkMerit')}</b>${cui('rkMeritT')}</div><div class="rkNote">${cui('rkNote')}</div><ol>${rows}</ol><button class="rkClose" type="button">${TR('閉じる')}</button></div>`;
