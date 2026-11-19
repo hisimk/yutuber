@@ -1135,6 +1135,27 @@ const SEED = (location.search.match(/[?&]seed=(\d+)/) || [])[1];
 if (SEED !== undefined) { let a = (+SEED) >>> 0; Math.random = () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 // 2階の怪異を指定して起こす：?ev2=stairFace,teddy,fall など（デバッグ用）
 const EV2 = ((location.search.match(/[?&]ev2=([\w,]+)/) || [])[1] || '').split(',').filter(Boolean);
+/* =========================================================
+   2026-11-19 107番：部屋の仕掛けも「毎周かならず」をやめ、周の始めは起きにくく、時間がたつほど起きやすく
+   ・p：周の始めにその仕掛けを用意する確率／nb：解禁までの時間（周が始まってからの秒。くじ）／quiet：仕掛けが起きたあとの静かな時間
+   ・ramp：時間ごとの起きやすさ（ふつうの現象と、部屋の仕掛けの両方）。early：最初の t 秒に起きるふつうの現象は n 個まで
+   ・確認用の ?ev2= ・f2force（?books など）・NEWEV_F・WF は、今までどおり必ず起きる
+   ========================================================= */
+const ROOMX = {
+  CFG: { nb: [60, 210], nbPow: 0.7, p: { books: 0.5, lchair: 0.5, page: 1, skel: 0.5, jar: 0.6, bust: 0.5, doll: 0.5, blink: 0.6, libfall: 1 }, quiet: [8, 18], libCool: [12, 20], blinkGap: [18, 35],
+    ramp: [[0, 0.12], [60, 0.25], [180, 1], [300, 1.25]], early: { t: 60, n: 1 } },
+  run: null, s: {},
+  forced(k) { try { return (typeof f2force === 'function' && f2force(k)) || WF(k) || (TEST && /[?&]roomxall\b/.test(location.search)); } catch (e) { return false; } },
+  roll() { if (this.run === world.runId) return; this.run = world.runId; const C = this.CFG; this.s = {}; try { DIR.earlyN = 0; } catch (e) { }
+    for (const k in C.p) { const f = this.forced(k); this.s[k] = { on: f || Math.random() < C.p[k], nb: f ? 0 : rnd(C.nb[0], C.nb[1]) }; }
+    if (TEST || DEV) console.log('ROOMX', Object.entries(this.s).map(([k, v]) => k + (v.on ? '@' + Math.round(v.nb) : '×')).join(' ')); },
+  /* その仕掛けが今起きてよいか。noQuiet：続いている物（目で追う瓶など）は静かな時間を見ない */
+  ok(k, noQuiet) { this.roll(); const S = this.s[k]; if (!S) return true; if (this.forced(k)) return true; return S.on && world.t >= S.nb && (noQuiet || world.t >= (world.quietUntil || 0)); },
+  fired(k, light) { const q = this.CFG.quiet; world.quietUntil = Math.max(world.quietUntil || 0, world.t + (light ? q[0] * 0.5 : rnd(q[0], q[1]))); },
+  ramp(t = world.t) { const R = this.CFG.ramp; if (t <= R[0][0]) return R[0][1]; for (let i = 1; i < R.length; i++) if (t < R[i][0]) { const a = R[i - 1], b = R[i]; return a[1] + (b[1] - a[1]) * (t - a[0]) / (b[0] - a[0]); } return R[R.length - 1][1]; },
+  /* ふつうの現象：1秒あたり ramp の確率で「始めてよい」（1以上ならいつでも） */
+  dirOK(dt) { this.roll(); const r = this.ramp(); return r >= 1 || Math.random() < Math.min(1, r * dt * 4); },
+};
 
 /* =========================================================
    描画の土台
@@ -6516,7 +6537,7 @@ const DIR = {
     }
     if (DEV) for (const id of Object.keys(EV)) if (!chosen.includes(id)) chosen.push(id);
     for (const id of EV2) if (EV[id] && !chosen.includes(id)) chosen.push(id);   // ?ev2=イベント名 で必ず起こす（確認用）
-    for (const id of chosen) { const e = EV[id]; e.planned = true; e.done = false; e.omened = false; e.sensed = false; e.notBefore = DEV || EV2.includes(id) ? 0 : rnd(e.minT, Math.max(e.minT, e.maxT)); e.variant = e.pickVariant ? e.pickVariant() : null; e.onPlan && e.onPlan(); }
+    for (const id of chosen) { const e = EV[id]; e.planned = true; e.done = false; e.omened = false; e.sensed = false; e.notBefore = DEV || EV2.includes(id) ? 0 : e.minT + (Math.max(e.minT, e.maxT) - e.minT) * Math.pow(Math.random(), ROOMX.CFG.nbPow);   /* 2026-11-19 107番：解禁の時間を後ろ寄りに */ e.variant = e.pickVariant ? e.pickVariant() : null; e.onPlan && e.onPlan(); }
     this.plan = chosen;
     if (typeof PACALL !== 'undefined' && PACALL.plan) PACALL.plan();   // 校内放送：1周に1回、放送室を覗いた時
     if (DEV || TEST) console.log('PLAN', chosen.map(id => id + '@' + Math.round(EV[id].notBefore)).join(', '));
@@ -6547,9 +6568,10 @@ const DIR = {
       } }
     if (world.t < world.quietUntil) return;
     if (world.selfie || MD.ph !== 'idle' && MD.ph !== 'done') return;   // インカメラ中・鏡の怪異中は新しい怪異を始めない
-    const z = playerZone();
+    const z = playerZone(), gateOK = ROOMX.dirOK(dt);   /* 2026-11-19 107番：時間がたつほど起きやすく。最初の1分は ROOMX.CFG.early.n 個まで */
     for (const id of shuffle(this.plan.slice())) {
       const e = EV[id]; if (e.done || world.t < e.notBefore) continue;
+      if (!EV2.includes(id) && !DEV && (!gateOK || (world.t < ROOMX.CFG.early.t && (this.earlyN || 0) >= ROOMX.CFG.early.n))) continue;
       if (e.zones.length && !e.zones.includes(z)) continue;
       if (e.sg && (WD.borrowed || CH.state !== 'off')) continue;
       if (WING_Z.includes(z) && !world.wingOpen) continue;   /* 2026-11-16 新しい棟の場所は、開いている周だけ */
@@ -6563,7 +6585,7 @@ const DIR = {
           e.omened = true;
           if (chance(0.5)) { const p = (e.spot && e.spot.p) || e.pos || e.at || camera.position.clone().addScaledVector(camFwd(), 5); const L = FL.tubeNear(p); const d = L ? FL.play(L) : 0; if (d) { this.omen = { e, until: world.t + Math.min(d, 2.2) }; return; } }
         }
-        if (this.start(e)) return;
+        if (this.start(e)) { if (world.t < ROOMX.CFG.early.t) this.earlyN = (this.earlyN || 0) + 1; return; }
       }
     }
   },
@@ -8071,11 +8093,11 @@ F2.updLib = function (dt) {
   if (!busy && this.libCool <= 0 && !F2.busy) {
     const bp = this.bookLook ? V(this.bookLook.x, this.bookLook.y, this.shelfFront - 0.06) : V(-6.2, Y2 + 1.0, -11.4);   /* 本の中心は棚の中で見通しが遮られ、本が落ちる演出が起きなかったので、棚の手前の点で判定 */ const dp = V(rooms.LIB.desks[1].x, Y2 + 0.76, rooms.LIB.desks[1].z);
     const cands = [];
-    if (S.books === 'wait' && f2vis(bp, 7.5, [], 0.85) && camera.position.distanceTo(bp) > 1.6) cands.push('books');
-    if (S.page === 'wait' && this.hinge && f2vis(dp, 4.5, [], 0.9)) cands.push('page');
-    if (S.lchair === 'wait' && f2vis(V(-4.0, Y2 + 0.45, -12.4), 7, [], 0.85) && distTo(-4.0, -12.4) > 2.0) cands.push('lchair');
-    if (cands.length && (f2force(cands[0]) || chance(dt * 0.6))) {
-      const k = pick(cands); this.libCool = rnd(6, 10); f2hold(4);
+    if (S.books === 'wait' && ROOMX.ok('books') && f2vis(bp, 7.5, [], 0.85) && camera.position.distanceTo(bp) > 1.6) cands.push('books');
+    if (S.page === 'wait' && this.hinge && ROOMX.ok('page') && f2vis(dp, 4.5, [], 0.9)) cands.push('page');
+    if (S.lchair === 'wait' && ROOMX.ok('lchair') && f2vis(V(-4.0, Y2 + 0.45, -12.4), 7, [], 0.85) && distTo(-4.0, -12.4) > 2.0) cands.push('lchair');
+    if (cands.length && (f2force(cands[0]) || chance(dt * 0.6 * ROOMX.ramp()))) {
+      const k = pick(cands); this.libCool = rnd(ROOMX.CFG.libCool[0], ROOMX.CFG.libCool[1]); f2hold(4); ROOMX.fired(k);
       if (k === 'books') { S.books = 'run'; const n = 2 + ((f2rng('books')() * 3) | 0); shuffle(this.books.slice()).slice(0, n).forEach((b, i) => { b.st = 'queue'; b.at = world.t + i * rnd(0.5, 1.2); b.vy = 0; b.ry = rnd(-2, 2); }); }
       else if (k === 'page') { S.page = 'run'; S.pn = 0; S.pt = 0; S.pdur = rnd(0.25, 0.7); S.pgap = 0; playSfx('page_turn', { pos: dp, ref: 0.6, roll: 1.1, dur: S.pdur + 0.1 }); }
       else { S.lchair = 'run'; S.lt = 0; S.ld = rnd(0.1, 0.3); playSfx('chair_shift', { pos: this.libChair.position.clone().setY(Y2 + 0.2), ref: 0.8, roll: 1.1 }) || playSfx('chair_pull', { pos: this.libChair.position.clone().setY(Y2 + 0.2), ref: 0.8 }); S.lp0 = this.libChair.position.clone(); }
@@ -8162,7 +8184,7 @@ F2.updMusic = function (dt) {
   const bp = this.portraits.find(p => p.k === 'beethoven_open');
   if (bp && !this.bFallen) {   // 額縁が落ちた後はまばたきしない
     if (this.blinkOn > 0) { this.blinkOn -= dt; if (rec.active && seen(bp.p, { maxD: 9 }) && (zoom >= 2 || camera.position.distanceTo(bp.p) < 3.5)) award('f2blink', '肖像画のベートーベンがまばたきした', 45); if (this.blinkOn <= 0) bp.pic.material.map = this.tex.beethoven_open; }
-    else if (playerZone() === 'MUS' && onScreen(bp.p, 0.9) && camera.position.distanceTo(bp.p) < 8) { this.blinkT -= dt; if (this.blinkT <= 0) { this.blinkT = rnd(7, 16); if (f2force('blink') || chance(0.55)) { bp.pic.material.map = this.tex.beethoven_blink; this.blinkOn = 0.3; } } }
+    else if (playerZone() === 'MUS' && onScreen(bp.p, 0.9) && camera.position.distanceTo(bp.p) < 8) { this.blinkT -= dt; if (this.blinkT <= 0) { this.blinkT = rnd(ROOMX.CFG.blinkGap[0], ROOMX.CFG.blinkGap[1]); if (f2force('blink') || (ROOMX.ok('blink') && chance(0.55 * ROOMX.ramp()))) { ROOMX.fired('blink', true); bp.pic.material.map = this.tex.beethoven_blink; this.blinkOn = 0.3; } } }
   }
   // 10. 窓の外を水平に滑る女子高生（足場のない高さ）
   const mw = V(-9.5, Y2 + 1.5, -21.5);
@@ -15408,7 +15430,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.74';
+const VERSION = '0.17.75';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -17420,7 +17442,7 @@ const LIBFALL = {
   update(dt) {
     if (this.st === 'off' || this.st === 'done') return;
     if (this.st === 'wait') {
-      const ok = player.lv === 1 && playerZone() === 'LIB' && player.x < -7.3 && player.z < -15.0 && world.state === 'play' && !PHAN.on;
+      const ok = player.lv === 1 && playerZone() === 'LIB' && player.x < -7.3 && player.z < -15.0 && world.state === 'play' && !PHAN.on && (NEWEV_F('libfall') || ROOMX.ok('libfall'));
       this.stay = ok ? this.stay + dt : 0; if (this.stay < 5) return;
       if (!this.setup()) { this.st = 'off'; return; }
       this.st = 'tip'; this.t = 0; this.seenT = 0; SND.creak(V(-8.4, LH + 1.6, -14.8), 1.2, 0.8); if (TEST || DEV) console.log('LIBFALL');
@@ -18059,10 +18081,10 @@ const SCIRM = {
     /* 空っぽの台座：台座と足あとの両方 */
     /* 2026-11-17 撮れ高「空っぽの台座」と足あとはなくした */
     /* 骸骨：見ていない間に少しずつこちらを向く */
-    if (inR) { const vis = onScreen(this.skelH, 1.05) && clearLine(this.skelH); if (!vis && nearLook(this.skelH)) { this.offT += dt; if (this.offT > 1.5) { this.offT = 0; const to = Math.atan2(cp.x - this.skel.position.x, cp.z - this.skel.position.z); const d = Math.atan2(Math.sin(to - this.skel.rotation.y), Math.cos(to - this.skel.rotation.y)); if (Math.abs(d) > 0.1) { this.skel.rotation.y += clamp(d, -0.6, 0.6); this.skelTurned = true; } } } else { this.offT = 0; if (this.skelTurned && seen(this.skelH, { maxD: 12 })) award('skelTurn', 'こちらを向く骸骨', 40); if (this.skelTurned && !this.glinted && this.eyeFill && seen(this.skelH, { maxD: 12 })) { this.glinted = true; this.glint = 0.45; } } }   /* 2026-11-16 向き切ったら、目のくぼみの奥が一瞬光る */
+    if (inR && ROOMX.ok('skel', this.skelGo)) { const vis = onScreen(this.skelH, 1.05) && clearLine(this.skelH); if (!vis && nearLook(this.skelH)) { if (!this.skelGo) { this.skelGo = true; ROOMX.fired('skel'); } this.offT += dt; if (this.offT > 1.5) { this.offT = 0; const to = Math.atan2(cp.x - this.skel.position.x, cp.z - this.skel.position.z); const d = Math.atan2(Math.sin(to - this.skel.rotation.y), Math.cos(to - this.skel.rotation.y)); if (Math.abs(d) > 0.1) { this.skel.rotation.y += clamp(d, -0.6, 0.6); this.skelTurned = true; } } } else { this.offT = 0; if (this.skelTurned && seen(this.skelH, { maxD: 12 })) award('skelTurn', 'こちらを向く骸骨', 40); if (this.skelTurned && !this.glinted && this.eyeFill && seen(this.skelH, { maxD: 12 })) { this.glinted = true; this.glint = 0.45; } } }   /* 2026-11-16 向き切ったら、目のくぼみの奥が一瞬光る */
     if (this.glint > 0 && this.eyeFill) { this.glint -= dt; const k = Math.max(0, Math.sin(Math.PI * this.glint / 0.45)); this.eyeFill.dark.emissive.setRGB(k * 0.9, k * 0.85, k * 0.7); }
     /* 瓶の目玉：こちらを目で追う */
-    if (nearLook(this.jarP)) { const e = this.eyeObj, lp = e.worldToLocal(cp.clone()), l = lp.length(); const tx = clamp(Math.atan2(lp.x, lp.z), -0.9, 0.9), ty = clamp(-Math.atan2(lp.y, Math.hypot(lp.x, lp.z)), -0.7, 0.7); this.eyePiv.rotation.y += (tx - this.eyePiv.rotation.y) * Math.min(1, dt * 6); this.eyePiv.rotation.x += (ty - this.eyePiv.rotation.x) * Math.min(1, dt * 6);
+    if (ROOMX.ok('jar', true) && nearLook(this.jarP)) { const e = this.eyeObj, lp = e.worldToLocal(cp.clone()), l = lp.length(); const tx = clamp(Math.atan2(lp.x, lp.z), -0.9, 0.9), ty = clamp(-Math.atan2(lp.y, Math.hypot(lp.x, lp.z)), -0.7, 0.7); this.eyePiv.rotation.y += (tx - this.eyePiv.rotation.y) * Math.min(1, dt * 6); this.eyePiv.rotation.x += (ty - this.eyePiv.rotation.x) * Math.min(1, dt * 6);
       const d = cp.distanceTo(this.jarP), q = this.jarP.clone().project(viewCam()); const ok = inR && rec.active && d < 2.2 && Math.abs(q.x) < 0.5 && q.z < 1 && seen(this.jarP, { maxD: 2.4 }); const cm = this.lastC ? cp.distanceTo(this.lastC) : 0; this.lastC = cp.clone();
       if (ok) { this.jarT += dt; this.jarCm += cm; if (this.jarT > 1.2 && this.jarCm > 0.12) award('jarEye', '瓶の中の目玉', 40); } else { this.jarT = 0; this.jarCm = 0; } }
     /* 2026-11-16 フクロウはただの剥製（動き・撮れ高なし） */
@@ -20726,7 +20748,7 @@ const BUSTX = {
   reset() { const A2 = ARTRM; if (!A2.bust) return; A2.bust.visible = true; A2.bust.position.set(0, 1.0, 0); A2.bust.rotation.set(0, Math.PI * 0.85, 0); this.st = 'wait'; this.t = 0; this.look = 0; for (const s of this.shards || []) s.parent && s.parent.remove(s); this.shards = []; },
   update(dt) {
     const A2 = ARTRM; if (!A2.bust || world.state !== 'play') return; const p = A2.bustH;
-    if (this.st === 'wait') { const vis = onScreen(p, 0.8) && clearLine(p) && nearLook(p); this.look = vis ? this.look + dt : Math.max(0, this.look - dt * 2); if (this.look > 2.4) { this.st = 'tip'; this.t = 0; SND.creak(p, 0.6, 0.4); } return; }
+    if (this.st === 'wait') { if (!ROOMX.ok('bust')) return; const vis = onScreen(p, 0.8) && clearLine(p) && nearLook(p); this.look = vis ? this.look + dt : Math.max(0, this.look - dt * 2); if (this.look > 2.4) { this.st = 'tip'; this.t = 0; SND.creak(p, 0.6, 0.4); ROOMX.fired('bust'); } return; }
     const b = A2.bust; this.t += dt;
     if (this.st === 'tip') { const u = clamp(this.t / 0.9, 0, 1); b.rotation.x = Math.sin(u * Math.PI * 2.5) * 0.05 * (1 - u) + u * u * 0.5; b.position.z = u * u * 0.12; if (u >= 1) { this.st = 'fall'; this.t = 0; this.v = 0; } }
     else if (this.st === 'fall') { this.v += 9.8 * dt; b.position.y -= this.v * dt; b.position.z += dt * 0.8; b.rotation.x += dt * 4; if (b.position.y <= 0.12) this.crash(); }
@@ -20744,7 +20766,7 @@ const DOLLX = {
   update(dt) {
     const A2 = ARTRM; if (!A2.dollL || !A2.dollL.length || world.state !== 'play') return; const p = A2.dollP;
     if (this.st === 'done') return; const vis = onScreen(p, 0.8) && clearLine(p) && nearLook(p);
-    if (this.st === 'wait') { this.look = vis ? this.look + dt : 0; if (this.look > 1.2) { this.st = 'pose'; this.t = 0; this.i = 0; } return; }
+    if (this.st === 'wait') { if (!ROOMX.ok('doll')) return; this.look = vis ? this.look + dt : 0; if (this.look > 1.2) { this.st = 'pose'; this.t = 0; this.i = 0; ROOMX.fired('doll'); } return; }
     if (!vis) return; this.t += dt; if (this.t < 0.45) return; this.t = 0;
     const L = A2.dollL, cp = camera.position, d = A2.doll; d.updateMatrixWorld(true);
     const steps = [() => L[2].rotation.set(-0.9, 0, 0.2), () => L[3].rotation.set(-1.3, 0, -0.25), () => { L[0].rotation.set(0.2, 0, 2.6); const la = A2.dollLA && A2.dollLA[0]; if (la) la.rotation.set(0, 0, 2.3); }, () => { const j = L[1], wp = j.getWorldPosition(V()), dir = cp.clone().sub(wp).normalize(); const pq = j.parent.getWorldQuaternion(new THREE.Quaternion()).invert(); const q = new THREE.Quaternion().setFromUnitVectors(V(0, -1, 0), dir.applyQuaternion(pq)); j.quaternion.copy(q); }, () => { if (A2.dollHead) A2.dollHead.rotation.set(0.3, 0, 0.6); d.rotation.z += 0.25; }];
@@ -25816,7 +25838,7 @@ for (const b of document.querySelectorAll('#hintSeg button')) b.addEventListener
 Object.assign(EN, { 'キーの表示': 'Key hints', '画面に出す操作の文字': 'Key labels shown on screen', '最初だけ': 'At first', 'いつも': 'Always', '出さない': 'Never', '左クリック': 'Left click', '右クリック': 'Right click', 'ホイール': 'Wheel', '調べる・開ける・隠れる': 'Interact / open / hide', '録画の開始・停止': 'Start/stop recording', 'ズーム': 'Zoom' });
 /* じゆうちょう・絵画を開いた時 */
 { let was = ''; new MutationObserver(() => { const H = document.documentElement.classList, now = H.contains('jyOn') ? 'jiyu' : H.contains('ptOn') ? 'paint' : ''; if (now && now !== was) try { KH.screen(now); } catch (e) { } was = now; }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] }); }
-if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, ARARE, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
+if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, ROOMX, DIRX: DIR, EVX: EV, ARARE, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
