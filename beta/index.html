@@ -25905,9 +25905,8 @@ const GHOSTCUT = {
       let v = Math.random() * 255; v = v * (1 - face * 0.22) + face * 26 - eye * 90; d[i] = d[i + 1] = d[i + 2] = clamp(v, 0, 255); d[i + 3] = 255; }
     g.putImageData(im, 0, 0); return cv; },
   snapFace() { const W = 270, H = 480, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
-    try { const im = TX.face.image; g.filter = 'grayscale(1) contrast(1.9) brightness(.5) blur(1.2px)'; g.drawImage(im, -W * 0.45, -H * 0.05, W * 1.9, H * 1.15); g.filter = 'none'; }
-    { const v = g.createRadialGradient(W / 2, H * 0.45, W * 0.2, W / 2, H * 0.45, W * 0.85); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.9)'); g.fillStyle = v; g.fillRect(0, 0, W, H); } catch (e) { g.fillStyle = '#ddd'; g.beginPath(); g.ellipse(W / 2, H / 2, W * 0.42, H * 0.36, 0, 0, 7); g.fill(); }
-    g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(0, 0, W, H); return cv; },
+    try { const im = TX.face.image; g.filter = 'grayscale(1) contrast(1.9) brightness(.5) blur(1.2px)'; g.drawImage(im, -W * 0.45, -H * 0.05, W * 1.9, H * 1.15); g.filter = 'none'; } catch (e) { g.fillStyle = '#ddd'; g.beginPath(); g.ellipse(W / 2, H / 2, W * 0.42, H * 0.36, 0, 0, 7); g.fill(); }
+    { const v = g.createRadialGradient(W / 2, H * 0.45, W * 0.2, W / 2, H * 0.45, W * 0.85); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.9)'); g.fillStyle = v; g.fillRect(0, 0, W, H); } return cv; },
   /* 見返す画面に重ねて出す */
   el(VP) { if (this.cv && this.cv.parentNode === VP.box) return this.cv; const c = this.cv = document.createElement('canvas'); c.id = 'vpGhost'; c.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1'; VP.box.appendChild(c); return c; },
   draw(VP) { const C = this.cur; if (!C || !VP.box || !VP.v) return; const cv = this.el(VP), G = VP.g(), on = G >= C.t && G < C.t + C.len;
