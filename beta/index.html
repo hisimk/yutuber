@@ -12184,7 +12184,7 @@ Object.assign(MINOR, {
         let nx = BALL.position.x + b.dir.x * step, nz = BALL.position.z + b.dir.z * step;
         if (b.kicked) {   // 壁・机ではね返る
           const [cx, cz] = collide(nx, nz, 0.1, b.y0 > 1 ? 1 : 0);
-          if (Math.abs(cx - nx) + Math.abs(cz - nz) > 1e-4) { const n = V(cx - nx, 0, cz - nz).normalize(); const dn = b.dir.dot(n); if (dn < 0) { b.dir.addScaledVector(n, -2 * dn).normalize(); b.axis = V(b.dir.z, 0, -b.dir.x).normalize(); if (A.ctx && b.v > 0.4) SND.kata && SND.kata(BALL.position.clone(), 0.25 * Math.min(1, b.v / 2)); if (b.v > 0.8) CHATLOG.bhEvent('ballWall'); b.v *= 0.6; } nx = cx; nz = cz; }
+          if (Math.abs(cx - nx) + Math.abs(cz - nz) > 1e-4) { const n = V(cx - nx, 0, cz - nz).normalize(); const dn = b.dir.dot(n); if (dn < 0) { try { GOAL.hit(BALL.position.clone(), n, b.y0 > 1 ? 1 : 0, world.t - b.kickT, b.v); } catch (e) { } b.dir.addScaledVector(n, -2 * dn).normalize(); b.axis = V(b.dir.z, 0, -b.dir.x).normalize(); if (A.ctx && b.v > 0.4) SND.kata && SND.kata(BALL.position.clone(), 0.25 * Math.min(1, b.v / 2)); if (b.v > 0.8) CHATLOG.bhEvent('ballWall'); b.v *= 0.6; } nx = cx; nz = cz; }
         }
         if (!b.kicked && Math.hypot(nx - player.x, nz - player.z) < 0.55) b.v = 0;   // 足元で止まる
         else { BALL.position.x = nx; BALL.position.z = nz; BALL.rotateOnWorldAxis(b.axis, step / 0.1); }
@@ -15433,7 +15433,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.80';
+const VERSION = '0.17.81';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -22783,7 +22783,7 @@ const KBALL = {
       if (b.rest) continue;   /* 2026-11-17 止まったボールは床に残る（拾えばまた使える） */
       b.p = p; let ev = null; { const N = Math.min(8, Math.ceil(dt / (1 / 60))), h = dt / N; for (let i = 0; i < N && !ev; i++) ev = this.step(b, h); }   /* 線の予測（1/60秒ずつ）と同じ細かさで動かす */
       if (ev && ev.k === 'ground') { SND.knock(p.clone(), Math.min(0.6, ev.s * 0.12)); this.lure(V(p.x, b.fy, p.z)); }
-      if (ev && ev.k !== 'ground') { b.nb++; if (ev.k === 'glass' && ev.s > 2.5) this.breakGlass(b, ev); else { SND.knock(p.clone(), 0.55); this.lure(V(p.x, b.fy, p.z)); } }
+      if (ev && ev.k !== 'ground') { try { GOAL.hit(V(p.x, p.y, p.z), ev.n, b.lv, b.t, ev.s); } catch (e) { } b.nb++; if (ev.k === 'glass' && ev.s > 2.5) this.breakGlass(b, ev); else { SND.knock(p.clone(), 0.55); this.lure(V(p.x, b.fy, p.z)); } }
       const sp = Math.hypot(v.x, v.z); b.m.rotation.x += v.z * dt / 0.11; b.m.rotation.z -= v.x * dt / 0.11;
       if (sp > 0.3 && (b.lt = (b.lt ?? 0) - dt) <= 0) { b.lt = 1.2; this.lure(V(p.x, b.fy, p.z)); }   /* 2026-11-17 転がっている間だけ怪異を呼ぶ */
       if ((sp < 0.15 && v.y === 0) || b.t > 14) { v.set(0, 0, 0); b.rest = true; } }
@@ -25984,12 +25984,37 @@ setInterval(() => { try { GHOSTCUT.sample(); } catch (e) { } }, 500);
 { const F0 = finalizeRec; finalizeRec = function () { try { GHOSTCUT.decide(); } catch (e) { console.warn(e); } return F0(...arguments); }; }
 { const B1 = CHAT.build.bind(CHAT); CHAT.build = function (P) { const d = B1(P); try { GHOSTCUT.addChat(d); } catch (e) { } return d; }; }
 { const R0 = VPLAY.run.bind(VPLAY); VPLAY.run = function () { R0(); if (this._gcLoop) return; this._gcLoop = true; const f = () => { try { if (this.shown && this.shown()) GHOSTCUT.draw(this); } catch (e) { } requestAnimationFrame(f); }; requestAnimationFrame(f); }; }
+/* 2026-11-19 113番：撮れ高「ボールをゴールにシュート」。蹴ったボール（持ち込み・校舎のサッカーボール）が、玄関の出入り口の壁（スタート地点のうしろ、外へ出る扉のある壁）に当たったら */
+const GOAL = {
+  CFG: { x: [-3.2, 3.2], z: 5.0, t: 5, minV: 0.5, pts: 60 },   /* 当たりの範囲（1階・玄関の出口側の壁）／蹴ってから何秒以内／当たった時の速さの下限 */
+  hit(p, n, lv, t, v) { const C = this.CFG;
+    if (lv !== 0 || !n || n.z > -0.5 || p.x < C.x[0] || p.x > C.x[1] || p.z < C.z || t > C.t || (v || 0) < C.minV || world.state !== 'play') return false;
+    if (world.t - (this.lastT || -9) < 1) return false; this.lastT = world.t;
+    try { SND.knock(p.clone(), 0.95); if (A.ctx) ballKickSe(p.clone(), 0.6); } catch (e) { }   /* ゴールの「ドン」 */
+    const vis = rec.active && SHOT.now(p.clone().setY(0.4), { maxD: 16, margin: 0.9 });
+    if (TEST || DEV) console.log('GOAL', p.x.toFixed(2), p.z.toFixed(2), 'vis', vis);
+    if (!vis) return false;
+    if (!awarded.has('ballGoal')) award('ballGoal', 'ボールをゴールにシュート', this.CFG.pts);
+    try { XCHAT.log('it_goal'); } catch (e) { } return true; },
+};
+REP.GROUP.it_goal = 'goal';
+REP.L.goal = { 1: [['ゴーーーール！', 'GOOOOAL!'], ['ナイスシュート', 'nice shot'], ['心霊スポットでサッカーすな', 'no soccer in a haunted school'], ['キーパー誰', 'who is the keeper'], ['出口にシュートは草', 'shooting at the exit lol']],
+  3: [['またゴール', 'another goal'], ['ハットトリック？', 'hat trick?'], ['シュート練習かな', 'shooting practice?']],
+  6: [['何点取るねん', 'how many goals are you going for'], ['エースストライカー', 'ace striker'], ['霊もびっくり', 'even the ghosts are shocked']],
+  10: [['まだ蹴ってて草', 'still shooting lol'], ['玄関がゴールになった', 'the entrance is a goal now']] };
+for (const tr in REP.L.goal) REP.L.goal[tr].forEach((x, i) => { CHAT_DICT.t['rp.goal.' + tr + '.' + i] = x; });
+XCHAT.LIST.it_goal = REP.ids('goal', 1);
+Object.assign(AW_TABLE, { ballGoal: ['A', GOAL.CFG.pts] }); COL.LIST.push(['ballGoal', 'ボールをゴールにシュート', GOAL.CFG.pts]);
+CHIP_DESC.ballGoal = ['蹴ったボールが、出入り口に吸いこまれるように当たった。夜の校舎に、ゴールの音がひびく。', 'The ball you kicked slammed right into the exit. The sound of a goal echoed through the school at night.'];
+AW_HINT.ballGoal = ['出入り口をゴールに', 'treat the exit as a goal'];
+TKTXT.ballGoal = [CHIP_DESC.ballGoal[0], 'ボールをゴールに■■ート', '■ったボールが、■入り口に■いこまれるように当たった。■の校舎に、ゴールの■がひびく。'];
+Object.assign(EN, { 'ボールをゴールにシュート': 'Shot the ball into the goal' });
 Object.assign(AW_TABLE, { ghostCut: ['A', 70] }); COL.LIST.push(['ghostCut', '撮った覚えのない映像', 70]);
 CHIP_DESC.ghostCut = ['見返した動画に、撮った覚えのない短いカットが入っていた。…誰が撮ったの？', 'Rewatching the video, there was a short cut you don’t remember filming. …Who filmed it?'];
 AW_HINT.ghostCut = ['長く撮った動画を、あとで見返すと', 'rewatch a long video afterward'];
 TKTXT.ghostCut = [CHIP_DESC.ghostCut[0], '撮った■えのない■■', '見返した■■に、■った■えのない■いカットが入っていた。…■が撮ったの？'];
 Object.assign(EN, { '撮った覚えのない映像': 'Footage you never shot' });
-if (TEST && window.__G) Object.assign(window.__G, { REP, XCHAT, CHATLOG, NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, GHOSTCUT, ROOMX, DIRX: DIR, EVX: EV, ARARE, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
+if (TEST && window.__G) Object.assign(window.__G, { GOAL, REP, XCHAT, CHATLOG, NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, GHOSTCUT, ROOMX, DIRX: DIR, EVX: EV, ARARE, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
