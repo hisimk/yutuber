@@ -5288,7 +5288,7 @@ const WD = {
     } else { const ds0 = URAV.far(this.dests.filter(k => NAV[k]), k => nodePos(k)), ds1 = ds0.filter(k => !saltNear(nodePos(k))), ds = ds1.length ? ds1 : ds0; let g = 0; do d = pick(ds); while (d === this.node && g++ < 10); }   /* 2026-11-16 オフタリサマから12m以上離れた所へ */
     this.path = navSkip(this.pos, navPath(nearestNode(this.pos.x, this.pos.z, undefined, this.pos.y), d));   /* 2026-11-19 92番 */
   },
-  goTo(p) { const n = nearestNode(p.x, p.z, undefined, p.y || 0); if (this.path.length >= 2 && this.path[this.path.length - 1] === n && world.t - (this.goT || -99) < 4) { this.extra = p.clone(); return; } this.goT = world.t; this.path = navSkip(this.pos, navPath(nearestNode(this.pos.x, this.pos.z, undefined, this.pos.y), n)); this.extra = p.clone(); },   /* 2026-11-19 92番：最初の点は、壁がない時だけ飛ばす */
+  goTo(p) { if (this.path.length >= 2 && (oscLocked(this) || (typeof CH !== 'undefined' && oscLocked(CH)))) return; const n = nearestNode(p.x, p.z, undefined, p.y || 0); if (this.path.length >= 2 && this.path[this.path.length - 1] === n && world.t - (this.goT || -99) < 4) { this.extra = p.clone(); return; } this.goT = world.t; this.path = navSkip(this.pos, navPath(nearestNode(this.pos.x, this.pos.z, undefined, this.pos.y), n)); this.extra = p.clone(); },   /* 2026-11-19 92番：最初の点は、壁がない時だけ飛ばす */
   borrow() { scareZoom1(); this.borrowed = true; this.glance = null; SG.ovYaw = SG.ovPitch = 0; SG.ovStretch = 0; return SG; },
   release(far = true) {
     if (this.borrowed && !world.capture && !CAP.on) screamCut();   // 2026-11-14 驚かしが終わって女が消えたら、叫びも止める
@@ -8810,7 +8810,7 @@ SP.updChase = function (dt, fp) {
   if (!direct) {
     this.repath -= dt;
     const pn = nearestNode(G.x, G.z, undefined, G.y);
-    if (!this.cpath.length || pn !== this.pNode || this.repath <= 0) {   // 目標の近くの点が変わった時（か2秒ごと）だけ道を引き直す。毎回引き直すと踊り場で行ったり来たりした
+    if (!this.cpath.length || ((pn !== this.pNode || this.repath <= 0) && !oscLocked(this))) {   // 目標の近くの点が変わった時（か2秒ごと）だけ道を引き直す。毎回引き直すと踊り場で行ったり来たりした
       this.repath = 2; this.pNode = pn; this.cpath = navPath(nearestNode(this.pos.x, this.pos.z, undefined, this.gy), pn).map(k => nodePos(k));
       const h = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
       if (this.cpath.length > 1 && h(this.pos, this.cpath[1]) < h(this.cpath[0], this.cpath[1]) && (inStair || !segBlocked(this.pos.x, this.pos.z, this.cpath[1].x, this.cpath[1].z, this.lv))) this.cpath.shift();   // 最初の点がすでに後ろなら飛ばす
@@ -10718,7 +10718,16 @@ defEvent('nurse', {
    ========================================================= */
 // 2026-11-14 落ちる部品の当たり：壁など（ベッドの上にいる時はベッドは壁にしない）と、下にある台（ベッドの上面）
 // 2026-11-14 敵が壁につっかえて動けなくなった時の救済：動くはずなのに2.5秒ほとんど進んでいなければ、近くの通路に戻して道を選び直す
+function oscLocked(o) { return !!o && world.t < (o._oscUntil || 0); }   /* 2026-11-20 行ったり来たりしていると気づいたら、しばらく今の道のまま進む */
 function stuckWatch(o, pos, moving, dt, recover) {
+  { const q = o._osc || (o._osc = { s: [], dt: 0 }); q.dt += dt;   /* 2026-11-20 同じ所で行ったり来たり：4秒で3m以上動いたのに、半径1m以内から出ていない */
+    if (!moving) { q.s.length = 0; q.dt = 0; } else if (q.dt >= 0.25) { q.dt = 0; q.s.push(pos.clone()); if (q.s.length > 16) q.s.shift();
+      if (q.s.length === 16 && !oscLocked(o)) { let L = 0, cx = 0, cz = 0; for (let i = 0; i < 16; i++) { cx += q.s[i].x / 16; cz += q.s[i].z / 16; if (i) L += q.s[i].distanceTo(q.s[i - 1]); } let m = 0; for (const v of q.s) m = Math.max(m, Math.hypot(v.x - cx, v.z - cz));
+        if (L > 3 && m < 1.0) { o._oscUntil = world.t + 3; q.s.length = 0; if (TEST || DEV) console.log('osc → lock path'); } } } }
+  { const q = o._stk2 || (o._stk2 = { p: pos.clone(), t: 0, cd: -99 });   /* 2026-11-20 動くはずの怪異が、10秒ずっと半径1.5mの中にいて、それが映っていたら、コメントがつっこむ */
+    if (pos.distanceTo(q.p) > 1.5) { q.p.copy(pos); q.t = 0; } else if (moving) q.t += dt;
+    if (q.t >= 10 && world.t > q.cd && world.t > (stuckWatch.cd || -99) && rec.active) { const a = V(pos.x, pos.y + 0.4, pos.z), b2 = V(pos.x, pos.y + 1.3, pos.z);
+      if (seen(a, { maxD: 16 }) || seen(b2, { maxD: 16 })) { q.cd = world.t + 45; stuckWatch.cd = world.t + 25; q.t = 0; CHATLOG.add('monStuck'); } } }
   const s = o._stuck || (o._stuck = { p: pos.clone(), t: 0 });
   if (!moving || pos.distanceTo(s.p) > 0.3) { s.p.copy(pos); s.t = 0; return; }
   s.t += dt; if (s.t > 2.5) { if (recover() === false) return; s.t = 0; s.p.copy(pos); if (TEST || DEV) console.log('stuck → recover'); }   /* 2026-11-15 recover が false を返したら、戻すのを待つ（次のフレームでまた試す） */
@@ -11330,7 +11339,7 @@ const MANN = {
         break;
       }
       case 'hunt': {   // 2026-11-15 通常ダッシュ：小さく構えて（ため）→ 通り道に沿って走る（ぶつかっても激突しない）→ しばらく走ると立ち止まり、胴体をぐるぐる回す → また構えて走る
-        const MD = MANN_DASH; this.t += dt; this.hT = (this.hT || 0) + dt; this.rep -= dt; if (this.rep <= 0) { this.rep = 0.6; this.walkTo(V(player.x, player.y, player.z)); }
+        const MD = MANN_DASH; this.t += dt; this.hT = (this.hT || 0) + dt; this.rep -= dt; if (this.rep <= 0 && !(oscLocked(this) && this.path.length)) { this.rep = 0.6; this.walkTo(V(player.x, player.y, player.z)); }
         const dNow = Math.hypot(player.x - this.pos.x, player.z - this.pos.z) + Math.abs(player.y - this.pos.y) * 2;
         if (!this.prog || dNow < this.prog.d - 0.6) this.prog = { d: dNow, t: 0 }; else this.prog.t += dt;
         const nx = this.path[0] || player;
@@ -15519,7 +15528,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.46';
+const VERSION = '0.18.47';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16260,6 +16269,7 @@ const CHATGEN = {
       else if (e.k === 'still') { bg.push([e.t + rnd2(0.3, 1.2), 'still_q', 7]); for (let k = 0; k < Math.min(3, rk); k++) bg.push([e.t + 2 + k * rnd2(1.5, 3), 'still_q', 6]); }   // 止まっている間、ランクが高いほど声がかかる
       else if (e.k === 'mute') { if (e.spoke) bg.push([e.t + rnd2(0.3, 1.2), 'mic_silent', 7]); }   // 2026-11-14 直前まで話していた時だけ（判断できない時は出さない）   // 声が入っていなかった録画では「急に無口」は使わない   // マイクがオンなのに無言
       else if (e.k === 'bellSnd' && R() < 0.6) bg.push([e.t + rnd2(0.5, 1.5), 'heard_bell', 6]);
+      else if (e.k === 'monStuck') { const n = 2 + (R() < 0.5 ? 1 : 0); let t = e.t + rnd2(0.4, 1.2); for (let q = 0; q < n; q++) { bg.push([t, q === 1 && R() < 0.3 ? 'mon_stuck_meta' : 'mon_stuck', 9]); t += rnd2(0.9, 2.2); } }   /* 2026-11-20 怪異が同じ所で動けなくなっている（笑う・とまどう。「バグ」系はたまに） */
       else if (e.k === 'yItem' && CHAT_DICT.c[e.c] && R() < (e.p ?? 0.8)) bg.push([e.t + rnd2(0.5, 1.5), e.c, 7]);   /* 2026-11-19 137番：お線香・ゴーストボックス */
       else if (e.k === 'fluteSnd' && R() < 0.7) bg.push([e.t + rnd2(0.6, 1.6), 'heard_flute', 6]);
       else if (e.k === 'crouch') { const C = crN; C.n = e.t - C.t > REP.CFG.gap ? 1 : C.n + 1; C.t = e.t; if (C.n <= 2) bg.push([e.t + rnd2(0.4, 1.2), e.tense ? 'crouch_tense' : 'crouch_calm', 8]); else { const tr = C.n <= 5 ? 3 : C.n <= 9 ? 6 : 10; if (rnd2(0, 1) < REP.CFG.p[tr]) { const L = REP.L.crouch[tr], x = L[Math.floor(rnd2(0, L.length)) % L.length]; out.push([e.t + rnd2(0.6, 1.6), 'g', LANG === 'en' ? x[1] : x[0], 8, e.t]); } } }   /* 2026-11-19 112番：くり返しに合わせて変える */   // 2026-11-15 しゃがんだまま5秒
@@ -18028,8 +18038,8 @@ const WING = {
   build() {
     if (this.built) return; this.built = true;
     /* rub：壊したあとのがれき（机 d・椅子 c を [x, z, 向き]）。通り道・扉・壁にかからない所だけ。lim：飛び散る机と椅子が止まる範囲 */
-    this.B = [{ id: 1, key: 'yt_bar1_open', x: 0, z: -33.9, ry: 0, c: V(0, LH + 1.0, -33.0), rubL: [['d', -0.95, -34.5, 1.45], ['c', 0.95, -34.2, 0.4]], rubC: [[-1.35, -0.55, -34.85, -34.15], [0.65, 1.3, -34.5, -33.9]], lim: [-1.1, 1.1, -36.2, -33.5] },
-      { id: 2, key: 'yt_bar2_open', x: 11.8, z: -31.5, ry: Math.PI / 2, c: V(11.8, LH + 1.0, -31.5), rubL: [['d', 12.85, -30.5, 0.1], ['c', 11.55, -32.6, 1.2]], rubC: [[12.45, 13.3, -30.85, -30.15], [11.3, 11.85, -32.85, -32.35]], lim: [11.4, 15.6, -32.6, -30.5] }];
+    this.B = [{ id: 1, key: 'yt_bar1_open', x: 0, z: -33.9, ry: 0, c: V(0, LH + 1.0, -33.0), rubL: [['d', -0.95, -35.6, 1.45], ['c', 1.95, -33.75, 0.4]], rubC: [[-1.35, -0.55, -35.95, -35.25], [1.65, 2.3, -34.05, -33.45]], lim: [-1.1, 1.1, -36.2, -33.5] },
+      { id: 2, key: 'yt_bar2_open', x: 11.8, z: -31.5, ry: Math.PI / 2, c: V(11.8, LH + 1.0, -31.5), rubL: [['d', 12.85, -30.5, 0.1], ['c', 10.45, -32.6, 1.2]], rubC: [[12.45, 13.3, -30.85, -30.15], [10.2, 10.75, -32.85, -32.35]], lim: [11.4, 15.6, -32.6, -30.5] }];
     for (const b of this.B) {
       const g = WB.g(b.x, LH, b.z, b.ry); b.bar = g;
       for (const [x, ry] of [[-1.05, 0.1], [-0.35, -0.08], [0.35, 0.12], [1.05, -0.1]]) { WB.desk(g, x, 0.05, ry); WB.chair(g, x + 0.05, -0.05, ry + 0.2, true).position.y = 0.76; }
@@ -19442,7 +19452,7 @@ const URAH = {
       if (this.rep <= 0 || !this.D || this.D.room !== room) { this.rep = 0.6; this.D = this.pickDoor(room); if (this.D) this.goTo(this.standAt(this.D, 'reach')); }
       const S = this.D && this.standAt(this.D, 'reach'); if (S && Math.hypot(this.pos.x - S.x, this.pos.z - S.z) < 0.3 && Math.abs(this.pos.y - S.y) < 0.5) { this.toDoor(); return; }
     } else if (this.direct()) { this.route = [V(player.x, player.y, player.z)]; this.glass(); }
-    else if (this.rep <= 0) { this.rep = 0.5; this.goTo(V(player.x, player.y, player.z)); }
+    else if (this.rep <= 0 && !(oscLocked(this) && this.route.length)) { this.rep = 0.5; this.goTo(V(player.x, player.y, player.z)); }
     const x0 = this.pos.x, z0 = this.pos.z; this.move(dt, this.spd * (URGAIT.on ? URGAIT.surge || 1 : 1));
     if (this.rw && this.rw.ph === 'coast') { this.rw.d += Math.hypot(this.pos.x - x0, this.pos.z - z0); this.rw.pts.push({ x: this.pos.x, y: this.pos.y, z: this.pos.z, by: this.by }); }
     /* 体が大きくて届かない：あと少しなら、その場で手を伸ばす */
@@ -26340,6 +26350,10 @@ Object.assign(CHAT_DICT.t, { 'v2.senko_put.0': ['線香立てたｗ', 'incense l
   'v2.gbox_on.0': ['ゴーストボックスきた', 'ghost box time'], 'v2.gbox_on.1': ['本物の心霊番組っぽい', 'feels like a real ghost show'], 'v2.gbox_on.2': ['ザザザ…', 'kshhh...'], 'v2.gbox_on.3': ['ノイズやば', 'that static tho'],
   'v2.gbox_voice.0': ['今なんか言った？', 'did it just say something?'], 'v2.gbox_voice.1': ['返事した…', 'it answered...'], 'v2.gbox_voice.2': ['声入ってる', 'there’s a voice in there'], 'v2.gbox_voice.3': ['聞こえた？', 'did you hear that?'] });
 for (const c of ['senko_put', 'gbox_on', 'gbox_voice']) CHAT_DICT.c[c] = [0, 1, 2, 3].map(i => `v2.${c}.${i}`);
+/* 2026-11-20 怪異が同じ所で動けなくなっている時のコメント */
+{ const L = [['逆にこわいw', 'somehow scarier lol'], ['助けてあげて', 'someone help it'], ['おいおいどうなってんだ', "what's going on"], ['これは…どういう状況だ？', 'what... is happening?'], ['WTF', 'WTF'], ['何してんの…？', 'what is it doing...?'], ['ずっとそこで何してるの', 'why is it just stuck there'], ['出られないの？', "can't it get out?"], ['動きがおかしい', "it's moving weird"], ['ちょっとかわいそうになってきた', 'kinda feel bad for it'], ['混乱してる？', 'is it confused?'], ['迷子かな', 'is it lost?']];
+  L.forEach((x, i) => { CHAT_DICT.t['v2.mon_stuck.' + i] = x; }); CHAT_DICT.c.mon_stuck = L.map((x, i) => 'v2.mon_stuck.' + i);
+  CHAT_DICT.t['v2.mon_stuck_meta.0'] = ['バグった？！', 'did it glitch?!']; CHAT_DICT.c.mon_stuck_meta = ['v2.mon_stuck_meta.0']; }
 if (TEST && window.__G) Object.assign(window.__G, { STAKE, SENKO, GBOX, HAND, PLACE });
 /* 2026-11-19 動画が終わる直前に出た物（スマホの通知・着信・置く仮置き・道具の音など）が、結果画面に残らないように。プレイが終わった瞬間に片付ける */
 const ENDCLEAN = {
