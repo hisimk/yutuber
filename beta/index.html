@@ -15408,7 +15408,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.72';
+const VERSION = '0.17.74';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -20859,6 +20859,7 @@ const ECON = {
      決め方：1周のいいね350前後・3〜7分の周で、コメント数の平均を測った（新人49・駆け出し57・中堅70・人気78・大物84・伝説96件）。
      コメントの分が平均で「いいね350×倍率」の2割（＝70×倍率）になるよう、70÷平均件数にした */
   cmt: [1.43, 1.22, 1.01, 0.90, 0.83, 0.73],
+  cmtPerSec: 0.5,                            /* 2026-11-19 105番：お金に数えるコメントの上限（録画1秒あたり。＋4件） */
   carry: [1, 1, 2, 2, 3, 3],                 /* 1周に持って入れる道具の数 */
   sponsor: [2, 3, 4, 5],                     /* スポンサーから1つ届くランク */
   pickWing: 0.1,                             /* 新しい棟が開いた周に、理科室でケミカルライト・ろうそくを拾える確率 */
@@ -20950,7 +20951,7 @@ const SHOP = {
     /* 2026-11-16 校舎で拾ったショップの道具は持ち帰れる：使い切りは使わずに帰れば持ち物に足す（お札は枚数ぶん）、見た目の物は自分の物になる */
     const got = []; for (const it of ECON.items) { const id = it[0], h = ITEM.have[id]; if (!h) continue; if ((this.carried || []).includes(id)) { if (id === 'ofuda' && h > 1) { d.own.ofuda = (d.own.ofuda | 0) + h - 1; got.push(id); } continue; }   /* 2026-11-16 持ち込んだお札のほかに拾った分も持ち帰る */ if (YTAG.KEEP.includes(id)) { if (!d.own[id]) { d.own[id] = 1; got.push(id); } continue; } if (it[3] === 'look') { if (!d.look[id]) { d.look[id] = true; got.push(id); } } else { const n = typeof h === 'number' ? h : 1; d.own[id] = (d.own[id] | 0) + n; got.push(id); } }
     this.brought = got;
-    const k = cap ? ECON.capture : 1, tipRe = /^¥[\d,]+$/, cm = (typeof CHAT !== 'undefined' && CHAT.cur && CHAT.cur.items || []).filter(x => !x.some(v => typeof v === 'string' && tipRe.test(v))).length;   /* 投げ銭の帯は数えない */
+    const k = cap ? ECON.capture : 1, tipRe = /^¥[\d,]+$/, cur = typeof CHAT !== 'undefined' && CHAT.cur, phI = new Set((cur && cur.phIdx) || []), cm0 = ((cur && cur.items) || []).filter((x, i) => !x.some(v => typeof v === 'string' && tipRe.test(v)) && !phI.has(i) && !(typeof x[2] === 'string' && /^x\.ar\./.test(x[2]))).length, durS = cur && cur.end ? cur.end.R : (rec.time || 0), cm = Math.min(cm0, Math.ceil(durS * ECON.cmtPerSec) + 4);   /* 2026-11-19 105番：コメントの分のお金は、荒らし・荒れて足したコメントを数えず、録画の秒数で上限を付ける */   /* 投げ銭の帯は数えない */
     const likeY = Math.round(Math.max(0, likes) * ECON.like * ECON.mul[r]), cmtY = Math.round(cm * ECON.cmt[r] * ECON.mul[r]), base = likeY + cmtY, tips = typeof TIPS !== 'undefined' ? TIPS.sum() : 0, gross = base + tips, fee0 = cap ? Math.round(base * (1 - k)) : 0, fee = ins ? Math.round(fee0 / 2) : fee0, neko = wnk ? Math.round(base * 0.05) : 0, yen = gross - fee + neko;   /* 2026-11-16 襲われた時は「医療費」として、いいねとコメントの分の半分を引く（投げ銭は対象外） */
     d.yen += yen; this.save(); this.last = { yen, likes, mul: ECON.mul[r], cap, tips, base, likeY, cmtY, cm, per: ECON.cmt[r], fee, ins, neko }; if (TEST || DEV) console.log('SHOP run', JSON.stringify(this.last)); return this.last;
   },
@@ -24610,6 +24611,7 @@ for (const d of AW59.DEF) { AW_TABLE[d[0]] = [d[2], d[3]]; COL.LIST.push([d[0], 
    ・言い方は62番のラベル（LABX）で見分ける。ラベルのないコメント（あとから足した物）は、文から簡単に見分ける
    ・確認用：?araare=2（ちょい荒れ）／?araare=3（大荒れ）
    ========================================================= */
+const ARARE_N = { 2: 1.2, 3: 2 };   /* 2026-11-19 105番：荒れた時に足すコメント（10秒あたり。ちょい荒れ・大荒れ） */
 const ARARE = {
   KEY: 'yt_arare_v1', T2: 15, T3: 30,
   load() { if (!this.d) { try { this.d = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) { } if (!this.d || typeof this.d.s !== 'number') this.d = { s: 0, b: 0 }; } return this.d; },
@@ -24643,15 +24645,21 @@ const ARARE = {
   apply(d) {
     const st = this.stage(); d.ar = st; if (st < 2 || !d.items || !d.items.length) return; const R = chatRng((d.seed ^ 0xa4a4e) >>> 0), U = Math.max(6, (d.users || []).length || 12), end = d.end ? d.end.R + (d.end.ec ? 3 : -0.2) : 1e9, T = t => Math.round(t * 100) / 100;
     const norm = d.items.filter(x => x[1] !== -1 && typeof x[2] === 'string' && !/^¥/.test(x[2]) && !(d.phSet && d.phSet.has(x))), L = this.L, out = [], used = new Set();
-    const tmax = Math.min(end, Math.max(...d.items.map(x => x[0]), 10)), at = () => 3 + R() * Math.max(1, tmax - 5), one = (pool, id) => { const c = pool.filter(l => !used.has(l[0])); if (!c.length) return null; const l = c[Math.floor(R() * c.length)]; used.add(l[0]); return l; };
+    /* 2026-11-19 105番：足す数は動画の長さに合わせる（10秒あたり ARARE_N 件。10秒未満はほぼ足さない。喧嘩・長文は20秒以上だけ）。終わりの結果の3秒には置かない */
+    const dur = d.end ? d.end.R : Math.max(...d.items.map(x => x[0]), 0), lim = Math.max(0, dur - 0.3), budget = dur < 10 ? (st === 3 && dur >= 5 ? 1 : 0) : Math.round(dur / 10 * ARARE_N[st]), longOK = dur >= 20;
+    const tmax = Math.min(lim, Math.max(...d.items.map(x => x[0]), 3)), at = () => Math.min(lim, 1 + R() * Math.max(0.5, tmax - 1.5)), one = (pool, id) => { const c = pool.filter(l => !used.has(l[0])); if (!c.length) return null; const l = c[Math.floor(R() * c.length)]; used.add(l[0]); return l; };
     /* やさしい言い方を少し減らして、厳しい言い方を足す */
     const kindRm = st === 3 ? 0.3 : 0.15; const rm = new Set(norm.filter(x => this.toneX(x).k && R() < kindRm));
     const nh = Math.max(1, Math.round(norm.length * (st === 3 ? 0.12 : 0.06))); for (let i = 0; i < nh; i++) { const l = one(L.harsh); if (l) out.push([T(at()), Math.floor(R() * U), 'x.ar.h' + i, l[0], l[1]]); }
     const nc = st === 3 ? 3 : 2 + (R() < 0.5 ? 1 : 0); for (let i = 0; i < nc; i++) { const l = one(L.comp); if (l) out.push([T(at()), Math.floor(R() * U), 'x.ar.c' + i, l[0], l[1]]); }
     if (st === 3) { for (let i = 0; i < 2 + (R() < 0.5 ? 1 : 0); i++) { const l = one(L.angry); if (l) out.push([T(at()), Math.floor(R() * U), 'x.ar.a' + i, l[0], l[1]]); }
-      { const l = one(L.meta); if (l) out.push([T(at()), Math.floor(R() * U), 'x.ar.m0', l[0], l[1]]); } if (R() < 0.6) { const l = one(L.long); if (l) out.push([T(at()), Math.floor(R() * U), 'x.ar.l0', l[0], l[1]]); }
-      const fs = L.fight.slice().sort(() => R() - 0.5).slice(0, 1 + (R() < 0.5 ? 1 : 0)); fs.forEach((F, j) => { let t = at(); F.forEach((l, k) => { if (t <= end) out.push([T(t), Math.floor(R() * U), 'x.ar.f' + j + k, l[0], l[1]]); t += 1.6 + R() * 2.4; }); }); }
-    d.items = d.items.filter(x => !rm.has(x)).concat(out.filter(x => x[0] <= end)).sort((a, b) => a[0] - b[0]);
+      { const l = one(L.meta); if (l) out.push([T(at()), Math.floor(R() * U), 'x.ar.m0', l[0], l[1]]); } if (longOK && R() < 0.6) { const l = one(L.long); if (l) out.push([T(at()), Math.floor(R() * U), 'x.ar.l0', l[0], l[1]]); }
+      if (longOK) { const fs = L.fight.slice().sort(() => R() - 0.5).slice(0, 1 + (R() < 0.5 && dur >= 45 ? 1 : 0)); fs.forEach((F, j) => { let t = at(); F.forEach((l, k) => { if (t <= lim) out.push([T(t), Math.floor(R() * U), 'x.ar.f' + j + k, l[0], l[1]]); t += 1.6 + R() * 2.4; }); }); } }
+    /* 数の上限：喧嘩のやり取りは1組をまとめて数える */
+    { const keep = []; let n = 0; const groups = new Map(); for (const x of out) { const g = /^x\.ar\.f(\d)/.exec(x[2]); const k = g ? 'f' + g[1] : x[2]; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(x); }
+      const order = [...groups.values()].sort(() => R() - 0.5); for (const G of order) { if (n >= budget) break; keep.push(...G); n++; } out.length = 0; out.push(...keep); }
+    if (dur < 10) rm.clear();
+    d.items = d.items.filter(x => !rm.has(x)).concat(out.filter(x => x[0] <= lim)).sort((a, b) => a[0] - b[0]);
     if (TEST || DEV) console.log('ARARE stage', st, 'add', out.length, 'rm', rm.size);
   },
 };
@@ -25808,7 +25816,7 @@ for (const b of document.querySelectorAll('#hintSeg button')) b.addEventListener
 Object.assign(EN, { 'キーの表示': 'Key hints', '画面に出す操作の文字': 'Key labels shown on screen', '最初だけ': 'At first', 'いつも': 'Always', '出さない': 'Never', '左クリック': 'Left click', '右クリック': 'Right click', 'ホイール': 'Wheel', '調べる・開ける・隠れる': 'Interact / open / hide', '録画の開始・停止': 'Start/stop recording', 'ズーム': 'Zoom' });
 /* じゆうちょう・絵画を開いた時 */
 { let was = ''; new MutationObserver(() => { const H = document.documentElement.classList, now = H.contains('jyOn') ? 'jiyu' : H.contains('ptOn') ? 'paint' : ''; if (now && now !== was) try { KH.screen(now); } catch (e) { } was = now; }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] }); }
-if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
+if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, ARARE, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
