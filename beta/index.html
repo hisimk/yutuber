@@ -4327,10 +4327,10 @@ setInterval(() => { if (stickId !== null && performance.now() - stickEvT > 5000 
 const keys = {};
 /* 2026-11-13 PCのキー操作（設定で組み換えられる。この端末に保存） */
 const KB = {
-  DEF: { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD', lookL: 'ArrowLeft', lookR: 'ArrowRight', lookU: 'ArrowUp', lookD: 'ArrowDown', rec: 'KeyR', act: 'KeyE', selfie: 'KeyF', crouch: 'KeyC', tool: 'KeyG', inv: 'KeyI', z1: 'Digit1', z2: 'Digit2', z3: 'Digit3' },
+  DEF: { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD', lookL: 'ArrowLeft', lookR: 'ArrowRight', lookU: 'ArrowUp', lookD: 'ArrowDown', rec: 'KeyR', act: 'KeyE', selfie: 'KeyF', crouch: 'KeyC', tool: 'KeyG', inv: 'Tab', z1: 'Digit1', z2: 'Digit2', z3: 'Digit3' },
   NAME: { crouch: 'しゃがむ・立つ', tool: '手に持った道具を使う', up: '前へ歩く', down: '後ろへ歩く', left: '左へ歩く', right: '右へ歩く', lookL: '左を向く', lookR: '右を向く', lookU: '上を向く', lookD: '下を向く', rec: '録画の開始・停止', act: '調べる・開ける', selfie: 'インカメラの切り替え', inv: '持ち物', z1: 'ズーム 1倍', z2: 'ズーム 2倍', z3: 'ズーム 3倍' },
   map: {},
-  load() { let s = {}; try { s = JSON.parse(localStorage.getItem('yt_keys') || '{}'); } catch (e) { } this.map = Object.assign({}, this.DEF, s); },
+  load() { let s = {}; try { s = JSON.parse(localStorage.getItem('yt_keys') || '{}'); } catch (e) { } if (s.inv === 'KeyI' && !Object.keys(s).some(a => a !== 'inv' && s[a] === 'Tab')) { s.inv = 'Tab'; try { localStorage.setItem('yt_keys', JSON.stringify(s)); } catch (e) { } }   /* 2026-11-19 102番：持ち物のキーが I のまま保存されている時は Tab に置きかえる（ほかのキーと重なる時はそのまま） */ this.map = Object.assign({}, this.DEF, s); },
   save() { try { localStorage.setItem('yt_keys', JSON.stringify(this.map)); } catch (e) { } },
   label(c) { if (!c) return '—'; const A = { ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓', Space: 'Space', Enter: 'Enter', Tab: 'Tab', Backspace: 'BS', ShiftLeft: 'Shift', ShiftRight: '右Shift', ControlLeft: 'Ctrl', ControlRight: '右Ctrl', AltLeft: 'Alt', AltRight: '右Alt', CapsLock: 'Caps' }; return A[c] || c.replace(/^Key|^Digit|^Numpad/, (m) => m === 'Numpad' ? 'テンキー' : ''); },
   of(a) { return this.label(this.map[a]); },
@@ -4341,6 +4341,7 @@ setTimeout(() => { try { hintsRefresh(); } catch (e) { } }, 0);   // 2026-11-14 
 addEventListener('keyup', e => { try { if (e.code === KB.map.tool && typeof AIM !== 'undefined') AIM.release(); } catch (x) { } });
 addEventListener('keydown', e => {
   if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;   // 名前の入力中は反応しない
+  if (e.code === 'Tab' && !KB.wait && world.state !== 'title') e.preventDefault();   /* 102番：Tab でボタンの間を移らない（ゲーム中） */
   keys[e.code] = true; if (KB.wait) return; const M = KB.map;
   if (e.code === M.rec) toggleRec(); if (e.code === M.act) $('#actBtn').click();
   if (e.code === M.selfie && typeof SELF !== 'undefined' && world.state === 'play') SELF.set(!world.selfie);
@@ -15402,7 +15403,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.69';
+const VERSION = '0.17.70';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -23382,7 +23383,7 @@ function renderHowto() {
     'さまざまな<em>心霊現象をカメラに収めて</em>ください。',
     '<em>W・A・S・Dキーで移動</em>。<em>画面をクリックすると、マウスで視点操作</em>（Escでカーソルが出る。矢印キーでも可）。',
     '<em>Rキー</em>または<em>赤いボタンで録画開始／停止</em>。録画時間は<em>通算120秒</em>（画面上の「残容量」で残りが分かります）',
-    '<em>Eキー</em>で戸を開ける・隠れる、<em>1〜3キー</em>でズーム、<em>Fキー</em>でインカメラ、<em>Iキー</em>で持ち物、<em>Escキー</em>で設定（キーは設定で組み換えられます）。',
+    '<em>Eキー</em>で戸を開ける・隠れる、<em>1〜3キー</em>でズーム、<em>Fキー</em>でインカメラ、<em>Tabキー</em>で持ち物、<em>Escキー</em>で設定（キーは設定で組み換えられます）。',
     '電池は録画中に早く減ります。<em>玄関まで自分の足で戻り帰還</em>することもできます。',
     'イヤホン推奨',
   ]) : (IS_TOUCH ? [
@@ -23395,7 +23396,7 @@ function renderHowto() {
     'Catch all kinds of <em>paranormal phenomena on camera</em>.',
     '<em>Move with W/A/S/D</em>. <em>Click the screen, then move the mouse</em> to look around (Esc shows the cursor; arrow keys work too).',
     '<em>R key</em> or the <em>red button starts/stops recording</em>. You have <em>120 seconds in total</em> (see “Storage” at the top).',
-    '<em>E key</em> to open doors, hide, and interact. <em>1–4 keys</em> to change zoom.',
+    '<em>E key</em> to open doors, hide, and interact. <em>1–3 keys</em> to zoom, <em>F</em> for the selfie camera, <em>Tab</em> for items, <em>Esc</em> for settings (keys can be changed in Settings).',
     'The battery drains faster while recording. You can also <em>walk back to the entrance to escape</em>.',
     'Headphones recommended',
   ]);
