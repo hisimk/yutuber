@@ -4885,7 +4885,7 @@ function awardCont(key, label, pps, dt, cap = 200) {
   const add = Math.min(cap - e.acc, pps * dt); e.acc = Math.min(cap, e.acc + pps * dt); e.sec += dt; e.pts = Math.floor(e.acc); e.label = `${label}（${Math.round(e.sec)}秒）`;
   if (add > 0 && closeUp()) closeBonus(add * (CLOSE.mul - 1));
 }
-function award(key, label, pts) { if (awarded.has(key)) return;  if (typeof KEHAI !== 'undefined') KEHAI.onAward(awBase(key)); if (typeof TIPS !== 'undefined') try { TIPS.onAward(awBase(key)); } catch (e) { } { const a = AW_TABLE[awBase(key)]; if (a) pts = a[1]; } awarded.set(key, true); const ev = { t: rec.time, label, pts, key }; if (seenVia === 'fix' && world.t - FIXCAM.hitT < 0.2) ev.cam = 'fix'; else if (seenVia === 'wipe') ev.cam = 'wipe';   /* 2026-11-14 どのカメラで撮れたか */ evidence.push(ev); try { BOTH.onAward(ev); } catch (e) { } CHATLOG.add('aw', { key, label, pts }); if (rec.active) CHATLOG.bhAward(key); likePop(ev); if (closeUp()) closeBonus(pts * (CLOSE.mul - 1)); if (TEST || DEV) console.log('EVIDENCE', key, rec.time.toFixed(2)); }
+function award(key, label, pts) { if (awarded.has(key)) return;  if (typeof KEHAI !== 'undefined') KEHAI.onAward(awBase(key)); if (typeof TIPS !== 'undefined') try { TIPS.onAward(awBase(key)); } catch (e) { } { const a = AW_TABLE[awBase(key)]; if (a) pts = a[1]; } try { pts = AWPTS.adj(awBase(key), pts); } catch (e) { } awarded.set(key, true); const ev = { t: rec.time, label, pts, key }; if (seenVia === 'fix' && world.t - FIXCAM.hitT < 0.2) ev.cam = 'fix'; else if (seenVia === 'wipe') ev.cam = 'wipe';   /* 2026-11-14 どのカメラで撮れたか */ evidence.push(ev); try { BOTH.onAward(ev); } catch (e) { } CHATLOG.add('aw', { key, label, pts }); if (rec.active) CHATLOG.bhAward(key); likePop(ev); if (closeUp()) closeBonus(pts * (CLOSE.mul - 1)); if (TEST || DEV) console.log('EVIDENCE', key, rec.time.toFixed(2)); }
 function accum(key, cond, dt, need) { if (!cond) return false; evAcc[key] = (evAcc[key] || 0) + dt; return evAcc[key] >= need; }
 const _v = V(), _dir = V(), ray = new THREE.Raycaster();
 function onScreen(pos, margin = 1) { _v.copy(pos).project(camera); return _v.z < 1 && _v.z > -1 && Math.abs(_v.x) <= margin && Math.abs(_v.y) <= margin; }
@@ -15471,7 +15471,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.10';
+const VERSION = '0.18.11';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -26278,6 +26278,24 @@ AW_HINT.ghostCut = ['長く撮った動画を、あとで見返すと', 'rewatch
 TKTXT.ghostCut = [CHIP_DESC.ghostCut[0], '撮った■えのない■■', '見返した■■に、■った■えのない■いカットが入っていた。…■が撮ったの？'];
 Object.assign(EN, { '撮った覚えのない映像': 'Footage you never shot' });
 /* =========================================================
+   2026-11-19 96番：撮れ高のランクと点数をそろえ直す（ランクは下げない）
+   ・ランクごとの点数の幅：D 10まで／C 15〜25／B 30〜45／A 50〜80／S 90〜150／SS 200から（ランクが上なら必ず点数も上）
+     ※ 追われながら撮り続ける物（chaseRec など）は「1秒あたり」の点数なので、この幅の対象外
+   ・FIX：幅から外れていた撮れ高の新しい点数（AW_TABLE と COL.LIST の両方をここでそろえる）
+   ・2回目以降：自分の操作だけで安全に毎回起こせる撮れ高は、コレクションにもう入っている時（2回目以降）にいいねを減らす
+     HALF＝半分、PIANO（自分で弾く曲）＝3割。怪異に追われる・確率で起きる撮れ高は減らさない
+   ・保存済みの記録（歴代の神回の内訳）は、取った時の点数のまま残す
+   ========================================================= */
+const AWPTS = {
+  FIX: {"micNonstop": 90, "micScream": 90, "micLate": 50, "micRunScream": 90, "micChaseTalk": 90, "micHideLoud": 50, "micSilent": 50, "snake": 90, "soccer": 15, "mannRun": 45, "shoeBlood": 25, "fireExit": 45, "lidTrap": 90, "callBehind": 25, "slideCreep": 25, "f2stairFace": 45, "f2piano": 45, "spHead": 45, "clairPlay": 50, "nekoPiano": 50, "close": 15, "standFall": 25, "urahSummon": 200, "turcaPlay": 90, "toccataPlay": 90, "unmeiPlay": 90, "nuiTalk": 30, "nuiSelf": 90, "girlClue": 50},
+  HALF: ["micNonstop", "micScream", "micLate", "micSilent", "eqShades", "eqParty", "eqEars", "eqHood", "eqFlute", "eqFull", "squat30", "winSneak", "darkRec", "bellRing", "apEat", "tapSave", "soccer", "ballGlass", "ballGoal", "jyTalk", "jyHand", "paintDone", "paintX", "nuiTalk", "nuiSelf"], PIANO: ["clairPlay", "nekoPiano", "turcaPlay", "toccataPlay", "unmeiPlay", "pianist"], MUL_HALF: 0.5, MUL_PIANO: 0.3,
+  mul(k) { return this.PIANO.includes(k) ? this.MUL_PIANO : this.HALF.includes(k) ? this.MUL_HALF : 1; },
+  again(k) { try { const e = COL.LIST.find(x => x[0] === k); const it = e && COL.load().items[e[1]]; return !!(it && it.n > 0); } catch (e) { return false; } },
+  adj(k, pts) { const m = this.mul(k); if (m >= 1 || !this.again(k)) return pts; this.last = k; return Math.max(1, Math.round(pts * m)); },
+  apply() { for (const k in this.FIX) { if (AW_TABLE[k]) AW_TABLE[k][1] = this.FIX[k]; } for (const e of COL.LIST) { const a = AW_TABLE[e[0]]; if (a && typeof e[2] === 'number' && !['chaseRec', 'chaseSelfie', 'chaseBlood', 'selfieRun', 'redLight'].includes(e[0])) e[2] = a[1]; } },
+};
+try { AWPTS.apply(); } catch (e) { console.warn('AWPTS', e); }
+/* =========================================================
    2026-11-19 97番＋97番の追加：撮れ高テスト（試し版だけ。?awtest で開く）
    ・?awtest＝回の一覧／?awtest=回の番号＝その回で遊ぶ。保存は「awt:」を付けて、ふだんの記録と分ける
    ・回ごとに：その回の撮れ高が起きやすいように、テスト用スイッチ（?ev2= など）と「必ず起きる」設定を付けて始める
@@ -26473,7 +26491,7 @@ const AWT = {
 AWT.EVK = {}; for (const r of AWT.R) for (const e of r.list) if (e[3]) AWT.EVK[e[0]] = e[3];
 
 try { AWT.boot(); } catch (e) { console.warn('AWT', e); }
-if (TEST && window.__G) Object.assign(window.__G, { AWT, COL, GLITCH, RES_CHAT, FUDAGIFT, RADIO, NOTE, STATS, ENDING, PLACE, SALT2, ARMOCK, ENDCM, XEXT2, OPENCM, GOAL, REP, XCHAT, CHATLOG, NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, GHOSTCUT, ROOMX, DIRX: DIR, EVX: EV, ARARE, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
+if (TEST && window.__G) Object.assign(window.__G, { AWPTS, AWT, COL, GLITCH, RES_CHAT, FUDAGIFT, RADIO, NOTE, STATS, ENDING, PLACE, SALT2, ARMOCK, ENDCM, XEXT2, OPENCM, GOAL, REP, XCHAT, CHATLOG, NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, GHOSTCUT, ROOMX, DIRX: DIR, EVX: EV, ARARE, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
