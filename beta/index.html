@@ -2198,6 +2198,8 @@ function nearestNode(x, z, zone, y = 0) {
   return best;
 }
 /* 2026-11-19 92番：道順の最初の点を飛ばしてよいのは、今の位置から次の点まで壁にさえぎられていない時だけ */
+/* 2026-11-19 104番：捕まえる前に、間に壁・閉まった戸がないか */
+function catchClear(a, lv) { return !segBlocked(a.x, a.z, player.x, player.z, lv, 0.02) && !closedDoorOn(a.x, a.z, player.x, player.z, lv); }
 function navSkip(pos, path) { if (path.length >= 2) { const a = nodePos(path[1]), lv = (pos.y || 0) > 1.6 ? 1 : 0; if (Math.abs((a.y || 0) - (pos.y || 0)) < 0.3 && !stairZone(pos.x, pos.z) && !segBlocked(pos.x, pos.z, a.x, a.z, lv, 0.15)) return path.slice(1); return path; } return path.length && path[0] && Math.hypot(nodePos(path[0]).x - pos.x, nodePos(path[0]).z - pos.z) < 0.2 ? path.slice(1) : path; }
 const nodePos = k => V(NAV[k][0], NAV[k][3] || 0, NAV[k][1]);
 
@@ -5377,7 +5379,7 @@ const CH = {
     this.sndT -= dt;
     if (this.sndT <= 0) { const p = V(WD.pos.x, WD.pos.y + 1.1, WD.pos.z), cp = camera.position, oth = Math.abs(WD.pos.y - (cp.y - 1.4)) > 2.2, k = oth ? (stairZone(cp.x, cp.z) ? 0.55 : 0.3) : 1;   /* 2026-11-18 違う階は小さく、こもった音（高い衣ずれはやめて、低いすれる音だけ） */ if (chance(0.65) && !oth) SND.rustle(p, 1.3); else SND.scrape(V(WD.pos.x, WD.pos.y + 0.1, WD.pos.z), 0.3 * k, 0.35); this.sndT = clamp(dP * 0.13, 0.35, 1.5); }
     if (dP < 3.2 && chance(dt * 1.1)) SND.breath(rnd(-0.7, 0.7), 1.1);
-    if (dP < 0.75 && !player.hidden && !world.noCatch) CAP.start();
+    if (dP < 0.75 && !player.hidden && !world.noCatch && catchClear(WD.pos, (WD.pos.y || 0) > 1.6 ? 1 : 0)) CAP.start();
   },
 };
 
@@ -11157,7 +11159,7 @@ const MANN = {
       return;
     }
     const near = Math.hypot(player.x - this.pos.x, player.z - this.pos.z), same = Math.abs(this.pos.y - player.y) < 1.0;
-    if (same && near < 0.75 && !player.hidden && this.st !== 'stun') { this.capture(); return; }
+    if (same && near < 0.75 && !player.hidden && this.st !== 'stun' && catchClear(this.pos, this.lv())) { this.capture(); return; }
     switch (this.st) {
       case 'walk': {
         if (URAV.near(this.pos) && world.t > (this.fleeUntil || 0) && URAV.flee(this)) { this.fleeUntil = world.t + 6; this.walkTo(URAV.farthest(WD.dests, k => nodePos(k))); }   /* 2026-11-16 オフタリサマから走って逃げる */
@@ -15406,7 +15408,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.71';
+const VERSION = '0.17.72';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -18488,7 +18490,7 @@ const URAH_B64 = 'Z2xURgIAAADorQcAvHoAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvciI6ImdsVE
    ・動き：Noh_Walk・Hannya_Chase・Idle・ArmReach（般若側へ左右反転して使う）・Noh/Hannya_Detect（見つけた時）・Noh/Hannya_GrabBite（捕まえた時）
    ========================================================= */
 const URAH_CFG = {
-  scale: 1.15, catchR: 1.6, stepGain: 2.5,   /* 2026-11-18 捕まる範囲 1.0→1.6m（体が大きく腕も長い） */   /* 2026-11-16 足音の大きさ（前の足音の何倍か。聞いて調整） */
+  scale: 1.15, catchR: 1.6, doorCapDelay: 0.8, stepGain: 2.5,   /* 2026-11-18 捕まる範囲 1.0→1.6m（体が大きく腕も長い） */   /* 2026-11-16 足音の大きさ（前の足音の何倍か。聞いて調整） */
   /* 2026-11-15 速さは主人公の歩く速さを1とした倍率。追う速さは、追いかけ始めてから rampT 秒かけて最大へ */
   walkK: [0.8, 0.9],           /* ふだん歩き回る速さ（歩くたびに、この間でばらつく） */
   hannyaK: [1.1, 1.15],        /* 般若の追う速さ */
@@ -19233,7 +19235,12 @@ const URAH = {
     if (this.st === 'revenge') { this.headTick(dt); URFUDA.revTick(dt); URFUDA.follow(); return; }
     if (this.st === 'stun' || this.st === 'summon') { this.headTick(dt); URFUDA.tick(dt); URFUDA.follow(); this.apply(); return; }
     const dist = Math.hypot(player.x - this.pos.x, player.z - this.pos.z), dy = Math.abs(player.y - this.pos.y);
-    if (dist < URAH_CFG.catchR * this.root.scale.x / 1.15 && dy < 1.2 && !player.hidden && this.st !== 'climb' && !['prey', 'feed', 'rest'].includes(this.st) && !(this.face === 'noh' && this.frozen)) { this.capture(this.face); return; }
+    if (dist < URAH_CFG.catchR * this.root.scale.x / 1.15 && dy < 1.2 && !player.hidden && this.st !== 'climb' && !['prey', 'feed', 'rest'].includes(this.st) && !(this.face === 'noh' && this.frozen)) {
+      /* 2026-11-19 104番：間に閉まった扉・壁・個室の戸がある時は、すぐには捕まえない。ふつうの扉は体当たりで壊し、姿が見えてから少しあとに捕まえる */
+      const lv = this.lv(), dr = closedDoorOn(this.pos.x, this.pos.z, player.x, player.z, lv), wall = segBlocked(this.pos.x, this.pos.z, player.x, player.z, lv, 0.05), stall = this.stallP();
+      if (dr) { const L = Math.hypot(player.x - this.pos.x, player.z - this.pos.z) || 1; this.breakDoor(dr, (player.x - this.pos.x) / L, (player.z - this.pos.z) / L); this.capAfter = world.t + URAH_CFG.doorCapDelay; if (TEST || DEV) console.log('URAH door before catch', dr.name); }
+      else if (!wall && !stall && world.t >= (this.capAfter || 0)) { this.capture(this.face); return; }
+    }
     if (this.sees()) this.lastSeen = world.t;
     this.gDt = this.frozen ? 0.0001 : dt;
     if (!this.frozen) { this.mixer.update(dt); if (!this.gaitOn()) this.feet(this.st === 'walk' ? 0.5 : this.face === 'noh' ? 0.6 : 0.8); }
