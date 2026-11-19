@@ -5320,7 +5320,7 @@ const WD = {
         const fwd = V(Math.sin(this.heading + SG.ovYaw), 0, Math.cos(this.heading + SG.ovYaw)); const to = V(player.x - this.pos.x, 0, player.z - this.pos.z).normalize();
         ok = fwd.dot(to) > Math.cos(world.bneko ? 1.15 : 0.95) || dd < 1.6 || (NOISE.own && NOISE.fresh(this.pos)) || (PHAN.on && -fwd.dot(to) > Math.cos(0.95));   // 2026-11-15 ナカヨシは背中の頭（人体模型）でも見る   // 2026-11-14 鈴や笛の音が聞こえたら、向きに関係なく気づく（見通せる時だけ）
       } else if (!NOISE.used && NOISE.fresh(this.pos, 0.8) && !this.scripted && !this.borrowed && this.wait <= 0) { NOISE.used = true; if (chance(0.35)) this.goTo(V(NOISE.x, NOISE.y, NOISE.z)); }   // 見えない所の音：ときどき様子を見に来る
-      this.detect = ok ? this.detect + dt : Math.max(0, this.detect - dt * 0.5);
+      this.detect = ok ? this.detect + dt * TORCH.k(head) : Math.max(0, this.detect - dt * 0.5);   /* 109番：懐中電灯の光が当たっていると早く気づく */
       if (this.detect > 0.6) { this.detect = 0; CH.start(); }
     }
   },
@@ -11194,7 +11194,7 @@ const MANN = {
         }
         if (!this.path.length) { const ds0 = URAV.far(WD.dests.filter(k => NAV[k]), k => nodePos(k)), ds1 = ds0.filter(k => !saltNear(nodePos(k))); this.walkTo(pick(ds1.length ? ds1 : ds0)); }
         this.stepTick(dt, 1.7); this.apply();
-        this.seeT = this.seesPlayer(world.dark ? 20 : 14) ? (this.seeT || 0) + dt : 0;
+        this.seeT = this.seesPlayer(world.dark ? 20 : 14) ? (this.seeT || 0) + dt * TORCH.k(this.head()) : 0;
         if (this.seeT > 0.4) { this.seeT = 0; this.spot(); }
         break;
       }
@@ -15430,7 +15430,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.76';
+const VERSION = '0.17.77';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -19231,7 +19231,7 @@ const URAH = {
   },
   updAlert(dt) {
     this.play('Hannya_Chase', 1); this.alertT += dt;
-    if (this.sees()) { this.seeT = (this.seeT || 0) + dt; if (this.seeT > 0.15) { this.seeT = 0; this.toChase(); return; } } else this.seeT = 0;
+    if (this.sees()) { this.seeT = (this.seeT || 0) + dt * TORCH.k(this.head(this.face)); if (this.seeT > 0.15) { this.seeT = 0; this.toChase(); return; } } else this.seeT = 0;
     if (this.route.length) this.move(dt, this.sp('hannya') * (URGAIT.on ? URGAIT.surge || 1 : 1));
     else { this.by += dt * 1.6 * Math.sin(this.alertT * 1.3); this.srchT = (this.srchT || 0) + dt; if (this.srchT > 4.5) { this.srchT = 0; this.toWalk(); } }
     if (this.alertT > 30) this.toWalk();
@@ -19276,7 +19276,7 @@ const URAH = {
         if (!this.route.length) { this.wk = rnd(URAH_CFG.walkK[0], URAH_CFG.walkK[1]); } if (!this.route.length) { const ks0 = Object.keys(this.N).filter(k => !/^ue/.test(k) && !(this.TIGHT[this.N[k][2]] && !/^S/.test(this.N[k][2]))), ks1 = ks0.filter(k => !saltNear(this.npos(k))); this.goTo(this.npos(pick(ks1.length ? ks1 : ks0))); }   /* 2026-11-16 盛り塩のまわりは選ばない */   /* 徘徊の行き先：狭い部屋（階段以外）は選ばない */
         { const ws = this.sp('walk'); this.play('Noh_Walk', ws / 0.85 * 0.8); this.move(dt, ws * (URGAIT.on ? URGAIT.surge || 1 : 1)); }
         if (world.t > this.swapAt) { this.swapAt = world.t + rnd(URAH_CFG.swapMin, URAH_CFG.swapMax); this.swap(this.face === 'noh' ? 'hannya' : 'noh', false); }   /* ふとした時に顔が入れ替わる */
-        this.seeT = this.sees() && world.t >= (this.giveUntil || 0) ? this.seeT + dt : 0;
+        this.seeT = this.sees() && world.t >= (this.giveUntil || 0) ? this.seeT + dt * TORCH.k(this.head(this.face)) : 0;
         if (this.seeT > 0.3) { this.seeT = 0; this.toChase(); }
         break;
       }
@@ -25699,7 +25699,7 @@ const WALLOG = { on: /[?&]wallog\b/.test(location.search), last: new Map(), n: 0
    ・数字は TORCH.CFG にまとめた。確認用：?torch（最初から持っている）
    ========================================================= */
 const TORCH = {
-  CFG: { int: 3.5, dist: 30, angle: 0.19, pen: 0.45, decay: 0, color: 0xfff3dc },   /* decay 0：遠くまで弱まりにくい（dist の手前で切れる） */
+  CFG: { int: 3.5, dist: 30, angle: 0.19, pen: 0.45, decay: 0, color: 0xfff3dc, detK: 2, hitDist: 22 },   /* detK：光が当たっている怪異が気づくまでの速さ（2＝半分の時間）。hitDist：光が当たるとみなす距離 */   /* decay 0：遠くまで弱まりにくい（dist の手前で切れる） */
   init() { if (this.L) return; const C = this.CFG; const L = this.L = new THREE.SpotLight(C.color, 0, C.dist, C.angle, C.pen, C.decay); L.castShadow = false; L.position.set(0.09, -0.16, -0.36); camera.add(L); L.target.position.set(0.02, -0.06, -2); camera.add(L.target); },
   mesh() { const g = new THREE.Group(), dark = new THREE.MeshLambertMaterial({ color: 0x2c2e33 }), silver = new THREE.MeshLambertMaterial({ color: 0xa8adb5, emissive: 0x15161a });
     const body = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.12, 10), dark); g.add(body);
@@ -25707,16 +25707,18 @@ const TORCH = {
     const lens = this.lens = new THREE.Mesh(new THREE.CircleGeometry(0.018, 14), new THREE.MeshBasicMaterial({ color: 0x55534c, toneMapped: false })); lens.position.y = 0.0925; lens.rotation.x = -Math.PI / 2; g.add(lens);
     const sw = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.016, 0.008), new THREE.MeshLambertMaterial({ color: 0xb8402c })); sw.position.set(0, 0.01, -0.0135); g.add(sw);
     g.rotation.set(-Math.PI / 2 + 0.12, 0, 0.12); g.position.set(0.11, -0.215, -0.46); return g; },
+  /* 109番：光（照らす向き・広がり・距離）に入っていれば、気づくまでの時間を短く */
+  k(p) { try { if (!p || !this.L || !(this.L.intensity > 0)) return 1; const cp = camera.position, d = cp.distanceTo(p); if (d > this.CFG.hitDist) return 1; const f = camFwd(), v = p.clone().sub(cp).normalize(); return f.angleTo(v) <= this.CFG.angle * 1.3 ? this.CFG.detK : 1; } catch (e) { return 1; } },
   update() { this.init(); const on = HAND.item === 'torch' && HAND.tOn && !HAND.hiding() && !world.dark && (world.state === 'play' || world.state === 'paused');
     this.L.intensity = on ? this.CFG.int : 0; if (this.lens) this.lens.material.color.setHex(on ? 0xfff6d8 : 0x55534c); },
 };
 TORCH.init();
-ITEM.defs.torch = { name: '懐中電灯', desc: '前の方を、遠くまで少し明るく照らせる。使うと手に持ち、ボタンで点けたり消したりできる。なくならない。', size: 0.2, act: '使う' };
+ITEM.defs.torch = { name: '懐中電灯', desc: '前方を明るく照らせるが、怪異に気づかれる危険性も高まる。', size: 0.2, act: '使う' };
 ITEM_ICON2.torch = ITEM_IMG.torch = 'data:image/webp;base64,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';   /* 2026-11-19 本人が用意したアイコン（白い背景を抜いた） */
 ECON.items.push(['torch', 5000, 2, 'use']); YTAG.NOUSE.push('torch'); YTAG.USE.push('torch'); if (!INV.ids.includes('torch')) INV.ids.push('torch'); ITEM_TIER.rare.push('torch'); LOCKX.TIER.r.push('torch'); LOCKX.WT.torch = 0.6; if (!ITEM.LK_IDS.includes('torch')) ITEM.LK_IDS.push('torch');
 { const K0 = YTAG.kind.bind(YTAG); YTAG.kind = function (id) { return id === 'torch' ? 'perm' : K0(id); }; }   /* 札は「ずっと」 */
 HAND.HOLD.push('torch');
-Object.assign(EN, { '懐中電灯': 'Flashlight', '前の方を、遠くまで少し明るく照らせる。使うと手に持ち、ボタンで点けたり消したりできる。なくならない。': 'Lights up the way ahead, a little farther than usual. Use it to hold it, and press the button to turn it on or off. It never runs out.', 'つける': 'On', '消す': 'Off' });
+Object.assign(EN, { '懐中電灯': 'Flashlight', '前方を明るく照らせるが、怪異に気づかれる危険性も高まる。': 'Lights up the way ahead, but also makes spirits more likely to notice you.', 'つける': 'On', '消す': 'Off' });
 { const I0 = HAND.init.bind(HAND); HAND.init = function () { const first = !this.g; I0(); if (first) { const t = TORCH.mesh(); this.g.add(t); this.m.torch = t; t.traverse(o => { o.frustumCulled = false; o.renderOrder = 5; }); t.visible = false; } }; }
 { const L0 = HAND.toolLabel.bind(HAND); HAND.toolLabel = function () { const l = L0(); if (this.item !== 'torch') return l; if (!this.item || world.state !== 'play' || world.capture || this.hiding()) return null; const H = document.documentElement.classList; if (H.contains('jyOn') || H.contains('ptOn') || (typeof PIANO !== 'undefined' && PIANO.on) || (typeof INV !== 'undefined' && INV.open) || (typeof SET !== 'undefined' && SET.open)) return null; return TR(this.tOn ? '消す' : 'つける'); }; }
 { const U0 = HAND.useTool.bind(HAND); HAND.useTool = function () { if (this.item === 'torch') { if (!this.toolLabel()) return; this.tOn = !this.tOn; try { SND.latch(camera.position.clone()); } catch (e) { } if (TEST || DEV) console.log('TORCH', this.tOn); return; } return U0(...arguments); }; }
