@@ -13627,6 +13627,7 @@ function render() {
   CALL.after();   // 2026-11-15 着信の画面（録画にも入る）
   if (!fx && RECV.want()) RECV.copy();   /* 録画用の画面へ（いつもの映像） */
   if (typeof AIM !== 'undefined' && AIM.sc && AIM.line && AIM.line.visible) { const ac = renderer.autoClear; renderer.autoClear = false; renderer.render(AIM.sc, cam); renderer.autoClear = ac; }   /* 2026-11-19 110番：軌道の線は録画のあとに重ねる（録画には映らない） */
+  if (typeof PLACE !== 'undefined' && PLACE.sc && PLACE.vis) { const ac = renderer.autoClear; renderer.autoClear = false; renderer.render(PLACE.sc, cam); renderer.autoClear = ac; }   /* 121・122番：仮置きも録画のあとに重ねる */
 }
 /* 2026-11-15 タイトル画面の背景：校舎の紹介映像（ゲームの3Dの校舎をそのまま撮る。動画ファイルは使わない）
    ・決めた場所を、1か所6〜8秒ずつ、ゆっくりパン／前進。次の場所へは暗転でつなぎ、最後まで行ったら最初から
@@ -15435,7 +15436,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.87';
+const VERSION = '0.17.88';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -20944,7 +20945,7 @@ Object.assign(ITEM.defs, {
   drink: { name: '栄養ドリンク', desc: '1分間、歩く速さが上がる。切れたあと少し息が上がる。', size: 0.18, act: '飲む' },
   drinkG: { name: '栄養ドリンクG', desc: '2分間、歩く速さが上がる（栄養ドリンクの上位版）。切れたあと少し息が上がる。', size: 0.18, act: '飲む' },
   stick: { name: 'こわれかけの自撮り棒', desc: '持っていると、インカメラが少し遠く・広く映る。時間の制限はないが、怪異に襲われると壊れる。', size: 0.2 },
-  salt: { name: '盛り塩', desc: '部屋の中で置くと、その部屋の入口すべてに塩を盛る。怪異はその部屋に入ってこられない（逃げ込めば助かる）。3回追い返すと塩が黒く変色して効かなくなる。1周に1回まで。', size: 0.18, act: '置く' },
+  salt: { name: '盛り塩', desc: '使うと手に持ち、部屋の入口に置くと、その部屋の入口すべてに塩を盛る。怪異はその部屋に入ってこられない（逃げ込めば助かる）。3回追い返すと塩が黒く変色して効かなくなる。1周に1回まで。', size: 0.18, act: '使う' },
   bkey: { name: '壊れかけの脱出口の鍵', desc: '非常口の鍵穴にだけ合うらしい。一度回したら、たぶん折れる。（非常口を1回だけ開けられる。ロッカーやほかの扉は開けられない。拾った鍵がある時はそちらを使う）', size: 0.18 },
   hoken: { name: '今から入れる保険証', desc: '持っている時に襲われると、医療費が半分になる。使うとなくなる。校舎に落ちていることもある。', size: 0.18 },
   wneko: { name: '白い招き猫', desc: '商売繁盛のご利益があるらしい。持ち込むと、収益がほんの少し増える。なくならない。', size: 0.2 },
@@ -22261,11 +22262,11 @@ const SALT2 = {
       if (!out.some(o => o.P.distanceTo(D.P) < 1.2)) out.push(D); }
     return out; },
   inRoom(p, y) { return this.on() && Math.abs(y - this.y) < 1.6 && zoneOf(p.x, p.z, this.y + 1) === this.room; },
-  place() {
+  place(Tg) {
     const T = (ja, en) => LANG === 'en' ? en : ja; if (this.room) { toast(T('盛り塩は1周に1回まで', 'One salt per run'), 1500); return false; }
-    const lv = player.y > 1.6 ? 1 : 0, y = lv ? LH : 0, room = zoneOf(player.x, player.z, y + 1);
+    const lv = Tg ? Tg.lv : player.y > 1.6 ? 1 : 0, y = lv ? LH : 0, room = Tg ? Tg.room : zoneOf(player.x, player.z, y + 1);   /* 2026-11-19 122番：手に持って選んだ入口（Tg）の部屋に置く */
     if (!this.ROOMS.includes(room) || (room === '2B' && world.maze)) { POP.msg(T('部屋の中でお使いください', 'Please use it inside a room')); return false; }
-    const ds = this.doors(room, lv); if (!ds.length) { toast(T('この部屋には置けないようだ', 'Can’t be used in this room'), 1600); return false; }
+    const ds = Tg ? Tg.ds : this.doors(room, lv); if (!ds.length) { toast(T('この部屋には置けないようだ', 'Can’t be used in this room'), 1600); return false; }
     this.room = room; this.y = y; this.lv = lv; this.n = 0; this.dead = false; this.ds = ds; this.mat = new THREE.MeshLambertMaterial({ color: 0xe9e6de, emissive: 0x2a2926 });   /* 暗い廊下でもうっすら分かる程度 */ this.plate = new THREE.MeshLambertMaterial({ color: 0xbfbab0 });
     const G = lv ? F2G : F1G;
     for (const D of ds) { const side = V(-D.dir.z, 0, D.dir.x), c = D.P.clone().addScaledVector(D.dir, 0.22);
@@ -22301,7 +22302,7 @@ STICK.update = () => { };
 XCHAT.LIST.salt_put = ['sl.01', 'sl.02', 'sl.03']; XCHAT.LIST.salt_rep = ['sl.04', 'sl.05', 'sl.06']; XCHAT.LIST.salt_dead = ['sl.07', 'sl.08'];
 Object.assign(CHAT_DICT.t, { 'sl.01': ['盛り塩ｷﾀ', 'salt time'], 'sl.02': ['籠城か', 'turtling up'], 'sl.03': ['ここが安全地帯', 'safe zone'], 'sl.04': ['入ってこないｗ', 'it can’t come in lol'], 'sl.05': ['塩つよ', 'salt OP'], 'sl.06': ['塩が…くすんでる', 'the salt is darkening'], 'sl.07': ['塩真っ黒で草', 'salt went black lol'], 'sl.08': ['もう効かないぞ逃げろ', 'it won’t work anymore, run'] });
 Object.assign(EN, { '壊れかけの脱出口の鍵': 'Worn escape key', '電池が30％回復する。': 'Restores 30% battery.', '理科室にあった予備のバッテリー。電池が50％回復する。': 'A spare battery from the science room. Restores 50% battery.',
-  '部屋の中で置くと、その部屋の入口すべてに塩を盛る。怪異はその部屋に入ってこられない（逃げ込めば助かる）。3回追い返すと塩が黒く変色して効かなくなる。1周に1回まで。': 'Use inside a room to salt all its doorways. Apparitions can’t enter that room. After driving them off 3 times, the salt turns black and stops working. Once per run.',
+  '使うと手に持ち、部屋の入口に置くと、その部屋の入口すべてに塩を盛る。怪異はその部屋に入ってこられない（逃げ込めば助かる）。3回追い返すと塩が黒く変色して効かなくなる。1周に1回まで。': 'Use it to hold it, then place it at a room’s doorway to salt all its doorways. Apparitions can’t enter that room. After driving them off 3 times, the salt turns black and stops working. Once per run.',
   '持っていると、インカメラが少し遠く・広く映る。時間の制限はないが、怪異に襲われると壊れる。': 'The selfie camera shows a little wider. No time limit, but it breaks if an apparition attacks you.',
   '非常口の鍵穴にだけ合うらしい。一度回したら、たぶん折れる。（非常口を1回だけ開けられる。ロッカーやほかの扉は開けられない。拾った鍵がある時はそちらを使う）': 'Seems to fit only the emergency exit. It will probably snap after one turn. (Opens the emergency exit once. Can’t open lockers or other doors.)',
   'クマ避けの鈴。ここでは、別のものを呼び寄せてしまう。一度つけると、その周の間は外せない（向きを変えるたびに鳴る）。怪異に気づかれやすくなるかわりに、怪奇現象も少し起きやすくなる。使ってもなくならない。': 'A bear bell. Here it calls something else. Once worn it can’t be removed that run (it rings when you turn). Apparitions notice you more, but strange events happen a bit more often. Never used up.',
@@ -25261,15 +25262,17 @@ const JIYU = {
     const spots = n === 2 ? [[0.5, 0.29, 300], [0.5, 0.71, 300]] : [[0.36, 0.22, 230], [0.66, 0.5, 250], [0.38, 0.79, 230]];
     for (let i = 0; i < n; i++) { const [x, y, s] = spots[i]; this.drawPic(g, ks[i], (x + (R() - 0.5) * 0.06) * this.TW, (y + (R() - 0.5) * 0.04) * this.TH, s * (0.9 + R() * 0.15), chatRng((R() * 1e9) | 0)); }
     this.grain(g, 0.4); L.art = c; L.artK = ks.slice(0, n); },
-  place() {
-    if (world.state !== 'play') return false; this.build(); const f = camFwd(); f.y = 0; f.normalize(); const by = Math.atan2(-f.x, -f.z);
-    let desk = null, best = 1.7; for (const rk in rooms) for (const d of (rooms[rk] && rooms[rk].desks) || []) { if (!d || !d.g) continue; const p = d.g.getWorldPosition(V()); if (Math.abs(p.y - (player.lv ? LH : 0)) > 1) continue; const dx = p.x - player.x, dz = p.z - player.z, dd = Math.hypot(dx, dz); if (dd > best || (f.x * dx + f.z * dz) / (dd || 1) < 0.3) continue; if (KOK.desk === d || deskBusy(d, this.g)) continue; best = dd; desk = d; }
-    if (desk) { desk.g.add(this.g); const dy = desk.g.getWorldQuaternion(new THREE.Quaternion()); const e = new THREE.Euler().setFromQuaternion(dy, 'YXZ'); this.g.position.set(0, 0.757, 0); this.g.rotation.y = by - e.y; this.desk = desk; }
+  place(T) {
+    if (world.state !== 'play') return false; this.build(); const f = camFwd(); f.y = 0; f.normalize(); let by = Math.atan2(-f.x, -f.z);
+    /* 2026-11-19 121番：手に持って選んだ場所（T）に置く。T がない時（確認用の自動置き）は今までどおり */
+    if (T) { if (this.g.parent) this.g.parent.remove(this.g); by = T.by; if (T.desk) { const desk = T.desk; desk.g.add(this.g); const e = new THREE.Euler().setFromQuaternion(desk.g.getWorldQuaternion(new THREE.Quaternion()), 'YXZ'); this.g.position.set(0, 0.757, 0); this.g.rotation.y = by - e.y; this.desk = desk; } else { this.g.position.set(T.p.x, T.p.y + 0.004, T.p.z); this.g.rotation.y = by; scene.add(this.g); this.desk = null; } }
+    let desk = null, best = T ? -1 : 1.7; for (const rk in rooms) for (const d of (rooms[rk] && rooms[rk].desks) || []) { if (!d || !d.g) continue; const p = d.g.getWorldPosition(V()); if (Math.abs(p.y - (player.lv ? LH : 0)) > 1) continue; const dx = p.x - player.x, dz = p.z - player.z, dd = Math.hypot(dx, dz); if (dd > best || (f.x * dx + f.z * dz) / (dd || 1) < 0.3) continue; if (KOK.desk === d || deskBusy(d, this.g)) continue; best = dd; desk = d; }
+    if (T) { } else if (desk) { desk.g.add(this.g); const dy = desk.g.getWorldQuaternion(new THREE.Quaternion()); const e = new THREE.Euler().setFromQuaternion(dy, 'YXZ'); this.g.position.set(0, 0.757, 0); this.g.rotation.y = by - e.y; this.desk = desk; }
     else { const [x, z] = collide(player.x + f.x * 0.75, player.z + f.z * 0.75, 0.2, player.lv); this.g.position.set(x, (player.lv ? LH : 0) + 0.004, z); this.g.rotation.y = by; scene.add(this.g); this.desk = null; }
     this.by = by; this.lv = player.lv; this.placed = true; this.fqUsed = false; this.placedAt = world.t; this.away = 0; this.rolled = false; this.wrote = 0; this.lastSeen = world.t; this.hintAsked = false; this.liveDone = false; this.pend = null; this.q = null; this.hurt = null; this.angry = false;
     this.leftArt(); if (WF('jiyufill')) this.write('word');
     this.render(); SND.rustle && SND.rustle(this.pos(), 0.6); try { CHATLOG.add('jiyu', { w: 'put' }); } catch (e) { }
-    if (TEST || DEV) console.log('JIYU place', desk ? 'desk' : 'floor');
+    if (TEST || DEV) console.log('JIYU place', T ? (T.desk ? 'desk' : T.kind) : desk ? 'desk' : 'floor');
     return true; },
   pos() { return this.g ? this.g.getWorldPosition(V()) : V(); },
   reset() { this.exit(true); if (this.g && this.g.parent) this.g.parent.remove(this.g); this.g = null; this.placed = false; this.desk = null; this.k = 0; world.jyK = 0; },
@@ -25482,11 +25485,11 @@ const JIYU = {
 };
 /* ── 持ち物として */
 for (const k in JIYU_IMG) JIYU.img(k);   /* 絵は先に読み込んでおく */
-ITEM.defs.jiyu = { name: 'じゆうちょう', desc: '使うと、目の前の机（なければ床）に開いて置く。置いたら拾い直せない。離れているあいだに、何かが書き込まれることがある。鉛筆で書き込むこともできる。', size: 0.2, act: '置く' };
+ITEM.defs.jiyu = { name: 'じゆうちょう', desc: '使うと手に持ち、机の上や床に開いて置ける。置いたら拾い直せない。離れているあいだに、何かが書き込まれることがある。鉛筆で書き込むこともできる。', size: 0.2, act: '使う' };
 ECON.items.push(['jiyu', 500, 1, 'use']); YTAG.USE.push('jiyu'); INV.ids.push('jiyu'); ITEM_ICON2.jiyu = ITEM_IMG.jiyu = JIYU_ICON;
 LOCKX.TIER.n.push('jiyu'); LOCKX.WT.jiyu = 0.6; if (!ITEM.LK_IDS.includes('jiyu')) ITEM.LK_IDS.push('jiyu');
-Object.assign(EN, { 'じゆうちょう': 'Notebook', '使うと、目の前の机（なければ床）に開いて置く。置いたら拾い直せない。離れているあいだに、何かが書き込まれることがある。鉛筆で書き込むこともできる。': 'Use it to lay it open on the desk in front of you (or the floor). It can’t be picked back up. While you’re away, something may write in it. You can write in it with a pencil too.', 'のぞく': 'Peek', '置く': 'Put down', 'じゆうちょうを置いた': 'You put the notebook down', 'もう置いてある': 'It’s already placed' });
-{ const U0 = ITEM.use.bind(ITEM); ITEM.use = function (id) { if (id !== 'jiyu') return U0(id); if (!this.have.jiyu) return false; if (JIYU.placed) { toast(TR('もう置いてある'), 1500); return false; } if (!JIYU.place()) return false; this.have.jiyu = false; toast(TR('じゆうちょうを置いた'), 1500); try { if (INV.open) INV.close && INV.close(); } catch (e) { } return true; }; }
+Object.assign(EN, { 'じゆうちょう': 'Notebook', '使うと手に持ち、机の上や床に開いて置ける。置いたら拾い直せない。離れているあいだに、何かが書き込まれることがある。鉛筆で書き込むこともできる。': 'Use it to hold it, then lay it open on a desk or the floor. It can’t be picked back up. While you’re away, something may write in it. You can write in it with a pencil too.', 'のぞく': 'Peek', '置く': 'Put down', 'じゆうちょうを置いた': 'You put the notebook down', 'もう置いてある': 'It’s already placed' });
+{ const U0 = ITEM.use.bind(ITEM); ITEM.use = function (id) { if (id !== 'jiyu') return U0(id); if (!this.have.jiyu) return false; if (JIYU.placed) { toast(TR('もう置いてある'), 1500); return false; } return U0(id); }; }   /* 2026-11-19 121番：使うと手に持つ（置くのは手に持ってから） */
 /* ── つなぐ所 */
 { const R0 = ITEM.reset.bind(ITEM); ITEM.reset = function () { const r = R0.apply(this, arguments); try { JIYU.reset(); } catch (e) { console.warn('JIYU', e); } return r; }; }
 { const C0 = KOK.cam.bind(KOK); KOK.cam = function (pos) { C0(pos); JIYU.cam(pos); }; }
@@ -25829,6 +25832,67 @@ Object.assign(EN, { '懐中電灯': 'Flashlight', '前方を明るく照らせ�
 { const T0 = HAND.take.bind(HAND); HAND.take = function (id, st) { const r = T0(id, st); if (id === 'torch') this.tOn = true; return r; }; }   /* 持った時はつけた状態 */
 { const U1 = HAND.update.bind(HAND); HAND.update = function (dt) { U1(dt); try { TORCH.update(); } catch (e) { } }; }
 { const R0 = HAND.reset.bind(HAND); HAND.reset = function () { R0(); this.tOn = false; }; }
+/* =========================================================
+   2026-11-19 121・122番：じゆうちょう・盛り塩は「手に持つ → 半透明の仮置きを見て → 置く」
+   ・仮置きは録画のあとに重ねる（録画には映らない）
+   ・じゆうちょう：机（教室・図書室の机、理科室の実験台、1階の教卓）か床。物が乗っている所・壁・遠すぎる所には出さない
+   ・盛り塩：部屋の入口を見ている時は白（その部屋の入口すべて）、それ以外は赤（置けない）
+   ========================================================= */
+const PLACE = {
+  sc: new THREE.Scene(), vis: false, t: null,
+  CFG: { deskD: 1.7, floor: [0.35, 2.2], doorD: 4.0, doorAng: 0.82, doorNear: 1.3 },
+  /* 教室・図書室の机のほかに置ける所（動かない台）。理科室の実験台は新しい棟が開いた周だけ。美術室・理科室の動く机・椅子には置かない */
+  SURF() { const a = [{ p: V(7.5, 0.905, -17.1), lv: 0 }, { p: V(7.5, 0.905, -19.0), lv: 0 }];
+    if (typeof SCIRM !== 'undefined' && SCIRM.built && SCIRM.tables && world.wingOpen) for (const t of SCIRM.tables) a.push({ p: V(t.x, LH + 0.862, t.z), lv: 1 });
+    return a; },
+  /* 台の上（p のまわり）に、小さな物が乗っていないか */
+  busy(p) { let hit = false; const bb = new THREE.Box3(), c = V(); scene.traverseVisible(o => { if (hit || !o.isMesh) return; if (JIYU.g && (o === JIYU.g || JIYU.g.getObjectById(o.id))) return; bb.setFromObject(o); if (bb.isEmpty()) return; const sz = bb.getSize(V()); if (sz.x > 0.9 || sz.z > 0.9 || sz.y > 1.2) return; bb.getCenter(c); if (Math.abs(c.x - p.x) < 0.3 && Math.abs(c.z - p.z) < 0.3 && bb.min.y > p.y - 0.03 && bb.min.y < p.y + 0.25) hit = true; }); return hit; },
+  /* 見ている床の点（壁の向こうは×） */
+  floorPt(maxD) { const c = camera.getWorldPosition(V()), f = camFwd(), ly = player.lv ? LH : 0; if (f.y > -0.12) return null; const t = (c.y - ly) / -f.y, q = c.clone().addScaledVector(f, t); const hd = Math.hypot(q.x - player.x, q.z - player.z); if (hd < this.CFG.floor[0] || hd > maxD) return null;
+    for (let i = 1; i <= 5; i++) { const k = i / 5, x = lerp(player.x, q.x, k), z = lerp(player.z, q.z, k), [cx, cz] = collide(x, z, 0.12, player.lv); if (Math.abs(cx - x) + Math.abs(cz - z) > 0.03) return null; } q.y = ly; return q; },
+  jTarget() { if (JIYU.placed) return null; const f = camFwd(), fh = V(f.x, 0, f.z).normalize(), by = Math.atan2(-fh.x, -fh.z), ly = player.lv ? LH : 0; if (f.y > 0.15) return null;
+    let T = null, best = this.CFG.deskD; const cone = (p) => { const dx = p.x - player.x, dz = p.z - player.z, dd = Math.hypot(dx, dz); return dd <= best && (fh.x * dx + fh.z * dz) / (dd || 1) >= 0.5 ? dd : null; };
+    for (const rk in rooms) for (const d of (rooms[rk] && rooms[rk].desks) || []) { if (!d || !d.g || !d.g.visible) continue; const p = d.g.getWorldPosition(V()); if (Math.abs(p.y - ly) > 1) continue; const dd = cone(p); if (dd === null || KOK.desk === d || deskBusy(d, JIYU.g)) continue; best = dd; T = { desk: d, by, p: d.g.localToWorld(V(0, 0.757, 0)), kind: 'desk' }; }
+    for (const S of this.SURF()) { if (S.lv !== player.lv) continue; const dd = cone(S.p); if (dd === null || this.busy(S.p)) continue; best = dd; T = { by, p: S.p.clone(), kind: 'table' }; }
+    if (T) return T; const q = this.floorPt(this.CFG.floor[1]); return q ? { by, p: q, kind: 'floor' } : null; },
+  /* 盛り塩：見ている入口（その部屋の入口すべて）。なければ赤（見ている床） */
+  doorsOf(room, lv) { const k = room + lv; this.dc = this.dc || {}; return this.dc[k] || (this.dc[k] = SALT2.doors(room, lv)); },
+  sTarget() { const lv = player.y > 1.6 ? 1 : 0, c = camera.getWorldPosition(V()), f = camFwd(), q = this.floorPt(3.5); let best = null, bs = -1; const here = zoneOf(player.x, player.z, (lv ? LH : 0) + 1);
+    for (const room of SALT2.ROOMS) { if (room === '2B' && world.maze) continue; if (WING_Z.includes(room) && !world.wingOpen) continue; const ds = this.doorsOf(room, lv);
+      for (const D of ds) { const p = V(D.P.x, (lv ? LH : 0) + 0.3, D.P.z), v = p.clone().sub(c), d = v.length(); if (d > this.CFG.doorD) continue; const a = v.normalize().dot(f); const near = q && Math.hypot(q.x - D.P.x, q.z - D.P.z) < this.CFG.doorNear;
+        if (a < this.CFG.doorAng && !near) continue; let sc = a + (near ? 1 : 0) + (room === here ? 0.05 : 0); if (sc > bs) { bs = sc; best = { room, lv, ds, D }; } } }
+    if (best) return Object.assign(best, { ok: true }); const p = q || (() => { const fh = V(f.x, 0, f.z).normalize(), [x, z] = collide(player.x + fh.x * 1.2, player.z + fh.z * 1.2, 0.2, player.lv); return V(x, lv ? LH : 0, z); })(); return { ok: false, p, lv }; },
+  mat(col, op) { return new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: op, depthWrite: false, depthTest: false }); },
+  init() { if (this.jg) return; const W = this.mat(0xffffff, 0.42);
+    this.jg = new THREE.Group(); const pg = new THREE.Mesh(new THREE.PlaneGeometry(JIYU.PW * 2, JIYU.PH), W); pg.rotation.x = -Math.PI / 2; this.jg.add(pg); const sp = new THREE.Mesh(new THREE.PlaneGeometry(0.004, JIYU.PH), this.mat(0xffffff, 0.6)); sp.rotation.x = -Math.PI / 2; sp.position.y = 0.001; this.jg.add(sp); this.sc.add(this.jg);
+    this.sW = this.mat(0xffffff, 0.45); this.sR = this.mat(0xff3b30, 0.5); this.sg = new THREE.Group(); this.sc.add(this.sg); this.hide(); },
+  pile(m, x, y, z, G) { const pl = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.016, 14), m); pl.position.set(x, y + 0.008, z); const co = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.13, 12), m); co.position.set(x, y + 0.08, z); G.add(pl, co); },
+  /* 盛り塩の仮置き：SALT2.place と同じ形（入口ごとに左右2つと線） */
+  saltGhost(T) { const key = T.ok ? 'w' + T.room + T.lv : 'r', G = this.sg; if (this.sKey !== key || !T.ok) { while (G.children.length) G.remove(G.children[0]); this.sKey = key; const y = T.lv ? LH : 0;
+      if (T.ok) for (const D of T.ds) { const side = V(-D.dir.z, 0, D.dir.x), c = D.P.clone().addScaledVector(D.dir, 0.22), m = D === T.D ? this.sW : this.mat(0xffffff, 0.22); for (const k of [-0.62, 0.62]) { const q = c.clone().addScaledVector(side, k); this.pile(m, q.x, y, q.z, G); } const ln = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.004, 0.035), m); ln.position.set(c.x, y + 0.004, c.z); ln.rotation.y = Math.atan2(side.x, side.z) + Math.PI / 2; G.add(ln); }
+      else this.pile(this.sR, T.p.x, y, T.p.z, G); } G.visible = true; },
+  hide() { if (this.jg) this.jg.visible = false; if (this.sg) this.sg.visible = false; this.vis = false; this.t = null; },
+  can() { const id = HAND.item; if (id !== 'jiyu' && id !== 'salt') return false; if (world.state !== 'play' || world.capture || HAND.hiding() || (typeof CAP !== 'undefined' && CAP.on)) return false; const H = document.documentElement.classList; return !(H.contains('jyOn') || H.contains('ptOn') || (typeof PIANO !== 'undefined' && PIANO.on) || (typeof SCIRM !== 'undefined' && SCIRM.scope) || (typeof INV !== 'undefined' && INV.open) || (typeof SET !== 'undefined' && SET.open) || (typeof CALL !== 'undefined' && CALL.lockYaw !== undefined) || (typeof REVIVE !== 'undefined' && REVIVE.on)); },
+  tick() { this.init(); if (!this.can()) { this.hide(); return; } const id = HAND.item;
+    if (id === 'jiyu') { const T = this.jTarget(); this.sg.visible = false; if (!T) { this.hide(); return; } this.t = T; this.jg.position.set(T.p.x, T.p.y + 0.006, T.p.z); this.jg.rotation.set(0, T.by, 0); this.jg.visible = true; this.vis = true; return; }
+    const T = this.sTarget(); this.jg.visible = false; this.t = T; this.saltGhost(T); this.vis = true; },
+  label() { if (!this.can()) return null; const T = (j, e) => LANG === 'en' ? e : j; if (HAND.item === 'jiyu') return this.t ? T('置く', 'Place') : null; return T('置く', 'Place'); },
+  buzz() { try { if (ensureAudio()) { const t = A.ctx.currentTime; tn(A.master, { t, type: 'square', f0: 190, f1: 180, dur: 0.09, peak: 0.12 }); tn(A.master, { t: t + 0.13, type: 'square', f0: 190, f1: 180, dur: 0.09, peak: 0.12 }); } } catch (e) { } },
+  use() { const id = HAND.item, T = this.t, J = (j, e) => LANG === 'en' ? e : j;
+    if (id === 'jiyu') { if (!T || JIYU.placed) return; if (JIYU.place(T)) { HAND.drop(); this.hide(); toast(TR('じゆうちょうを置いた'), 1500); } return; }
+    if (id === 'salt') { if (!T) return; if (!T.ok) { this.buzz(); toast(J('部屋の入り口に置いてください', 'Place it at a room’s doorway'), 1600); return; } if (SALT2.place(T)) { HAND.drop(); this.hide(); } } },
+};
+HAND.HOLD.push('jiyu', 'salt');
+{ const I0 = HAND.init.bind(HAND); HAND.init = function () { const first = !this.g; I0(); if (!first) return;
+    const jy = new THREE.Group(); const cov = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.012, 0.15), new THREE.MeshLambertMaterial({ color: 0xb8322a, emissive: 0x2a0806 })); jy.add(cov); const lab = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.013, 0.03), new THREE.MeshLambertMaterial({ color: 0xf0ead8 })); lab.position.z = -0.03; jy.add(lab); jy.position.set(0.11, -0.23, -0.5); jy.rotation.set(1.0, -0.35, 0.1); jy.scale.setScalar(0.6); this.g.add(jy); this.m.jiyu = jy;   /* 閉じた赤い表紙のじゆうちょう */
+    const sl = new THREE.Group(); const dish = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.035, 0.01, 16), new THREE.MeshLambertMaterial({ color: 0xbfbab0 })); sl.add(dish); const cone = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.05, 12), new THREE.MeshLambertMaterial({ color: 0xf2efe8, emissive: 0x2a2926 })); cone.position.y = 0.03; sl.add(cone); sl.position.set(0.09, -0.225, -0.48); sl.scale.setScalar(0.8); this.g.add(sl); this.m.salt = sl;   /* 小皿に盛った塩 */
+    for (const k of ['jiyu', 'salt']) { this.m[k].traverse(o => { o.frustumCulled = false; o.renderOrder = 5; }); this.m[k].visible = false; } }; }
+{ const L0 = HAND.toolLabel.bind(HAND); HAND.toolLabel = function () { if (this.item === 'jiyu' || this.item === 'salt') return PLACE.label(); return L0(); }; }
+{ const U0 = HAND.useTool.bind(HAND); HAND.useTool = function () { if (this.item === 'jiyu' || this.item === 'salt') { if (PLACE.label()) PLACE.use(); return; } return U0(...arguments); }; }
+{ const U1 = HAND.update.bind(HAND); HAND.update = function (dt) { U1(dt); try { PLACE.tick(); } catch (e) { if (TEST || DEV) console.warn('PLACE', e); } }; }
+/* 持ち物の「使う」で手に持ったら、持ち物を閉じる */
+{ const U0 = ITEM.use.bind(ITEM); ITEM.use = function (id) { const r = U0(id); if (r && (id === 'jiyu' || id === 'salt') && HAND.item === id) { try { if (INV.open) INV.hide(); } catch (e) { } } return r; }; }
+Object.assign(EN, { '置く': 'Place', '部屋の入り口に置いてください': 'Place it at a room’s doorway' });
 if ((TEST || BETA) && /[?&]torch\b/.test(location.search)) { const B1 = SHOP.beginRun.bind(SHOP); SHOP.beginRun = function () { const r = B1(); ITEM.have.torch = true; return r; }; }
 /* =========================================================
    2026-11-19 90番：投げる・蹴るボタンを長押しすると、飛んでいく線と着地点の円が出る（はなすと投げる）
@@ -26069,7 +26133,7 @@ CHIP_DESC.ghostCut = ['見返した動画に、撮った覚えのない短いカ
 AW_HINT.ghostCut = ['長く撮った動画を、あとで見返すと', 'rewatch a long video afterward'];
 TKTXT.ghostCut = [CHIP_DESC.ghostCut[0], '撮った■えのない■■', '見返した■■に、■った■えのない■いカットが入っていた。…■が撮ったの？'];
 Object.assign(EN, { '撮った覚えのない映像': 'Footage you never shot' });
-if (TEST && window.__G) Object.assign(window.__G, { ARMOCK, ENDCM, XEXT2, OPENCM, GOAL, REP, XCHAT, CHATLOG, NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, GHOSTCUT, ROOMX, DIRX: DIR, EVX: EV, ARARE, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
+if (TEST && window.__G) Object.assign(window.__G, { PLACE, SALT2, ARMOCK, ENDCM, XEXT2, OPENCM, GOAL, REP, XCHAT, CHATLOG, NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, GHOSTCUT, ROOMX, DIRX: DIR, EVX: EV, ARARE, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
