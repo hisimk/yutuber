@@ -15433,7 +15433,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.81';
+const VERSION = '0.17.82';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -20895,6 +20895,8 @@ const ECON = {
   sponsor: [2, 3, 4, 5],                     /* スポンサーから1つ届くランク */
   pickWing: 0.1,                             /* 新しい棟が開いた周に、理科室でケミカルライト・ろうそくを拾える確率 */
   /* [id, 値段, 解放（ランクの番号 か 'wing'）, 種類（use＝使い切り / look＝見た目だけ）] */
+  /* 2026-11-19 114番：ショップの並び。解放のランクが低い順（新しい棟で解放＝駆け出しの次）→ 同じランクの中は安い順。あとから足した道具も自動でこの順になる */
+  sorted() { const r = it => it[2] === 'wing' ? 1.5 : it[2]; return this.items.map((it, i) => [it, i]).sort((a, b) => (r(a[0]) - r(b[0])) || (a[0][1] - b[0][1]) || (a[1] - b[1])).map(x => x[0]); },
   items: [
     ['battery2', 1000, 1, 'use'], ['buzzer', 1500, 1, 'use'], ['recorder', 300, 1, 'use'],
     ['shades', 200, 1, 'look'], ['party', 200, 1, 'look'], ['ears', 200, 1, 'look'], ['hood', 200, 1, 'look'],
@@ -20913,12 +20915,12 @@ const YTAG = {
   KEEP: ['wneko', 'bneko'], NOUSE: ['bell', 'recorder', 'beads', 'stick'],
   kind(id) { if (PERM.DEFS[id] || this.KEEP.includes(id)) return 'perm'; const it = ECON.items.find(x => x[0] === id); return it ? (it[3] === 'look' ? 'perm' : 'use') : null; },
   tag(id) { const k = this.kind(id); return k ? `<span class="ytag ${k}">${TR(k === 'use' ? '使い切り' : 'ずっと')}</span>` : ''; },
-  how(id) { if (!this.kind(id)) return ''; if (this.KEEP.includes(id)) return TR('持ち込むと効く'); return TR(this.USE.includes(id) ? '使った時だけ' : this.RUN.includes(id) ? 'その周の間ずっと' : '持っているだけで効く'); },
+  how(id) { if (!this.kind(id)) return ''; if (id === 'torch') return TR('点けている間だけ');   /* 2026-11-19 114番 */ if (this.KEEP.includes(id)) return TR('持ち込むと効く'); return TR(this.USE.includes(id) ? '使った時だけ' : this.RUN.includes(id) ? 'その周の間ずっと' : '持っているだけで効く'); },
   desc(id, d) { const h = this.how(id); return (h ? `<em class="yhow">${h}${LANG === 'en' ? ': ' : '：'}</em>` : '') + d; },
 };
 Object.assign(EN, { '使うと手に持つ。もう一度ボタンを押すと投げる。落ちた所で20秒鳴り続け、近くの怪異はそちらへ向かう。': 'Use it to hold it. Press again to throw. It rings for 20 seconds where it lands, and nearby monsters head there.' });
 Object.assign(EN, { '音量（全体）': 'Volume (all)', 'ゲームの音すべて。スピーカーから出る大きさ（録画の音は変わりません）': 'All game sound. Speaker volume (does not change the recording)', 'BGM': 'Music', '追跡の曲・結果画面の曲・エンディングの曲など': 'Chase music, results and ending songs', '効果音': 'Sound effects', '足音・怪異の声・物が壊れる音・環境音など': 'Footsteps, monster voices, crashes, ambience', '画面の操作音': 'UI sounds', 'ボタン・メニューの音（動かすと試しに鳴ります）': 'Buttons and menus (plays a sample as you move it)' });
-Object.assign(EN, { '持ち込むと効く': 'Works when brought in', '今から入れる保険証': 'Easy-signup insurance card', '大容量バッテリー': 'Large battery', 'モバイルバッテリーG': 'Mobile battery G', '白い招き猫': 'White beckoning cat', '黒い招き猫': 'Black beckoning cat', '使い切り': 'One-use', 'ずっと': 'Permanent', '使った時だけ': 'Only when used', 'その周の間ずっと': 'All run long', '持っているだけで効く': 'Works just by having it', '持ち込み中': 'Brought in', 'コーナーとかで差をつけろ！歩く速さが1.2倍になる。': 'Win the corners! You walk 1.2× faster.', '持っている': 'Owned' });
+Object.assign(EN, { '点けている間だけ': 'Only while it is on', '持ち込むと効く': 'Works when brought in', '今から入れる保険証': 'Easy-signup insurance card', '大容量バッテリー': 'Large battery', 'モバイルバッテリーG': 'Mobile battery G', '白い招き猫': 'White beckoning cat', '黒い招き猫': 'Black beckoning cat', '使い切り': 'One-use', 'ずっと': 'Permanent', '使った時だけ': 'Only when used', 'その周の間ずっと': 'All run long', '持っているだけで効く': 'Works just by having it', '持ち込み中': 'Brought in', 'コーナーとかで差をつけろ！歩く速さが1.2倍になる。': 'Win the corners! You walk 1.2× faster.', '持っている': 'Owned' });
 /* 新しい道具（アイコンは仮。ITEM_ICON2[id] に画像を入れれば差し替わる） */
 Object.assign(ITEM.defs, {
   buzzer: { name: '防犯ブザー', desc: '使うと手に持つ。もう一度ボタンを押すと投げる。落ちた所で20秒鳴り続け、近くの怪異はそちらへ向かう。', size: 0.18, act: '使う' },
@@ -21024,7 +21026,7 @@ const SHOP = {
       if (!ok) return `<div class="shIt lock"><div class="shIc">？</div><div class="shTx"><b>？？？</b><small>${lockTxt(it)}</small></div></div>`;
       const btn = own ? (it[3] === 'look' ? `<span class="shOwn">${en ? 'Owned' : '持っている'}</span>` : `<button class="shCar${carry ? ' on' : ''}" data-c="${id}">${carry ? (en ? 'Bringing' : '持ち込む') : (en ? 'Leave' : '置いていく')}</button>`) : `<button class="shBuy" data-b="${id}"${d.yen < it[1] ? ' disabled' : ''}>${it[1].toLocaleString()}${en ? ' yen' : '円'}</button>`;
       return `<div class="shIt"><img src="${ITEM_IMG[id] || (ITEM_IMG[id] = ITEM.fallbackIcon(id))}"><div class="shTx"><b>${TR(D.name)}</b><small>${TR(D.desc)}</small></div>${btn}</div>`; };
-    el.innerHTML = `<div class="shBox"><div class="shHead"><b>${en ? 'Shop' : 'ショップ'}</b><span>${en ? 'Money' : '所持金'} <b>${d.yen.toLocaleString()}${en ? ' yen' : '円'}</b></span><button class="shX">×</button></div><div class="shNote">${en ? `You can bring ${ECON.carry[r]} tool(s) per run (${d.carry.filter(id => this.has(id)).length} chosen). Unused tools carry over. Looks-only items are always yours.` : `1周に持って入れる道具：${ECON.carry[r]}つ（選んでいる数 ${d.carry.filter(id => this.has(id)).length}）。使わなければ次の周に持ち越せます。見た目だけの物は、ずっと使えます。`}</div><div class="shList">${ECON.items.map(row).join('')}</div></div>`;
+    el.innerHTML = `<div class="shBox"><div class="shHead"><b>${en ? 'Shop' : 'ショップ'}</b><span>${en ? 'Money' : '所持金'} <b>${d.yen.toLocaleString()}${en ? ' yen' : '円'}</b></span><button class="shX">×</button></div><div class="shNote">${en ? `You can bring ${ECON.carry[r]} tool(s) per run (${d.carry.filter(id => this.has(id)).length} chosen). Unused tools carry over. Looks-only items are always yours.` : `1周に持って入れる道具：${ECON.carry[r]}つ（選んでいる数 ${d.carry.filter(id => this.has(id)).length}）。使わなければ次の周に持ち越せます。見た目だけの物は、ずっと使えます。`}</div><div class="shList">${ECON.sorted().map(row).join('')}</div></div>`;
     el.querySelector('.shX').onclick = e => { e.stopPropagation(); el.classList.remove('show'); this.title(); };
     el.querySelectorAll('[data-b]').forEach(b => b.onclick = e => { e.stopPropagation(); if (this.buy(b.dataset.b)) { toast(en ? 'Purchased' : '買いました', 1200); this.openUI(); } });
     el.querySelectorAll('[data-c]').forEach(b => b.onclick = e => { e.stopPropagation(); if (!this.toggleCarry(b.dataset.c)) toast(en ? 'You cannot bring more' : 'これ以上は持って入れません', 1500); this.openUI(); });
@@ -21124,7 +21126,7 @@ Object.assign(SHOP, {
       const own = `<span class="shN">${TR('持っている')}×${it[3] === 'look' ? (d.look[id] ? 1 : 0) : n}</span>`;   /* 2026-11-17 持っている×1 */
       const btn = it[3] === 'look' && d.look[id] ? '' : `<button class="shBuy" data-b="${id}"${d.yen < it[1] ? ' disabled' : ''}>${Y(it[1])}</button>`;
       return `<div class="shIt"><img src="${ITEM_IMG[id] || (ITEM_IMG[id] = ITEM.fallbackIcon(id))}"><div class="shTx"><b>${TR(D.name)}${YTAG.tag(id)}${own}</b><small>${YTAG.desc(id, TR(D.desc))}</small></div>${btn}</div>`; };
-    el.innerHTML = `<div class="shBox"><div class="shHead"><b>${en ? 'Shop' : 'ショップ'}</b><span><img class="uiIc" src="${UI_ICON.yen}" alt="">${en ? 'Money' : '所持金'} <b>${Y(d.yen)}</b></span><button class="shX">×</button></div><div class="shNote">${en ? 'What to bring into the school is chosen from the bag button next to the shop.' : '持って入る道具は、スタート画面のショップの隣の「持ち物」で選びます。'}</div><div class="shList">${ECON.items.map(row).join('')}</div></div>`;
+    el.innerHTML = `<div class="shBox"><div class="shHead"><b>${en ? 'Shop' : 'ショップ'}</b><span><img class="uiIc" src="${UI_ICON.yen}" alt="">${en ? 'Money' : '所持金'} <b>${Y(d.yen)}</b></span><button class="shX">×</button></div><div class="shNote">${en ? 'What to bring into the school is chosen from the bag button next to the shop.' : '持って入る道具は、スタート画面のショップの隣の「持ち物」で選びます。'}</div><div class="shList">${ECON.sorted().map(row).join('')}</div></div>`;
     el.querySelector('.shX').onclick = e => { e.stopPropagation(); el.classList.remove('show'); this.title(); };
     el.querySelectorAll('[data-b]').forEach(b => b.onclick = e => { e.stopPropagation(); this.ask(b.dataset.b); });
     el.classList.add('show');
@@ -21147,7 +21149,7 @@ Object.assign(SHOP, {
     if (!el) { el = document.createElement('div'); el.id = 'bagUI'; el.className = 'shopLike'; document.body.appendChild(el); el.addEventListener('click', e => { e.stopPropagation(); if (e.target.id === 'bagUI') { el.classList.remove('show'); this.title(); } }); for (const t of ['pointerdown', 'touchstart', 'touchmove']) el.addEventListener(t, e => e.stopPropagation(), { passive: true }); }
     const perm = PERM.owned().map(id => `<div class="shIt"><img src="${PERM_IMG[id]}"><div class="shTx"><b>${TR(PERM.DEFS[id].name)}${YTAG.tag(id)}</b><small>${YTAG.desc(id, TR(PERM.DEFS[id].desc || ''))}</small></div></div>`);
     const looks = ECON.items.filter(it => it[3] === 'look' && d.look[it[0]] && ['goldphone', 'goldframe'].includes(it[0])).map(it => `<div class="shIt"><img src="${ITEM_IMG[it[0]]}"><div class="shTx"><b>${TR(ITEM.defs[it[0]].name)}${YTAG.tag(it[0])}</b><small>${YTAG.desc(it[0], TR(ITEM.defs[it[0]].desc))}</small></div></div>`);
-    const uses = ECON.items.filter(it => (it[3] === 'use' && this.cnt(it[0]) > 0) || (it[3] === 'look' && d.look[it[0]] && !['goldphone', 'goldframe'].includes(it[0]))).sort((a, b) => (cl.includes(a[0]) ? cl.indexOf(a[0]) : 999) - (cl.includes(b[0]) ? cl.indexOf(b[0]) : 999)).map(it => { const id = it[0], on = cl.includes(id), fav = this.favs().includes(id), full = !on && cl.length >= lim;
+    const uses = ECON.sorted().filter(it => (it[3] === 'use' && this.cnt(it[0]) > 0) || (it[3] === 'look' && d.look[it[0]] && !['goldphone', 'goldframe'].includes(it[0]))).sort((a, b) => (cl.includes(a[0]) ? cl.indexOf(a[0]) : 999) - (cl.includes(b[0]) ? cl.indexOf(b[0]) : 999)).map(it => { const id = it[0], on = cl.includes(id), fav = this.favs().includes(id), full = !on && cl.length >= lim;
       return `<div class="shIt${on ? ' sel' : ''}"><img src="${ITEM_IMG[id]}"><div class="shTx"><b>${TR(ITEM.defs[id].name)}${YTAG.tag(id)}<span class="shN">×${it[3] === 'look' ? 1 : this.cnt(id)}</span></b><small>${YTAG.desc(id, TR(ITEM.defs[id].desc))}</small></div><button class="fav${fav ? ' on' : ''}" data-f="${id}" aria-label="★">${fav ? '★' : '☆'}</button><button class="shCar${on ? ' on' : ''}" data-c="${id}"${(full || fav) ? ' disabled' : ''}>${on ? (en ? 'Bring' : '持ち込む') : (en ? 'Leave' : '置いていく')}</button></div>`; });
     el.innerHTML = `<div class="shBox"><div class="shHead"><b>${en ? 'Bag' : '持ち物'}</b><span>${en ? 'Bringing' : '持ち込み'} <b>${cl.length} / ${lim}</b></span><button class="shX">×</button></div><div class="shList">
       <div class="shSec">${en ? 'Tools to bring in' : '持ち込む道具'}<small>${en ? `Up to ${lim} per run. ★ = always bring. Used tools are gone; unused ones stay.` : `1周に${lim}つまで。★お気に入りは、選ばなくても自動で持ち込みます。使った物はなくなり、使わなければ残ります。`}</small></div>${uses.join('') || `<div class="shEmpty">${en ? 'No tools yet. Buy them in the shop.' : 'まだありません。ショップで買えます。'}</div>`}
