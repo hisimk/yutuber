@@ -15433,7 +15433,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.84';
+const VERSION = '0.17.85';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -24718,6 +24718,13 @@ for (const d of AW59.DEF) { AW_TABLE[d[0]] = [d[2], d[3]]; COL.LIST.push([d[0], 
    ・確認用：?araare=2（ちょい荒れ）／?araare=3（大荒れ）
    ========================================================= */
 const ARARE_N = { 2: 1.2, 3: 2 };   /* 2026-11-19 105番：荒れた時に足すコメント（10秒あたり。ちょい荒れ・大荒れ） */
+/* 2026-11-19 118番：大荒れの時のからかい（軽口まで。人そのものを悪く言わない） */
+const ARMOCK = {
+  CFG: { p: 0.3, max: [2, 3], cap: 0.4 },   /* できごと1回で出る確率／1本の上限（2〜3件）／捕まった時に1件まぜる確率 */
+  BH: /^behavior\.(spin|freeze|wall_walk|exit_turnback|room_reentry|locker_stay|retreat|quick_return)\./,   /* 動画に映った下手なプレイ（つっこみのコメントが付いた所） */
+  PLAY: [['へった', 'so bad'], ['下手', 'bad'], ['へたくそで草', 'so bad lol'], ['何やってんの', 'what are you doing'], ['見てらんない', "can't watch this"], ['操作どうなってんの', 'how are you even controlling this'], ['迷子かよ', 'are you lost'], ['skill issue', 'skill issue']],
+  CAP: [['おつｗ', 'gg lol'], ['はい終了ｗ', 'and it is over lol'], ['知ってた', 'called it'], ['やっぱりな', 'knew it'], ['ざまぁ…とは言わんけど', "not gonna say serves you right but..."]],
+};
 const ARARE = {
   KEY: 'yt_arare_v1', T2: 15, T3: 30,
   load() { if (!this.d) { try { this.d = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) { } if (!this.d || typeof this.d.s !== 'number') this.d = { s: 0, b: 0 }; } return this.d; },
@@ -24729,7 +24736,7 @@ const ARARE = {
   KIND: /(がんば|頑張|えらい|偉い|すごい|上手|うま[いっ]|ナイス|かわい|可愛|ありがと|大丈夫|無理しない|気をつけ|応援|好き|最高|天才|おつ|乙|よかった|安心|助かった|優し|やさし|グッジョブ|いい判断|頼もし|神プレイ|お疲れ)/,
   tone(t) { t = String(t || ''); const h = this.HARSH.test(t), k = this.KIND.test(t); return { h, k }; },
   toneX(x) { const id = x[2]; if (typeof id === 'string' && CHAT_DICT.t[id]) return { h: LABX.has(id, 'R') || LABX.has(id, 'S'), k: LABX.has(id, 'K') }; return this.tone(x.length >= 5 ? x[3] : x[2]); },   /* 62番のラベルがあればそれで、なければ文から */
-  pts(x) { if (typeof x[2] === 'string' && /^x\.ar\./.test(x[2])) return 1; const t = x.length >= 5 ? x[3] : x[2]; if (typeof t !== 'string' || /^¥[\d,]+$/.test(t)) return 0; const T = this.toneX(x); return T.h ? (T.k ? 1 : 0) : 2; },
+  pts(x) { if (typeof x[2] === 'string' && /^x\.ar\.k/.test(x[2])) return 0;   /* 2026-11-19 118番：からかいは厳しい扱い（BANしても不満は増えない） */ if (typeof x[2] === 'string' && /^x\.ar\./.test(x[2])) return 1; const t = x.length >= 5 ? x[3] : x[2]; if (typeof t !== 'string' || /^¥[\d,]+$/.test(t)) return 0; const T = this.toneX(x); return T.h ? (T.k ? 1 : 0) : 2; },
   onBan(D, i) { const x = D.items && D.items[i]; if (!x || x[1] === -1 || D.ph || (D.phIdx || []).includes(i)) return; const p = this.pts(x); const d = this.load(); d.s = Math.min(60, d.s + p); d.b = (d.b | 0) + 1; this.save(); if (TEST || DEV) console.log('ARARE ban +' + p, d.s); },
   /* 動画を1本作るたび：前の動画でBANしなかったら3減らす */
   onVideo() { const d = this.load(), id = world.runId || ''; if (d.run === id) return; d.run = id; if (d.v) { if (!(d.b | 0)) d.s = Math.max(0, d.s - 3); } d.v = 1; d.b = 0; this.save(); },   /* 同じ動画は二度数えない */
@@ -24760,12 +24767,17 @@ const ARARE = {
     const nc = st === 3 ? 3 : 2 + (R() < 0.5 ? 1 : 0); for (let i = 0; i < nc; i++) { const l = one(L.comp); if (l) out.push([T(at()), Math.floor(R() * U), 'x.ar.c' + i, l[0], l[1]]); }
     if (st === 3) { for (let i = 0; i < 2 + (R() < 0.5 ? 1 : 0); i++) { const l = one(L.angry); if (l) out.push([T(at()), Math.floor(R() * U), 'x.ar.a' + i, l[0], l[1]]); }
       { const l = one(L.meta); if (l) out.push([T(at()), Math.floor(R() * U), 'x.ar.m0', l[0], l[1]]); } if (longOK && R() < 0.6) { const l = one(L.long); if (l) out.push([T(at()), Math.floor(R() * U), 'x.ar.l0', l[0], l[1]]); }
-      if (longOK) { const fs = L.fight.slice().sort(() => R() - 0.5).slice(0, 1 + (R() < 0.5 && dur >= 45 ? 1 : 0)); fs.forEach((F, j) => { let t = at(); F.forEach((l, k) => { if (t <= lim) out.push([T(t), Math.floor(R() * U), 'x.ar.f' + j + k, l[0], l[1]]); t += 1.6 + R() * 2.4; }); }); } }
+      if (longOK) { const fs = L.fight.slice().sort(() => R() - 0.5).slice(0, 1 + (R() < 0.5 && dur >= 45 ? 1 : 0)); fs.forEach((F, j) => { let t = at(); F.forEach((l, k) => { if (t <= lim) out.push([T(t), Math.floor(R() * U), 'x.ar.f' + j + k, l[0], l[1]]); t += 1.6 + R() * 2.4; }); }); } 
+      /* 2026-11-19 118番：大荒れの時だけ、動画に映った下手なプレイ（つっこみのコメントが付いた所）に、たまにからかいを足す */
+      { const C = ARMOCK.CFG, seen = []; let k = 0; const mx = C.max[0] + (R() < 0.5 ? 1 : 0);
+        for (const x of d.items) { if (k >= mx) break; const m = ARMOCK.BH.exec(typeof x[2] === 'string' ? x[2] : ''); if (!m || seen.some(t => Math.abs(t - x[0]) < 4)) continue; seen.push(x[0]); if (R() >= C.p) continue; const l = one(ARMOCK.PLAY); if (!l) continue; out.push([T(Math.min(lim, x[0] + 1 + R() * 1.5)), Math.floor(R() * U), 'x.ar.k' + k, l[0], l[1]]); k++; } } }
     /* 数の上限：喧嘩のやり取りは1組をまとめて数える */
     { const keep = []; let n = 0; const groups = new Map(); for (const x of out) { const g = /^x\.ar\.f(\d)/.exec(x[2]); const k = g ? 'f' + g[1] : x[2]; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(x); }
       const order = [...groups.values()].sort(() => R() - 0.5); for (const G of order) { if (n >= budget) break; keep.push(...G); n++; } out.length = 0; out.push(...keep); }
     if (dur < 10) rm.clear();
     d.items = d.items.filter(x => !rm.has(x)).concat(out.filter(x => x[0] <= lim)).sort((a, b) => a[0] - b[0]);
+    /* 2026-11-19 118番：大荒れで捕まって終わった時、終わりのコメントの1件をからかいに入れかえる（件数は増やさない） */
+    if (st === 3 && d.end && d.end.lost && d.end.capRec !== false && R() < ARMOCK.CFG.cap) { const E = d.end.R, c = d.items.filter(x => x[0] >= E && x[1] !== -1 && typeof x[2] === 'string' && !/^x\.ar/.test(x[2])); if (c.length) { const x = c[Math.floor(R() * c.length)], l = ARMOCK.CAP[Math.floor(R() * ARMOCK.CAP.length)]; x[2] = 'x.ar.kcap'; x[3] = l[0]; x[4] = l[1]; } }
     if (TEST || DEV) console.log('ARARE stage', st, 'add', out.length, 'rm', rm.size);
   },
 };
@@ -26053,7 +26065,7 @@ CHIP_DESC.ghostCut = ['見返した動画に、撮った覚えのない短いカ
 AW_HINT.ghostCut = ['長く撮った動画を、あとで見返すと', 'rewatch a long video afterward'];
 TKTXT.ghostCut = [CHIP_DESC.ghostCut[0], '撮った■えのない■■', '見返した■■に、■った■えのない■いカットが入っていた。…■が撮ったの？'];
 Object.assign(EN, { '撮った覚えのない映像': 'Footage you never shot' });
-if (TEST && window.__G) Object.assign(window.__G, { ENDCM, XEXT2, OPENCM, GOAL, REP, XCHAT, CHATLOG, NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, GHOSTCUT, ROOMX, DIRX: DIR, EVX: EV, ARARE, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
+if (TEST && window.__G) Object.assign(window.__G, { ARMOCK, ENDCM, XEXT2, OPENCM, GOAL, REP, XCHAT, CHATLOG, NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, GHOSTCUT, ROOMX, DIRX: DIR, EVX: EV, ARARE, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
