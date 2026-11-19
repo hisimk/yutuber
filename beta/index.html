@@ -15514,7 +15514,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.40';
+const VERSION = '0.18.41';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16967,7 +16967,7 @@ const KOK = {
   W: 0.42, D: 0.3,
   // ── 紙の絵（黄ばみ・しわ・鳥居・はい・いいえ・五十音・数字）
   tex() {
-    if (this.tx) return this.tx; const c = document.createElement('canvas'); c.width = 512; c.height = 366; const g = c.getContext('2d'), R = chatRng(4242), P = this.pos = {};
+    if (this.tx && this.txLang === LANG) return this.tx; this.txLang = LANG; const c = document.createElement('canvas'); c.width = 512; c.height = 366; const g = c.getContext('2d'), R = chatRng(4242), P = this.pos = {};
     g.fillStyle = '#e4d6b0'; g.fillRect(0, 0, 512, 366);
     const st = g.createRadialGradient(150, 250, 10, 150, 250, 260); st.addColorStop(0, 'rgba(170,130,60,.28)'); st.addColorStop(1, 'rgba(170,130,60,0)'); g.fillStyle = st; g.fillRect(0, 0, 512, 366);
     for (let i = 0; i < 26; i++) { const x = R() * 512, y = R() * 366, a = R() * 6.28, l = 60 + R() * 200; g.strokeStyle = `rgba(${R() < 0.5 ? '255,250,235' : '110,85,50'},${0.08 + R() * 0.12})`; g.lineWidth = 1 + R() * 2; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + Math.cos(a + 0.4) * l * 0.5, y + Math.sin(a + 0.4) * l * 0.5, x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke(); }   // しわ
@@ -16975,9 +16975,11 @@ const KOK = {
     // 鳥居
     g.strokeStyle = '#a3241c'; g.lineCap = 'round'; g.lineWidth = 6; g.beginPath(); g.moveTo(222, 36); g.quadraticCurveTo(256, 30, 290, 36); g.stroke(); g.lineWidth = 4; g.beginPath(); g.moveTo(230, 50); g.lineTo(282, 50); g.stroke();
     g.beginPath(); g.moveTo(238, 38); g.lineTo(235, 88); g.moveTo(274, 38); g.lineTo(277, 88); g.stroke(); P.T = [256, 66];
-    g.fillStyle = ink; g.font = `700 30px ${serif}`; g.fillText('はい', 112, 62); P.YES = [112, 62]; g.fillText('いいえ', 400, 62); P.NO = [400, 62];
+    const EN_ = LANG === 'en';   /* 2026-11-19 141番：英語版は YES／NO・A〜Z（3段）・0〜9。鳥居はそのまま */
+    g.fillStyle = ink; g.font = `700 30px ${serif}`; g.fillText(EN_ ? 'YES' : 'はい', 112, 62); P.YES = [112, 62]; g.fillText(EN_ ? 'NO' : 'いいえ', 400, 62); P.NO = [400, 62];
     g.font = `700 25px ${serif}`;
-    this.COLS.forEach((col, ci) => { const x = 472 - ci * 43.2; Array.from(col).forEach((ch, r) => { if (ch === ' ') return; const y = 112 + r * 40; g.fillText(ch, x, y); P[ch] = [x, y]; }); });
+    if (EN_) { g.font = `700 32px ${serif}`; const AZ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', rows = [AZ.slice(0, 9), AZ.slice(9, 18), AZ.slice(18)]; rows.forEach((row, ri) => { const y = 138 + ri * 62, n = row.length, sp = 49; Array.from(row).forEach((ch, i) => { const x = 256 + (i - (n - 1) / 2) * sp; g.fillText(ch, x, y); P[ch] = [x, y]; }); }); g.font = `700 25px ${serif}`; }
+    else this.COLS.forEach((col, ci) => { const x = 472 - ci * 43.2; Array.from(col).forEach((ch, r) => { if (ch === ' ') return; const y = 112 + r * 40; g.fillText(ch, x, y); P[ch] = [x, y]; }); });
     for (let i = 0; i < 10; i++) { const x = 68 + i * 41.8, y = 334; g.fillText(String(i), x, y); P[String(i)] = [x, y]; }
     g.strokeStyle = 'rgba(42,26,18,.45)'; g.lineWidth = 1.5; g.strokeRect(10, 10, 492, 346);
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; this.tx = t; return t;
@@ -16994,6 +16996,7 @@ const KOK = {
     if (!cands.length) { this.desk = null; return; }
     const d = this.desk = pick(cands), side = d.zmax > 0.3 ? 1 : -1; this.side = side;
     const g = this.g = new THREE.Group(); g.position.set(0, 0.757, 0); g.rotation.y = side > 0 ? 0 : Math.PI; d.g.add(g);
+    if (this.tx && this.txLang !== LANG) { try { this.tx.dispose(); } catch (e) { } this.tx = null; }
     const paper = new THREE.Mesh(new THREE.PlaneGeometry(this.W, this.D, 6, 4), new THREE.MeshLambertMaterial({ map: this.tex() }));
     { const P = paper.geometry.attributes.position; for (let i = 0; i < P.count; i++) P.setZ(i, (Math.sin(P.getX(i) * 40) + Math.cos(P.getY(i) * 31)) * 0.0012); P.needsUpdate = true; paper.geometry.computeVertexNormals(); }   // 少し波打つ紙
     paper.rotation.x = -Math.PI / 2; paper.position.y = 0.004; paper.rotation.z = rnd(-0.04, 0.04); g.add(paper);
@@ -17064,8 +17067,13 @@ const KOK = {
   /* 2026-11-19 139番：なぞる言葉。言葉が出た時に「かえれ」になる割合（KAERE）は今と同じ 1/4。残りはほかの言葉で同じくらいに分ける。確認用 ?kokword=うるさい */
   KAERE: 0.25, WORDS: ['うしろ', 'いるよ', 'みてる', 'うるさい', 'やめろ', 'くるな', 'さわるな', 'きえろ', 'ゆるさない', 'おまえ'], ANGRY: ['うるさい', 'やめろ', 'くるな', 'さわるな', 'きえろ', 'ゆるさない', 'おまえ'],
   word() { return Math.random() < this.KAERE ? 'かえれ' : pick(this.WORDS); },
-  WQ() { if (!(TEST || BETA)) return null; const m = location.search.match(/[?&]kokword=([^&]+)/); if (!m) return null; try { const w = decodeURIComponent(m[1]); return Array.from(w).every(c => this.pos && this.pos[c]) ? w : null; } catch (e) { return null; } },
+  /* 2026-11-19 141番：英語版の言葉（日本語の言葉ごと）。なぞる字は空白を数えず最大8文字。空白はなぞらずに少し止まる */
+  EN_W: { 'かえれ': 'LEAVE', 'うしろ': 'BEHIND', 'いるよ': 'HERE', 'みてる': 'WATCHING', 'うるさい': 'SHUT UP', 'やめろ': 'STOP', 'くるな': 'GO AWAY', 'さわるな': 'HANDS OFF', 'きえろ': 'GET OUT', 'ゆるさない': 'NO MERCY', 'おまえ': 'YOU' },
+  say(w) { return LANG === 'en' ? (this.EN_W[w] || w) : w; },
+  WQ() { if (!(TEST || BETA)) return null; const m = location.search.match(/[?&]kokword=([^&]+)/); if (!m) return null; try { let w = decodeURIComponent(m[1]).replace(/\+/g, ' '); if (LANG === 'en' && this.EN_W[w]) w = this.EN_W[w]; if (LANG === 'en') w = w.toUpperCase(); const jp = Object.keys(this.EN_W).find(k => k === w || this.EN_W[k] === w); this._wqJp = jp || w; return Array.from(w).every(c => c === ' ' || (this.pos && this.pos[c])) ? w : null; } catch (e) { return null; } },
+  nameEn() { let r = String(world.chRaw || '').normalize('NFKC').trim().toUpperCase(); const sp = r.split(/\s+/).filter(Boolean); if (sp.length === 2 && /[A-Z]/.test(sp[0]) && /[A-Z]/.test(sp[1])) r = sp[0];   /* 英語の名前は「名・姓」の順なので、前を下の名前として使う（Ken Sato → KEN） */ const out = Array.from(r).filter(c => /[A-Z0-9]/.test(c) && this.pos && this.pos[c]).slice(0, 8); return out.length >= 2 ? out : []; },
   nameKana() {
+    if (LANG === 'en') return this.nameEn();
     const kana = /^[ぁ-ゟ゠-ヿー\s]+$/, y = (world.yomi || '').trim(), r = (world.chRaw || '').trim(); let s = y && kana.test(y) ? y : r && kana.test(r) ? r : '';
     /* 2026-11-19 138番：名字がはっきり分かる時（チャット欄で下の名前で呼ぶ時と同じ NICK.given）は、下の名前の読みだけをなぞる。読みが取り出せない時は今どおり全部 */
     try { const gv = NICK.given(r, y); if (gv) { const g = kana.test(gv) ? NICK.hira(gv.replace(/\s+/g, '')) : ((NICK.full(r, y) || {}).g || ''); if (g && kana.test(g)) s = g; } } catch (e) { }
@@ -17076,10 +17084,10 @@ const KOK = {
   answer() {
     this.n++; let keys, kind;
     const nm = this.nameKana(), x = Math.random();
-    if (this.n >= this.finalAt) { keys = ['か', 'え', 'れ']; kind = 'final'; }
+    if (this.n >= this.finalAt) { keys = LANG === 'en' ? Array.from('LEAVE') : ['か', 'え', 'れ']; kind = 'final'; }
     else if (nm.length && (x < 0.07 || /[?&]kokname\b/.test(location.search))) { keys = nm; kind = 'name'; }
     else if (x < 0.55 && !this.WQ()) { keys = [Math.random() < 0.5 ? 'YES' : 'NO']; kind = 'yesno'; }
-    else if (x < 0.8 || this.WQ()) { const w = this.WQ() || this.word(); keys = Array.from(w); kind = 'word'; this.lastWord = w; }
+    else if (x < 0.8 || this.WQ()) { const q = this.WQ(), w = q ? this._wqJp : this.word(); keys = Array.from(q || this.say(w)); kind = 'word'; this.lastWord = w; }
     else { const n = 1 + Math.floor(Math.random() * 2); keys = Array.from({ length: n }, () => String(Math.floor(Math.random() * 10))); kind = 'num'; }
     this.seq = { keys, i: 0, kind, ph: 'wait', t: 0, wait: rnd(0.5, 1.0), from: this.coin.position.clone(), to: null, dur: 0 };
     if (kind === 'name') this.accName = 0;
@@ -17089,12 +17097,12 @@ const KOK = {
   seqUpd(dt) {
     const S = this.seq; if (!S) return; S.t += dt; const c = this.coin;
     const go = to => { S.from = c.position.clone(); S.to = to; S.dur = 0.45 + S.from.distanceTo(to) * 3.2; S.t = 0; S.ph = 'move'; this.scrape(S.dur); };
-    if (S.ph === 'wait') { if (S.t >= S.wait) { if (S.i === 0 && !S.started) { S.started = true; CHATLOG.add('kok', { w: 'move' }); } if (S.i < S.keys.length) go(this.lp(S.keys[S.i])); else if (S.kind !== 'final') { this.seq = null; this.idleT = 0; return; } else if (S.kind === 'final') { go(V(rnd(-0.12, 0.12), 0, -0.34)); S.off = true; }   /* 紙の外へ、机の向こうのふちから落ちる（座った位置から見える） */ else { go(this.lp('T')); S.back = true; } } }
+    if (S.ph === 'wait') { if (S.t >= S.wait) { if (S.i === 0 && !S.started) { S.started = true; CHATLOG.add('kok', { w: 'move' }); } if (S.i < S.keys.length && S.keys[S.i] === ' ') { S.i++; S.t = 0; S.wait = rnd(0.6, 0.9); return; } if (S.i < S.keys.length) go(this.lp(S.keys[S.i])); else if (S.kind !== 'final') { this.seq = null; this.idleT = 0; return; } else if (S.kind === 'final') { go(V(rnd(-0.12, 0.12), 0, -0.34)); S.off = true; }   /* 紙の外へ、机の向こうのふちから落ちる（座った位置から見える） */ else { go(this.lp('T')); S.back = true; } } }
     else if (S.ph === 'move') {
       const k = clamp(S.t / S.dur, 0, 1), e = k * k * (3 - 2 * k); c.position.lerpVectors(S.from, S.to, e); c.position.x += Math.sin(S.t * 23) * 0.0012 * (1 - k); c.position.y = 0.0065;
       if (S.off && c.position.z < -0.235) { this.startDrop(); this.seq = null; return; }   // 机のふちを越えた
       if (k >= 1) { if (S.back) { this.seq = null; this.idleT = 0; return; } S.i++; S.ph = 'wait'; S.t = 0; S.wait = S.i >= S.keys.length ? rnd(1.1, 1.5) : rnd(1.05, 1.45);   /* 2026-11-15 どの文字か分かるように、止まる時間を0.5秒のばした */
-        if (S.i >= S.keys.length) { CHATLOG.add('kok', { w: S.kind === 'name' ? 'name' : S.kind === 'yesno' ? 'yesno' : S.kind === 'final' ? 'final' : S.kind === 'word' && this.ANGRY.includes(S.keys.join('')) ? 'angry' : 'move2' }); if (S.kind === 'name' && rec.active && this.accName >= 0.8) award('kokName', '十円玉が自分の名前をなぞった', 70); } }
+        if (S.i >= S.keys.length) { CHATLOG.add('kok', { w: S.kind === 'name' ? 'name' : S.kind === 'yesno' ? 'yesno' : S.kind === 'final' ? 'final' : S.kind === 'word' && this.ANGRY.includes(this.lastWord) ? 'angry' : 'move2' }); if (S.kind === 'name' && rec.active && this.accName >= 0.8) award('kokName', '十円玉が自分の名前をなぞった', 70); } }
     }
     // 撮れ高：動いているところを録画で撮った
     if (S.ph === 'move' && rec.active) { const w = c.getWorldPosition(V()); if (seen(w, { maxD: 4, margin: 1.05 })) { if (S.off) this.offSeen = true; this.accMove += dt; if (S.kind === 'name') this.accName += dt; if (this.accMove >= 0.4) award('kokMove', '十円玉が動いた', 40); } }
