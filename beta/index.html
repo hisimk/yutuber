@@ -417,7 +417,7 @@
   #bagUI .shList{overflow-y:auto;padding:0 10px 12px}#bagUI .shSec{color:#ffd34d;font-weight:800;font-size:14px;margin:12px 4px 4px}#bagUI .shSec small{display:block;color:#8f8a82;font-weight:400;font-size:11px;line-height:1.5}
   #bagUI .shIt{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid #222226}#bagUI .shIt.sel{background:rgba(255,211,77,.07)}#bagUI .shIt img{width:40px;height:40px;flex:none;border-radius:10px;background:rgba(255,255,255,.06);object-fit:contain}
   #bagUI .shTx{flex:1;min-width:0}#bagUI .shTx b{display:block;font-size:14px;color:#fff}#bagUI .shTx small{display:block;font-size:11px;color:#8f8a82;line-height:1.5}
-  #bagUI .fav{flex:none;background:none;border:0;font-size:20px;color:#8f8a82;padding:0 2px}#bagUI .fav.on{color:#ffd34d}
+  #bagUI .fav{flex:none;background:none;border:0;font-size:20px;color:#8f8a82;padding:0 2px}#bagUI .fav.on{color:#ffd34d} #bagUI .shIt{align-items:flex-start} #bagUI .shIt img{margin-top:2px} #bagUI .shAct{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:6px} #bagUI .shAct .shCar{padding:6px 12px}
   #bagUI .shCar{flex:none;padding:8px 10px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid #ffd34d;background:none;color:#ffd34d;white-space:nowrap}#bagUI .shCar.on{background:#ffd34d;color:#111}#bagUI .shCar:disabled{opacity:.4}
   #bagUI .shEmpty{font-size:12px;color:#8f8a82;padding:10px 4px}
   #shopUI,#shopPop{position:fixed;inset:0;z-index:72;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:16px}
@@ -663,6 +663,17 @@
   /* ランク一覧（下から上へ、良いランクになる） */
   #rkList{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.62)}
   #rkList.show{display:flex}
+  /* 2026-11-19 133番：ランク一覧（札・通り過ぎたランクは灰色・今と次を目立たせる） */
+  #rkList .rkBd{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+  #rkList .rkBd small{display:inline-flex;align-items:center;gap:3px;margin:0;padding:2px 7px;border-radius:999px;font-size:10.5px;font-weight:700;color:#cfcac0;background:#26252a;border:1px solid #3a3836;white-space:nowrap}
+  #rkList .rkBd .rkC.up{color:#ffd60a;border-color:rgba(255,214,10,.55);background:rgba(255,214,10,.08)}
+  #rkList .rkBd .rkC i{font-style:normal;font-size:9.5px;font-weight:800;color:#141416;background:#ffd60a;border-radius:6px;padding:0 4px;margin-left:2px}
+  #rkList li.done{opacity:.42;filter:grayscale(1);background:#18181a;border-color:#262528}
+  #rkList li.done .rkN,#rkList li.done .rkR,#rkList li.done .rkG,#rkList li.done .rkG.got{color:#8f8b84}
+  #rkList li.now{padding:13px 12px;border-width:1.5px;box-shadow:0 0 14px rgba(255,214,10,.16)}
+  #rkList li.now .rkN{font-size:16px}
+  #rkList li.now .rkR{color:#ffd60a;font-weight:800}
+  #rkList li.next .rkNd{display:inline-block;margin-top:2px;padding:1px 7px;border-radius:999px;background:rgba(255,255,255,.1);color:#fff;font-size:12px}
   #rkList .rkBox{width:min(340px,90%);max-height:86%;overflow:auto;padding:18px 14px 14px;border-radius:16px;background:#141416;border:1px solid rgba(255,211,77,.35);color:#e9e4da}
   #rkList h4{margin:0 0 4px;font-size:17px;color:#ffd60a;text-align:center}#rkList .rkNote{font-size:11px;color:#9a958c;text-align:center;margin-bottom:10px}
   #rkList ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
@@ -837,6 +848,7 @@
   .colTitle{font-size:19px;font-weight:800;color:#fff;letter-spacing:.06em}
   .colProg{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:13px;color:#ddd;font-weight:700}
   .colProg b{color:#ffd34d;font-size:16px}
+  .colSort{display:flex;gap:6px;margin-top:9px} .colSort button{flex:1;padding:6px 4px;border-radius:999px;border:1px solid #3a3836;background:#1b1b1f;color:#bdb8ae;font:700 11.5px system-ui;white-space:nowrap} .colSort button.on{border-color:#ffd34d;color:#ffd34d;background:rgba(255,211,77,.08)}
   .colBar{width:120px;height:5px;border-radius:3px;background:rgba(255,255,255,.15);overflow:hidden}
   .colBar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffd34d,#ff9ae6)}
   #colClose{height:36px;padding:0 18px;border-radius:18px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.5);color:#fff;font-size:13px;font-weight:700;flex:0 0 auto}
@@ -1578,7 +1590,7 @@ const EN = {
   '歩いたり見回したりして、画角を決めてください': 'Walk and look around to frame the shot', 'ここに設置': 'Place here', 'やめる': 'Cancel', '定点カメラを設置した。怪異が映ると自動で録画します': 'Fixed camera placed. It records automatically when something appears.', '定点カメラを回収した。持ち物からまた置けます': 'Fixed camera picked up. You can place it again from your items.', '定点カメラを回収する': 'Pick up the fixed camera', '置く': 'Place', '設置中': 'In use',
   '定点': 'Fixed', 'スマホ＋定点 ×2': 'Phone + fixed ×2',
   '定点カメラを置いた。怪異が映ると自動で録画します（15秒まで）': 'Fixed camera placed. It records automatically when something appears (up to 15s).', '定点カメラの容量がいっぱいになった': 'The fixed camera is full', '定点': 'CAM2',
-  '2台目のスマホを定点カメラに。持ち物から好きな場所に設置できる。画角に入った現象を自動で録画し（15秒まで）、スマホで撮っていない時でも撮れ高になる。録画中に映ると、動画の画面が定点カメラに切り替わる。所持しているとメモリーカードは出なくなる。': 'A second phone used as a fixed camera. Place it anywhere from your items. It automatically records anything that enters the frame (up to 15s), and counts as a highlight even when your phone isn’t filming. If it catches something while you’re recording, the video cuts to the fixed camera. Once owned, memory cards no longer appear.', '外カメラで録画している間、画面の隅にインカメラの小窓が映る。自分のリアクションと背後の怪異も一緒に録画でき、小窓に映った現象も撮れ高になる（一部をのぞく）。': 'While recording with the rear camera, a small selfie window appears in the corner. Your reactions and anything behind you are recorded too, and most things caught in the window count as highlights.',
+  '2台目のスマホを定点カメラに。持ち物から好きな場所に設置できる。画角に入った現象を自動で録画し（15秒まで）、スマホで撮っていない時でも撮れ高になる。録画中に映ると、動画の画面が定点カメラに切り替わる。': 'A second phone used as a fixed camera. Place it anywhere from your items. It automatically records anything that enters the frame (up to 15s), and counts as a highlight even when your phone isn’t filming. If it catches something while you’re recording, the video cuts to the fixed camera.', '外カメラで録画している間、画面の隅にインカメラの小窓が映る。自分のリアクションと背後の怪異も一緒に録画でき、小窓に映った現象も撮れ高になる（一部をのぞく）。': 'While recording with the rear camera, a small selfie window appears in the corner. Your reactions and anything behind you are recorded too, and most things caught in the window count as highlights.',
   'ワイプカメラ': 'Wipe camera', '定点カメラ': 'Fixed camera', 'ここに置く': 'Place here', '置いた': 'Placed', 'リングライト': 'Ring light', 'ガンマイク': 'Shotgun mic', '予備バッテリー': 'Spare battery',
   'ひろう': 'Pick up',
   'コントローラーをつなぎました': 'Controller connected', 'ボタンを押す…': 'Press a button…', '先にコントローラーをつないで、どれかボタンを押してください': 'Connect a controller and press any button first', 'つながっていません（PS・Xbox・Switchプロコンに対応）': 'Not connected (PS, Xbox, Switch Pro supported)', '録画の開始・停止': 'Start/stop recording', '調べる・開ける・隠れる': 'Examine / open / hide', 'インカメラ切り替え': 'Selfie camera', 'ズームを下げる': 'Zoom out', 'ズームを上げる': 'Zoom in', '持ち物': 'Items', '設定（一時停止）': 'Settings (pause)', '閉じる・戻る': 'Close / back',
@@ -9410,7 +9422,7 @@ const ITEM = {
         else { it.lv = sp.lv ?? (sp.type === 'lib' ? 1 : 0); it.pos.copy(sp.p); }
         return true; };
       const hmOK = HMEMO.pick(), used = new Set();
-      const avail = id => id === 'luckfuda' ? !used.has(id) && !all && !world.phanRun : !!this.get(id) && !used.has(id) && !(YTAG.KEEP.includes(id) && (SHOP.has(id) || this.have[id])) && !(id === 'torch' && (SHOP.has('torch') || this.have.torch || HAND.item === 'torch')) && !(id === 'memcard' && PERM.has('fixcam')) && !(id === 'hmemo' && !hmOK);
+      const avail = id => id === 'luckfuda' ? !used.has(id) && !all && !world.phanRun : !!this.get(id) && !used.has(id) && !(YTAG.KEEP.includes(id) && (SHOP.has(id) || this.have[id])) && !(id === 'torch' && (SHOP.has('torch') || this.have.torch || HAND.item === 'torch')) && !(id === 'hmemo' && !hmOK);
       const T = LOCKX.TIER, WT = LOCKX.WT;
       const take = (tier, inLocker) => { const order = tier === 'u' ? ['u', 'r', 'n'] : tier === 'r' ? ['r', 'u', 'n'] : ['n', 'r']; for (const t of order) { const c = T[t].filter(id => avail(id) && (id !== 'hmemo' || HMEMO.tierOf() === t) && (inLocker || (id !== 'omamori' && id !== 'luckfuda')));   /* 2026-11-19 100番：メモは書かれた撮れ高のレア度の枠だけ */   /* おまもり・封印のお札はロッカーの中だけ */ if (c.length) { const id = pickW(c.map(x => [x, WT[x] ?? 1])); used.add(id); return id; } } return null; };
       const tierFor = (hard, red) => LOCKX.tier(hard, red, OU);   /* 2026-11-18 レア度の決め方は LOCKX.tier にまとめた */
@@ -10362,14 +10374,20 @@ const COL = {
     this.build(); const d = this.load();
     const order = { SS: 0, S: 1, A: 2, B: 3, C: 4, D: 5 };
     const rows = this.LIST.map(([key, name, pts]) => ({ key, name, pts, r: rankOf({ key, pts }), it: d.items[name] }));
-    rows.sort((a, b) => order[a.r] - order[b.r] || b.pts - a.pts);
+    /* 2026-11-19 並べ方を切りかえ：撮れた順（撮れた物が上・新しく撮った順）／レア度が高い順／レア度が低い順。選んだ物は覚えておく */
+    let srt = 'got'; try { srt = localStorage.getItem('yt_col_sort') || 'got'; } catch (e) { } if (!['got', 'hi', 'lo'].includes(srt)) srt = 'got';
+    const ord = Object.keys(d.items), gi = x => (x.it && x.it.n) ? ord.indexOf(x.name) : -1, hi = (a, b) => order[a.r] - order[b.r] || b.pts - a.pts;
+    if (srt === 'got') rows.sort((a, b) => (gi(b) >= 0) - (gi(a) >= 0) || (gi(a) >= 0 ? gi(b) - gi(a) : 0) || (order[b.r] - order[a.r] || a.pts - b.pts));   /* まだ撮れていない物は、やさしい物（C・D）から */
+    else if (srt === 'lo') rows.sort((a, b) => order[b.r] - order[a.r] || a.pts - b.pts);
+    else rows.sort(hi);
     const got = rows.filter(x => x.it && x.it.n).length;
     $('#colNote').textContent = `${TR('これまでの撮影回数')} ${d.runs || 0}${TR('回')}`;
     const ALL = /[?&]colall\b/.test(location.search);   // 確認用：?colall で、まだ撮れていないものも名前を全部見せる
     if (ALL) $('#colNote').textContent += '　（確認用：すべての名前を表示中）';
     const list = $('#colList'); list.innerHTML = '';
     list.appendChild(ACH.box()); const sec = document.createElement('div'); sec.className = 'colSec';
-    sec.innerHTML = `<div class="colSecH">${TR('撮れ高コレクション')}</div><div class="colProg"><span>${LANG === 'en' ? `<b>${got}</b> / ${rows.length}` : `<b>${got}</b> / ${rows.length} 種類`}</span><span class="colBar"><i style="width:${(got / rows.length * 100).toFixed(1)}%"></i></span></div>`; list.appendChild(sec);   // 2026-11-14 一覧の見出し（黄色・中くらい）と集めた数
+    sec.innerHTML = `<div class="colSecH">${TR('撮れ高コレクション')}</div><div class="colProg"><span>${LANG === 'en' ? `<b>${got}</b> / ${rows.length}` : `<b>${got}</b> / ${rows.length} 種類`}</span><span class="colBar"><i style="width:${(got / rows.length * 100).toFixed(1)}%"></i></span></div><div class="colSort">${[['got', '撮れた順', 'Collected'], ['hi', 'レア度が高い順', 'Rarest first'], ['lo', 'レア度が低い順', 'Common first']].map(([k, j, e]) => `<button type="button" data-s="${k}" class="${k === srt ? 'on' : ''}">${LANG === 'en' ? e : j}</button>`).join('')}</div>`; list.appendChild(sec);
+    for (const b of sec.querySelectorAll('.colSort button')) b.addEventListener('click', e => { e.stopPropagation(); try { localStorage.setItem('yt_col_sort', b.dataset.s); } catch (er) { } this.open(); });   // 2026-11-14 一覧の見出し（黄色・中くらい）と集めた数
     for (const x of rows) {
       const c = document.createElement('div'); const has = x.it && x.it.n, show = has || ALL;
       c.className = 'colItem r-' + x.r.toLowerCase() + (show ? '' : ' unk'); c.style.setProperty('--rc', RANK_COL[x.r]);
@@ -15402,7 +15420,7 @@ const PERM = {
     gunmic: { name: 'ガンマイク', desc: '狙った音を拾う外付けマイク。怪異の足音や声が少し遠くまで、方向も分かりやすく聞こえる。' },
     batt: { name: '大容量バッテリー', desc: '大容量のバッテリー。スマホの電池が少しゆっくり減る。' },
     wipe: { name: 'ワイプカメラ', desc: '外カメラで録画している間、画面の隅にインカメラの小窓が映る。自分のリアクションと背後の怪異も一緒に録画でき、小窓に映った現象も撮れ高になる（一部をのぞく）。' },
-    fixcam: { name: '定点カメラ', desc: '2台目のスマホを定点カメラに。持ち物から好きな場所に設置できる。画角に入った現象を自動で録画し（15秒まで）、スマホで撮っていない時でも撮れ高になる。録画中に映ると、動画の画面が定点カメラに切り替わる。所持しているとメモリーカードは出なくなる。' },
+    fixcam: { name: '定点カメラ', desc: '2台目のスマホを定点カメラに。持ち物から好きな場所に設置できる。画角に入った現象を自動で録画し（15秒まで）、スマホで撮っていない時でも撮れ高になる。録画中に映ると、動画の画面が定点カメラに切り替わる。' },
   },
   load() {
     if (this.d) return this.d; let d = null; try { d = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) { }
@@ -15477,7 +15495,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.12';
+const VERSION = '0.18.13';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -15617,12 +15635,12 @@ const yrankName = i => YRANK[i][LANG === 'en' ? 4 : 1];
 const RKLIST = {
   open() {
     let el = $('#rkList'); if (!el) { el = document.createElement('div'); el.id = 'rkList'; document.body.appendChild(el); for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'click']) el.addEventListener(ev, e => e.stopPropagation()); el.addEventListener('click', e => { if (e.target === el || e.target.closest('.rkClose')) el.classList.remove('show'); }); }
-    const d = ACH.load(), ri = yrankIdx(d.total), L = n => Number(n).toLocaleString(LANG === 'en' ? 'en-US' : 'ja-JP');
+    const d = ACH.load(), rq = (TEST || BETA || DEV) && location.search.match(/[?&]rank=(\d)/), ri = rq ? Math.min(YRANK.length - 1, +rq[1]) : yrankIdx(d.total), tot = rq ? YRANK[ri][2] : d.total, L = n => Number(n).toLocaleString(LANG === 'en' ? 'en-US' : 'ja-JP');   /* 2026-11-19 133番：試し版は ?rank= の数字で一覧もそのランクに */
     const rows = YRANK.map((r, i) => {
       const cls = i < ri ? 'done' : i === ri ? 'now' : i === ri + 1 ? 'next' : 'lock';
-      const right = i < ri ? cui('rkDone') : i === ri ? cui('rkNow') : i === ri + 1 ? `${cui('rkReq', r[2])}<br>${cui('rkNeed', r[2] - d.total)}` : cui('rkHidden');
-      const name = i > ri + 1 ? cui('rkHidden') : yrankName(i);
-      const gi = PERM.rankItem(i), mul = i > ri + 1 ? '' : `<small class="rkM">${cui('rkMul', r[3].toFixed(2))}</small>`;
+      const right = i < ri ? cui('rkDone') : i === ri ? cui('rkNow') : i === ri + 1 ? `${cui('rkReq', r[2])}<br><b class="rkNd">${cui('rkNeed', r[2] - tot)}</b>` : cui('rkReq', r[2]);   /* 2026-11-19 先のランクも、名前・ごほうび・必要ないいねを見せる（先の楽しみ） */
+      const name = yrankName(i);
+      const gi = PERM.rankItem(i), cv = ECON.carry[Math.min(i, ECON.carry.length - 1)], cup = i > 0 && cv > ECON.carry[Math.min(i - 1, ECON.carry.length - 1)], mul = `<span class="rkBd"><small class="rkM">${cui('rkMul', r[3].toFixed(2))}</small><small class="rkC${cup ? ' up' : ''}">${cui('rkCarry', cv)}${cup ? '<i>+1</i>' : ''}</small></span>`;   /* 133番：コメント量と持ち込み枠を札のように並べる（持ち込みが増えるランクは +1） */
       const gear = i === 0 ? '' : gi ? `<span class="rkG${PERM.has(gi) ? ' got' : ''}" data-gear="${gi}" data-r="${i}"><img src="${PERM_IMG[gi]}" alt="">${PERM.has(gi) ? cui('rkGot') : cui('rkGet')}${TR(PERM.DEFS[gi].name)}</span>` : `<span class="rkG"><i>？</i>${cui('rkGet')}${cui('rkHidden')}</span>`;   // 2026-11-14 入手できる配信機材の予告
       return `<li class="${cls}"><span class="rkI">${i + 1}</span><span class="rkN">${name}${mul}${gear}</span><span class="rkR" style="text-align:right">${right}</span></li>`;
     }).reverse().join('');
@@ -15714,7 +15732,7 @@ const CHAT_UI = {
   title: ['チャット', 'Chat'], banned: ['このコメントはBANされました', 'This comment was banned'], banTip: ['クリック・タップでBAN（このコメントを消す）', 'Click or tap to ban (remove this comment)'], banHint: ['タップでBAN', 'Tap to ban'], note: ['映像に合わせた架空のコメント', 'Simulated chat synced to the video'], before: ['再生するとコメントが流れます', 'Play the video to see chat.'],
   novid: ['録画された映像がありません', 'No recorded video.'], nosync: ['この動画には同期コメントがありません', "Synced chat isn't available for this video."], legacy: ['この保存チャットは日本語のみです', 'This saved chat is only available in Japanese.'],
   latest: ['最新へ', 'Jump to latest'], pending: ['動画を仕上げています…', 'Finishing the video…'], nick: ['コメントでの呼び名', 'Name used in chat'], nickHint: ['空欄の場合はチャンネル名を使います', 'Leave blank to use your channel name.'],
-  rkList: ['ランク一覧', 'All ranks'], nextName: ['次のランク', 'Next rank'], rkNow: ['いま', 'NOW'], rkDone: ['到達', 'Reached'], rkNeed: ['あと{count}いいね', '{count} likes to go'], rkReq: ['累計 {count} いいね', '{count} lifetime likes'], rkHidden: ['？？？', '???'], rkNote: ['下から上へ、良いランクになります', 'Ranks get better from bottom to top'], rkMerit: ['ランクが上がるとどうなる？', 'Why rank up?'], rkMeritT: ['ランクは累計いいね数で上がります。動画についたいいねが、撮影のたびに貯まっていきます。ランクが上がるほど、動画のチャット欄が賑やかに（コメントが増え、静かな場面でも流れるように）。さらにランクごとに、ずっと使える撮影機材が手に入ります。', 'The higher your rank, the livelier your video chat gets: more comments, even during quiet moments. Rank is based on your lifetime likes, which add up every time you film.'], rkMul: ['コメント量 ×{count}', 'Chat ×{count}'], rkGear: ['機材：', 'Gear: '], rkGet: ['入手：', 'Unlocks: '], rkGot: ['入手済み：', 'Owned: '],
+  rkList: ['ランク一覧', 'All ranks'], nextName: ['次のランク', 'Next rank'], rkNow: ['いま', 'NOW'], rkDone: ['到達', 'Reached'], rkNeed: ['あと{count}いいね', '{count} likes to go'], rkReq: ['累計 {count} いいね', '{count} lifetime likes'], rkHidden: ['？？？', '???'], rkNote: ['下から上へ、良いランクになります', 'Ranks get better from bottom to top'], rkMerit: ['ランクが上がるとどうなる？', 'Why rank up?'], rkMeritT: ['ランクは累計いいね数で上がります。動画についたいいねが、撮影のたびに貯まっていきます。ランクが上がるほど、動画のチャット欄が賑やかになり、収益も増えやすくなります。現地に持ち込めるアイテムの数が増える他、ランクごとに撮影に便利なランク報酬ももらえます。', 'Your rank goes up with your lifetime likes, which add up every time you film. The higher your rank, the livelier your video chat and the more you tend to earn. You can bring more items on site, and each rank also gives you a handy filming reward.'], rkCarry: ['持ち込み {count}つ', 'Items {count}'], rkMul: ['コメント量 ×{count}', 'Chat ×{count}'], rkGear: ['機材：', 'Gear: '], rkGet: ['入手：', 'Unlocks: '], rkGot: ['入手済み：', 'Owned: '],
   lifetime: ['累計 {count} いいね', '{count} lifetime likes'], subsH: ['累計いいね数', 'Lifetime likes'], subsN: ['{count}', '{count}'], subsFrom: ['動画のいいねが、撮影のたびに貯まります。', 'Likes on your videos add up every time you film.'], next: ['次のランクまで あと{count}いいね', '{count} likes to the next rank'], top: ['最高ランク到達', 'Highest rank reached'],
   cnt: ['コメント数{count}件', '{count} comments'], cnt1: ['コメント数{count}件', '{count} comment'], counting: ['集計中…', 'Counting…'], cntNA: ['コメント情報なし', 'Chat data unavailable'],
   congrats: ['おめでとうございます！', 'Congratulations!'], explain: ['これからの動画はコメントが増えやすくなります', 'Your future videos can attract more chat reactions.'], ok: ['やった！', 'Nice!'],
@@ -17356,7 +17374,7 @@ const MAZE = {
   after() {
     const it0 = this.moved; if (it0) { it0.it.pos.copy(it0.p); it0.it.lv = it0.lv; this.moved = null; }
     if (!this.on || !this.goal) return;
-    const ids = ['omamori', 'battery'].concat(PERM.has('fixcam') ? [] : ['memcard']), it = ITEM.get(pick(ids)); if (!it) return;
+    const ids = ['omamori', 'battery', 'memcard'], it   /* 2026-11-19 131番：定点カメラを持っていてもメモリーカードは出る */ = ITEM.get(pick(ids)); if (!it) return;
     if (it.id !== 'memcard') this.moved = { it, p: it.pos.clone(), lv: it.lv };
     it.taken = false; it.lk = null; it.spot = { type: 'maze' }; it.lv = 1; it.pos.copy(this.goal); ITEM.skin(it);
     if (TEST || DEV) console.log('MAZE goal', it.id, this.goal.toArray().map(v => v.toFixed(1)).join(','));
@@ -20974,7 +20992,7 @@ const YTAG = {
   kind(id) { if (PERM.DEFS[id] || this.KEEP.includes(id)) return 'perm'; const it = ECON.items.find(x => x[0] === id); return it ? (it[3] === 'look' ? 'perm' : 'use') : null; },
   tag(id) { const k = this.kind(id); return k ? `<span class="ytag ${k}">${TR(k === 'use' ? '使い切り' : 'ずっと')}</span>` : ''; },
   how(id) { if (!this.kind(id)) return ''; if (id === 'torch') return TR('点けている間だけ');   /* 2026-11-19 114番 */ if (this.KEEP.includes(id)) return TR('持ち込むと効く'); return TR(this.USE.includes(id) ? '使った時だけ' : this.RUN.includes(id) ? 'その周の間ずっと' : '持っているだけで効く'); },
-  desc(id, d) { const h = this.how(id); return (h ? `<em class="yhow">${h}${LANG === 'en' ? ': ' : '：'}</em>` : '') + d; },
+  desc(id, d) { let h = this.how(id); if (h && String(d).replace(/<[^>]+>/g, '').trim().startsWith(h.slice(0, 4))) h = '';   /* 2026-11-19 「持ち込むと効く：持ち込むと、…」のように同じ言葉が続く時は札を出さない */ return (h ? `<em class="yhow">${h}${LANG === 'en' ? ': ' : '：'}</em>` : '') + d; },
 };
 Object.assign(EN, { '使うと手に持つ。もう一度ボタンを押すと投げる。落ちた所で20秒鳴り続け、近くの怪異はそちらへ向かう。': 'Use it to hold it. Press again to throw. It rings for 20 seconds where it lands, and nearby monsters head there.' });
 Object.assign(EN, { '音量（全体）': 'Volume (all)', 'ゲームの音すべて。スピーカーから出る大きさ（録画の音は変わりません）': 'All game sound. Speaker volume (does not change the recording)', 'BGM': 'Music', '追跡の曲・結果画面の曲・エンディングの曲など': 'Chase music, results and ending songs', '効果音': 'Sound effects', '足音・怪異の声・物が壊れる音・環境音など': 'Footsteps, monster voices, crashes, ambience', '画面の操作音': 'UI sounds', 'ボタン・メニューの音（動かすと試しに鳴ります）': 'Buttons and menus (plays a sample as you move it)' });
@@ -21208,7 +21226,7 @@ Object.assign(SHOP, {
     const perm = PERM.owned().map(id => `<div class="shIt"><img src="${PERM_IMG[id]}"><div class="shTx"><b>${TR(PERM.DEFS[id].name)}${YTAG.tag(id)}</b><small>${YTAG.desc(id, TR(PERM.DEFS[id].desc || ''))}</small></div></div>`);
     const looks = ECON.items.filter(it => it[3] === 'look' && d.look[it[0]] && ['goldphone', 'goldframe'].includes(it[0])).map(it => `<div class="shIt"><img src="${ITEM_IMG[it[0]]}"><div class="shTx"><b>${TR(ITEM.defs[it[0]].name)}${YTAG.tag(it[0])}</b><small>${YTAG.desc(it[0], TR(ITEM.defs[it[0]].desc))}</small></div></div>`);
     const uses = ECON.sorted().filter(it => (it[3] === 'use' && this.cnt(it[0]) > 0) || (it[3] === 'look' && d.look[it[0]] && !['goldphone', 'goldframe'].includes(it[0]))).sort((a, b) => (cl.includes(a[0]) ? cl.indexOf(a[0]) : 999) - (cl.includes(b[0]) ? cl.indexOf(b[0]) : 999)).map(it => { const id = it[0], on = cl.includes(id), fav = this.favs().includes(id), full = !on && cl.length >= lim;
-      return `<div class="shIt${on ? ' sel' : ''}"><img src="${ITEM_IMG[id]}"><div class="shTx"><b>${TR(ITEM.defs[id].name)}${YTAG.tag(id)}<span class="shN">×${it[3] === 'look' ? 1 : this.cnt(id)}</span></b><small>${YTAG.desc(id, TR(ITEM.defs[id].desc))}</small></div><button class="fav${fav ? ' on' : ''}" data-f="${id}" aria-label="★">${fav ? '★' : '☆'}</button><button class="shCar${on ? ' on' : ''}" data-c="${id}"${(full || fav) ? ' disabled' : ''}>${on ? (en ? 'Bring' : '持ち込む') : (en ? 'Leave' : '置いていく')}</button></div>`; });
+      return `<div class="shIt${on ? ' sel' : ''}"><img src="${ITEM_IMG[id]}"><div class="shTx"><b>${TR(ITEM.defs[id].name)}${YTAG.tag(id)}<span class="shN">×${it[3] === 'look' ? 1 : this.cnt(id)}</span></b><small>${YTAG.desc(id, TR(ITEM.defs[id].desc))}</small><div class="shAct"><button class="fav${fav ? ' on' : ''}" data-f="${id}" aria-label="★">${fav ? '★' : '☆'}</button><button class="shCar${on ? ' on' : ''}" data-c="${id}"${(full || fav) ? ' disabled' : ''}>${on ? (en ? 'Bring' : '持ち込む') : (en ? 'Leave' : '置いていく')}</button></div></div></div>`; });   /* 2026-11-19 ★とボタンは説明の下へ（説明の列が細くならないように） */
     el.innerHTML = `<div class="shBox"><div class="shHead"><b>${en ? 'Bag' : '持ち物'}</b><span class="carHd"><i class="carSl">${Array.from({ length: lim }, (_, i) => cl[i] ? `<em class="on"><img src="${ITEM_IMG[cl[i]]}" alt=""></em>` : '<em></em>').join('')}</i>${en ? 'Bringing' : '持ち込み'} <b>${cl.length} / ${lim}</b></span><button class="shX">×</button></div><div class="shList">
       <div class="shSec">${en ? 'Tools to bring in' : '持ち込む道具'}<small>${en ? `Up to ${lim} per run. ★ = always bring. Used tools are gone; unused ones stay.` : `1周に${lim}つまで。★お気に入りは、選ばなくても自動で持ち込みます。使った物はなくなり、使わなければ残ります。`}</small></div>${uses.join('') || `<div class="shEmpty">${en ? 'No tools yet. Buy them in the shop.' : 'まだありません。ショップで買えます。'}</div>`}
       <div class="shSec">${en ? 'Key items' : 'だいじなもの'}<small>${en ? 'Never lost, even if caught. Not counted in what you bring.' : '捕まってもなくならない物。持ち込む数には入りません。'}</small></div>${[...perm, ...looks].join('') || `<div class="shEmpty">${en ? 'None yet' : 'まだありません'}</div>`}</div></div>`;
