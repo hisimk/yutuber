@@ -4335,13 +4335,14 @@ const KB = {
 };
 KB.load();
 setTimeout(() => { try { hintsRefresh(); } catch (e) { } }, 0);   // 2026-11-14 録画ボタンの下のキー表示
+addEventListener('keyup', e => { try { if (e.code === KB.map.tool && typeof AIM !== 'undefined') AIM.release(); } catch (x) { } });
 addEventListener('keydown', e => {
   if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;   // 名前の入力中は反応しない
   keys[e.code] = true; if (KB.wait) return; const M = KB.map;
   if (e.code === M.rec) toggleRec(); if (e.code === M.act) $('#actBtn').click();
   if (e.code === M.selfie && typeof SELF !== 'undefined' && world.state === 'play') SELF.set(!world.selfie);
   if (e.code === M.crouch && typeof CROUCH !== 'undefined') CROUCH.toggle();
-  if (e.code === M.tool && typeof HAND !== 'undefined' && world.state === 'play') HAND.useTool();
+  if (e.code === M.tool && !e.repeat && typeof AIM !== 'undefined' && world.state === 'play') AIM.start();
   if (e.code === M.inv && typeof INV !== 'undefined') INV.open ? INV.hide() : INV.show();
   for (const [i, k] of [[0, 'z1'], [1, 'z2'], [2, 'z3']]) if (e.code === M[k]) { const z = CONFIG.zoomStops[i]; if (z) setZoom(z); }
 });
@@ -4485,6 +4486,7 @@ const PAD = {
     if (PADNAV.active()) { PADNAV.poll(B, this.prev, M, dt, this); for (const a of ['menu', 'inv']) { const i = M[a]; if (B[i] && !this.prev[i]) this.press(a); } this.prev = B; this.vibTick(dt); return; }   // 2026-11-15 メニューや画面ではボタンで選んで操作
     PADNAV.clear();
     for (const a of this.ACTS) { const i = M[a]; if (B[i] && !this.prev[i]) this.press(a); }
+    { const i = M.tool; if (!B[i] && this.prev[i]) try { AIM.release(); } catch (e) { } }   /* 道具のボタンをはなしたら投げる */
     this.prev = B;
     // 見回す（右スティック）。ゲーム中だけ
     if (world.state === 'play' && (this.rx || this.ry)) {
@@ -4508,7 +4510,7 @@ const PAD = {
     else if (a === 'act') { if (actFn && $('#actBtn').classList.contains('show')) actFn(); }
     else if (a === 'selfie') SELF.set(!world.selfie);
     else if (a === 'crouch') CROUCH.toggle();
-    else if (a === 'tool') HAND.useTool();
+    else if (a === 'tool') AIM.start();
     else if (a === 'zoomUp' || a === 'zoomDown') { const st = CONFIG.zoomStops; let i = st.indexOf(zoomTarget); if (i < 0) i = 0; i = clamp(i + (a === 'zoomUp' ? 1 : -1), 0, st.length - 1); setZoom(st[i]); }
   },
   // 振動
@@ -15396,7 +15398,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.62';
+const VERSION = '0.17.63';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -17913,6 +17915,16 @@ const WING = {
       if (!clear) continue;
       M.heading = Math.atan2(b.c.x - M.pos.x, b.c.z - M.pos.z); M.nearBar = b; M.lockAim = true; M.dashMin = 99; M.dashP0 = M.pos.clone(); if (TEST || DEV) console.log('WING aim', b.id); return;
     }
+  },
+  /* 2026-11-19 90番：バリケードの向こうで鳴るブザーに気を引かれた内田くんは、ブザーの方へ猛ダッシュしてバリケードを壊す */
+  aimBuzz(M, p) {
+    if (M.lv() !== 1 || p.y < LH - 0.5) return false;
+    for (const b of this.B) { if (b.open || Math.hypot(p.x - b.c.x, p.z - b.c.z) > 9 || Math.hypot(M.pos.x - b.c.x, M.pos.z - b.c.z) > 16) continue;
+      const cs = [b.col, b.dcol].filter(Boolean), on = cs.map(c => c.on), blockedNow = segBlocked(M.pos.x, M.pos.z, p.x, p.z, 1, 0.1); cs.forEach(c => c.on = false); const clearB = !segBlocked(M.pos.x, M.pos.z, b.c.x, b.c.z, 1, 0.1), clearP = !segBlocked(M.pos.x, M.pos.z, p.x, p.z, 1, 0.1); cs.forEach((c, i) => c.on = on[i]);
+      if (!clearB || !(blockedNow && (clearP || Math.hypot(p.x - b.c.x, p.z - b.c.z) < 5))) continue;
+      M.st = 'dash'; M.t = 0; M.speed = 1.5; M.col && (M.col.on = false); M.play('Run', 2.7); M.heading = Math.atan2(b.c.x - M.pos.x, b.c.z - M.pos.z); M.nearBar = b; M.lockAim = true; M.dashMin = 99; M.dashP0 = M.pos.clone(); M.buzzDash = true;
+      try { playSfx('start_pistol', { pos: M.head().clone(), ref: 1.4, gain: 1.0 }); } catch (e) { } if (TEST || DEV) console.log('WING aimBuzz', b.id); return true; }
+    return false;
   },
   hit(M, fx, fz, mv) {
     if (M.lv() !== 1) return false;
@@ -20984,12 +20996,11 @@ const BUZZ = { reset() { this.on = null; if (this.gnd) { scene.remove(this.gnd);
     const strap = new THREE.Mesh(new THREE.TorusGeometry(0.008, 0.002, 5, 12), K); strap.position.set(0, -0.042, 0); strap.rotation.y = Math.PI / 2; g.add(strap);
     return g; },
   /* 手から投げる：前へ約4.5m・弧を描いて0.5秒。落ちた所で鳴り始める */
-  throwIt() { const f = camFwd(); f.y = 0; f.normalize(); const fy = player.lv ? LH : 0, [x, z] = collide(player.x + f.x * 4.5, player.z + f.z * 4.5, 0.2, player.lv);
-    camera.updateMatrixWorld(); const from = camera.localToWorld(V(0.08, -0.17, -0.4)), to = V(x, fy + 0.016, z), m = this.mesh(); m.position.copy(from); scene.add(m); if (this.gnd) scene.remove(this.gnd); this.gnd = m;
+  throwIt(P) { P = P || AIM.plan('buzzer'); const from = P.from.clone(), to = P.to.clone(), m = this.mesh();   /* 2026-11-19 90番：線と同じ計算。2階のバリケードは越える */ m.position.copy(from); scene.add(m); if (this.gnd) scene.remove(this.gnd); this.gnd = m;
     this.fly = { m, from, to, t: 0 }; try { XCHAT.log('it_buzzer'); } catch (e) { } },
   flyTick(dt) { const F = this.fly; if (!F) return; F.t += dt / 0.5; const k = Math.min(1, F.t); F.m.position.lerpVectors(F.from, F.to, k); F.m.position.y += Math.sin(k * Math.PI) * 0.6; F.m.rotation.x += dt * 14; F.m.rotation.z += dt * 5;
     if (k >= 1) { this.fly = null; F.m.rotation.set(-Math.PI / 2, rnd(0, 6), 0); F.m.position.copy(F.to); this.on = { p: F.to.clone().setY(F.to.y + 0.04), t: 0, nx: 0 }; SND.knock(this.on.p, 0.6); this.lure(); } }, use() { const f = camFwd(); f.y = 0; f.normalize(); const p = V(player.x + f.x * 3, player.y, player.z + f.z * 3); const [x, z] = collide(p.x, p.z, 0.2, player.lv); p.x = x; p.z = z; this.on = { p: p.setY(player.y + 0.05), t: 0, nx: 0 }; SND.knock(this.on.p, 0.6); this.lure(); },
-  lure() { const p = this.on.p; try { if (CH.state === 'off' && !WD.borrowed && Math.abs((WD.pos.y || 0) - p.y) < 1.5 && WD.pos.distanceTo(p) < 30) WD.goTo(p); } catch (e) { } try { if (urahShown() && !URAH.chasing() && Math.abs(URAH.pos.y - p.y) < 1.5) URAH.alertAt(p); } catch (e) { } try { if (world.mannRun && MANN.st === 'walk' && Math.abs(MANN.pos.y - p.y) < 1.5) MANN.walkTo(nearestNode(p.x, p.z, undefined, p.y)); } catch (e) { } URINT.noise('buzzer'); },
+  lure() { const p = this.on.p; try { if (world.mannRun && MANN.st === 'walk' && WING.aimBuzz(MANN, p)) { } } catch (e) { } try { if (CH.state === 'off' && !WD.borrowed && Math.abs((WD.pos.y || 0) - p.y) < 1.5 && WD.pos.distanceTo(p) < 30) WD.goTo(p); } catch (e) { } try { if (urahShown() && !URAH.chasing() && Math.abs(URAH.pos.y - p.y) < 1.5) URAH.alertAt(p); } catch (e) { } try { if (world.mannRun && MANN.st === 'walk' && Math.abs(MANN.pos.y - p.y) < 1.5) MANN.walkTo(nearestNode(p.x, p.z, undefined, p.y)); } catch (e) { } URINT.noise('buzzer'); },
   update(dt) { const B = this.on; if (!B || !A.ctx) return; B.t += dt; B.nx -= dt; if (B.nx <= 0) { B.nx = 0.13; B.k = !B.k; tn(panAt(B.p, 2.2, 0.9, undefined, 1), { t: A.ctx.currentTime, type: 'square', f0: B.k ? 3300 : 2700, f1: B.k ? 3300 : 2700, dur: 0.11, peak: 0.08 });   /* 2026-11-17 ブザーらしく速く・2音で */ } if (Math.floor(B.t) % 5 === 0 && Math.floor(B.t - dt) % 5 !== 0) this.lure(); if (B.t > 20) this.on = null; } };
 { const U0 = BUZZ.update.bind(BUZZ); BUZZ.update = function (dt) { try { this.flyTick(dt); } catch (e) { } return U0(dt); }; }
 const CHEM = { list: [], reset() { for (const c of this.list) scene.remove(c); this.list = []; },
@@ -22692,19 +22703,32 @@ function urahShown() { try { return URAH.on && !['wait', 'off', 'cap'].includes(
 const KBALL = {
   list: [], reset() { for (const b of this.list) F2G.remove(b.m), scene.remove(b.m); this.list = []; },
   mesh() { const c = document.createElement('canvas'); c.width = 128; c.height = 64; const g = c.getContext('2d'); g.fillStyle = '#cfc2a2'; g.fillRect(0, 0, 128, 64); for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(80,60,30,${Math.random() * 0.25})`; g.fillRect(Math.random() * 128, Math.random() * 64, 6, 4); } g.fillStyle = '#1e1c18'; for (let i = 0; i < 10; i++) { const x = (i % 5) * 26 + (i > 4 ? 13 : 0) + 6, y = i > 4 ? 46 : 16; g.beginPath(); for (let k = 0; k < 5; k++) { const a = k / 5 * 6.283 - 1.57; g.lineTo(x + Math.cos(a) * 7, y + Math.sin(a) * 7); } g.fill(); } const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), new THREE.MeshLambertMaterial({ map: t })); },
-  use() { const f = camFwd(); f.y = 0; f.normalize(); const lv = player.lv, fy = lv ? LH : 0; const m = this.mesh(); m.position.set(player.x + f.x * 0.45, fy + 0.11, player.z + f.z * 0.45); scene.add(m);
-    const b = { m, v: V(f.x * 11, 2.2, f.z * 11), lv, fy, t: 0, stop: 0, nb: 0 }; this.list.push(b); ballKickSe(m.position.clone(), 0.9); try { XCHAT.log('it_ball'); } catch (e) { }
+  KV: { h: 8, up: 5.2 },   /* 2026-11-19 90番：少し弧を描いて飛ぶ（前は横11・上2.2のゴロ）。頂点は床から約1.5m */
+  start() { const f = camFwd(); f.y = 0; f.normalize(); const lv = player.lv, fy = lv ? LH : 0; return { p: V(player.x + f.x * 0.45, fy + 0.11, player.z + f.z * 0.45), v: V(f.x * this.KV.h, this.KV.up, f.z * this.KV.h), lv, fy }; },
+  /* 1コマ分の動き（線の予測と、実際の動きで同じものを使う）。起きたこと（床・壁・ガラス）を返す */
+  step(b, dt) { const p = b.p, v = b.v; let ev = null; v.y -= 9.8 * dt; let ny = p.y + v.y * dt;
+    if (ny < b.fy + 0.11) { ny = b.fy + 0.11; if (v.y < -1.2) ev = { k: 'ground', p: V(p.x, b.fy, p.z), s: -v.y }; v.y = -v.y * 0.35; if (Math.abs(v.y) < 0.5) v.y = 0; }
+    const vx0 = v.x, vz0 = v.z, tx = p.x + v.x * dt, tz = p.z + v.z * dt, [cx, cz] = collide(tx, tz, 0.12, b.lv); let hit = false, n = V();
+    if (Math.abs(cx - tx) > 1e-3) { v.x = -v.x * 0.65; hit = true; n.x = -Math.sign(vx0); } if (Math.abs(cz - tz) > 1e-3) { v.z = -v.z * 0.65; hit = true; n.z = -Math.sign(vz0); }
+    if (hit) { const g = this.glassAt(p.x, p.z, ny, b.lv); ev = { k: g ? 'glass' : 'wall', g, p: V(p.x, ny, p.z), n: n.normalize(), s: Math.hypot(vx0, vz0) }; } else { p.x = cx; p.z = cz; } p.y = ny;
+    if (ny <= b.fy + 0.111) { const k = Math.max(0, 1 - 0.9 * dt); v.x *= k; v.z *= k; } return ev; },
+  /* ボールが当たった所の窓ガラス（割れていない物だけ） */
+  glassAt(x, z, y, lv) { for (const g of glassPanes) { const S = g.userData.sec; if (!S || !g.visible || (S.lv !== lv && S.lv !== -1)) continue; const along = S.axis === 'x' ? z : x, across = S.axis === 'x' ? x : z; if (along < S.lo - 0.05 || along > S.hi + 0.05 || Math.abs(across - S.c) > 0.45) continue; const yy = y - (lv ? LH : 0); if (yy < S.y - S.h / 2 || yy > S.y + S.h / 2) continue; return g; } return null; },
+  breakGlass(b, ev) { const g = ev.g; if (!g || !g.visible) return; const lv0 = SP.lv; SP.lv = b.lv; try { SP.breakWindow(ev.p.x, ev.p.z); } catch (e) { } SP.lv = lv0; if (g.visible) return;
+    b.v.multiplyScalar(0.4); const gp = g.getWorldPosition(V()); this.lure(V(gp.x, b.fy, gp.z)); try { NOISE.make(7); } catch (e) { } if (TEST || DEV) console.log('BALL glass');
+    if (rec.active && seen(gp, { maxD: 16 })) { award('ballGlass', 'ボールで窓ガラスを割った', 40); }
+    SHOT.watch('ballGlass', () => gp, { maxD: 16, margin: 0.9, win: 1.2, hold: 0.1 }); },
+  use(P) { P = P || AIM.plan('ball'); const S0 = P.b0; const m = this.mesh(); m.position.copy(S0.p); scene.add(m);
+    const b = { m, p: m.position, v: S0.v.clone(), lv: S0.lv, fy: S0.fy, t: 0, stop: 0, nb: 0 }; this.list.push(b); ballKickSe(m.position.clone(), 0.9); try { XCHAT.log('it_ball'); } catch (e) { }
     /* 2026-11-18 姿を見せている時（前兆の間・捕まえている時は除く）で14m以内だけ：オフタリサマの位置から、かなの声で「ケマリ、スル」（字幕なし）＋ボールに気を取られる */
     try { if (urahShown() && Math.hypot(URAH.pos.x - player.x, URAH.pos.z - player.z) < 14) setTimeout(() => { try { if (!urahShown()) return; URAHV.busy = 0; URAHV.say('x', URAH.face, { text: 'ケマリ、スル' }); URAH.alertAt(b.m.position.clone().setY(b.fy)); } catch (e) { } }, 900); } catch (e) { } },
   lure(p) { try { if (CH.state === 'off' && !WD.borrowed && Math.abs((WD.pos.y || 0) - p.y) < 1.5 && WD.pos.distanceTo(p) < 30) WD.goTo(p); } catch (e) { } try { if (urahShown() && !URAH.chasing() && Math.abs(URAH.pos.y - p.y) < 1.5) URAH.alertAt(p); } catch (e) { } try { if (world.mannRun && MANN.st === 'walk' && Math.abs(MANN.pos.y - p.y) < 1.5) MANN.walkTo(nearestNode(p.x, p.z, undefined, p.y)); } catch (e) { } try { URINT.noise('buzzer'); } catch (e) { } NOISE.make(6); },
   update(dt) {
     for (const b of this.list.slice()) { const p = b.m.position, v = b.v; b.t += dt;
       if (b.rest) continue;   /* 2026-11-17 止まったボールは床に残る（拾えばまた使える） */
-      v.y -= 9.8 * dt; let ny = p.y + v.y * dt; if (ny < b.fy + 0.11) { ny = b.fy + 0.11; if (v.y < -1.2) { SND.knock(p.clone(), Math.min(0.6, -v.y * 0.12)); this.lure(V(p.x, b.fy, p.z)); } v.y = -v.y * 0.35; if (Math.abs(v.y) < 0.5) v.y = 0; }
-      const tx = p.x + v.x * dt, tz = p.z + v.z * dt, [cx, cz] = collide(tx, tz, 0.12, b.lv); let hit = false;
-      if (Math.abs(cx - tx) > 1e-3) { v.x = -v.x * 0.65; hit = true; } if (Math.abs(cz - tz) > 1e-3) { v.z = -v.z * 0.65; hit = true; }
-      if (hit) { b.nb++; SND.knock(p.clone(), 0.55); this.lure(V(p.x, b.fy, p.z)); } else { p.x = cx; p.z = cz; } p.y = ny;
-      if (ny <= b.fy + 0.111) { const k = Math.max(0, 1 - 0.9 * dt); v.x *= k; v.z *= k; }
+      b.p = p; let ev = null; { const N = Math.min(8, Math.ceil(dt / (1 / 60))), h = dt / N; for (let i = 0; i < N && !ev; i++) ev = this.step(b, h); }   /* 線の予測（1/60秒ずつ）と同じ細かさで動かす */
+      if (ev && ev.k === 'ground') { SND.knock(p.clone(), Math.min(0.6, ev.s * 0.12)); this.lure(V(p.x, b.fy, p.z)); }
+      if (ev && ev.k !== 'ground') { b.nb++; if (ev.k === 'glass' && ev.s > 2.5) this.breakGlass(b, ev); else { SND.knock(p.clone(), 0.55); this.lure(V(p.x, b.fy, p.z)); } }
       const sp = Math.hypot(v.x, v.z); b.m.rotation.x += v.z * dt / 0.11; b.m.rotation.z -= v.x * dt / 0.11;
       if (sp > 0.3 && (b.lt = (b.lt ?? 0) - dt) <= 0) { b.lt = 1.2; this.lure(V(p.x, b.fy, p.z)); }   /* 2026-11-17 転がっている間だけ怪異を呼ぶ */
       if ((sp < 0.15 && v.y === 0) || b.t > 14) { v.set(0, 0, 0); b.rest = true; } }
@@ -22900,8 +22924,8 @@ const HAND = {
   hiding() { return !!player.hidden || (typeof HIDE !== 'undefined' && !!HIDE.lk) || (typeof UNDER !== 'undefined' && !!UNDER.on) || (typeof KOK !== 'undefined' && !!KOK.on); },
   /* 道具の操作（別のボタン・Qキー・コントローラーのLT/L2/ZL） */
   toolLabel() { const id = this.item; if (!id || world.state !== 'play' || world.capture || this.hiding() || (typeof CAP !== 'undefined' && CAP.on)) return null; const H = document.documentElement.classList; if (H.contains('jyOn') || H.contains('ptOn') || (typeof PIANO !== 'undefined' && PIANO.on) || (typeof SCIRM !== 'undefined' && SCIRM.scope) || (typeof INV !== 'undefined' && INV.open) || (typeof SET !== 'undefined' && SET.open) || (typeof SPH !== 'undefined' && SPH.shareOn) || (typeof DIR !== 'undefined' && DIR.active)) return null; const T = (j, e) => LANG === 'en' ? e : j; return id === 'ball' ? T('蹴る', 'Kick') : id === 'chem' || id === 'buzzer' ? T('投げる', 'Throw') : null; },
-  useTool() { const id = this.item; if (!this.toolLabel()) return; if (id === 'ball') { this.drop(); KBALL.use(); } else if (id === 'chem') this.throwChem(); else if (id === 'buzzer') { this.drop(); BUZZ.throwIt(); } },
-  toolUi() { const b = $('#toolBtn'); if (!b) return; if (!this.tbInit) { this.tbInit = true; hudTap(b, () => this.useTool()); } const L = this.toolLabel(), k = $('#toolKey');
+  useTool(P) { const id = this.item; if (!this.toolLabel()) return; if (id === 'ball') { this.drop(); KBALL.use(P); } else if (id === 'chem') this.throwChem(P); else if (id === 'buzzer') { this.drop(); BUZZ.throwIt(P); } },
+  toolUi() { const b = $('#toolBtn'); if (!b) return; if (!this.tbInit) { this.tbInit = true; const dn = e => { e.preventDefault(); e.stopPropagation(); try { b.setPointerCapture && b.setPointerCapture(e.pointerId); } catch (x) { } AIM.start(); }, up = e => { e.preventDefault(); e.stopPropagation(); AIM.release(); }; b.addEventListener('pointerdown', dn); b.addEventListener('pointerup', up); b.addEventListener('pointercancel', () => { AIM.on = false; AIM.hide(); }); for (const ev of ['touchstart', 'touchend', 'click', 'mousedown', 'mouseup']) b.addEventListener(ev, e => e.stopPropagation()); }   /* 2026-11-19 90番：押している間は線、はなすと投げる */ const L = this.toolLabel(), k = $('#toolKey');
     if (b._l !== L) { b._l = L; b.querySelector('span').textContent = L || ''; b.classList.toggle('show', !!L); }
     if (k) { const t = L ? (PAD.using ? PAD.of('tool') : `${KB.of('tool')} ${TR('キー')}`) : ''; if (k._t !== t) { k._t = t; k.textContent = t; } k.classList.toggle('show', !!L); } },
   name(id) { return TR(ITEM.defs[id] ? ITEM.defs[id].name : id); },
@@ -22911,9 +22935,8 @@ const HAND = {
   unStash() { if (!(this.cStash > 0)) return false; if (this.item) this.stow(); this.take('candle', true); this.sync(); return true; },
   drop() { this.item = null; this.sync(); },
   offer() { },   /* 2026-11-19 87番：道具の操作は調べるボタンではなく、別のボタン（toolUi）で出す */
-  throwChem() {
-    const f = camFwd(); f.y = 0; f.normalize(); const [x, z] = collide(player.x + f.x * 2.6, player.z + f.z * 2.6, 0.2, player.lv);
-    const from = camera.localToWorld(V(0.08, -0.17, -0.4)), to = V(x, (player.lv ? LH : 0) + 0.03, z); this.drop();
+  throwChem(P) {
+    P = P || AIM.plan('chem'); const from = P.from.clone(), to = P.to.clone(); this.drop();   /* 2026-11-19 90番：線（AIM.plan）と同じ計算で飛ぶ */
     const g = new THREE.Group(); const m = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.15, 6), new THREE.MeshBasicMaterial({ color: 0x7cff70 })); m.rotation.z = Math.PI / 2; g.add(m); g.position.copy(from); scene.add(g); CHEM.list.push(g);
     const L = CHEM.vl[CHEM.k++ % CHEM.vl.length]; L.l.intensity = 0.9; L.lv = player.lv; g.userData.L = L.l;
     this.fly.push({ g, from, to, t: 0 });
@@ -25636,19 +25659,62 @@ const TORCH = {
 };
 TORCH.init();
 ITEM.defs.torch = { name: '懐中電灯', desc: '前の方を、遠くまで少し明るく照らせる。使うと手に持ち、ボタンで点けたり消したりできる。なくならない。', size: 0.2, act: '使う' };
-ITEM_ICON2.torch = ITEM_IMG.torch = 'data:image/webp;base64,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';
+ITEM_ICON2.torch = ITEM_IMG.torch = 'data:image/webp;base64,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';   /* 2026-11-19 本人が用意したアイコン（白い背景を抜いた） */
 ECON.items.push(['torch', 5000, 2, 'use']); YTAG.NOUSE.push('torch'); YTAG.USE.push('torch'); if (!INV.ids.includes('torch')) INV.ids.push('torch'); ITEM_TIER.rare.push('torch'); LOCKX.TIER.r.push('torch'); LOCKX.WT.torch = 0.6; if (!ITEM.LK_IDS.includes('torch')) ITEM.LK_IDS.push('torch');
 { const K0 = YTAG.kind.bind(YTAG); YTAG.kind = function (id) { return id === 'torch' ? 'perm' : K0(id); }; }   /* 札は「ずっと」 */
 HAND.HOLD.push('torch');
 Object.assign(EN, { '懐中電灯': 'Flashlight', '前の方を、遠くまで少し明るく照らせる。使うと手に持ち、ボタンで点けたり消したりできる。なくならない。': 'Lights up the way ahead, a little farther than usual. Use it to hold it, and press the button to turn it on or off. It never runs out.', 'つける': 'On', '消す': 'Off' });
 { const I0 = HAND.init.bind(HAND); HAND.init = function () { const first = !this.g; I0(); if (first) { const t = TORCH.mesh(); this.g.add(t); this.m.torch = t; t.traverse(o => { o.frustumCulled = false; o.renderOrder = 5; }); t.visible = false; } }; }
 { const L0 = HAND.toolLabel.bind(HAND); HAND.toolLabel = function () { const l = L0(); if (this.item !== 'torch') return l; if (!this.item || world.state !== 'play' || world.capture || this.hiding()) return null; const H = document.documentElement.classList; if (H.contains('jyOn') || H.contains('ptOn') || (typeof PIANO !== 'undefined' && PIANO.on) || (typeof INV !== 'undefined' && INV.open) || (typeof SET !== 'undefined' && SET.open)) return null; return TR(this.tOn ? '消す' : 'つける'); }; }
-{ const U0 = HAND.useTool.bind(HAND); HAND.useTool = function () { if (this.item === 'torch') { if (!this.toolLabel()) return; this.tOn = !this.tOn; try { SND.latch(camera.position.clone()); } catch (e) { } if (TEST || DEV) console.log('TORCH', this.tOn); return; } return U0(); }; }
+{ const U0 = HAND.useTool.bind(HAND); HAND.useTool = function () { if (this.item === 'torch') { if (!this.toolLabel()) return; this.tOn = !this.tOn; try { SND.latch(camera.position.clone()); } catch (e) { } if (TEST || DEV) console.log('TORCH', this.tOn); return; } return U0(...arguments); }; }
 { const T0 = HAND.take.bind(HAND); HAND.take = function (id, st) { const r = T0(id, st); if (id === 'torch') this.tOn = true; return r; }; }   /* 持った時はつけた状態 */
 { const U1 = HAND.update.bind(HAND); HAND.update = function (dt) { U1(dt); try { TORCH.update(); } catch (e) { } }; }
 { const R0 = HAND.reset.bind(HAND); HAND.reset = function () { R0(); this.tOn = false; }; }
 if ((TEST || BETA) && /[?&]torch\b/.test(location.search)) { const B1 = SHOP.beginRun.bind(SHOP); SHOP.beginRun = function () { const r = B1(); ITEM.have.torch = true; return r; }; }
-if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, TORCH, HAND, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
+/* =========================================================
+   2026-11-19 90番：投げる・蹴るボタンを長押しすると、飛んでいく線と着地点の円が出る（はなすと投げる）
+   ・線と実際の飛び方は同じ計算（AIM.plan → 投げる時にそのまま使う）
+   ・ボール：KBALL.step で1コマずつ予測。最初に床・壁・ガラスに当たる所に円
+   ・ケミカルライト・ブザー：まっすぐ前へ（2.6m・4.5m）。壁や閉まった戸に当たる時は、当たる所に円。ブザーは2階のバリケードを越える
+   ========================================================= */
+const AIM = {
+  on: false, t0: 0, HOLD_MS: 140,
+  init() { if (this.line) return; const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3 * 96), 3)); g.setDrawRange(0, 0);
+    this.line = new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0xc8f2ff, transparent: true, opacity: 0.42, depthWrite: false, depthTest: true })); this.line.frustumCulled = false; this.line.renderOrder = 7; this.line.visible = false; scene.add(this.line);
+    this.ring = new THREE.Mesh(new THREE.RingGeometry(0.15, 0.21, 32), new THREE.MeshBasicMaterial({ color: 0xc8f2ff, transparent: true, opacity: 0.6, depthWrite: false, side: THREE.DoubleSide })); this.ring.renderOrder = 7; this.ring.visible = false; this.ring.frustumCulled = false; scene.add(this.ring); },
+  kind() { const id = HAND.item; return ['ball', 'chem', 'buzzer'].includes(id) && HAND.toolLabel() ? id : null; },
+  start() { if (this.on) return; const k = this.kind(); if (!k) { HAND.useTool(); return; } this.on = true; this.t0 = performance.now(); this.init(); },
+  release() { if (!this.on) return; this.on = false; this.hide(); const k = this.kind(); if (!k) return; HAND.useTool(this.plan(k)); },
+  hide() { if (this.line) { this.line.visible = false; this.ring.visible = false; } },
+  hand() { camera.updateMatrixWorld(); return camera.localToWorld(V(0.08, -0.17, -0.4)); },
+  /* まっすぐ前へ投げる物：届く所と、壁に当たる所 */
+  flat(D, H, passBar) { const f = camFwd(); f.y = 0; f.normalize(); const lv = player.lv, fy = lv ? LH : 0, from = this.hand();
+    const bars = passBar && lv === 1 ? WING.B.filter(b => !b.open).flatMap(b => [b.col, b.dcol].filter(c => c && c.on)) : []; bars.forEach(c => c.on = false);
+    let d = D, wall = null; for (let s = 0.25; s <= D + 1e-6; s += 0.1) { const x = player.x + f.x * s, z = player.z + f.z * s; if (segBlocked(player.x, player.z, x, z, lv, 0.12) || closedDoorOn(player.x, player.z, x, z, lv)) { d = Math.max(0.3, s - 0.25); wall = V(x - f.x * 0.12, 0, z - f.z * 0.12); break; } }
+    bars.forEach(c => c.on = true);
+    if (bars.length) { const inBar = (x, z) => bars.some(c => x > c.x0 - 0.2 && x < c.x1 + 0.2 && z > c.z0 - 0.2 && z < c.z1 + 0.2); let k = 0; while (inBar(player.x + f.x * d, player.z + f.z * d) && k++ < 14) d += 0.1; }
+    const to = V(player.x + f.x * d, fy + 0.016, player.z + f.z * d), pts = []; for (let i = 0; i <= 24; i++) { const k = i / 24, q = from.clone().lerp(to, k); q.y += Math.sin(k * Math.PI) * H; pts.push(q); }
+    if (wall) { const k = Math.min(1, (d + 0.25) / Math.max(0.01, D)); wall.y = from.y + (to.y - from.y) * Math.min(1, k) + Math.sin(Math.min(1, k) * Math.PI) * H * 0.6; }
+    return { from, to, pts, land: wall ? wall : to.clone().setY(fy + 0.02), n: wall ? f.clone().negate() : null }; },
+  plan(k) {
+    if (k === 'chem') return this.flat(2.6, 0.5, false);
+    if (k === 'buzzer') return this.flat(4.5, 0.6, true);
+    const b0 = KBALL.start(), b = { p: b0.p.clone(), v: b0.v.clone(), lv: b0.lv, fy: b0.fy }, pts = [b.p.clone()]; let land = null, n = null;
+    for (let i = 0; i < 300; i++) { const ev = KBALL.step(b, 1 / 60); if (i % 2 === 1) pts.push(b.p.clone()); if (ev) { land = ev.k === 'ground' ? ev.p.clone().setY(b.fy + 0.02) : ev.p.clone(); n = ev.k === 'ground' ? null : ev.n; pts.push(land.clone()); break; } }
+    if (!land) land = b.p.clone().setY(b.fy + 0.02);
+    return { b0, pts, land, n }; },
+  tick() { if (!this.on) return; const k = this.kind(); if (!k) { this.on = false; this.hide(); return; } if (performance.now() - this.t0 < this.HOLD_MS) return;
+    const P = this.plan(k), A = this.line.geometry.attributes.position, m = Math.min(96, P.pts.length); for (let i = 0; i < m; i++) A.setXYZ(i, P.pts[i].x, P.pts[i].y, P.pts[i].z); A.needsUpdate = true; this.line.geometry.setDrawRange(0, m); this.line.geometry.computeBoundingSphere();
+    this.line.visible = true; this.ring.visible = true; this.ring.position.copy(P.land); if (P.n) { this.ring.lookAt(P.land.clone().add(P.n)); } else this.ring.rotation.set(-Math.PI / 2, 0, 0); },
+};
+{ const U1 = HAND.update.bind(HAND); HAND.update = function (dt) { U1(dt); try { AIM.tick(); } catch (e) { } }; }
+Object.assign(AW_TABLE, { ballGlass: ['B', 40] }); COL.LIST.push(['ballGlass', 'ボールで窓ガラスを割った', 40]);
+CHIP_DESC.ballGlass = ['蹴ったボールが、窓ガラスに当たって割れた。弁償の二文字が頭をよぎる。', 'The ball you kicked smashed a window. The word "compensation" crosses your mind.'];
+AW_HINT.ballGlass = ['ボールを高く蹴って、窓に当てる', 'kick the ball high at a window'];
+TKTXT.ballGlass = [CHIP_DESC.ballGlass[0], 'ボールで■■ガラスを■った', '■ったボールが、■ガラスに当たって■れた。■■の二文字が頭をよぎる。'];
+Object.assign(EN, { 'ボールで窓ガラスを割った': 'Smashed a window with the ball' });
+{ const J = [['割ったｗ', 'you broke it lol'], ['弁償だな', 'you’re paying for that'], ['器物損壊で草', 'property damage lmao'], ['今の音でバレたろ', 'they definitely heard that']]; XCHAT.LIST.ballGlass = J.map((x, i) => 'bgl.' + i); J.forEach((x, i) => { CHAT_DICT.t['bgl.' + i] = x; }); }
+if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
