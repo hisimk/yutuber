@@ -15514,7 +15514,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.39';
+const VERSION = '0.18.40';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -17061,8 +17061,14 @@ const KOK = {
     this.answer();
   },
   // ── 答え（めちゃくちゃ）
+  /* 2026-11-19 139番：なぞる言葉。言葉が出た時に「かえれ」になる割合（KAERE）は今と同じ 1/4。残りはほかの言葉で同じくらいに分ける。確認用 ?kokword=うるさい */
+  KAERE: 0.25, WORDS: ['うしろ', 'いるよ', 'みてる', 'うるさい', 'やめろ', 'くるな', 'さわるな', 'きえろ', 'ゆるさない', 'おまえ'], ANGRY: ['うるさい', 'やめろ', 'くるな', 'さわるな', 'きえろ', 'ゆるさない', 'おまえ'],
+  word() { return Math.random() < this.KAERE ? 'かえれ' : pick(this.WORDS); },
+  WQ() { if (!(TEST || BETA)) return null; const m = location.search.match(/[?&]kokword=([^&]+)/); if (!m) return null; try { const w = decodeURIComponent(m[1]); return Array.from(w).every(c => this.pos && this.pos[c]) ? w : null; } catch (e) { return null; } },
   nameKana() {
-    const kana = /^[ぁ-ゟ゠-ヿー\s]+$/, y = (world.yomi || '').trim(), r = (world.chRaw || '').trim(), s = y && kana.test(y) ? y : r && kana.test(r) ? r : '';
+    const kana = /^[ぁ-ゟ゠-ヿー\s]+$/, y = (world.yomi || '').trim(), r = (world.chRaw || '').trim(); let s = y && kana.test(y) ? y : r && kana.test(r) ? r : '';
+    /* 2026-11-19 138番：名字がはっきり分かる時（チャット欄で下の名前で呼ぶ時と同じ NICK.given）は、下の名前の読みだけをなぞる。読みが取り出せない時は今どおり全部 */
+    try { const gv = NICK.given(r, y); if (gv) { const g = kana.test(gv) ? NICK.hira(gv.replace(/\s+/g, '')) : ((NICK.full(r, y) || {}).g || ''); if (g && kana.test(g)) s = g; } } catch (e) { }
     const SM = { 'ぁ': 'あ', 'ぃ': 'い', 'ぅ': 'う', 'ぇ': 'え', 'ぉ': 'お', 'っ': 'つ', 'ゃ': 'や', 'ゅ': 'ゆ', 'ょ': 'よ', 'ゎ': 'わ', 'ゔ': 'う' };
     const out = []; for (let ch of s.normalize('NFD')) { const c = ch.charCodeAt(0); if (c >= 0x30a1 && c <= 0x30f6) ch = String.fromCharCode(c - 0x60); ch = SM[ch] || ch; if (this.pos && this.pos[ch]) out.push(ch); }
     return out.slice(0, 8);
@@ -17072,8 +17078,8 @@ const KOK = {
     const nm = this.nameKana(), x = Math.random();
     if (this.n >= this.finalAt) { keys = ['か', 'え', 'れ']; kind = 'final'; }
     else if (nm.length && (x < 0.07 || /[?&]kokname\b/.test(location.search))) { keys = nm; kind = 'name'; }
-    else if (x < 0.55) { keys = [Math.random() < 0.5 ? 'YES' : 'NO']; kind = 'yesno'; }
-    else if (x < 0.8) { keys = Array.from(pick(['かえれ', 'うしろ', 'いるよ', 'みてる'])); kind = 'word'; }
+    else if (x < 0.55 && !this.WQ()) { keys = [Math.random() < 0.5 ? 'YES' : 'NO']; kind = 'yesno'; }
+    else if (x < 0.8 || this.WQ()) { const w = this.WQ() || this.word(); keys = Array.from(w); kind = 'word'; this.lastWord = w; }
     else { const n = 1 + Math.floor(Math.random() * 2); keys = Array.from({ length: n }, () => String(Math.floor(Math.random() * 10))); kind = 'num'; }
     this.seq = { keys, i: 0, kind, ph: 'wait', t: 0, wait: rnd(0.5, 1.0), from: this.coin.position.clone(), to: null, dur: 0 };
     if (kind === 'name') this.accName = 0;
@@ -17088,7 +17094,7 @@ const KOK = {
       const k = clamp(S.t / S.dur, 0, 1), e = k * k * (3 - 2 * k); c.position.lerpVectors(S.from, S.to, e); c.position.x += Math.sin(S.t * 23) * 0.0012 * (1 - k); c.position.y = 0.0065;
       if (S.off && c.position.z < -0.235) { this.startDrop(); this.seq = null; return; }   // 机のふちを越えた
       if (k >= 1) { if (S.back) { this.seq = null; this.idleT = 0; return; } S.i++; S.ph = 'wait'; S.t = 0; S.wait = S.i >= S.keys.length ? rnd(1.1, 1.5) : rnd(1.05, 1.45);   /* 2026-11-15 どの文字か分かるように、止まる時間を0.5秒のばした */
-        if (S.i >= S.keys.length) { CHATLOG.add('kok', { w: S.kind === 'name' ? 'name' : S.kind === 'yesno' ? 'yesno' : S.kind === 'final' ? 'final' : 'move2' }); if (S.kind === 'name' && rec.active && this.accName >= 0.8) award('kokName', '十円玉が自分の名前をなぞった', 70); } }
+        if (S.i >= S.keys.length) { CHATLOG.add('kok', { w: S.kind === 'name' ? 'name' : S.kind === 'yesno' ? 'yesno' : S.kind === 'final' ? 'final' : S.kind === 'word' && this.ANGRY.includes(S.keys.join('')) ? 'angry' : 'move2' }); if (S.kind === 'name' && rec.active && this.accName >= 0.8) award('kokName', '十円玉が自分の名前をなぞった', 70); } }
     }
     // 撮れ高：動いているところを録画で撮った
     if (S.ph === 'move' && rec.active) { const w = c.getWorldPosition(V()); if (seen(w, { maxD: 4, margin: 1.05 })) { if (S.off) this.offSeen = true; this.accMove += dt; if (S.kind === 'name') this.accName += dt; if (this.accMove >= 0.4) award('kokMove', '十円玉が動いた', 40); } }
@@ -17119,8 +17125,8 @@ const KOK = {
   chat(d) {
     if (!d || !d.items || !d.end) return; const ev = (CHATLOG.ev || []).filter(e => e.k === 'kok'); if (!ev.length) return;
     const R = chatRng((d.seed ^ 0x2545f491) >>> 0), T = CHAT_DICT.t, U = Math.max(6, (d.users || []).length || 12), maxR = d.end.R + (d.end.ec ? 3 : -0.2), out = [];
-    const CAT = { enter: 'kok_enter', ask: 'kok_ask', still: 'kok_still', move: 'kok_move', move2: 'kok_move', yesno: 'kok_yesno', name: 'kok_name', final: 'kok_drop', drop: 'kok_drop' };
-    const N = { enter: 2, ask: 1, still: 2, move: 3, move2: 1, yesno: 2, name: 3, final: 1, drop: 3 };
+    const CAT = { enter: 'kok_enter', ask: 'kok_ask', still: 'kok_still', move: 'kok_move', move2: 'kok_move', angry: 'kok_angry', yesno: 'kok_yesno', name: 'kok_name', final: 'kok_drop', drop: 'kok_drop' };
+    const N = { enter: 2, ask: 1, still: 2, move: 3, move2: 1, angry: 2, yesno: 2, name: 3, final: 1, drop: 3 };
     for (const e of ev) { const cat = CAT[e.w]; if (!cat) continue; const ids = CHAT_DICT.c[cat] || []; const n = N[e.w] + (R() < 0.4 ? 1 : 0);
       for (let i = 0; i < n; i++) { const tk = ids.filter(id => this.TSUK.includes(id)), sr = ids.filter(id => !this.TSUK.includes(id)); const pool = tk.length && R() < 0.33 ? tk : sr; const id = pool[Math.floor(R() * pool.length)]; if (!id || !T[id]) continue;
         const t = e.t + (e.w === 'still' ? 6.5 + R() * 2.5 : 0.6) + i * (0.7 + R() * 0.9); if (e.w === 'still' && ev.some(x => x.w !== 'still' && x.w !== 'ask' && x.t > e.t && x.t < t + 0.5)) continue;   /* 2026-11-16 「動かない」は、しばらく見守ってから（間に動いたら出さない） */ if (t > maxR) continue; if (out.some(x => x[2] === id && Math.abs(x[0] - t) < 8) || d.items.some(x => x[2] === id && Math.abs(x[0] - t) < 8)) continue;
@@ -24518,6 +24524,20 @@ const SPH = {
     ['photo', '写真', 'Photos', '1年前の今日の思い出を見てみましょう', 'Look back at your memories from a year ago today'],
     ['dating', 'ときめきマッチ', 'Tokimeki Match', 'あなたに「いいね」が3件届いています', 'You have 3 new likes'],
     ['eng', '英会話レッスン', 'English Lessons', 'レッスンを5日間サボっています', "You've skipped your lessons for 5 days"],
+    /* 2026-11-19 140番：日常のおもしろい連絡（13通） */
+    ['msg', 'ばあちゃん', 'Grandma', 'ねるまえに はみがき しなさいよ', 'brush ur teeth befor bed'],
+    ['msg', 'ばあちゃん', 'Grandma', 'すたんぷの おくりかた おしえて', 'how do i send the stiker'],
+    ['msg', 'ばあちゃん', 'Grandma', 'みかん おくりました 10きろ', 'sent u oranges 10 kilo'],
+    ['msg', 'おかあさん', 'Mom', '晩ごはんカレーだけど何時に帰る？', 'Dinner is curry. What time are you coming home?'],
+    ['msg', '父', 'Dad', '今日はカレイが釣れました。父より。', 'Caught a flounder today. From Dad.'],
+    ['msg', '父', 'Dad', 'お母さんの誕生日、何あげるか一緒に考えてくれ。', 'Help me think of a birthday present for your mom.'],
+    ['msg', '弟', 'Little brother', 'ゲーム機かりていい？もう借りてる', 'Can I borrow your game console? Already did'],
+    ['msg', '姉', 'Big sister', 'あんたの動画、職場で流れてたんだけど', 'Your video was playing at my work'],
+    ['msg', '田中', 'Tanaka', '今どこ？ラーメン行こうぜ', "Where are you? Let's get ramen"],
+    ['msg', 'たけし', 'Takeshi', '今どこ？位置情報オフにした？', 'Where are you? Did you turn off your location?'],
+    ['msg', '店長', 'Manager', '明日シフト入れる？人足りなくて', "Can you take a shift tomorrow? We're short-handed"],
+    ['msg', '大家さん', 'Landlord', '家賃の件で一度お話が…', 'About the rent, could we talk…'],
+    ['msg', '3年2組', 'Class 3-2', '同窓会の出欠、まだの人あと1人です', 'Reunion RSVP: still waiting on 1 person'],
   ],
   SAKU: { first: ['ひさしぶり。動画みてるよ', 'Long time no see. I watch your videos'],
     burst: [['その学校、まだ通ってるの？', 'Are you still going to that school?'], ['わたしも前に、そこで撮ってた', 'I used to film there too'], ['まだ出られないの', "I still can't get out"], ['ずっと見てる', "I've been watching the whole time"]],
@@ -24825,6 +24845,20 @@ for (const d of AW59.DEF) { AW_TABLE[d[0]] = [d[2], d[3]]; COL.LIST.push([d[0], 
     ['思い出見せて', 'show us the memories', '1年前は平和だった', 'a year ago was peaceful'],
     ['出会いアプリやってて草', 'lol you use a dating app', 'いいね3件はリアル', '3 likes feels real'],
     ['サボってて草', 'skipping lessons lol', '英会話の通知うるさいよね', 'those English app alerts are so annoying'],
+    /* 2026-11-19 140番（MSG と同じ順） */
+    ['ばあちゃん見守ってる', "grandma's watching", '歯みがきしろｗ', 'go brush lol'],
+    ['教えてあげて', 'go teach her', 'スタンプ送るばあちゃんかわいい', 'grandma sending stickers is cute'],
+    ['10キロ草', '10 kilos lol', '冬こせる', 'set for the winter'],
+    ['カレーいいな', 'curry sounds good', '早く帰れ', 'go home already'],
+    ['カレイ報告いらんｗ', 'nobody asked about the flounder lol', 'お父さんかわいい', 'dad is cute'],
+    ['父がんばれ', 'hang in there dad', '一緒に考えてあげて', 'help him out'],
+    ['事後報告ｗ', 'asking after the fact lol', '弟自由すぎ', 'your brother does whatever'],
+    ['職場ｗ', 'at work lol', 'お姉さん見てる', 'your sister is watching'],
+    ['ラーメン行きたい', 'I want ramen', '今心霊スポットです', 'currently at a haunted spot'],
+    ['束縛ｗ', 'so controlling lol', 'たけし怖い', 'Takeshi is scary'],
+    ['断れ', 'say no', 'バイト戦士', 'part-time warrior'],
+    ['家賃ｗ', 'the rent lol', 'がんばれ', 'good luck'],
+    ['1人ってお前じゃん', 'that one person is you', '行ってあげて', 'go to it'],
   ];
   const T = CHAT_DICT.t;
   M.forEach((m, i) => { const a = 'sph.m.' + i + '.1', b = 'sph.m.' + i + '.2'; T[a] = [m[0], m[1]]; T[b] = [m[2], m[3]]; XCHAT.LIST['sph_m' + i] = [a, b]; });
@@ -26294,6 +26328,9 @@ Object.assign(CHAT_DICT.t, { 'v2.senko_put.0': ['線香立てたｗ', 'incense l
   'v2.gbox_voice.0': ['今なんか言った？', 'did it just say something?'], 'v2.gbox_voice.1': ['返事した…', 'it answered...'], 'v2.gbox_voice.2': ['声入ってる', 'there’s a voice in there'], 'v2.gbox_voice.3': ['聞こえた？', 'did you hear that?'] });
 for (const c of ['senko_put', 'gbox_on', 'gbox_voice']) CHAT_DICT.c[c] = [0, 1, 2, 3].map(i => `v2.${c}.${i}`);
 if (TEST && window.__G) Object.assign(window.__G, { STAKE, SENKO, GBOX, HAND, PLACE });
+/* 2026-11-19 139番：こっくりさんが怒った言葉をなぞった時のコメント */
+Object.assign(CHAT_DICT.t, { 'kok.angry.01': ['怒ってない？', 'is it angry?'], 'kok.angry.02': ['機嫌悪いぞ', "it's in a bad mood"], 'kok.angry.03': ['なんか怒らせた？', 'did you make it mad?'], 'kok.angry.04': ['やめといた方がいい', 'you should stop'], 'kok.angry.05': ['こわいこわい', 'scary scary'], 'kok.angry.06': ['もう帰ろう', "let's just leave"] });
+CHAT_DICT.c.kok_angry = ['kok.angry.01', 'kok.angry.02', 'kok.angry.03', 'kok.angry.04', 'kok.angry.05', 'kok.angry.06'];
 Object.assign(EN, { '商売繁盛のご利益があるらしい。持ち込むと、収益がほんの少し増える。持ち込んでもなくならない（捕まると失う）。': 'Said to bring good business. Bring it in and your earnings go up a little. Not used up (but lost if you get caught).', '何かを招き寄せるらしい。持ち込むと、怪奇現象が少し起きやすくなり、怪異にも見つかりやすくなる。持ち込んでもなくならない（捕まると失う）。': 'Said to beckon something. Bring it in and strange events happen a bit more often, but monsters find you more easily too. Not used up (but lost if you get caught).' });   /* 2026-11-19 捕まると失う道具の説明 */
 /* =========================================================
    2026-11-19 90番：投げる・蹴るボタンを長押しすると、飛んでいく線と着地点の円が出る（はなすと投げる）
