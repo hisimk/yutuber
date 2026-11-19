@@ -469,6 +469,8 @@
   #resetAsk .raBtns{display:flex;gap:10px}
   #resetAsk .raBtns button{flex:1;padding:12px 6px;border-radius:12px;font-size:15px;font-weight:700;border:1px solid #3a3a3e;background:#202024;color:#fff}
   #resetAsk #resetYes{background:#e0332f;border-color:#e0332f}
+  #setReset .rsSub{display:block;font-size:11px;color:#9a958c;font-weight:400;margin-top:2px}
+  #boomFl{position:fixed;inset:0;z-index:9999;background:#fff;pointer-events:none;opacity:0;transition:opacity .55s ease-out}
   .achBox{grid-column:1/-1;border-radius:14px;padding:12px 13px 10px;background:linear-gradient(160deg,#1d1810,#121214 60%);border:1px solid rgba(255,211,77,.35);margin-bottom:4px}
   .achH{font-size:14px;font-weight:800;color:#ffd34d;letter-spacing:.12em}
   .achTot{display:flex;align-items:baseline;justify-content:space-between;margin:8px 0 10px;font-size:12.5px;color:#cfcac0}
@@ -976,7 +978,7 @@
       <button class="setLink" id="setEnding" style="display:none">エンディングを見る</button>
       <button class="setLink" id="setNotice">注意事項・プライバシー</button>
       <button class="setLink" id="setXfer">引き継ぎコード</button>
-      <button class="setLink" id="setReset">データをリセット</button>
+      <button class="setLink" id="setReset">チャンネルを爆破する<small class="rsSub">（データをリセット）</small></button>
       <div class="verTag" id="verSet"></div>
       <button class="setLink" id="setHome">スタート画面にもどる</button>
       <button class="go" id="setClose">ゲームにもどる</button>
@@ -1028,7 +1030,7 @@
   <button class="go" id="overBtn">タイトルにもどる</button>
   <button id="overVideo" style="display:none;margin-top:14px;font-size:13px;color:#cfcac0;background:none;border:1px solid #444;border-radius:10px;padding:10px 16px">残った映像を見る</button>
 </div>
-<div id="resetAsk"><div class="raBox"><div class="raT">本当に消去していいですか？</div><div class="raD">集めた撮れ高、累計いいね数、歴代の神回など、これまでのプレイデータがすべて消えます。</div><div class="raBtns"><button id="resetYes">はい</button><button id="resetNo">だめ</button></div></div></div>
+<div id="resetAsk"><div class="raBox"><div class="raT">チャンネルを爆破しますか？</div><div class="raD">集めた撮れ高、累計いいね数、歴代の神回など、これまでのプレイデータがすべて消えます。</div><div class="raBtns"><button id="resetYes">爆破する</button><button id="resetNo">やめておく</button></div></div></div>
 <div id="rankPop"><div class="rpBox"><div id="rpT"></div><div id="rpFrom"></div><div id="rpTot"></div><div class="rpNote" id="rpNote"></div><button id="rpOk"></button></div></div>
 <div id="shAsk" role="dialog" aria-modal="true" aria-labelledby="shAskT"><div class="shBox"><button id="shAskX" class="mX" type="button">×</button><div id="shAskT"></div><p id="shAskS"></p><div class="shBtns"><button id="shAskNo" type="button"></button><button id="shAskYes" type="button"></button></div></div></div>
 <div id="vedit" role="dialog" aria-modal="true">
@@ -15433,7 +15435,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.85';
+const VERSION = '0.17.86';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -20548,7 +20550,13 @@ const RESET = {
   keys() { return [COL.KEY, ACH.KEY, PERM.KEY, 'yt_mann_unlock', 'yt_tut', 'yt_keyuse', PHAN.KEY, 'yt_wing_open', 'yt_bar1_open', 'yt_bar2_open', 'yt_start']; },   // 2026-11-15 ナカヨシの段階も0に
   ask() { $('#resetAsk').classList.add('show'); },
   no() { $('#resetAsk').classList.remove('show'); },
-  yes() {
+  /* 2026-11-19 119番：「爆破する」を押したら、小さな爆発の音と画面が一瞬白く飛ぶ演出（0.7秒）のあと、今どおり消してスタート画面へ */
+  yes() { if (this.boomed) return; this.boomed = true; try { $('#resetYes').disabled = $('#resetNo').disabled = true; } catch (e) { }
+    try { if (ensureAudio()) { const t = A.ctx.currentTime; nb(A.master, { t, f: 900, f1: 70, type: 'lowpass', q: 0.7, a: 0.004, peak: 0.5, d: 0.75 }); tn(A.master, { t, type: 'sine', f0: 90, f1: 32, dur: 0.6, peak: 0.35 }); } } catch (e) { }
+    try { const f = document.createElement('div'); f.id = 'boomFl'; document.body.appendChild(f); f.style.opacity = '1'; requestAnimationFrame(() => requestAnimationFrame(() => { f.style.opacity = '0'; })); } catch (e) { }
+    try { const b = document.querySelector('#resetAsk .raBox'); if (b && b.animate) b.animate([{ transform: 'translate(0,0)' }, { transform: 'translate(-6px,3px)' }, { transform: 'translate(5px,-4px)' }, { transform: 'translate(-3px,2px)' }, { transform: 'translate(0,0)' }], { duration: 350 }); } catch (e) { }
+    setTimeout(() => this.wipe(), 700); },
+  wipe() {
     try { for (const k of this.keys()) localStorage.removeItem(k); for (let i = localStorage.length - 1; i >= 0; i--) { const k0 = localStorage.key(i), k = k0 && (BETA ? (k0.startsWith('beta:') ? k0.slice(5) : null) : (k0.startsWith('beta:') ? null : k0)); if (k && /^yutuber_/.test(k)) localStorage.removeItem(k); } } catch (e) { }
     try { resultUrls.forEach(u => URL.revokeObjectURL(u)); } catch (e) { }
     COL.data = null; ACH.d = null; PERM.d = null; PHAN.d = null;
@@ -23099,7 +23107,7 @@ const HAND = {
 HAND.vl = { l: new THREE.PointLight(0xffa850, 0, 5, 2), lv: -1 }; LPOOL.src.push(HAND.vl);   /* 手に持った明かり：シーンに足さず、光の枠を借りる（足すと描き直しでカクつく） */
 CHEM.vl = [0, 1, 2].map(() => { const e = { l: new THREE.PointLight(0x5cff60, 0, 4.5, 2), lv: -1 }; LPOOL.src.push(e); return e; }); CHEM.k = 0;
 CHEM.reset = function () { for (const c of this.list) scene.remove(c); this.list = []; for (const e of this.vl) e.l.intensity = 0; };
-Object.assign(EN, { '手に持っている': 'In your hand', 'しまう': 'Put away', 'はい': 'Yes', 'いいえ': 'No', '部屋の中でお使いください': 'Please use it inside a room' });
+Object.assign(EN, { 'チャンネルを爆破する': 'Nuke the channel', '（データをリセット）': '(Reset data)', 'チャンネルを爆破しますか？': 'Nuke your channel?', '集めた撮れ高、累計いいね数、歴代の神回など、これまでのプレイデータがすべて消えます。': 'All your play data will be erased, including collected highlights, total likes, and your all-time best videos.', '爆破する': 'Nuke it', 'やめておく': 'Never mind', '手に持っている': 'In your hand', 'しまう': 'Put away', 'はい': 'Yes', 'いいえ': 'No', '部屋の中でお使いください': 'Please use it inside a room' });
 /* 持っている間は、帰還以外の「調べる」は出さない */
 { const OA0 = offerAction; offerAction = function (label, fn, opt) { if (HAND.blocks() && !HAND.own && !(opt && opt.exit)) return; return OA0(label, fn, opt); }; }
 { const O0 = ITEM.offer.bind(ITEM); ITEM.offer = function () { HAND.offer(); return O0(); }; }
