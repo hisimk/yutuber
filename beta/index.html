@@ -15438,7 +15438,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.90';
+const VERSION = '0.17.91';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -25272,7 +25272,7 @@ const JIYU = {
     if (T) { } else if (desk) { desk.g.add(this.g); const dy = desk.g.getWorldQuaternion(new THREE.Quaternion()); const e = new THREE.Euler().setFromQuaternion(dy, 'YXZ'); this.g.position.set(0, 0.757, 0); this.g.rotation.y = by - e.y; this.desk = desk; }
     else { const [x, z] = collide(player.x + f.x * 0.75, player.z + f.z * 0.75, 0.2, player.lv); this.g.position.set(x, (player.lv ? LH : 0) + 0.004, z); this.g.rotation.y = by; scene.add(this.g); this.desk = null; }
     this.by = by; this.lv = player.lv; this.placed = true; this.fqUsed = false; this.placedAt = world.t; this.away = 0; this.rolled = false; this.wrote = 0; this.lastSeen = world.t; this.hintAsked = false; this.liveDone = false; this.pend = null; this.q = null; this.hurt = null; this.angry = false;
-    this.leftArt(); if (WF('jiyufill')) this.write('word');
+    this.pg.L.art = null; this.pg.L.artK = null; this.artOK = false; this.leftPend = true;   /* 2026-11-19 左のページの絵は、右のページに最初に何かが書き込まれた時に描かれる（置いた時は白紙） */ if (WF('jiyufill')) this.write('word');
     this.render(); SND.rustle && SND.rustle(this.pos(), 0.6); try { CHATLOG.add('jiyu', { w: 'put' }); } catch (e) { }
     if (TEST || DEV) console.log('JIYU place', T ? (T.desk ? 'desk' : T.kind) : desk ? 'desk' : 'floor');
     return true; },
@@ -25362,7 +25362,7 @@ const JIYU = {
     else if (kind === 'ev') { const ev = []; if (this.hidRun === world.runId && !this.usedLk) ev.push('locker'); if (this.banEver() && !this.usedBan) ev.push('ban'); const e = ev.length ? pickL(ev) : 'locker'; if (e === 'locker') this.usedLk = true; else this.usedBan = true; b = this.textBlock([pickL(W[e])], 42); }
     else if (kind === 'run') { b = this.textBlock([W.run[0], W.run[0]], 64, { run: true }); live = true; }
     else if (kind === 'live') { b = this.textBlock([pickL(W.live)], 52); live = true; }
-    if (!b) return null; if (b.yn) this.q = b; this.add(b, live); this.wrote++;
+    if (!b) return null; if (b.yn) this.q = b; this.add(b, live); this.wrote++; if (this.leftPend) { this.leftPend = false; this.leftArt(); this.render(); }
     if (TEST || DEV) console.log('JIYU write', kind, live ? 'live' : '', b.lines ? b.lines.join('/') : b.pic || 'fill');
     return b; },
   /* コメント：録画中に、じゆうちょうが映っている時だけ（同じ種類は1周に1回） */
