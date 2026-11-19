@@ -10554,9 +10554,12 @@ defEvent('paCall', {
 });
 PACALL.chosen = false;
 PACALL.plan = function () {   // 1周に1回：25%の確率で、この周回のどこかで呼ばれる（場所は問わない）
-  this.chosen = EV2.includes('paCall') || chance(0.25); world.nurseCall = false;
-  if (this.chosen && !DIR.plan.includes('paCall')) { const e = EV.paCall; e.planned = true; e.done = false; e.omened = false; e.sensed = false; e.notBefore = EV2.includes('paCall') ? 0 : rnd(30, 150); DIR.plan.push('paCall'); }
+  /* 2026-11-19 初めて遊んでから3周目までに、一度も呼ばれていなければ、3周目は必ず呼ぶ（呼ばれるまで次の周も。一度呼ばれたら今までどおり25%） */
+  let first = false; try { const k = 'yt_pa_first', d = JSON.parse(localStorage.getItem(k) || '{}'); d.n = (d.n | 0) + 1; localStorage.setItem(k, JSON.stringify(d)); first = !d.done && d.n >= 3; } catch (e) { }
+  this.first = first; this.chosen = EV2.includes('paCall') || first || chance(0.25); world.nurseCall = false;
+  if (this.chosen && !DIR.plan.includes('paCall')) { const e = EV.paCall; e.planned = true; e.done = false; e.omened = false; e.sensed = false; e.notBefore = EV2.includes('paCall') ? 0 : this.first ? rnd(25, 70) : rnd(30, 150); DIR.plan.push('paCall'); }
 };
+{ const S0 = EV.paCall.start.bind(EV.paCall); EV.paCall.start = function () { try { const k = 'yt_pa_first', d = JSON.parse(localStorage.getItem(k) || '{}'); d.done = true; localStorage.setItem(k, JSON.stringify(d)); } catch (e) { } return S0(...arguments); }; }   /* 呼ばれたら記録 */
 
 /* =========================================================
    保健室：呼ばれたあと（校内放送のフラグ）
@@ -15462,7 +15465,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.06';
+const VERSION = '0.18.07';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -20180,21 +20183,23 @@ const PHAN = {
     if (TEST || DEV) console.log('PHAN run', this.runSt, this.on ? 'monster' : '', this.troll0 ? 'troll' : '');
   },
   // ── 荒らしの文面（日本語・英語は同じ言葉の組で作る）
-  WJ: ['ﾐﾂｹﾀ', 'ﾀｽｹﾃ', 'ﾕﾙﾅｻﾅｲ', 'ｺｯﾁｦﾐﾃ', 'ｱｿﾎﾞ', 'ｶｴﾚﾅｲ'], WE: ['FOUNDYOU', 'HELPME', 'NEVERFORGIVE', 'LOOKATME', 'PLAYWITHME', 'CANTGOHOME'],
-  trollText(R) {
-    const ri = n => Math.floor(R() * n), x = R();
+  /* 2026-11-19 ナカヨシ（逆さ女）が書きこんでいる言葉。くり返しの長文で連呼し、たまに文字の並びを逆にする */
+  WJ: ['ｶｴﾘﾀｲ', 'ﾀｽｹﾃ', 'ﾄﾞｳｼﾃ', 'ﾂｷﾞﾊｱﾅﾀ', 'ｸﾙｼｲ', 'ｺｯﾁｦﾐﾃ', 'ｶｴﾚﾅｲ'], WE: ['IWANTTOGOHOME', 'HELPME', 'WHY', 'YOURENEXT', 'ITHURTS', 'LOOKATME', 'CANTGOHOME'], REV: 0.25,
+  trollText(R) { const t = this.trollText0(R); if (R() < this.REV) { const rv = s => Array.from(s).reverse().join(''); return [rv(t[0]), rv(t[1])]; } return t; },   /* たまに逆さに読む並び */
+  trollText0(R) {
+    const ri = n => Math.floor(R() * n), x = R(), NW = this.WJ.length;
     const rep = (w, n) => w.repeat(n);
     const brk = s => { const a = Array.from(s); for (let k = 0; k < 2; k++) { const i = 4 + ri(Math.max(1, a.length - 8)); a.splice(i, ri(3), '…'); } return a.join(''); };
     if (x < 0.62) {   // 同じ言葉のくり返し（回数を変える。タスケテは日本語ではカタカナの全角）
-      const i = ri(6), n = 8 + ri(9), wj = i === 1 && R() < 0.6 ? 'タスケテ' : this.WJ[i];
+      const i = ri(NW), n = 12 + ri(14), wj = i === 1 && R() < 0.4 ? 'タスケテ' : this.WJ[i];   /* 長文で連呼 */
       return [rep(wj, wj === 'タスケテ' ? Math.min(n, 10) : n), rep(this.WE[i], Math.max(6, n - 3))];
     }
     if (x < 0.82) {   // 混ぜたもの（すき間で区切る）
       const k = 4 + ri(2), ja = [], en = [];
-      for (let j = 0; j < k; j++) { const i = ri(6), n = 1 + ri(3); ja.push(rep(this.WJ[i], n)); en.push(rep(this.WE[i], Math.min(2, n))); }
+      for (let j = 0; j < k; j++) { const i = ri(NW), n = 2 + ri(4); ja.push(rep(this.WJ[i], n)); en.push(rep(this.WE[i], Math.min(2, n))); }
       return [ja.join(' '), en.join(' ')];
     }
-    const i = ri(6), n = 7 + ri(5); return [brk(rep(this.WJ[i], n)), brk(rep(this.WE[i], n - 2))];   // 崩れたもの
+    const i = ri(NW), n = 10 + ri(8); return [brk(rep(this.WJ[i], n)), brk(rep(this.WE[i], n - 2))];   // 崩れたもの
   },
   L: {
     react: [['荒らさないで', 'stop spamming'], ['荒らし消えて', 'go away troll'], ['荒らしに反応する奴も荒らし', "don't feed the troll"], ['通報した', 'reported'], ['なにこのコメント', 'what is this comment']],
@@ -20574,7 +20579,7 @@ if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, 
    ・音量・言語・キー操作・チャンネル名などの設定は残す。撮った映像は端末に保存していない（読み込み直しで消える）
    ========================================================= */
 const RESET = {
-  keys() { return ['yt_stats_v1', 'yt_fuda1000', COL.KEY, ACH.KEY, PERM.KEY, 'yt_mann_unlock', 'yt_tut', 'yt_keyuse', PHAN.KEY, 'yt_wing_open', 'yt_bar1_open', 'yt_bar2_open', 'yt_start']; },   // 2026-11-15 ナカヨシの段階も0に
+  keys() { return ['yt_stats_v1', 'yt_fuda1000', 'yt_pa_first', COL.KEY, ACH.KEY, PERM.KEY, 'yt_mann_unlock', 'yt_tut', 'yt_keyuse', PHAN.KEY, 'yt_wing_open', 'yt_bar1_open', 'yt_bar2_open', 'yt_start']; },   // 2026-11-15 ナカヨシの段階も0に
   ask() { $('#resetAsk').classList.add('show'); },
   no() { $('#resetAsk').classList.remove('show'); },
   /* 2026-11-19 119番：「爆破する」を押したら、小さな爆発の音と画面が一瞬白く飛ぶ演出（0.7秒）のあと、今どおり消してスタート画面へ */
@@ -24849,6 +24854,32 @@ const ARARE = {
 };
 { const B0 = CHAT.build.bind(CHAT); CHAT.build = function (P) { try { ARARE.onVideo(); } catch (e) { } const d = B0(P); try { d.ph = !!world.phanRun; if (!d.ph) { const ph = new Set((d.phIdx || []).map(i => d.items[i])); d.phSet = ph; ARARE.apply(d); delete d.phSet; d.phIdx = d.items.map((x, i) => ph.has(x) ? i : -1).filter(i => i >= 0); } } catch (e) { console.warn('荒れ', e); } return d; }; }   /* ナカヨシの周は荒らさない・数えない */
 { const B0 = ChatView.prototype.ban; ChatView.prototype.ban = function (i, el) { try { if (!(this.data.ban || []).includes(i)) ARARE.onBan(this.data, i); } catch (e) { } return B0.call(this, i, el); }; }
+/* =========================================================
+   2026-11-19 ナカヨシが出るフラグを踏んだ瞬間（BANで段階2→3になった時）：
+   ・チャット欄の文字は真っ赤に。チャット欄と結果画面のほとんどの文字が、加速しながら次々と文字化けしていく（3割ほどは読めるまま残す）
+   ・動画は強制的に一時停止、結果画面の曲（月の光）は止める、文字化けが始まる瞬間に怖がらせる音
+   ・確認用：?glitch（結果画面でどれかのコメントをBANすると起きる）
+   ========================================================= */
+const GLITCH = { on: false, MAX: 0.7, CH: '縺繧譁蟄怜喧縺鯛縲螟画鋤蜿ｯ閭ｽ遘√°繧峨≠ﾃｯﾂ�▓░▒ｹｦﾘﾀ',
+  start(view) { if (this.on) return; this.on = true; const root = (view && view.el && (view.el.closest('.screen') || view.el.parentElement)) || $('#result') || document.body; this.root = root; this.view = view; this.p = 0; this.dt = 420; this.orig = new Map(); this.seed = new WeakMap();
+    root.classList.add('glitchRed'); const v = view && view.video; this.vid = v; try { v && v.pause(); } catch (e) { }
+    try { if (RBGM.g) RBGM.g.gain.setTargetAtTime(0, A.ctx.currentTime, 0.08); } catch (e) { }
+    try { if (!A.ctx) initAudio(); playSfx('noise_rise_cut', { ear: 0, gain: 0.75 }); playSfx('static_raw', { gain: 0.35 }); setTimeout(() => { try { if (this.on) playSfx('horror_loop', { ear: 0, gain: 0.3, dur: 4 }); } catch (e) { } }, 500); } catch (e) { }
+    if (TEST || DEV) console.log('GLITCH start'); this.tick(); },
+  nodes() { const out = [], w = document.createTreeWalker(this.root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.nodeValue.trim() && !(n.parentElement && /^(SCRIPT|STYLE)$/.test(n.parentElement.tagName)) ? 1 : 3 }); let n; while ((n = w.nextNode())) out.push(n); return out; },
+  garble(n) { let o = this.orig.get(n); if (o === undefined || (n.nodeValue !== this.last.get(n))) { o = n.nodeValue; this.orig.set(n, o); }
+    let sd = this.seed.get(n); if (!sd) { sd = Array.from(o).map(() => Math.random()); this.seed.set(n, sd); }
+    const C = this.CH, a = Array.from(o), out = a.map((c, i) => (/\s/.test(c) || (sd[i] ?? 1) >= this.p) ? c : C[Math.floor(Math.random() * C.length)]).join(''); n.nodeValue = out; this.last.set(n, out); },
+  tick() { if (!this.on) return; const vis = this.root === document.body || (this.root.isConnected && this.root.getClientRects().length > 0 && getComputedStyle(this.root).display !== 'none'); if (!vis) { this.stop(); return; }
+    this.last = this.last || new WeakMap(); this.p = Math.min(this.MAX, this.p + 0.045 + this.p * 0.12); for (const n of this.nodes()) this.garble(n);
+    try { if (this.vid && !this.vid.paused) this.vid.pause(); if (RBGM.g) RBGM.g.gain.setTargetAtTime(0, A.ctx.currentTime, 0.05); } catch (e) { }
+    this.dt = Math.max(70, this.dt * 0.8); this.tm = setTimeout(() => this.tick(), this.dt); },
+  stop() { if (!this.on) return; this.on = false; clearTimeout(this.tm); try { this.root.classList.remove('glitchRed'); for (const [n, o] of this.orig) if (n.isConnected && this.last && this.last.get(n) === n.nodeValue) n.nodeValue = o; } catch (e) { } this.orig = new Map(); try { RBGM.level(); } catch (e) { } },
+};
+{ const L0 = RBGM.level.bind(RBGM); RBGM.level = function () { if (GLITCH.on) { try { this.g && this.g.gain.setTargetAtTime(0, A.ctx.currentTime, 0.05); } catch (e) { } return; } return L0(); }; }
+{ const O0 = PHAN.onBan.bind(PHAN); PHAN.onBan = function () { const b = this.load().st; const r = O0(); const a = this.load().st; if ((b === 2 && a === 3) || ((TEST || BETA) && /[?&]glitch\b/.test(location.search))) { try { GLITCH.start(PHAN._view); } catch (e) { console.warn('GLITCH', e); } } return r; }; }
+{ const B1 = ChatView.prototype.ban; ChatView.prototype.ban = function (i, el) { PHAN._view = this; return B1.call(this, i, el); }; }
+{ const st = document.createElement('style'); st.textContent = '.glitchRed .chatList, .glitchRed .chatList *{color:#ff2020!important}'; document.head.appendChild(st); }
 { const R0 = TIPS.rate.bind(TIPS); TIPS.rate = function () { const s = ARARE.stage(); return R0() * (s === 3 ? 0.25 : s === 2 ? 0.6 : 1); }; }
 { const R0 = TIPS.reset.bind(TIPS); TIPS.reset = function () { const r = R0(); try { const s = ARARE.stage(); if (s >= 2 && this.pend) this.pend = this.pend.filter(() => Math.random() < (s === 3 ? 0.2 : 0.6)); } catch (e) { } return r; }; }
 { const K0 = RESET.keys.bind(RESET); RESET.keys = function () { return K0().concat([ARARE.KEY]); }; }
@@ -26198,7 +26229,7 @@ CHIP_DESC.ghostCut = ['見返した動画に、撮った覚えのない短いカ
 AW_HINT.ghostCut = ['長く撮った動画を、あとで見返すと', 'rewatch a long video afterward'];
 TKTXT.ghostCut = [CHIP_DESC.ghostCut[0], '撮った■えのない■■', '見返した■■に、■った■えのない■いカットが入っていた。…■が撮ったの？'];
 Object.assign(EN, { '撮った覚えのない映像': 'Footage you never shot' });
-if (TEST && window.__G) Object.assign(window.__G, { FUDAGIFT, RADIO, NOTE, STATS, ENDING, PLACE, SALT2, ARMOCK, ENDCM, XEXT2, OPENCM, GOAL, REP, XCHAT, CHATLOG, NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, GHOSTCUT, ROOMX, DIRX: DIR, EVX: EV, ARARE, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
+if (TEST && window.__G) Object.assign(window.__G, { GLITCH, RES_CHAT, FUDAGIFT, RADIO, NOTE, STATS, ENDING, PLACE, SALT2, ARMOCK, ENDCM, XEXT2, OPENCM, GOAL, REP, XCHAT, CHATLOG, NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, GHOSTCUT, ROOMX, DIRX: DIR, EVX: EV, ARARE, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
