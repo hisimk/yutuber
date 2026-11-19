@@ -1462,8 +1462,8 @@ TX.hair = ctex(64, 256, (g, w, h) => {
 function drawExit(g, w, h, inv) {
   g.fillStyle = '#19c25a'; g.fillRect(0, 0, w, h);
   g.fillStyle = '#f4fff6'; g.fillRect(86, 6, 34, 52); g.fillStyle = '#19c25a'; g.fillRect(92, 12, 22, 46);
-  /* 2026-11-19 提供の参考の絵（走る人）をもとに、線の形で描き直し。右（ドア）へ向かって走る。文字にかぶらないよう上の段に収める */
-  const s = 0.036, ox = 34, oy = 2.5, P = (x, y) => [ox + (1250 - x) * s, oy + (y - 70) * s];
+  /* 2026-11-19 提供の参考の絵（走る人）をもとに、線の形で描き直し。右（ドア）へ向かって走る。足の先を扉の下の辺（y=58）にそろえる。「非常口」の文字は左はしに縦書き（人が逆さになった時もかぶらない） */
+  const s = 0.0446, ox = 32, oy = 7, P = (x, y) => [ox + (1250 - x) * s, oy + (y - 70) * s];
   const cx = ox + (1250 - 625) * s, cy = oy + (630 - 70) * s;
   g.save(); if (inv) { g.translate(cx, cy); g.rotate(Math.PI); g.translate(-cx, -cy); }   /* 逆さ：人だけ頭を下に */
   g.fillStyle = g.strokeStyle = '#f4fff6'; g.lineCap = 'round'; g.lineJoin = 'round';
@@ -1474,7 +1474,7 @@ function drawExit(g, w, h, inv) {
   L(128, [645, 720], [745, 925], [1060, 935], [1105, 1020]);   // 後ろの脚
   L(128, [570, 720], [365, 860], [255, 1140], [150, 1150]);    // 前の脚
   L(205, [520, 440], [610, 690]);                        // 胴
-  g.restore(); g.fillStyle = '#f4fff6'; g.font = 'bold 12px sans-serif'; g.textBaseline = 'alphabetic'; g.fillText('非常口', 6, 61);
+  g.restore(); g.fillStyle = '#f4fff6'; g.font = 'bold 14px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; ['非', '常', '口'].forEach((c, i) => g.fillText(c, 13, 16 + i * 16)); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
 }
 TX.exit = ctex(128, 64, (g, w, h) => drawExit(g, w, h, false), { rep: false });
 TX.exitInv = ctex(128, 64, (g, w, h) => drawExit(g, w, h, true), { rep: false });
@@ -15514,7 +15514,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.24';
+const VERSION = '0.18.25';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
