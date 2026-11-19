@@ -138,6 +138,13 @@
   html.padUse:not(.pcFrame) #crouchKey{display:block}
   #crouchVig{position:absolute;inset:0;pointer-events:none;opacity:0;background:linear-gradient(to bottom,rgba(0,0,0,.85) 0%,rgba(0,0,0,0) 22%,rgba(0,0,0,0) 74%,rgba(0,0,0,.85) 100%);transition:opacity .25s}
   #hud.off #crouchBtn,#hud.off #crouchKey,#hud.fixMode #crouchBtn,#hud.fixMode #crouchKey{display:none!important}
+  /* 2026-11-19 87番：手に持った道具の操作は別のボタン（調べるボタンとは別。押し間違いを減らす）。スマホは調べるボタンの下、PCは調べるボタンの下 */
+  #toolBtn{position:absolute;display:none;box-sizing:border-box;width:64px;height:64px;border-radius:50%;padding:2px;border:1.5px solid #9fe8ff;background:rgba(6,26,34,.72);color:#dff8ff;font:700 13px system-ui;line-height:1.15;text-align:center;place-items:center;touch-action:none;right:calc(env(safe-area-inset-right,0px) + clamp(37px, calc(9 * var(--vw) + 11px), 55px));bottom:calc(calc(40 * var(--vh)) - 43px - 84px);white-space:nowrap}
+  #toolBtn.show{display:grid}
+  html.pcFrame #toolBtn{right:33px;top:calc(50% + 62px);bottom:auto}
+  #toolKey{display:none}html.pcFrame #toolKey.show,html.padUse #toolKey.show{display:block;position:absolute;width:64px;text-align:center;font:700 10.5px system-ui;color:#cfcac0;right:33px;top:calc(50% + 130px)}
+  html.padUse:not(.pcFrame) #toolKey.show{right:calc(env(safe-area-inset-right,0px) + clamp(37px, calc(9 * var(--vw) + 11px), 55px));top:auto;bottom:calc(calc(40 * var(--vh)) - 43px - 102px)}
+  #hud.off #toolBtn,#hud.off #toolKey,#hud.fixMode #toolBtn,#hud.fixMode #toolKey{display:none!important}
   #recKey{display:none}html.pcFrame #recKey{display:block;position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--sab) + 8px);padding:1px 7px;border:1px solid #6a665f;border-bottom-width:3px;border-radius:6px;background:#141416;font:700 11px system-ui;color:#fff;white-space:nowrap;pointer-events:none}
   html.pcFrame #actBtn[data-k]::after{content:attr(data-k);position:absolute;left:50%;top:-14px;bottom:auto;transform:translateX(-50%);min-width:20px;padding:1px 6px;border:1px solid #6a665f;border-bottom-width:3px;border-radius:6px;background:#141416;font:700 11px system-ui;color:#fff;white-space:nowrap}
   html.pcFrame #actBtn.key{border-color:#ffd34d;background:rgba(38,30,6,.78)}
@@ -900,6 +907,7 @@
   </div>
   <button class="btn" id="recBtn" aria-label="録画"><i></i></button><div id="recKey"></div>
   <button class="btn" id="crouchBtn" aria-label="しゃがむ"><span>しゃがむ</span></button><div id="crouchKey"></div>
+  <button class="btn" id="toolBtn" aria-label="道具を使う"><span></span></button><div id="toolKey"></div>
 </div>
 <div id="dev"></div>
 <div id="devInfo"></div>
@@ -4316,8 +4324,8 @@ setInterval(() => { if (stickId !== null && performance.now() - stickEvT > 5000 
 const keys = {};
 /* 2026-11-13 PCのキー操作（設定で組み換えられる。この端末に保存） */
 const KB = {
-  DEF: { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD', lookL: 'ArrowLeft', lookR: 'ArrowRight', lookU: 'ArrowUp', lookD: 'ArrowDown', rec: 'KeyR', act: 'KeyE', selfie: 'KeyF', crouch: 'KeyC', inv: 'KeyI', z1: 'Digit1', z2: 'Digit2', z3: 'Digit3' },
-  NAME: { crouch: 'しゃがむ・立つ', up: '前へ歩く', down: '後ろへ歩く', left: '左へ歩く', right: '右へ歩く', lookL: '左を向く', lookR: '右を向く', lookU: '上を向く', lookD: '下を向く', rec: '録画の開始・停止', act: '調べる・開ける', selfie: 'インカメラの切り替え', inv: '持ち物', z1: 'ズーム 1倍', z2: 'ズーム 2倍', z3: 'ズーム 3倍' },
+  DEF: { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD', lookL: 'ArrowLeft', lookR: 'ArrowRight', lookU: 'ArrowUp', lookD: 'ArrowDown', rec: 'KeyR', act: 'KeyE', selfie: 'KeyF', crouch: 'KeyC', tool: 'KeyG', inv: 'KeyI', z1: 'Digit1', z2: 'Digit2', z3: 'Digit3' },
+  NAME: { crouch: 'しゃがむ・立つ', tool: '手に持った道具を使う', up: '前へ歩く', down: '後ろへ歩く', left: '左へ歩く', right: '右へ歩く', lookL: '左を向く', lookR: '右を向く', lookU: '上を向く', lookD: '下を向く', rec: '録画の開始・停止', act: '調べる・開ける', selfie: 'インカメラの切り替え', inv: '持ち物', z1: 'ズーム 1倍', z2: 'ズーム 2倍', z3: 'ズーム 3倍' },
   map: {},
   load() { let s = {}; try { s = JSON.parse(localStorage.getItem('yt_keys') || '{}'); } catch (e) { } this.map = Object.assign({}, this.DEF, s); },
   save() { try { localStorage.setItem('yt_keys', JSON.stringify(this.map)); } catch (e) { } },
@@ -4333,6 +4341,7 @@ addEventListener('keydown', e => {
   if (e.code === M.rec) toggleRec(); if (e.code === M.act) $('#actBtn').click();
   if (e.code === M.selfie && typeof SELF !== 'undefined' && world.state === 'play') SELF.set(!world.selfie);
   if (e.code === M.crouch && typeof CROUCH !== 'undefined') CROUCH.toggle();
+  if (e.code === M.tool && typeof HAND !== 'undefined' && world.state === 'play') HAND.useTool();
   if (e.code === M.inv && typeof INV !== 'undefined') INV.open ? INV.hide() : INV.show();
   for (const [i, k] of [[0, 'z1'], [1, 'z2'], [2, 'z3']]) if (e.code === M[k]) { const z = CONFIG.zoomStops[i]; if (z) setZoom(z); }
 });
@@ -4439,17 +4448,17 @@ NOZOOM.init();
 const PAD = {
   using: false, idx: -1, brand: 'xb', id: '', prev: [], lx: 0, ly: 0, rx: 0, ry: 0, wait: null, beatT: 0, strongUntil: 0,
   cfg: { sens: 1, inv: false, vib: true, map: null },
-  ACTS: ['rec', 'act', 'selfie', 'zoomDown', 'zoomUp', 'inv', 'crouch', 'menu', 'back'],
-  NAME: { crouch: 'しゃがむ・立つ', rec: '録画の開始・停止', act: '調べる・開ける・隠れる', selfie: 'インカメラ切り替え', zoomDown: 'ズームを下げる', zoomUp: 'ズームを上げる', inv: '持ち物', menu: '設定（一時停止）', back: '閉じる・戻る' },
+  ACTS: ['rec', 'act', 'tool', 'selfie', 'zoomDown', 'zoomUp', 'inv', 'crouch', 'menu', 'back'],
+  NAME: { crouch: 'しゃがむ・立つ', tool: '手に持った道具を使う', rec: '録画の開始・停止', act: '調べる・開ける・隠れる', selfie: 'インカメラ切り替え', zoomDown: 'ズームを下げる', zoomUp: 'ズームを上げる', inv: '持ち物', menu: '設定（一時停止）', back: '閉じる・戻る' },
   GLYPH: {
     ps: ['×', '○', '□', '△', 'L1', 'R1', 'L2', 'R2', 'SHARE', 'OPTIONS', 'L3', 'R3', '↑', '↓', '←', '→', 'PS'],
     xb: ['A', 'B', 'X', 'Y', 'LB', 'RB', 'LT', 'RT', 'ビュー', 'メニュー', 'LS', 'RS', '↑', '↓', '←', '→', 'Xbox'],
     sw: ['B', 'A', 'Y', 'X', 'L', 'R', 'ZL', 'ZR', '−', '＋', 'Lスティック', 'Rスティック', '↑', '↓', '←', '→', 'HOME'],
   },
   DEF: {   // つないだ機種ごとの初期の割り当て（ボタンの番号。Switchは右がA・下がB）
-    ps: { rec: 7, act: 1, selfie: 3, zoomDown: 4, zoomUp: 5, inv: 2, crouch: 11, menu: 9, back: 0 },
-    xb: { rec: 7, act: 0, selfie: 3, zoomDown: 4, zoomUp: 5, inv: 2, crouch: 11, menu: 9, back: 1 },
-    sw: { rec: 7, act: 1, selfie: 2, zoomDown: 4, zoomUp: 5, inv: 3, crouch: 11, menu: 9, back: 0 },   // 2026-11-15 しゃがむ：右スティック押し込み
+    ps: { rec: 7, act: 1, selfie: 3, zoomDown: 4, zoomUp: 5, inv: 2, crouch: 11, tool: 6, menu: 9, back: 0 },
+    xb: { rec: 7, act: 0, selfie: 3, zoomDown: 4, zoomUp: 5, inv: 2, crouch: 11, tool: 6, menu: 9, back: 1 },
+    sw: { rec: 7, act: 1, selfie: 2, zoomDown: 4, zoomUp: 5, inv: 3, crouch: 11, tool: 6, menu: 9, back: 0 },   // 2026-11-15 しゃがむ：右スティック押し込み
   },
   load() { try { const v = JSON.parse(localStorage.getItem('yt_pad') || '{}'); if (typeof v.sens === 'number') this.cfg.sens = clamp(v.sens, 0.4, 2); this.cfg.inv = !!v.inv; if (v.vib === false) this.cfg.vib = false; if (v.map && typeof v.map === 'object') this.cfg.map = v.map; } catch (e) { } },
   save() { try { localStorage.setItem('yt_pad', JSON.stringify(this.cfg)); } catch (e) { } },
@@ -4499,6 +4508,7 @@ const PAD = {
     else if (a === 'act') { if (actFn && $('#actBtn').classList.contains('show')) actFn(); }
     else if (a === 'selfie') SELF.set(!world.selfie);
     else if (a === 'crouch') CROUCH.toggle();
+    else if (a === 'tool') HAND.useTool();
     else if (a === 'zoomUp' || a === 'zoomDown') { const st = CONFIG.zoomStops; let i = st.indexOf(zoomTarget); if (i < 0) i = 0; i = clamp(i + (a === 'zoomUp' ? 1 : -1), 0, st.length - 1); setZoom(st[i]); }
   },
   // 振動
@@ -15386,7 +15396,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.60';
+const VERSION = '0.17.61';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -20851,7 +20861,7 @@ Object.assign(EN, { '持ち込むと効く': 'Works when brought in', '今から
 Object.assign(ITEM.defs, {
   buzzer: { name: '防犯ブザー', desc: '使うと手に持つ。もう一度ボタンを押すと投げる。落ちた所で20秒鳴り続け、近くの怪異はそちらへ向かう。', size: 0.18, act: '使う' },
   chem: { name: 'ケミカルライト', desc: '折ると緑に光る棒。使うと手に持ち、まわりをぼんやり照らす。投げると落ちた所を照らし続け、その音に怪異が少し気を取られる。', size: 0.18, act: '使う' },
-  candle: { name: 'ろうそく', desc: '使うと燭台ごと手に持って歩ける小さな明かり。怪異が近づくと炎がゆらぎ、とても近いとふっと消える。約3分で燃え尽きる。', size: 0.18, act: '使う' },
+  candle: { name: 'ろうそく', desc: '使うと燭台ごと手に持って歩ける小さな明かり。怪異が近づくと炎がゆらぎ、とても近いとふっと消える。約3分で燃え尽きる。一度使うと、持ち帰れない。', size: 0.18, act: '使う' },
   spray: { name: '虫よけスプレー', desc: 'その周の間、クモ女が自分に近づきにくくなる。ほかの怪異には効かない。', size: 0.18, act: '使う' },
   drink: { name: '栄養ドリンク', desc: '1分間、歩く速さが上がる。切れたあと少し息が上がる。', size: 0.18, act: '飲む' },
   drinkG: { name: '栄養ドリンクG', desc: '2分間、歩く速さが上がる（栄養ドリンクの上位版）。切れたあと少し息が上がる。', size: 0.18, act: '飲む' },
@@ -20874,7 +20884,7 @@ Object.assign(ITEM_ICON2, { bkey: 'data:image/webp;base64,UklGRk4TAABXRUJQVlA4WA
 for (const id of ['pmask', 'buzzer', 'chem', 'candle', 'spray', 'drink', 'stick', 'salt', 'beads', 'bkey', 'hoken', 'wneko', 'bneko', 'goldphone', 'goldframe']) ITEM_IMG[id] = ITEM_ICON2[id] || ITEM.fallbackIcon(id);
 /* 2026-11-16 栄養ドリンクG：栄養ドリンクの絵に「G」を重ねる */
 ITEM_IMG.drinkG = ITEM_IMG.drink; for (const [dst, src] of [['drinkG', 'drink'], ['sparebat', 'battery']]) { const im = new Image(); im.onload = () => { const c = document.createElement('canvas'); c.width = c.height = 160; const x = c.getContext('2d'); x.drawImage(im, 0, 0, 160, 160); x.font = '900 64px system-ui,sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineWidth = 9; x.strokeStyle = '#1a1206'; x.strokeText('G', 112, 112); x.fillStyle = '#ffd34d'; x.fillText('G', 112, 112); ITEM_IMG[dst] = c.toDataURL('image/webp', 0.85); }; im.src = ITEM_IMG[src]; }   /* 2026-11-17 モバイルバッテリーGにもG印 */
-Object.assign(EN, { 'タップで進む': 'Tap to continue', 'クリックで進む': 'Click to continue', '防犯ブザー': 'Safety buzzer', 'ケミカルライト': 'Glow stick', 'ろうそく': 'Candle', '虫よけスプレー': 'Bug spray', '栄養ドリンク': 'Energy drink', '栄養ドリンクG': 'Energy drink G', '体がとても軽くなった': 'You feel much lighter', '1分間、歩く速さが上がる。切れたあと少し息が上がる。': 'Walk faster for 1 minute. You get a little out of breath afterward.', '2分間、歩く速さが上がる（栄養ドリンクの上位版）。切れたあと少し息が上がる。': 'Walk faster for 2 minutes (upgraded energy drink). You get a little out of breath afterward.', '襲われても一度だけなかったことにする。': 'Undoes one attack, just once.', 'こわれかけの自撮り棒': 'Rickety selfie stick', '盛り塩': 'Salt mound', '数珠': 'Prayer beads', '金色のスマホ': 'Golden phone', '伝説のサムネイル枠': 'Legendary thumbnail frame', '投げる': 'Throw', '折って置く': 'Snap & drop', '火をつける': 'Light', '飲む': 'Drink', '置く': 'Place', 'ショップ': 'Shop' });
+Object.assign(EN, { 'タップで進む': 'Tap to continue', 'クリックで進む': 'Click to continue', '防犯ブザー': 'Safety buzzer', 'ケミカルライト': 'Glow stick', 'ろうそく': 'Candle', '使うと燭台ごと手に持って歩ける小さな明かり。怪異が近づくと炎がゆらぎ、とても近いとふっと消える。約3分で燃え尽きる。一度使うと、持ち帰れない。': 'A small light you carry, holder and all. The flame flickers when something comes near, and goes out when it gets very close. Burns out in about 3 minutes. Once used, you can’t take it home.', '使ったろうそく': 'Used candle', '残り': 'Left: ', 'キー': 'key', '手に持った道具を使う': 'Use the item in your hand', '虫よけスプレー': 'Bug spray', '栄養ドリンク': 'Energy drink', '栄養ドリンクG': 'Energy drink G', '体がとても軽くなった': 'You feel much lighter', '1分間、歩く速さが上がる。切れたあと少し息が上がる。': 'Walk faster for 1 minute. You get a little out of breath afterward.', '2分間、歩く速さが上がる（栄養ドリンクの上位版）。切れたあと少し息が上がる。': 'Walk faster for 2 minutes (upgraded energy drink). You get a little out of breath afterward.', '襲われても一度だけなかったことにする。': 'Undoes one attack, just once.', 'こわれかけの自撮り棒': 'Rickety selfie stick', '盛り塩': 'Salt mound', '数珠': 'Prayer beads', '金色のスマホ': 'Golden phone', '伝説のサムネイル枠': 'Legendary thumbnail frame', '投げる': 'Throw', '折って置く': 'Snap & drop', '火をつける': 'Light', '飲む': 'Drink', '置く': 'Place', 'ショップ': 'Shop' });
 const SHOP = {
   KEY: 'yt_shop_v1',
   load() { if (this.d) return this.d; let d = null; try { d = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) { } this.d = d && typeof d.yen === 'number' ? d : { yen: 0, own: {}, look: {}, carry: [], seen: {}, stickT: 0 }; const q = (TEST || BETA || DEV) && location.search.match(/[?&]yen=(\d+)/); if (q) this.d.yen = +q[1]; return this.d; },
@@ -22886,16 +22896,21 @@ const HAND = {
     for (const k in this.m) this.m[k].traverse(o => { o.frustumCulled = false; o.renderOrder = 5; });
     g.visible = false;
   },
-  blocks() { return !!this.item && !(typeof HIDE !== 'undefined' && HIDE.lk) && !(typeof UNDER !== 'undefined' && UNDER.on) && !(typeof KOK !== 'undefined' && KOK.on); },
+  blocks() { return false; },   /* 2026-11-19 87番：道具を持っていても、ふだんの調べる操作はいつも通り出す */
+  hiding() { return !!player.hidden || (typeof HIDE !== 'undefined' && !!HIDE.lk) || (typeof UNDER !== 'undefined' && !!UNDER.on) || (typeof KOK !== 'undefined' && !!KOK.on); },
+  /* 道具の操作（別のボタン・Qキー・コントローラーのLT/L2/ZL） */
+  toolLabel() { const id = this.item; if (!id || world.state !== 'play' || world.capture || this.hiding() || (typeof CAP !== 'undefined' && CAP.on)) return null; const H = document.documentElement.classList; if (H.contains('jyOn') || H.contains('ptOn') || (typeof PIANO !== 'undefined' && PIANO.on) || (typeof SCIRM !== 'undefined' && SCIRM.scope) || (typeof INV !== 'undefined' && INV.open) || (typeof SET !== 'undefined' && SET.open) || (typeof SPH !== 'undefined' && SPH.shareOn) || (typeof DIR !== 'undefined' && DIR.active)) return null; const T = (j, e) => LANG === 'en' ? e : j; return id === 'ball' ? T('蹴る', 'Kick') : id === 'chem' || id === 'buzzer' ? T('投げる', 'Throw') : null; },
+  useTool() { const id = this.item; if (!this.toolLabel()) return; if (id === 'ball') { this.drop(); KBALL.use(); } else if (id === 'chem') this.throwChem(); else if (id === 'buzzer') { this.drop(); BUZZ.throwIt(); } },
+  toolUi() { const b = $('#toolBtn'); if (!b) return; if (!this.tbInit) { this.tbInit = true; hudTap(b, () => this.useTool()); } const L = this.toolLabel(), k = $('#toolKey');
+    if (b._l !== L) { b._l = L; b.querySelector('span').textContent = L || ''; b.classList.toggle('show', !!L); }
+    if (k) { const t = L ? (PAD.using ? PAD.of('tool') : `${KB.of('tool')} ${TR('キー')}`) : ''; if (k._t !== t) { k._t = t; k.textContent = t; } k.classList.toggle('show', !!L); } },
   name(id) { return TR(ITEM.defs[id] ? ITEM.defs[id].name : id); },
-  take(id) { this.init(); this.item = id; if (id === 'candle' && !(this.cT > 0)) this.cT = 180; try { if (id !== 'ball' && id !== 'buzzer' && XCHAT.LIST['it_' + id]) XCHAT.log('it_' + id); } catch (e) { } if (id === 'chem' && A.ctx) SND.kata && SND.kata(camera.position.clone(), 0.25); },
+  take(id, stash) { this.init(); this.item = id; if (id === 'candle') { if (stash) { this.cT = this.cStash; this.cStash = 0; } else this.cT = 180; this.cUsed = true; }   /* 2026-11-19 87番：「使う」をしたろうそくは、その周で使い切り（しまうと燃えず、続きから） */ try { if (id !== 'ball' && id !== 'buzzer' && XCHAT.LIST['it_' + id]) XCHAT.log('it_' + id); } catch (e) { } if (id === 'chem' && A.ctx) SND.kata && SND.kata(camera.position.clone(), 0.25); },
   toBag(id) { if (ITEM.have[id]) ITEM.extra[id] = (ITEM.extra[id] | 0) + 1; else ITEM.have[id] = true; ITEM.gotAt[id] = ++ITEM.gotN; },
-  stow() { const id = this.item; if (!id) return; this.item = null; this.toBag(id); this.sync(); },
+  stow() { const id = this.item; if (!id) return; this.item = null; if (id === 'candle' && this.cUsed) { this.cStash = Math.max(1, this.cT); } else this.toBag(id); this.sync(); },
+  unStash() { if (!(this.cStash > 0)) return false; if (this.item) this.stow(); this.take('candle', true); this.sync(); return true; },
   drop() { this.item = null; this.sync(); },
-  offer() {
-    if (!this.blocks() || world.capture) return; const id = this.item, T = (j, e) => LANG === 'en' ? e : j;
-    this.own = true; try { if (id === 'ball') offerAction(T('蹴る', 'Kick'), () => { this.drop(); KBALL.use(); }); else if (id === 'chem') offerAction(T('投げる', 'Throw'), () => this.throwChem()); else if (id === 'buzzer') offerAction(T('投げる', 'Throw'), () => { this.drop(); BUZZ.throwIt(); }); } finally { this.own = false; }
-  },
+  offer() { },   /* 2026-11-19 87番：道具の操作は調べるボタンではなく、別のボタン（toolUi）で出す */
   throwChem() {
     const f = camFwd(); f.y = 0; f.normalize(); const [x, z] = collide(player.x + f.x * 2.6, player.z + f.z * 2.6, 0.2, player.lv);
     const from = camera.localToWorld(V(0.08, -0.17, -0.4)), to = V(x, (player.lv ? LH : 0) + 0.03, z); this.drop();
@@ -22904,13 +22919,14 @@ const HAND = {
     this.fly.push({ g, from, to, t: 0 });
   },
   sync() { if (!this.g) return; for (const k in this.m) this.m[k].visible = this.item === k; },
-  reset() { this.item = null; this.cT = 180; this.fly = []; this.sync(); this.vl.l.intensity = 0; },
+  reset() { this.item = null; this.cT = 180; this.cStash = 0; this.cUsed = false; this.fly = []; this.sync(); this.vl.l.intensity = 0; },
   near() { let n = 99; try { n = Math.min(n, ...[WD.pos, SP.pos, MANN.pos, URAH.on && URAH.pos].filter(p => p && Math.abs((p.y || 0) - player.y) < 2 && (p !== WD.pos || (SG.opacity ?? 0) > 0.2 || CH.state !== 'off')).map(p => Math.hypot(p.x - player.x, p.z - player.z))); } catch (e) { } return n; },
   update(dt) {
     for (const F of this.fly.slice()) { F.t += dt / 0.45; const k = Math.min(1, F.t); F.g.position.lerpVectors(F.from, F.to, k); F.g.position.y += Math.sin(k * Math.PI) * 0.5; F.g.rotation.y += dt * 12; F.g.userData.L.position.copy(F.g.position).y += 0.15;
       if (k >= 1) { this.fly.splice(this.fly.indexOf(F), 1); F.g.rotation.y = rnd(0, 3); if (A.ctx) SND.kata && SND.kata(F.g.position.clone(), 0.4); NOISE.make(5); { const g = F.g; SHOT.watch('it_chem', () => g.position, { maxD: 12, margin: 0.85, win: 2, hold: 0.25 }); } } }   /* 2026-11-19 94番：落ちたライトが映った時だけコメント */
+    try { this.toolUi(); } catch (e) { }
     const id = this.item; if (!this.g) return;
-    this.g.visible = !!id && !world.selfie && (world.state === 'play' || world.state === 'paused');
+    this.g.visible = !!id && !world.selfie && !this.hiding() && (world.state === 'play' || world.state === 'paused');   /* 隠れている間は手を見せない */
     const L = this.vl.l; L.intensity = 0;
     if (!id || world.state === 'over') return;
     camera.updateMatrixWorld(); L.position.copy(camera.localToWorld(V(0.08, -0.12, -0.42)));
@@ -22921,6 +22937,8 @@ const HAND = {
       if (world.state === 'play' && (near < 2.2 || this.cT <= 0)) { toast(LANG === 'en' ? (near < 2.2 ? 'The candle went out' : 'The candle burned out') : (near < 2.2 ? 'ろうそくの火が、ふっと消えた' : 'ろうそくが燃え尽きた'), 1600); this.cT = 180; this.drop(); } }
   },
   invRow(L) {
+    if (this.cStash > 0) { const el = document.createElement('div'); el.className = 'invIt held'; el.innerHTML = '<img alt=""><div><b></b><small></small></div>'; el.querySelector('img').src = ITEM_IMG.candle; el.querySelector('b').textContent = TR('使ったろうそく'); const sec = Math.ceil(this.cStash), mm = Math.floor(sec / 60), ss = sec % 60; el.querySelector('small').textContent = LANG === 'en' ? `${TR('残り')}${mm}:${String(ss).padStart(2, '0')}` : `残り${mm ? mm + '分' : ''}${ss}秒`; el.dataset.tab = 'm';
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'invAct'; b.textContent = TR('使う'); b.addEventListener('click', e => { e.stopPropagation(); const go = () => { this.unStash(); INV.redraw(); }; if (this.item) POP.ask(LANG === 'en' ? `Swap the ${this.name(this.item)} in your hand?` : `すでに手に持っている「${this.name(this.item)}」と入れ替えますか？`, go); else go(); }); el.appendChild(b); L.appendChild(el); }
     const id = this.item; if (!id) return; const el = document.createElement('div'); el.className = 'invIt held';
     el.innerHTML = '<img alt=""><div><b></b><small></small></div>'; el.querySelector('img').src = ITEM_IMG[id]; el.querySelector('b').textContent = this.name(id); el.querySelector('small').textContent = TR('手に持っている'); el.dataset.tab = 'm';
     const b = document.createElement('button'); b.type = 'button'; b.className = 'invAct'; b.textContent = TR('しまう'); b.addEventListener('click', e => { e.stopPropagation(); this.stow(); INV.redraw(); }); el.appendChild(b); L.appendChild(el);
@@ -22947,7 +22965,7 @@ const GOLDPH = { apply(on) { let m = null; avatar.root.traverse(o => { if (o.nam
     if (!this.idx) { this.idx = []; this.orig = []; for (let i = 0; i < P.count; i++) { const r = C.getX(i), gg = C.getY(i), b = C.getZ(i); if (P.getZ(i) > 0.28 && P.getY(i) > 1.38 && P.getY(i) < 1.6 && r + gg + b < 0.45 && !(b > 0.11 && r < 0.08)) { this.idx.push(i); this.orig.push([r, gg, b]); } } }
     this.idx.forEach((i, k) => on ? C.setXYZ(i, 0.62, 0.43, 0.09) : C.setXYZ(i, ...this.orig[k])); C.needsUpdate = true; } };
 { const E1 = SHOP.endRun.bind(SHOP); SHOP.endRun = function (likes) {
-    if (this.ended === world.runId) return E1(likes); if (HAND.item) HAND.stow(); const ex = Object.assign({}, ITEM.extra || {}); ITEM.extra = {}; const r = E1(likes);
+    if (this.ended === world.runId) return E1(likes); if (HAND.item === 'candle' && HAND.cUsed) HAND.drop(); if (HAND.item) HAND.stow(); HAND.cStash = 0;   /* 使ったろうそくは持ち帰らない */ const ex = Object.assign({}, ITEM.extra || {}); ITEM.extra = {}; const r = E1(likes);
     if (world.state !== 'over') { const d = this.load(); let ch = false; for (const id in ex) { const n = ex[id] | 0, it = this.def(id); if (n <= 0 || !it || it[3] === 'look' || YTAG.KEEP.includes(id)) continue; d.own[id] = (d.own[id] | 0) + n; ch = true; this.brought = this.brought || []; if (!this.brought.includes(id)) this.brought.push(id); } if (ch) this.save(); }
     return r; }; }
 { const F0 = SHOPFX.update.bind(SHOPFX); SHOPFX.update = function (dt) { try { HAND.update(dt); } catch (e) { } return F0(dt); }; }
