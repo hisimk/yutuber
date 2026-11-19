@@ -15528,7 +15528,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.47';
+const VERSION = '0.18.48';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -20255,7 +20255,7 @@ const PHAN = {
     this.rematch = this.runSt === 3 && !!this.load().won; if (this.rematch) { const d = this.load(); d.st = 9; d.bans = 0; this.save(); }
     /* 2026-11-17 詰み防止：初めての化け物の周は倒すまで続くが、13回負けたら（13周目が終わったら）最初の段階へ戻す。戻った後の荒らしは10周に1回くらい */
     else if (this.runSt === 3) { const d = this.load(); d.tries = (d.tries || 0) + 1; if (d.tries >= 13) { d.st = 0; d.bans = 0; d.tries = 0; d.rs = true; } this.save(); }
-    this.on = this.runSt === 3 || this.rand; world.phanRun = this.on; this.partsOff(); if (this.h0 && SG.bones && SG.bones.Head) SG.bones.Head.position.copy(this.h0);
+    this.on = (this.runSt === 3 || this.rand) && !((TEST || BETA) && /[?&]nophan\b/.test(location.search)); world.phanRun = this.on;   /* 2026-11-20 確認用 ?nophan：記録はそのままで、この周だけナカヨシの周にしない */ this.partsOff(); if (this.h0 && SG.bones && SG.bones.Head) SG.bones.Head.position.copy(this.h0);
     this.hits = 0; this.backN = 0; this.fuN = 0; this.mode = 'idle'; this.nextHunt = 0; this.trackT = 0; this.sndT = 3; this.tintK = this.on ? 1 : 0; this.wasCh = false; this.dead = null; this.tintSlow = false; this.armsOff(); if (this.pool) { scene.remove(this.pool.grp); this.pool = null; } world.camShake = 0;
     this.troll0 = ((this.runSt === 0 && chance(this.load().rs ? 0.1 : 0.25)) || (this.runSt === 9 && chance(0.05)) || ((TEST || BETA) && /[?&]troll\b/.test(location.search)));   // 段階0：数周に1回くらい
     if (this.tag) this.tag.visible = false;
