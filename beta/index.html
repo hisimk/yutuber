@@ -15398,7 +15398,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.63';
+const VERSION = '0.17.64';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -24867,6 +24867,7 @@ const VPLAY = {
   poke() { this.hideAt = performance.now() + 2600; if (this.ui) this.ui.classList.remove('hide'); this.paint(); this.run(); },
   setBig(on) {
     if (on === this.big || !this.box) return; this.big = on;
+    if (on) { this.cmPrev = this.cm; this.cm = true; } else if (this.cmPrev !== undefined) { this.cm = this.cmPrev; this.cmPrev = undefined; }   /* 2026-11-19 93番：拡大した時は、流れるコメントを必ずオン（ふつうの大きさに戻したら、前の状態に戻す） */
     if (on) { const f = document.createElement('div'); f.id = 'vpFull'; f.setAttribute('role', 'dialog'); document.body.appendChild(f); f.appendChild(this.box); this.full = f; this.fit(); }
     else { this.wrap.insertBefore(this.box, this.wrap.firstChild); if (this.full) this.full.remove(); this.full = null; }
     this.layKey = ''; this.poke();
