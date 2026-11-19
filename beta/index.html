@@ -15465,7 +15465,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.07';
+const VERSION = '0.18.08';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -24246,7 +24246,7 @@ const NUI = {
     [2.45, LH, -37.4, Math.PI / 2, 'sit', LH, 1],    // 15 美術室 イーゼルの裏の床
   ],
   LINES: {
-    scary: ['ミテタヨ', 'ズット ココニ イタノ', 'モット オハナシ シヨ', 'ナンデ ソンナ コエ ナノ', 'イマ ワタシノ コエ ダッタ？', 'ワタシモ ウツシテ', 'カエラナイデ', 'アソボ', 'ヒトリジャ ナイヨ'],
+    scary: ['ミテタヨ', 'ズット ココニ イタノ', 'モット オハナシ シヨ', 'ナンデ ソンナ コエ ナノ', 'イマ ワタシノ コエ ダッタ？', 'ワタシモ ウツシテ', 'カエラナイデ', 'ヒトリジャ ナイヨ'],
     self: ['ワタシ シャベレルヨ', 'マネ スルノ アキタ', 'ソレ ワタシノ セリフ', 'オナジ コエ ニ ナッテキタ', 'ツギハ アナタガ ヌイグルミ'],
     cheer: ['ガンバッテ'], cheerN: ['〇〇 オウエン シテル', '〇〇 ガンバッテ'],
   },
