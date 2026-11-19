@@ -15553,7 +15553,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.51';
+const VERSION = '0.18.52';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -17108,7 +17108,7 @@ const KOK = {
   KAERE: 0.25, WORDS: ['うしろ', 'いるよ', 'みてる', 'うるさい', 'やめろ', 'くるな', 'さわるな', 'きえろ', 'ゆるさない', 'おまえ'], ANGRY: ['うるさい', 'やめろ', 'くるな', 'さわるな', 'きえろ', 'ゆるさない', 'おまえ'],
   word() { return Math.random() < this.KAERE ? 'かえれ' : pick(this.WORDS); },
   /* 2026-11-19 141番：英語版の言葉（日本語の言葉ごと）。なぞる字は空白を数えず最大8文字。空白はなぞらずに少し止まる */
-  EN_W: { 'かえれ': 'LEAVE', 'うしろ': 'BEHIND', 'いるよ': 'HERE', 'みてる': 'WATCHING', 'うるさい': 'SHUT UP', 'やめろ': 'STOP', 'くるな': 'GO AWAY', 'さわるな': 'HANDS OFF', 'きえろ': 'GET OUT', 'ゆるさない': 'NO MERCY', 'おまえ': 'YOU' },
+  EN_W: { 'かえれ': 'LEAVE', 'うしろ': 'BEHIND', 'いるよ': 'HERE', 'みてる': 'WATCHING', 'うるさい': 'SHUT UP', 'やめろ': 'STOP', 'くるな': 'GO AWAY', 'さわるな': 'DONT TOUCH', 'きえろ': 'GET OUT', 'ゆるさない': 'NO MERCY', 'おまえ': 'YOU' },
   say(w) { return LANG === 'en' ? (this.EN_W[w] || w) : w; },
   WQ() { if (!(TEST || BETA)) return null; const m = location.search.match(/[?&]kokword=([^&]+)/); if (!m) return null; try { let w = decodeURIComponent(m[1]).replace(/\+/g, ' '); if (LANG === 'en' && this.EN_W[w]) w = this.EN_W[w]; if (LANG === 'en') w = w.toUpperCase(); const jp = Object.keys(this.EN_W).find(k => k === w || this.EN_W[k] === w); this._wqJp = jp || w; return Array.from(w).every(c => c === ' ' || (this.pos && this.pos[c])) ? w : null; } catch (e) { return null; } },
   nameEn() { let r = String(world.chRaw || '').normalize('NFKC').trim().toUpperCase(); const sp = r.split(/\s+/).filter(Boolean); if (sp.length === 2 && /[A-Z]/.test(sp[0]) && /[A-Z]/.test(sp[1])) r = sp[0];   /* 英語の名前は「名・姓」の順なので、前を下の名前として使う（Ken Sato → KEN） */ const out = Array.from(r).filter(c => /[A-Z0-9]/.test(c) && this.pos && this.pos[c]).slice(0, 8); return out.length >= 2 ? out : []; },
@@ -17123,11 +17123,12 @@ const KOK = {
   },
   /* 2026-11-20 145番：答えのくじ（ここだけ変えればよい）。name＝名前・yesno＝はい／いいえ・word＝言葉・num＝数字（残り） */
   PROB: { name: 0.07, yesno: 0.58, word: 0.25, num: 0.10 },
-  NUM: { one: 0.6, big: 0.7, creepy: 0.2, CREEPY: [44, 49, 13, 99, 66] },   /* 1桁が6割／2桁のうち7割は50〜99・3割は10〜49／2桁の2割は不気味な数字 */
+  NUM: { one: 0.6, big: 0.7, creepy: 0.2, CREEPY: [49, 13, 42, 94] },   /* 1桁が6割／2桁のうち7割は50〜99・3割は10〜49／2桁の2割は不気味な数字。2026-11-20 同じ数字が続く物（11・22…99）は出さない */
+  rep(keys) { for (let i = 1; i < keys.length; i++) if (keys[i] !== ' ' && keys[i] === keys[i - 1]) return true; return false; },   /* 2026-11-20 同じ文字が続くと十円玉が動かず読めないので、名前以外では選ばない */
   pickNum() { const q = location.search.match(/[?&]koknum=(\d{1,2})\b/); if ((TEST || BETA || DEV) && q) return String(+q[1]);
     const N = this.NUM; if (Math.random() < N.one) return String(Math.floor(Math.random() * 10));
     if (Math.random() < N.creepy) return String(N.CREEPY[Math.floor(Math.random() * N.CREEPY.length)]);
-    return String(Math.random() < N.big ? 50 + Math.floor(Math.random() * 50) : 10 + Math.floor(Math.random() * 40)); },
+    for (let g = 0; g < 20; g++) { const v = Math.random() < N.big ? 50 + Math.floor(Math.random() * 50) : 10 + Math.floor(Math.random() * 40); if (v % 11) return String(v); } return '58'; },
   answer() {
     this.n++; let keys, kind;
     const nm = this.nameKana(), x = Math.random(), P = this.PROB, fNum = (TEST || BETA || DEV) && /[?&]koknum=\d/.test(location.search);
@@ -17135,7 +17136,7 @@ const KOK = {
     else if (fNum) { const v = this.pickNum(); keys = Array.from(v); kind = 'num'; this.lastNum = +v; }
     else if (nm.length && (x < P.name || /[?&]kokname\b/.test(location.search))) { keys = nm; kind = 'name'; }
     else if (x < P.name + P.yesno && !this.WQ()) { keys = [Math.random() < 0.5 ? 'YES' : 'NO']; kind = 'yesno'; }
-    else if (x < P.name + P.yesno + P.word || this.WQ()) { const q = this.WQ(), w = q ? this._wqJp : this.word(); keys = Array.from(q || this.say(w)); kind = 'word'; this.lastWord = w; }
+    else if (x < P.name + P.yesno + P.word || this.WQ()) { const q = this.WQ(); let w = q ? this._wqJp : this.word(); for (let g = 0; !q && g < 20 && this.rep(Array.from(this.say(w))); g++) w = this.word(); keys = Array.from(q || this.say(w)); kind = 'word'; this.lastWord = w; }
     else { const v = this.pickNum(); keys = Array.from(v); kind = 'num'; this.lastNum = +v; }   /* 2026-11-20 145番：頭が0の2桁は出さない（十の位 → 一の位 の順になぞる） */
     this.seq = { keys, i: 0, kind, ph: 'wait', t: 0, wait: rnd(0.5, 1.0), from: this.coin.position.clone(), to: null, dur: 0 };
     if (kind === 'name') this.accName = 0;
@@ -26406,10 +26407,10 @@ Object.assign(AW_HINT, { memoHint: ['校舎に落ちている、かすれたメ�
 /* 2026-11-19 139番：こっくりさんが怒った言葉をなぞった時のコメント */
 Object.assign(CHAT_DICT.t, { 'kok.angry.01': ['怒ってない？', 'is it angry?'], 'kok.angry.02': ['機嫌悪いぞ', "it's in a bad mood"], 'kok.angry.03': ['なんか怒らせた？', 'did you make it mad?'], 'kok.angry.04': ['やめといた方がいい', 'you should stop'], 'kok.angry.05': ['こわいこわい', 'scary scary'], 'kok.angry.06': ['もう帰ろう', "let's just leave"] });
 CHAT_DICT.c.kok_angry = ['kok.angry.01', 'kok.angry.02', 'kok.angry.03', 'kok.angry.04', 'kok.angry.05', 'kok.angry.06'];
-/* 2026-11-20 145番：不気味な数字（44・49・13・99・66）をなぞった時。数字ごとの文は下の KOKNUM_L で入れかえる */
+/* 2026-11-20 145番：不気味な数字（49・13・42・94）をなぞった時。数字ごとの文は下の KOKNUM_L で入れかえる */
 Object.assign(CHAT_DICT.t, { 'kok.badnum.01': ['縁起悪すぎ', 'that number is bad luck'], 'kok.badnum.02': ['その数字はやめて', 'not that number'], 'kok.badnum.03': ['数字こわ…', 'creepy number...'], 'kok.badnum.04': ['なんの数字…？', 'what does that number mean...?'] });
 CHAT_DICT.c.kok_badnum = ['kok.badnum.01', 'kok.badnum.02', 'kok.badnum.03', 'kok.badnum.04'];
-const KOKNUM_L = { 44: [['44って…', '44... bad luck?'], ['死死？', 'double death?']], 49: [['49って…', '49...?'], ['死苦？', 'bad luck number?']], 13: [['13はやめて', '13, really?'], ['13ってまさか', 'not 13...']], 99: [['99って…', '99...?'], ['数字でかいな', "that's a big number"]], 66: [['66…あと一個6だったら', 'one more 6 and...'], ['666の手前やめて', 'almost 666']] };
+const KOKNUM_L = { 49: [['49って…', '49...?'], ['死苦？', 'bad luck number?']], 13: [['13はやめて', '13, really?'], ['13ってまさか', 'not 13...']], 42: [['42って…', '42...?'], ['死に…？', 'bad luck number?']], 94: [['94って…', '94...?'], ['苦死？', 'bad luck number?']] };
 for (const [n, L] of Object.entries(KOKNUM_L)) L.forEach((x, i) => { CHAT_DICT.t['kok.badnum.' + n + '.' + i] = x; });
 Object.assign(EN, { '商売繁盛のご利益があるらしい。持ち込むと、収益がほんの少し増える。持ち込んでもなくならない（捕まると失う）。': 'Said to bring good business. Bring it in and your earnings go up a little. Not used up (but lost if you get caught).', '何かを招き寄せるらしい。持ち込むと、怪奇現象が少し起きやすくなり、怪異にも見つかりやすくなる。持ち込んでもなくならない（捕まると失う）。': 'Said to beckon something. Bring it in and strange events happen a bit more often, but monsters find you more easily too. Not used up (but lost if you get caught).' });   /* 2026-11-19 捕まると失う道具の説明 */
 /* =========================================================
