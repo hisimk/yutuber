@@ -4355,7 +4355,18 @@ setInterval(() => {
   if (!FRAME.on) return; const ok = MLOCK.ok(), on = MLOCK.on();
   if (on && !ok) document.exitPointerLock();
   $('#lockHint').classList.toggle('show', ok && !on && !world.capture && world.outro === 0);   // 2026-11-15 プレイ中にカーソルが出ている時は「クリックで視点操作」
+  if (ok && !on && RELOCK.t && performance.now() - RELOCK.t < 1500) { RELOCK.t = 0; MLOCK.req(); }   // 2026-11-20 146番：閉じる操作のすぐあとにプレイへもどった時（少し遅れてもどる画面も）
 }, 100);
+/* 2026-11-20 146番：PCで、アイテムの画面・持ち物・設定・お知らせなどを閉じる操作（クリック・キー）をしたら、そのままマウスの固定をかけ直す（もう一度クリックしなくても見回せる）。
+   ブラウザの決まりで、固定はクリック・キーの操作の中でしかかけられないので、操作の前は「プレイ中でない」→ 操作のあと「プレイ中」になった時だけかけ直す。Esc で閉じた時は、ブラウザがかけ直しを許さないので今どおり（クリックで視点操作の案内） */
+const RELOCK = { t: 0,
+  pre(e) { if (!FRAME.on) return; if ((e.type === 'keydown' || e.type === 'keyup') && (e.key === 'Escape' || e.repeat)) { this.t = 0; return; } if (e.pointerType && e.pointerType !== 'mouse') return; e.__rl = MLOCK.ok();
+    if (!e.__rl) { this.t = performance.now(); setTimeout(() => this.post(e), 0); } },   /* 閉じる側の処理が止めても（stopPropagation）、すぐあとにもう一度見る */
+  post(e) { if (!FRAME.on || e.__rl !== false || e.__rlDone) return; e.__rlDone = true; if (e.key === 'Escape') return;
+    if (MLOCK.ok() && !MLOCK.on()) { MLOCK.req(); this.t = 0; } else this.t = performance.now(); },
+  now() { if (FRAME.on && MLOCK.ok() && !MLOCK.on()) { MLOCK.req(); this.t = 0; } },   /* 閉じる処理の中から直接呼ぶ（いちばん確実） */
+};
+for (const ty of ['pointerdown', 'pointerup', 'click', 'keydown', 'keyup']) { addEventListener(ty, e => RELOCK.pre(e), true); setTimeout(() => addEventListener(ty, e => RELOCK.post(e), false), 0); }   /* あとの方は、ほかの処理（持ち物のキーなど）より後に動くように、読み込みの最後に付ける */
 /* 2026-11-14 PC：クリックしなくても、マウスを動かすだけで見回せる（ドラッグでも見回せる）。
    カーソルを画面の左右の端に寄せている間は、その向きへ回り続ける。設定・持ち物などの画面の上では見回さない */
 const PCLOOK = {
@@ -9750,7 +9761,8 @@ const ITEM = {
     this.tone(o, 1318, t, 1.8, 0.2); this.tone(o, 1976, t + 0.02, 1.2, 0.08); this.tone(o, 659, t, 1.4, 0.12, 'triangle');
   },
 };
-$('#itemModal').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); ITEM.close(); });
+$('#itemModal').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); ITEM.close(); if (e.pointerType === 'mouse') RELOCK.now(); });
+addEventListener('keydown', e => { if (!ITEM.modal || ITEM.modal.ask || e.repeat || (KB && KB.wait)) return; if ([KB.map.act, 'Enter', 'NumpadEnter', 'Space'].includes(e.code)) { e.preventDefault(); e.stopImmediatePropagation(); ITEM.close(); RELOCK.now(); } }, true);   /* 2026-11-20 146番：PCでは、調べるキー（E）・Enter・スペースでもアイテムの画面を閉じられる（閉じたらそのまま見回せる） */
 
 /* =========================================================
    誰も履いていない上履き（レア怪異）
@@ -14887,7 +14899,7 @@ const INV = {
 };
 { const el = $('#invBtn'); for (const ev of ['pointerdown', 'touchstart']) el.addEventListener(ev, e => e.stopPropagation(), { passive: true }); el.addEventListener('click', e => { e.stopPropagation(); ensureAudio(); INV.show(); }); }
 for (const ev of ['pointerdown', 'pointermove', 'pointerup', 'touchstart', 'touchmove']) $('#inv').addEventListener(ev, e => e.stopPropagation(), { passive: true });
-$('#invClose').addEventListener('click', e => { e.stopPropagation(); INV.hide(); });
+$('#invClose').addEventListener('click', e => { e.stopPropagation(); INV.hide(); RELOCK.now(); });
 $('#invX').addEventListener('click', e => { e.stopPropagation(); INV.hide(); });   // 2026-11-14 持ち物が長くなっても、右上の×でいつでも戻れる
 $('#invScore').addEventListener('click', e => { e.stopPropagation(); $('#invScore').classList.remove('show'); });
 /* 2026-11-14 PC：Esc キーで設定を開く・閉じる（持ち物・遊び方・キー組み換え中はそれぞれの Esc を優先） */
@@ -15541,7 +15553,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.50';
+const VERSION = '0.18.51';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -17109,14 +17121,22 @@ const KOK = {
     const out = []; for (let ch of s.normalize('NFD')) { const c = ch.charCodeAt(0); if (c >= 0x30a1 && c <= 0x30f6) ch = String.fromCharCode(c - 0x60); ch = SM[ch] || ch; if (this.pos && this.pos[ch]) out.push(ch); }
     return out.slice(0, 8);
   },
+  /* 2026-11-20 145番：答えのくじ（ここだけ変えればよい）。name＝名前・yesno＝はい／いいえ・word＝言葉・num＝数字（残り） */
+  PROB: { name: 0.07, yesno: 0.58, word: 0.25, num: 0.10 },
+  NUM: { one: 0.6, big: 0.7, creepy: 0.2, CREEPY: [44, 49, 13, 99, 66] },   /* 1桁が6割／2桁のうち7割は50〜99・3割は10〜49／2桁の2割は不気味な数字 */
+  pickNum() { const q = location.search.match(/[?&]koknum=(\d{1,2})\b/); if ((TEST || BETA || DEV) && q) return String(+q[1]);
+    const N = this.NUM; if (Math.random() < N.one) return String(Math.floor(Math.random() * 10));
+    if (Math.random() < N.creepy) return String(N.CREEPY[Math.floor(Math.random() * N.CREEPY.length)]);
+    return String(Math.random() < N.big ? 50 + Math.floor(Math.random() * 50) : 10 + Math.floor(Math.random() * 40)); },
   answer() {
     this.n++; let keys, kind;
-    const nm = this.nameKana(), x = Math.random();
+    const nm = this.nameKana(), x = Math.random(), P = this.PROB, fNum = (TEST || BETA || DEV) && /[?&]koknum=\d/.test(location.search);
     if (this.n >= this.finalAt) { keys = LANG === 'en' ? Array.from('LEAVE') : ['か', 'え', 'れ']; kind = 'final'; }
-    else if (nm.length && (x < 0.07 || /[?&]kokname\b/.test(location.search))) { keys = nm; kind = 'name'; }
-    else if (x < 0.55 && !this.WQ()) { keys = [Math.random() < 0.5 ? 'YES' : 'NO']; kind = 'yesno'; }
-    else if (x < 0.8 || this.WQ()) { const q = this.WQ(), w = q ? this._wqJp : this.word(); keys = Array.from(q || this.say(w)); kind = 'word'; this.lastWord = w; }
-    else { const n = 1 + Math.floor(Math.random() * 2); keys = Array.from({ length: n }, () => String(Math.floor(Math.random() * 10))); kind = 'num'; }
+    else if (fNum) { const v = this.pickNum(); keys = Array.from(v); kind = 'num'; this.lastNum = +v; }
+    else if (nm.length && (x < P.name || /[?&]kokname\b/.test(location.search))) { keys = nm; kind = 'name'; }
+    else if (x < P.name + P.yesno && !this.WQ()) { keys = [Math.random() < 0.5 ? 'YES' : 'NO']; kind = 'yesno'; }
+    else if (x < P.name + P.yesno + P.word || this.WQ()) { const q = this.WQ(), w = q ? this._wqJp : this.word(); keys = Array.from(q || this.say(w)); kind = 'word'; this.lastWord = w; }
+    else { const v = this.pickNum(); keys = Array.from(v); kind = 'num'; this.lastNum = +v; }   /* 2026-11-20 145番：頭が0の2桁は出さない（十の位 → 一の位 の順になぞる） */
     this.seq = { keys, i: 0, kind, ph: 'wait', t: 0, wait: rnd(0.5, 1.0), from: this.coin.position.clone(), to: null, dur: 0 };
     if (kind === 'name') this.accName = 0;
     if (TEST || DEV) console.log('KOK answer', this.n, kind, keys.join(''));
@@ -17130,7 +17150,7 @@ const KOK = {
       const k = clamp(S.t / S.dur, 0, 1), e = k * k * (3 - 2 * k); c.position.lerpVectors(S.from, S.to, e); c.position.x += Math.sin(S.t * 23) * 0.0012 * (1 - k); c.position.y = 0.0065;
       if (S.off && c.position.z < -0.235) { this.startDrop(); this.seq = null; return; }   // 机のふちを越えた
       if (k >= 1) { if (S.back) { this.seq = null; this.idleT = 0; return; } S.i++; S.ph = 'wait'; S.t = 0; S.wait = S.i >= S.keys.length ? rnd(1.1, 1.5) : rnd(1.05, 1.45);   /* 2026-11-15 どの文字か分かるように、止まる時間を0.5秒のばした */
-        if (S.i >= S.keys.length) { CHATLOG.add('kok', { w: S.kind === 'name' ? 'name' : S.kind === 'yesno' ? 'yesno' : S.kind === 'final' ? 'final' : S.kind === 'word' && this.ANGRY.includes(this.lastWord) ? 'angry' : 'move2' }); if (S.kind === 'name' && rec.active && this.accName >= 0.8) award('kokName', '十円玉が自分の名前をなぞった', 70); } }
+        if (S.i >= S.keys.length) { CHATLOG.add('kok', { w: S.kind === 'name' ? 'name' : S.kind === 'yesno' ? 'yesno' : S.kind === 'final' ? 'final' : S.kind === 'word' && this.ANGRY.includes(this.lastWord) ? 'angry' : S.kind === 'num' && this.NUM.CREEPY.includes(this.lastNum) ? 'badnum' : 'move2', n: S.kind === 'num' ? this.lastNum : undefined }); if (S.kind === 'name' && rec.active && this.accName >= 0.8) award('kokName', '十円玉が自分の名前をなぞった', 70); } }
     }
     // 撮れ高：動いているところを録画で撮った
     if (S.ph === 'move' && rec.active) { const w = c.getWorldPosition(V()); if (seen(w, { maxD: 4, margin: 1.05 })) { if (S.off) this.offSeen = true; this.accMove += dt; if (S.kind === 'name') this.accName += dt; if (this.accMove >= 0.4) award('kokMove', '十円玉が動いた', 40); } }
@@ -17161,10 +17181,10 @@ const KOK = {
   chat(d) {
     if (!d || !d.items || !d.end) return; const ev = (CHATLOG.ev || []).filter(e => e.k === 'kok'); if (!ev.length) return;
     const R = chatRng((d.seed ^ 0x2545f491) >>> 0), T = CHAT_DICT.t, U = Math.max(6, (d.users || []).length || 12), maxR = d.end.R + (d.end.ec ? 3 : -0.2), out = [];
-    const CAT = { enter: 'kok_enter', ask: 'kok_ask', still: 'kok_still', move: 'kok_move', move2: 'kok_move', angry: 'kok_angry', yesno: 'kok_yesno', name: 'kok_name', final: 'kok_drop', drop: 'kok_drop' };
-    const N = { enter: 2, ask: 1, still: 2, move: 3, move2: 1, angry: 2, yesno: 2, name: 3, final: 1, drop: 3 };
+    const CAT = { enter: 'kok_enter', ask: 'kok_ask', still: 'kok_still', move: 'kok_move', move2: 'kok_move', angry: 'kok_angry', badnum: 'kok_badnum', yesno: 'kok_yesno', name: 'kok_name', final: 'kok_drop', drop: 'kok_drop' };
+    const N = { enter: 2, ask: 1, still: 2, move: 3, move2: 1, angry: 2, badnum: 2, yesno: 2, name: 3, final: 1, drop: 3 };
     for (const e of ev) { const cat = CAT[e.w]; if (!cat) continue; const ids = CHAT_DICT.c[cat] || []; const n = N[e.w] + (R() < 0.4 ? 1 : 0);
-      for (let i = 0; i < n; i++) { const tk = ids.filter(id => this.TSUK.includes(id)), sr = ids.filter(id => !this.TSUK.includes(id)); const pool = tk.length && R() < 0.33 ? tk : sr; const id = pool[Math.floor(R() * pool.length)]; if (!id || !T[id]) continue;
+      for (let i = 0; i < n; i++) { const tk = ids.filter(id => this.TSUK.includes(id)), sr = ids.filter(id => !this.TSUK.includes(id)); const pool = tk.length && R() < 0.33 ? tk : sr; let id = pool[Math.floor(R() * pool.length)]; if (cat === 'kok_badnum' && i === 0 && e.n !== undefined && T['kok.badnum.' + e.n + '.0']) id = 'kok.badnum.' + e.n + '.' + Math.floor(R() * 2); if (!id || !T[id]) continue;
         const t = e.t + (e.w === 'still' ? 6.5 + R() * 2.5 : 0.6) + i * (0.7 + R() * 0.9); if (e.w === 'still' && ev.some(x => x.w !== 'still' && x.w !== 'ask' && x.t > e.t && x.t < t + 0.5)) continue;   /* 2026-11-16 「動かない」は、しばらく見守ってから（間に動いたら出さない） */ if (t > maxR) continue; if (out.some(x => x[2] === id && Math.abs(x[0] - t) < 8) || d.items.some(x => x[2] === id && Math.abs(x[0] - t) < 8)) continue;
         out.push([Math.round(t * 100) / 100, Math.floor(R() * U), id, T[id][0], T[id][1]]); } }
     if (out.length) d.items = d.items.concat(out).sort((a, b) => a[0] - b[0]);
@@ -26386,6 +26406,11 @@ Object.assign(AW_HINT, { memoHint: ['校舎に落ちている、かすれたメ�
 /* 2026-11-19 139番：こっくりさんが怒った言葉をなぞった時のコメント */
 Object.assign(CHAT_DICT.t, { 'kok.angry.01': ['怒ってない？', 'is it angry?'], 'kok.angry.02': ['機嫌悪いぞ', "it's in a bad mood"], 'kok.angry.03': ['なんか怒らせた？', 'did you make it mad?'], 'kok.angry.04': ['やめといた方がいい', 'you should stop'], 'kok.angry.05': ['こわいこわい', 'scary scary'], 'kok.angry.06': ['もう帰ろう', "let's just leave"] });
 CHAT_DICT.c.kok_angry = ['kok.angry.01', 'kok.angry.02', 'kok.angry.03', 'kok.angry.04', 'kok.angry.05', 'kok.angry.06'];
+/* 2026-11-20 145番：不気味な数字（44・49・13・99・66）をなぞった時。数字ごとの文は下の KOKNUM_L で入れかえる */
+Object.assign(CHAT_DICT.t, { 'kok.badnum.01': ['縁起悪すぎ', 'that number is bad luck'], 'kok.badnum.02': ['その数字はやめて', 'not that number'], 'kok.badnum.03': ['数字こわ…', 'creepy number...'], 'kok.badnum.04': ['なんの数字…？', 'what does that number mean...?'] });
+CHAT_DICT.c.kok_badnum = ['kok.badnum.01', 'kok.badnum.02', 'kok.badnum.03', 'kok.badnum.04'];
+const KOKNUM_L = { 44: [['44って…', '44... bad luck?'], ['死死？', 'double death?']], 49: [['49って…', '49...?'], ['死苦？', 'bad luck number?']], 13: [['13はやめて', '13, really?'], ['13ってまさか', 'not 13...']], 99: [['99って…', '99...?'], ['数字でかいな', "that's a big number"]], 66: [['66…あと一個6だったら', 'one more 6 and...'], ['666の手前やめて', 'almost 666']] };
+for (const [n, L] of Object.entries(KOKNUM_L)) L.forEach((x, i) => { CHAT_DICT.t['kok.badnum.' + n + '.' + i] = x; });
 Object.assign(EN, { '商売繁盛のご利益があるらしい。持ち込むと、収益がほんの少し増える。持ち込んでもなくならない（捕まると失う）。': 'Said to bring good business. Bring it in and your earnings go up a little. Not used up (but lost if you get caught).', '何かを招き寄せるらしい。持ち込むと、怪奇現象が少し起きやすくなり、怪異にも見つかりやすくなる。持ち込んでもなくならない（捕まると失う）。': 'Said to beckon something. Bring it in and strange events happen a bit more often, but monsters find you more easily too. Not used up (but lost if you get caught).' });   /* 2026-11-19 捕まると失う道具の説明 */
 /* =========================================================
    2026-11-19 90番：投げる・蹴るボタンを長押しすると、飛んでいく線と着地点の円が出る（はなすと投げる）
