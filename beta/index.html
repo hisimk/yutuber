@@ -15506,7 +15506,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.21';
+const VERSION = '0.18.22';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -26466,10 +26466,10 @@ const AWT = {
     this.draw();
   },
   itemHtml(e, i) {
-    const [k, pk, how] = e, a = this.load().a[k] || {}, t = this.texts(k), pl = this.PL[pk], canTrig = !!this.EVK[k] || ['lastSecond', 'battery1', 'chaseBlood', 'wallEyes', 'lidBlood', 'lidEye', 'lidTrap'].includes(k);
+    const [k, pk, how] = e, a = this.load().a[k] || {}, t = this.texts(k), pl = this.PL[pk], canTrig = !(NOSG && NOSG_AW.includes(k)) && !!this.EVK[k] || ['lastSecond', 'battery1', 'chaseBlood', 'wallEyes', 'lidBlood', 'lidEye', 'lidTrap'].includes(k);
     const w = a.tw || []; const W = (id, l) => `<button data-a="tw" data-k="${k}" data-w="${id}" class="${w.includes(id) ? 'sel' : ''}">${l}</button>`;
     return `<div class="awtIt${this.cur && this.cur.has(k) ? ' got' : a.got ? ' got0' : ''}" data-k="${k}"><div class="awtH"><b>${i + 1}. ${this.esc(t.nm)}</b><span class="awtRk">${this.rank(k)}・${this.pts(k)}</span><span class="awtSt">${this.cur && this.cur.has(k) ? '撮れた（今回）' : a.got ? '前に撮れた' : 'まだ'}</span></div>
-<div class="awtHow">${this.esc(how || t.hint)}</div><div class="awtPl">場所：${this.esc(pl ? pl[0] : '')}　ヒント：${this.esc(t.hint)}</div>
+<div class="awtHow">${this.esc(how || t.hint)}</div>${NOSG && NOSG_AW.includes(k) ? '<div style="color:#ff7a7a;font-weight:700;font-size:12px">いまのゲームでは起きません（逆さ女の驚かし演出を11/16に止めたため）</div>' : ''}<div class="awtPl">場所：${this.esc(pl ? pl[0] : '')}　ヒント：${this.esc(t.hint)}</div>
 <div class="awtB"><button data-a="go" data-k="${k}">行く</button>${canTrig ? `<button data-a="trig" data-k="${k}">起こす</button>` : ''}<button data-a="ok" data-k="${k}" class="${a.ok === 'ok' ? 'ok sel' : ''}">OK</button><button data-a="ng" data-k="${k}" class="${a.ok === 'ng' ? 'ng sel' : ''}">NG</button><button data-a="tx" data-k="${k}">文章</button></div>
 <div class="awtB"><input data-a="m" data-k="${k}" placeholder="動きのメモ" value="${this.esc(a.m || '')}"></div>
 <div class="awtTx" data-k="${k}">${this.txtHtml(k)}<div class="awtB"><button data-a="tok" data-k="${k}" class="${a.tok === 'ok' ? 'ok sel' : ''}">文章OK</button><button data-a="tng" data-k="${k}" class="${a.tok === 'ng' ? 'ng sel' : ''}">文章NG</button>${W('hint', 'ヒント')}${W('desc', '説明文')}${W('tk', '伏せ字')}${W('en', '英語')}</div><div class="awtB"><input data-a="tm" data-k="${k}" placeholder="文章のメモ" value="${this.esc(a.tm || '')}"></div></div></div>`;
