@@ -15507,7 +15507,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.17';
+const VERSION = '0.18.18';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -26404,7 +26404,7 @@ const AWT = {
       if (r.items.includes('ofuda') && !(ITEM.have.ofuda > 0)) ITEM.have.ofuda = 2;
       if (!this.fuda2 && r.items.includes('ofuda')) { this.fuda2 = true; ITEM.have.ofuda = 2; }
     }
-    let ch = false; for (const k0 of awarded.keys()) { const k = awBase(k0); const e = r.list.find(x => x[0] === k); if (!e) continue; const a = this.A(k); if (!a.got) { a.got = 1; ch = true; this.just(k); } }
+    let ch = false; this.cur = this.cur || new Set(); if (!awarded.size && this.cur.size) { this.cur.clear(); ch = true; } for (const k0 of awarded.keys()) { const k = awBase(k0); const e = r.list.find(x => x[0] === k); if (!e) continue; const a = this.A(k); if (!this.cur.has(k)) { this.cur.add(k); ch = true; this.just(k); } if (!a.got) { a.got = 1; ch = true; } }   /* 2026-11-19 「今回の周で撮れた」と「前の周で撮れた」を分けて出す */
     if (ch) { this.save(); this.draw(); }
   },
   just(k) { const t = this.texts(k); const el = document.createElement('div'); el.className = 'awtJust'; el.innerHTML = `<b>撮れた：${this.esc(t.nm)}</b><span>${this.esc(t.desc)}</span>`; document.body.appendChild(el); setTimeout(() => el.remove(), 6500); },
@@ -26421,7 +26421,7 @@ const AWT = {
 #awtTab{position:fixed;left:6px;top:calc(var(--sat,0px) + 132px);z-index:9000;padding:7px 10px;white-space:nowrap;border-radius:10px;border:1px solid #ffcc00;background:rgba(0,0,0,.72);color:#ffcc00;font:700 13px system-ui;max-width:46vw;text-align:left}
 #awtPan{position:fixed;left:6px;right:6px;top:calc(var(--sat,0px) + 174px);bottom:calc(var(--sab,0px) + 150px);z-index:9000;display:none;flex-direction:column;gap:6px;overflow:auto;padding:8px;border-radius:12px;background:rgba(10,10,12,.93);border:1px solid #444;color:#eee;font:13px/1.45 system-ui;-webkit-overflow-scrolling:touch}
 #awtPan.on{display:flex} #awtPan.awtPC{left:auto;right:14px;top:14px;bottom:14px;width:var(--awtW,420px);font-size:14px} #awtPan.awtPC.awtNarrow{right:6px;width:300px} #awtTab.awtPC{left:auto;right:14px;top:auto;bottom:14px;display:none}
-.awtIt{border:1px solid #333;border-radius:10px;padding:7px 8px;background:#151518} .awtIt.got{border-color:#3d8a5a;background:#122017}
+.awtIt{border:1px solid #333;border-radius:10px;padding:7px 8px;background:#151518} .awtIt.got{border-color:#3d8a5a;background:#122017} .awtIt.got0{border-color:#2e4a38} .got0 .awtSt{color:#6f9a7c}
 .awtH{display:flex;gap:6px;align-items:baseline;flex-wrap:wrap} .awtH b{font-size:14px} .awtRk{font:700 11px system-ui;padding:1px 6px;border-radius:6px;background:#333;color:#ffcc00} .awtSt{margin-left:auto;font-weight:700;color:#888} .got .awtSt{color:#5fd38a}
 .awtHow{color:#ccc;margin:3px 0} .awtPl{color:#8ab4ff;font-size:12px}
 .awtB{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px} .awtB button,#awtPan .awtFoot button,#awtMenu button,#awtTxt button{padding:7px 10px;border-radius:8px;border:1px solid #555;background:#26262b;color:#fff;font:600 13px system-ui;min-height:34px}
@@ -26452,7 +26452,7 @@ const AWT = {
   itemHtml(e, i) {
     const [k, pk, how] = e, a = this.load().a[k] || {}, t = this.texts(k), pl = this.PL[pk], canTrig = !!this.EVK[k] || ['lastSecond', 'battery1', 'chaseBlood', 'wallEyes'].includes(k);
     const w = a.tw || []; const W = (id, l) => `<button data-a="tw" data-k="${k}" data-w="${id}" class="${w.includes(id) ? 'sel' : ''}">${l}</button>`;
-    return `<div class="awtIt${a.got ? ' got' : ''}" data-k="${k}"><div class="awtH"><b>${i + 1}. ${this.esc(t.nm)}</b><span class="awtRk">${this.rank(k)}・${this.pts(k)}</span><span class="awtSt">${a.got ? '撮れた' : 'まだ'}</span></div>
+    return `<div class="awtIt${this.cur && this.cur.has(k) ? ' got' : a.got ? ' got0' : ''}" data-k="${k}"><div class="awtH"><b>${i + 1}. ${this.esc(t.nm)}</b><span class="awtRk">${this.rank(k)}・${this.pts(k)}</span><span class="awtSt">${this.cur && this.cur.has(k) ? '撮れた（今回）' : a.got ? '前に撮れた' : 'まだ'}</span></div>
 <div class="awtHow">${this.esc(how || t.hint)}</div><div class="awtPl">場所：${this.esc(pl ? pl[0] : '')}　ヒント：${this.esc(t.hint)}</div>
 <div class="awtB"><button data-a="go" data-k="${k}">行く</button>${canTrig ? `<button data-a="trig" data-k="${k}">起こす</button>` : ''}<button data-a="ok" data-k="${k}" class="${a.ok === 'ok' ? 'ok sel' : ''}">OK</button><button data-a="ng" data-k="${k}" class="${a.ok === 'ng' ? 'ng sel' : ''}">NG</button><button data-a="tx" data-k="${k}">文章</button></div>
 <div class="awtB"><input data-a="m" data-k="${k}" placeholder="動きのメモ" value="${this.esc(a.m || '')}"></div>
