@@ -238,7 +238,7 @@
   #start .opts,#start .howto{padding:10px 14px;background:rgba(5,5,6,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);border-radius:14px}   /* 2026-11-15 背景は校舎の紹介映像。文字の後ろは黒いぼかしの帯で読みやすく */   /* 設定ボタンとタイトルロゴが重ならないように */
   #start .logoTitle{margin-top:auto!important}#start .howto{margin-bottom:auto}   /* 2026-11-14 画面に収まる時は上下中央、収まらない時は上から並べる（中央寄せで上にはみ出して設定ボタンと重なっていた） */
   #yomiRow{display:none}
-  #yomiRow.show{display:flex}
+  #yomiRow.show{display:flex} html[lang=en] #yomiRow{display:none!important}
   #fxBtn,#wvBtn,#ltBtn{display:none}
   #settings{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:rgba(4,4,6,.95);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);padding:calc(var(--sat) + 16px) 16px calc(var(--sab) + 16px);overflow-y:auto}
   #settings.show{display:flex}
@@ -9339,7 +9339,7 @@ const ITEM = {
     const top = 90, gap = 16, bot = top + gap * 4; g.strokeStyle = '#3a3226'; g.lineWidth = 1.6;
     for (let i = 0; i < 5; i++) { g.beginPath(); g.moveTo(40, top + i * gap); g.lineTo(W - 36, top + i * gap); g.stroke(); }
     g.fillStyle = '#2a241c'; g.font = '86px serif'; g.textBaseline = 'alphabetic'; g.fillText('𝄞', 42, bot + 14);
-    const L = [['ド', 0, 0], ['ド#', 0, 1], ['レ', 1, 0], ['レ#', 1, 1], ['ミ', 2, 0], ['ファ', 3, 0], ['ファ#', 3, 1], ['ソ', 4, 0], ['ソ#', 4, 1], ['ラ', 5, 0], ['ラ#', 5, 1], ['シ', 6, 0]];   // 2026-11-15 黒鍵はシャープに統一
+    const L = [['ド', 0, 0], ['ド#', 0, 1], ['レ', 1, 0], ['レ#', 1, 1], ['ミ', 2, 0], ['ファ', 3, 0], ['ファ#', 3, 1], ['ソ', 4, 0], ['ソ#', 4, 1], ['ラ', 5, 0], ['ラ#', 5, 1], ['シ', 6, 0]]; if (LANG === 'en') ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].forEach((n, i) => { L[i] = [n, L[i][1], L[i][2]]; });   /* 2026-11-19 英語版は C・D・E… */   // 2026-11-15 黒鍵はシャープに統一
     const n = S.notes.length, x0 = 150, dx = Math.min(66, (W - 200 - x0 + 120) / n);
     S.notes.forEach((pc, i) => {
       const [nm, st0, flat] = L[pc], step = S.draw ? S.draw[i] : st0; const y = bot - (step - 2) * gap / 2, x = x0 + i * dx;   // ミ（E4）が一番下の線   2026-11-17 draw：楽譜に書く高さ（真ん中のド＝0、1つ上のド＝7）
@@ -9348,7 +9348,7 @@ const ITEM = {
       g.beginPath(); g.ellipse(x, y, 10, 7, -0.35, 0, 7); g.fill(); if (step >= 6) g.fillRect(x - 10.7, y, 2.2, 46); else g.fillRect(x + 8.5, y - 46, 2.2, 46);   /* 真ん中の線（シ）から上は、棒を下向きに */
       g.font = `bold ${nm.length > 2 ? 16 : 20}px sans-serif`; g.textAlign = 'center'; g.fillText(nm, x, bot + 58); g.textAlign = 'left';
     });
-    g.fillStyle = 'rgba(150,20,20,.85)'; g.font = 'italic 24px serif'; g.fillText('ひいて', W - 120, H - 34);
+    g.fillStyle = 'rgba(150,20,20,.85)'; g.font = 'italic 24px serif'; g.fillText(LANG === 'en' ? 'play me' : 'ひいて', W - (LANG === 'en' ? 130 : 120), H - 34);
     return c.toDataURL();
   },
   init() {
@@ -9946,7 +9946,8 @@ const PIANO = {
     KeyQ: 72, Digit2: 73, KeyW: 74, Digit3: 75, KeyE: 76, KeyR: 77, Digit5: 78, KeyT: 79, Digit6: 80, KeyY: 81, Digit7: 82, KeyU: 83, KeyI: 84 },
   KEYLABEL: { 60: 'Z', 61: 'S', 62: 'X', 63: 'D', 64: 'C', 65: 'V', 66: 'G', 67: 'B', 68: 'H', 69: 'N', 70: 'J', 71: 'M', 72: 'Q', 73: '2', 74: 'W', 75: '3', 76: 'E', 77: 'R', 78: '5', 79: 'T', 80: '6', 81: 'Y', 82: '7', 83: 'U', 84: 'I' },
   isPC: matchMedia('(hover: hover) and (pointer: fine)').matches,   // マウスで操作する端末（タッチ画面つきのPCも含む）
-  NAMES: ['ド', 'ド#', 'レ', 'レ#', 'ミ', 'ファ', 'ファ#', 'ソ', 'ソ#', 'ラ', 'ラ#', 'シ'],   // 2026-11-15 黒鍵はシャープに統一
+  NAMES_JA: ['ド', 'ド#', 'レ', 'レ#', 'ミ', 'ファ', 'ファ#', 'ソ', 'ソ#', 'ラ', 'ラ#', 'シ'], NAMES_EN: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'],   /* 2026-11-19 英語版は C・D・E… */
+  get NAMES() { return LANG === 'en' ? this.NAMES_EN : this.NAMES_JA; },   // 2026-11-15 黒鍵はシャープに統一
   LO: 60, HI: 84,   // ド(C4)〜2つ上のド(C6)。横画面いっぱいの鍵盤
   build() {
     if (this.el) return;
@@ -15142,7 +15143,7 @@ $('#goBtn').addEventListener('click', () => {
   world.runId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7); REVIVE.used = false;
   HAZURE.roll();
   world.channel = ($('#chName').value || '').trim() || '心霊チャンネル';
-  world.chRaw = ($('#chName').value || '').trim(); world.yomi = world.chRaw ? ($('#chYomi').value || '').trim() : '';
+  world.chRaw = ($('#chName').value || '').trim(); world.yomi = LANG === 'en' ? 'ゆうこ' : world.chRaw ? ($('#chYomi').value || '').trim() : '';   /* 2026-11-19 英語版：よみがなの欄はなし。名前を呼ぶ声は共通で「ユウコ」 */
   CHATLOG.reset(); world.chatRk = yrankIdx(ACH.load().total); world.chatM = YRANK[world.chatRk][3]; world.chatName = chatCallName(); world.chatNick = NICK.of(world.chRaw, world.yomi); try { world.chatNick3 = ENDCM.nick3(world.chRaw, world.yomi, world.chatNick); } catch (e) { world.chatNick3 = null; } world.chatLang = LANG;   // 2026-11-14 チャット：撮影開始時のランク倍率と呼び名をこの動画に固定
   NEWEV.decide(); PHAN.begin(); ENEMY.decide(); OUMA.decide(); MANN.reset(); WD.init(); WARP.reset(); VO.stopAll(); FIXCAM.reset(); CROUCH.reset(); UNDER.reset(); CALL.reset(); FDET.reset(); if (LID.list.length) LID.reset(); DIR.planRun(); OUMA.plan(); MINOR.reset(); SELF.reset(); MD.reset(); DOORS2.reset(); TAP.reset(); F2.reset(); SP.reset(); NEKO.reset(); OFUDA.reset(); ITEM.reset(); MAZE.after(); SNAKE.reset(); UWA.reset(); TEN.reset(); SHOP.beginRun(); GG.reset(); POLT.reset(); MF.reset(); STREETFIG.reset(); EXITF.reset(); STAY.reset(); RED.reset(); MG.reset();
   if (MIC30) CONFIG.recMaxSec = 30;   // 2026-11-14 開発用の30秒テスト（本番の120秒は変えない）
@@ -15399,7 +15400,7 @@ const NAME_NG = {
   try { n.value = cut(localStorage.getItem('yt_chName')); y.value = cut(localStorage.getItem('yt_chYomi')); } catch (e) { }
   if (NAME_NG.bad(n.value) || NAME_NG.bad(y.value)) { n.value = ''; y.value = ''; }   /* 前に保存した名前がNGなら空に（心霊チャンネルとして遊べる） */
   const check = () => { const bad = NAME_NG.bad(n.value) || NAME_NG.bad(y.value); ng.textContent = LANG === 'en' ? "That name can't be used. Please choose another." : 'その名前は使えません。別の名前にしてください'; ng.style.display = bad ? 'block' : 'none'; go.disabled = bad; go.style.opacity = bad ? '0.4' : ''; return bad; };
-  const sync = () => { if (Array.from(n.value).length > 12) n.value = cut(n.value); if (Array.from(y.value).length > 12) y.value = cut(y.value); row.classList.toggle('show', n.value.trim() !== ''); check(); try { localStorage.setItem('yt_chName', n.value); localStorage.setItem('yt_chYomi', y.value); } catch (e) { } };
+  const sync = () => { if (Array.from(n.value).length > 12) n.value = cut(n.value); if (Array.from(y.value).length > 12) y.value = cut(y.value); row.classList.toggle('show', n.value.trim() !== '' && LANG !== 'en'); check(); try { localStorage.setItem('yt_chName', n.value); localStorage.setItem('yt_chYomi', y.value); } catch (e) { } };
   n.addEventListener('input', sync); y.addEventListener('input', sync); sync();
   go.addEventListener('click', e => { if (check()) { e.stopImmediatePropagation(); e.preventDefault(); } }, true); }
 /* =========================================================
@@ -15514,7 +15515,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.41';
+const VERSION = '0.18.42';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -26336,6 +26337,7 @@ Object.assign(CHAT_DICT.t, { 'v2.senko_put.0': ['線香立てたｗ', 'incense l
   'v2.gbox_voice.0': ['今なんか言った？', 'did it just say something?'], 'v2.gbox_voice.1': ['返事した…', 'it answered...'], 'v2.gbox_voice.2': ['声入ってる', 'there’s a voice in there'], 'v2.gbox_voice.3': ['聞こえた？', 'did you hear that?'] });
 for (const c of ['senko_put', 'gbox_on', 'gbox_voice']) CHAT_DICT.c[c] = [0, 1, 2, 3].map(i => `v2.${c}.${i}`);
 if (TEST && window.__G) Object.assign(window.__G, { STAKE, SENKO, GBOX, HAND, PLACE });
+Object.assign(AW_HINT, { memoHint: ['校舎に落ちている、かすれたメモを拾う', 'pick up a faded memo lying in the school'], phantom: ['ナカヨシの周で、お札を最後まで貼りきる', 'in a Nakayoshi run, use your talismans to the very end'] });   /* 2026-11-19 取り方のヒントがなかった2つ（日本語・英語） */
 /* 2026-11-19 139番：こっくりさんが怒った言葉をなぞった時のコメント */
 Object.assign(CHAT_DICT.t, { 'kok.angry.01': ['怒ってない？', 'is it angry?'], 'kok.angry.02': ['機嫌悪いぞ', "it's in a bad mood"], 'kok.angry.03': ['なんか怒らせた？', 'did you make it mad?'], 'kok.angry.04': ['やめといた方がいい', 'you should stop'], 'kok.angry.05': ['こわいこわい', 'scary scary'], 'kok.angry.06': ['もう帰ろう', "let's just leave"] });
 CHAT_DICT.c.kok_angry = ['kok.angry.01', 'kok.angry.02', 'kok.angry.03', 'kok.angry.04', 'kok.angry.05', 'kok.angry.06'];
