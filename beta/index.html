@@ -15438,7 +15438,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.92';
+const VERSION = '0.17.93';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -25312,7 +25312,11 @@ const JIYU = {
     g.restore(); },
   /* ── 書き込みをページに足す（入りきらなければ、ページをめくる＝今のページは左へ） */
   /* ── 書き込み：置く場所を探す（空いている所。なければ上から重ねる）→ 1つの絵に描く → すぐ見せる／目の前で少しずつ */
-  alloc(h) { const busy = this.blocks.filter(b => !b.gone && !b.over).map(b => [b.y - 12, b.y + b.h + 12]); for (let y = 66; y + h <= this.TH - 60; y += 8) if (!busy.some(([a, c]) => y < c && y + h > a)) return { y, over: false }; return { y: 66 + Math.random() * Math.max(10, this.TH - h - 140), over: true }; },
+  /* 2026-11-19 書く場所：まず、プレイヤーが書いた・塗りつぶした所も避けて白紙の所をさがす。なければ今までどおり（幽霊の字だけ避ける） */
+  alloc(h) { const busy = this.blocks.filter(b => !b.gone && !b.over).map(b => [b.y - 12, b.y + b.h + 12]);
+    const ink = (this.strokes || []).filter(s => s.p && s.p.length).map(s => { let a = 1e9, c = -1e9; for (const q of s.p) { a = Math.min(a, q[1]); c = Math.max(c, q[1]); } return [a - 16, c + 16]; }).concat(this.blocks.filter(b => !b.over && (b.gone || b.scr > 0)).map(b => [b.y - 12, b.y + b.h + 12]));
+    if (ink.length) { const all = busy.concat(ink); let best = null, bd = -1; for (let y = 66; y + h <= this.TH - 60; y += 8) { if (all.some(([a, c]) => y < c && y + h > a)) continue; const d = Math.min(...all.map(([a, c]) => y >= c ? y - c : a - (y + h))); if (d > bd) { bd = d; best = y; } if (bd > 80) break; } if (best !== null) return { y: best, over: false }; }
+    for (let y = 66; y + h <= this.TH - 60; y += 8) if (!busy.some(([a, c]) => y < c && y + h > a)) return { y, over: false }; return { y: 66 + Math.random() * Math.max(10, this.TH - h - 140), over: true }; },
   drawBlock(b) { const c = this.mk(), g = c.getContext('2d'), R = chatRng(b.seed), cx = this.SX + (R() - 0.5) * 24;
     if (b.kind === 'text') { let y = b.y + b.size * 0.6; for (const ln of b.lines) { this.hand(g, ln, cx + (R() - 0.5) * 30, y, b.size, R); y += b.size * 1.35; } }
     if (b.kind === 'pic') { this.drawPic(g, b.pic, cx, b.y + b.size / 2, b.size, R); if (b.cap) this.hand(g, b.cap, cx, b.y + b.size + 22, 30, R); }
