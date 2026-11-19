@@ -12174,11 +12174,11 @@ Object.assign(MINOR, {
       { const lvY = b.y0 > 1 ? 1 : 0, d = Math.hypot(BALL.position.x - player.x, BALL.position.z - player.z);
         if (player.lv === lvY && d < 0.42 && player.speed > 0.3 && !(b.kicked && b.v > 1.2)) {
           const dir = V(BALL.position.x - player.x, 0, BALL.position.z - player.z); if (dir.lengthSq() < 1e-6) dir.set(-Math.sin(player.yaw), 0, -Math.cos(player.yaw)); dir.normalize();
-          b.dir = dir; b.axis = V(dir.z, 0, -dir.x).normalize(); b.v = 2.4 + Math.min(1.5, player.speed) * 0.7; b.kicked = true; b.kickT = world.t; CHATLOG.bhEvent('kick'); b.t = Math.max(b.t, 1.2); b.bounces = 3;
+          b.dir = dir; b.axis = V(dir.z, 0, -dir.x).normalize(); b.v = 2.4 + Math.min(1.5, player.speed) * 0.7; b.kicked = true; b.kickT = world.t; CHATLOG.bhEvent('kick'); try { SHOT.watch('it_ball', () => BALL.position, { maxD: 9, margin: 0.85, win: 2, hold: 0.15 }); } catch (e) { }   /* 2026-11-19 112番：校舎のボールも蹴るたびにコメント */ b.t = Math.max(b.t, 1.2); b.bounces = 3;
           if (A.ctx) ballKickSe(BALL.position.clone(), 0.75);   /* 2026-11-18 蹴る音は提供の音源に */
           BALL.position.x = player.x + dir.x * 0.44; BALL.position.z = player.z + dir.z * 0.44;
         }
-        if (b.kicked && !b.soccer && rec.active && world.t - b.kickT < 3 && b.v > 0.3 && seen(BALL.position, { maxD: 9 })) { b.soccer = true; award('soccer', 'サッカーしようぜ！', 10); } }
+        if (b.kicked && !b.soccer && rec.active && world.t - b.kickT < 3 && b.v > 0.3 && seen(BALL.position, { maxD: 9 })) { b.soccer = true; award('soccer', 'サッカーしようぜ！', 10); try { XCHAT.log('_soccer'); } catch (e) { } } }
       if (b.v > 0) {
         b.v = Math.max(0, b.v - (b.kicked ? 0.75 : 0.22) * dt); const step = b.v * dt;
         let nx = BALL.position.x + b.dir.x * step, nz = BALL.position.z + b.dir.z * step;
@@ -15433,7 +15433,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.79';
+const VERSION = '0.17.80';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16148,6 +16148,7 @@ const CHATGEN = {
     else if (o.name && firstSeg && end.R > 1.5) { const k = 1 + Math.floor(R() * 2); let t = firstSeg.t + rnd2(1.0, 1.8); for (let i = 0; i < k; i++) { const x = line('name_hello'); if (x) out.push([t, 'g', x, 19, firstSeg.t]); t += rnd2(0.5, 1.2); } }
     if (firstSeg && end.R > 1.5) { const r = R(); bg.push([firstSeg.t + rnd2(0.6, 1.8), r < 0.55 ? 'hello' : r < 0.8 ? 'name_hello' : 'start', 20]); if (cls >= 2) bg.push([firstSeg.t + rnd2(2.2, 4.5), R() < 0.6 ? 'hello' : 'start', 12]); }
     const tagCat = { shuji: 'view_shuji', desk: 'view_desk', clock: 'view_clock', bed: 'view_bed', piano: 'view_piano', stairs: 'view_stairs', gear: 'view_broadcast_gear', bwin: 'view_broken_window', clean: 'view_cleaning', bag: 'view_bag', books: 'view_books' };
+    const crN = { n: 0, t: -99 };   /* 2026-11-19 112番：しゃがんだ回数 */
     for (const e of ev) {
       if (e.k === 'tag' && qBefore(e.t + 1) === 0) { }   // 2026-11-14 忙しい最中は見えた物に触れない
       else if (e.k === 'tag' && e.tag === 'shuji') { const y = line('view_shuji'); if (y) out.push([e.t + rnd2(0.4, 1.2), 'g', y, 9, e.t]); if (R() < 0.6) { const z = line('view_shuji'); if (z) out.push([e.t + rnd2(1.8, 3.0), 'g', z, 8, e.t]); } }   /* 2026-11-18 習字は必ず反応（1〜2件） */
@@ -16168,7 +16169,7 @@ const CHATGEN = {
       else if (e.k === 'mute') { if (e.spoke) bg.push([e.t + rnd2(0.3, 1.2), 'mic_silent', 7]); }   // 2026-11-14 直前まで話していた時だけ（判断できない時は出さない）   // 声が入っていなかった録画では「急に無口」は使わない   // マイクがオンなのに無言
       else if (e.k === 'bellSnd' && R() < 0.6) bg.push([e.t + rnd2(0.5, 1.5), 'heard_bell', 6]);
       else if (e.k === 'fluteSnd' && R() < 0.7) bg.push([e.t + rnd2(0.6, 1.6), 'heard_flute', 6]);
-      else if (e.k === 'crouch') bg.push([e.t + rnd2(0.4, 1.2), e.tense ? 'crouch_tense' : 'crouch_calm', 8]);   // 2026-11-15 しゃがんだまま5秒
+      else if (e.k === 'crouch') { const C = crN; C.n = e.t - C.t > REP.CFG.gap ? 1 : C.n + 1; C.t = e.t; if (C.n <= 2) bg.push([e.t + rnd2(0.4, 1.2), e.tense ? 'crouch_tense' : 'crouch_calm', 8]); else { const tr = C.n <= 5 ? 3 : C.n <= 9 ? 6 : 10; if (rnd2(0, 1) < REP.CFG.p[tr]) { const L = REP.L.crouch[tr], x = L[Math.floor(rnd2(0, L.length)) % L.length]; out.push([e.t + rnd2(0.6, 1.6), 'g', LANG === 'en' ? x[1] : x[0], 8, e.t]); } } }   /* 2026-11-19 112番：くり返しに合わせて変える */   // 2026-11-15 しゃがんだまま5秒
       else if (e.k === 'taunt') { let t = e.t + 0.4; const m = e.kind === 'wreck' ? 2 : 3; for (let q = 0; q < m; q++) { const x = line(e.kind === 'wreck' ? (q ? 'laugh_short' : 'taunt_wreck') : 'taunt', { t }); if (x) out.push([t, 'g', x, 13, e.t]); t += rnd2(0.4, 0.8); } }   // 2026-11-15 煽り
       else if (e.k === 'call' || e.k === 'face') {   // 2026-11-15 非通知の着信・顔を検出（ツッコミ系は2〜3割）
         const P = e.k === 'face' ? (e.n > 1 ? ['face_many', 'face_many_tk', 4] : ['face_one', 'face_one_tk', 3]) : ({ ring: ['call_ring', 'call_ring_tk', 4], reject: ['call_reject', null, 2], miss: ['call_reject', null, 1], talk: ['call_talk', 'call_talk_tk', 3], behind: ['call_talk', 'call_talk_tk', 2], hang: ['call_after', null, 3], none: ['call_none', null, 2], scare: ['call_scare', 'call_scare_tk', 10] })[e.p];
@@ -17863,8 +17864,13 @@ const XCHAT = {   /* 撮れ高以外のできごとに、コメントを混ぜ�
   chat(d) {
     if (!d || !d.items || !d.end) return; const ev = (CHATLOG.ev || []).filter(e => e.k === 'xc'); if (!ev.length) return;
     const R = chatRng((d.seed ^ 0x51ed27) >>> 0), T = CHAT_DICT.t, U = Math.max(6, (d.users || []).length || 12), maxR = d.end.R + (d.end.ec ? 3 : -0.2), out = [];
-    for (const e of ev) { const ids = (this.LIST[e.w] || []).filter(id => T[id]); const ord = this.ORD && this.ORD.includes(e.w), big = this.BIG && this.BIG.includes(e.w), n = ord ? ids.length : Math.min(ids.length, big ? 7 + (R() < 0.5 ? 2 : 0) : (e.w === 'wingIn' || e.w === 'second' ? 4 : 2) + (R() < 0.4 ? 1 : 0));   /* 2026-11-16 大事件はコメントが大盛り上がり */
-      const pool = ids.slice(); for (let i = 0; i < n; i++) { const id = ord ? pool.shift() : pool.splice(Math.floor(R() * pool.length), 1)[0]; const t = e.t + 0.6 + i * (big ? 0.2 + R() * 0.35 : 0.6 + R() * 0.8); if (!id || t > maxR) continue; out.push([Math.round(t * 100) / 100, Math.floor(R() * U), id, T[id][0], T[id][1]]); } }
+    const RP = typeof REP !== 'undefined' ? REP : null, cnt = {}, lastT = {}, used = new Set(), socT = ev.filter(e => e.w === '_soccer').map(e => e.t);   /* 2026-11-19 112番：同じ動画の中で何回目かを数える */
+    for (const e of ev) { const g = RP && RP.GROUP[e.w];
+      if (g) { cnt[g] = (lastT[g] !== undefined && e.t - lastT[g] > RP.CFG.gap) ? 1 : (cnt[g] || 0) + 1; lastT[g] = e.t; const c = cnt[g];
+        if (e.w === 'it_ball' && socT.some(t => Math.abs(t - e.t) < 3)) continue;   /* 撮れ高「サッカーしようぜ！」のコメントと重ねない */
+        if (c >= 3) { const tr = c <= 5 ? 3 : c <= 9 ? 6 : 10; if (R() >= RP.CFG.p[tr]) continue; const ids = RP.ids(g, tr).filter(id => T[id] && !used.has(id)); if (!ids.length) continue; const id = ids[Math.floor(R() * ids.length)]; used.add(id); const t = e.t + 0.8 + R() * 1.2; if (t <= maxR) out.push([Math.round(t * 100) / 100, Math.floor(R() * U), id, T[id][0], T[id][1]]); continue; } }
+      const ids = (this.LIST[e.w] || []).filter(id => T[id] && !used.has(id)); const ord = this.ORD && this.ORD.includes(e.w), big = this.BIG && this.BIG.includes(e.w), n0 = ord ? ids.length : Math.min(ids.length, big ? 7 + (R() < 0.5 ? 2 : 0) : (e.w === 'wingIn' || e.w === 'second' ? 4 : 2) + (R() < 0.4 ? 1 : 0)), n = g && cnt[g] === 2 ? Math.min(n0, 1) : n0;   /* 2026-11-16 大事件はコメントが大盛り上がり */   /* 112番：2回目は1件まで */
+      const pool = ids.slice(); for (let i = 0; i < n; i++) { const id = ord ? pool.shift() : pool.splice(Math.floor(R() * pool.length), 1)[0]; if (id) used.add(id); const t = e.t + 0.6 + i * (big ? 0.2 + R() * 0.35 : 0.6 + R() * 0.8); if (!id || t > maxR) continue; out.push([Math.round(t * 100) / 100, Math.floor(R() * U), id, T[id][0], T[id][1]]); } }
     if (out.length) d.items = d.items.concat(out).sort((a, b) => a[0] - b[0]);
   },
 };
@@ -21052,7 +21058,8 @@ const CHEM = { list: [], reset() { for (const c of this.list) scene.remove(c); t
   /* 2026-11-19 98番：落ちたケミカルライトの所に、近くの怪異が少しだけ気を取られる（ブザーより弱い：届く距離が短い・確率） */
   LURE: { wd: 12, urah: 10, mann: 10, p: 0.7 },
   lure(p) { const L = this.LURE; if (TEST || DEV) console.log('CHEM lure', p.x.toFixed(1), p.z.toFixed(1)); if (!(Math.random() < L.p) && !(TEST && /[?&]chemlure\b/.test(location.search))) { NOISE.make(3, p, null); return; }
-    try { if (CH.state === 'off' && !WD.borrowed && Math.abs((WD.pos.y || 0) - p.y) < 1.5 && WD.pos.distanceTo(p) < L.wd) WD.goTo(p); } catch (e) { } try { if (urahShown() && !URAH.chasing() && Math.abs(URAH.pos.y - p.y) < 1.5 && Math.hypot(URAH.pos.x - p.x, URAH.pos.z - p.z) < L.urah) URAH.alertAt(p); } catch (e) { } try { if (world.mannRun && MANN.st === 'walk' && Math.abs(MANN.pos.y - p.y) < 1.5 && Math.hypot(MANN.pos.x - p.x, MANN.pos.z - p.z) < L.mann) MANN.walkTo(nearestNode(p.x, p.z, undefined, p.y)); } catch (e) { } NOISE.make(3, p, null); } };
+    const W = q => { try { SHOT.watch('it_chemLure', q, { maxD: 16, margin: 0.85, win: 5, hold: 0.4 }); } catch (e) { } };   /* 2026-11-19 112番：光に寄っていく怪異が映ったらコメント */
+    try { if (CH.state === 'off' && !WD.borrowed && Math.abs((WD.pos.y || 0) - p.y) < 1.5 && WD.pos.distanceTo(p) < L.wd) { WD.goTo(p); W(() => (SG.opacity ?? 1) > 0.3 ? WD.pos.clone().setY((WD.pos.y || 0) + 1.2) : null); } } catch (e) { } try { if (urahShown() && !URAH.chasing() && Math.abs(URAH.pos.y - p.y) < 1.5 && Math.hypot(URAH.pos.x - p.x, URAH.pos.z - p.z) < L.urah) { URAH.alertAt(p); W(() => URAH.pos.clone().setY(URAH.pos.y + 1.2)); } } catch (e) { } try { if (world.mannRun && MANN.st === 'walk' && Math.abs(MANN.pos.y - p.y) < 1.5 && Math.hypot(MANN.pos.x - p.x, MANN.pos.z - p.z) < L.mann) { MANN.walkTo(nearestNode(p.x, p.z, undefined, p.y)); W(() => MANN.pos.clone().setY(MANN.pos.y + 1.1)); } } catch (e) { } NOISE.make(3, p, null); } };
 const CANDLE = { reset() { if (this.g) { camera.remove(this.g); this.g = null; } this.t = 0; },
   use() { this.reset(); const g = new THREE.Group(); g.position.set(0.16, -0.2, -0.32); const w = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.09, 8), new THREE.MeshLambertMaterial({ color: 0xf2ead8 })); g.add(w); const fl = new THREE.Mesh(new THREE.SphereGeometry(0.009, 6, 5), new THREE.MeshBasicMaterial({ color: 0xffc860 })); fl.scale.y = 1.8; fl.position.y = 0.06; g.add(fl); const L = new THREE.PointLight(0xffa850, 0.8, 5, 2); L.position.y = 0.08; g.add(L); camera.add(g); Object.assign(this, { g, fl, L, t: 180 }); },
   update(dt) { if (!this.g) return; this.t -= dt; let near = 99; try { near = Math.min(near, ...[WD.pos, SP.pos, MANN.pos, URAH.on && URAH.pos].filter(p => p && Math.abs((p.y || 0) - player.y) < 2 && (p !== WD.pos || (SG.opacity ?? 0) > 0.2 || CH.state !== 'off')).map(p => Math.hypot(p.x - player.x, p.z - player.z))); } catch (e) { }
@@ -22797,6 +22804,41 @@ Object.assign(EN, { '割れた赤いスマホ': 'The cracked red phone', '蜘蛛
 /* 撮った時のコメント */
 { const J = { hintPhone: [['このスマホ誰の？', 'whose phone is that?'], ['前に来た人のじゃ…', 'is it from the last person who came…']], hintKanzashi: [['かんざしって昔の人の？', 'a hairpin? from the old days?'], ['なんで天井に', 'why is it on the ceiling'], ['クモ女の…？', 'the Spider Woman’s…?']], hintHands: [['手形ちっちゃ', 'those handprints are tiny'], ['子ども2人分？', 'two kids’ worth?']], hintMap: [['昔ここ村だったの？', 'this used to be a village?'], ['×印の場所って…', 'where the X is…'], ['村の決まりごとが厳しかったらしいよ', 'heard the village rules were strict']], tenteki: [['クモ女逃げた？', 'did the Spider Woman run?'], ['天敵なのかｗ', 'natural enemies lol']], mirrorPossess: [['今の顔なに', 'what was that face'], ['画面真っ赤', 'the screen went red'], ['取り憑かれてない？', 'are you possessed?']], it_ball: [['ボールｗ', 'a ball lol'], ['ナイスキック', 'nice kick'], ['そっち蹴る！？', 'you kicked it THAT way!?']] };
   for (const w in J) { XCHAT.LIST[w] = J[w].map((x, i) => 'lore.' + w + '.' + i); J[w].forEach((x, i) => { CHAT_DICT.t['lore.' + w + '.' + i] = x; }); } }
+/* 2026-11-19 112番：何度もくり返せる行動のコメント。同じ動画で何回目かで反応を変える
+   1〜2回目：ふつう（2回目は1件まで）／3〜5回目：くり返しに気づく／6〜9回目：つっこみ／10回目から：たまに1件
+   間が CFG.gap 秒あいたら数え直す。p は回数ごとの出る確率（出ても1件） */
+const REP = {
+  CFG: { gap: 45, p: { 3: 0.75, 6: 0.55, 10: 0.2 } },
+  GROUP: { it_ball: 'ball', it_buzzer: 'buzzer', it_chem: 'chem', it_chemLand: 'chemLand', it_chemLure: 'chemLure', salt_put: 'salt', salt_rep: 'salt', it_salt: 'salt' },
+  L: {
+    ball: { 3: [['また蹴った', 'kicked it again'], ['3回目', 'that is like the 3rd time'], ['気に入ってて草', 'really likes that ball lol'], ['ボール好きすぎん？', 'why do you love that ball so much'], ['またボール', 'the ball again']],
+      6: [['何回蹴るねん', 'how many times are you gonna kick it'], ['サッカー部入れ', 'join the soccer club already'], ['ボールが本体', 'the ball is the main character now'], ['もういいって', 'ok that is enough'], ['心霊スポットで部活すな', 'no club practice in a haunted school']],
+      10: [['まだやってて草', 'still at it lol'], ['この人ずっとこれ', 'this person just does this now'], ['ボールの動画になってる', 'this is a ball video now']] },
+    buzzer: { 3: [['またブザー', 'buzzer again'], ['ブザー何個あるの', 'how many buzzers do you have'], ['投げ癖ついてる', 'throwing is a habit now'], ['ブザー頼みｗ', 'all-in on buzzers lol']],
+      6: [['うるさいってｗ', 'so loud lol'], ['ブザー芸', 'the buzzer bit'], ['耳が死ぬ', 'my ears'], ['防犯ブザーの使い方ちがう', 'that is not how safety buzzers work']],
+      10: [['まだ投げてて草', 'still throwing lol'], ['ずっと鳴ってる', 'it never stops beeping']] },
+    chem: { 3: [['またライト', 'another glow stick'], ['ライト何本目？', 'how many glow sticks is that'], ['光るの好きだね', 'you really like glowing things']],
+      6: [['光りすぎ', 'too much glow'], ['ライト持ちすぎ', 'way too many glow sticks'], ['緑の人', 'the green glow guy']],
+      10: [['まだ光ってて草', 'still glowing lol'], ['この人ずっと光ってる', 'this person is always glowing']] },
+    chemLand: { 1: [['投げたｗ', 'threw it lol'], ['道しるべ？', 'leaving a trail?'], ['ヘンゼルとグレーテル方式', 'hansel and gretel style'], ['明るくなった', 'it got brighter']],
+      3: [['また置いた', 'dropped another one'], ['道しるべ増えてく', 'the trail keeps growing'], ['床が光ってきた', 'the floor is glowing now']],
+      6: [['床がイルミネーション', 'the floor is all lit up'], ['光の道できてる', 'there is a road of light now'], ['撒きすぎ', 'way too many']],
+      10: [['まだ撒いてて草', 'still dropping them lol'], ['廊下が明るい', 'the hallway is bright now']] },
+    chemLure: { 1: [['光に寄ってった', 'it went for the light'], ['虫かよ', 'like a bug'], ['ナイス囮', 'nice decoy'], ['今のうちに逃げろ', 'run while you can']],
+      3: [['また釣られてる', 'fell for it again'], ['学習しない霊', 'this ghost never learns'], ['光に弱すぎ', 'so weak to light']],
+      6: [['毎回寄ってくｗ', 'goes for it every time lol'], ['霊チョロい', 'this ghost is too easy'], ['囮うますぎ', 'decoy master']],
+      10: [['まだ釣れてて草', 'still falling for it lol'], ['もう飼い慣らしてる', 'basically a pet now']] },
+    salt: { 3: [['また塩', 'more salt'], ['塩まきすぎ', 'so much salt'], ['塩何キロ持ってきたの', 'how many kilos of salt did you bring']],
+      6: [['盛り塩職人', 'salt pile master'], ['塩の店開ける', 'you could open a salt shop'], ['しょっぱい学校', 'salty school']],
+      10: [['まだ盛ってて草', 'still salting lol']] },
+    crouch: { 3: [['またしゃがんだ', 'crouching again'], ['しゃがみ好き', 'loves crouching'], ['低い人', 'the low one']],
+      6: [['ずっと低い', 'always so low'], ['立って', 'stand up'], ['身長縮んだ？', 'did you shrink?']],
+      10: [['まだしゃがんでて草', 'still crouching lol']] },
+  },
+  ids(g, tr) { return (this.L[g] && this.L[g][tr] || []).map((x, i) => 'rp.' + g + '.' + tr + '.' + i); },
+};
+for (const g in REP.L) for (const tr in REP.L[g]) REP.L[g][tr].forEach((x, i) => { CHAT_DICT.t['rp.' + g + '.' + tr + '.' + i] = x; });
+XCHAT.LIST.it_chemLand = REP.ids('chemLand', 1); XCHAT.LIST.it_chemLure = REP.ids('chemLure', 1);
 /* ⑦⑩ 動画のコメント：最初の3周の噂・脈絡のない噂・オフタリサマ・的外れな考察 */
 const XEXT3 = {
   INTRO: [['ここってあの動画の学校？', 'is this the school from that video?'], ['最後に入った投稿者、更新止まったままなんだよね', 'the last uploader who went in never posted again'], ['赤いコートの人でしょ', 'the one in the red coat, right?']],
@@ -22994,7 +23036,7 @@ const HAND = {
   near() { let n = 99; try { n = Math.min(n, ...[WD.pos, SP.pos, MANN.pos, URAH.on && URAH.pos].filter(p => p && Math.abs((p.y || 0) - player.y) < 2 && (p !== WD.pos || (SG.opacity ?? 0) > 0.2 || CH.state !== 'off')).map(p => Math.hypot(p.x - player.x, p.z - player.z))); } catch (e) { } return n; },
   update(dt) {
     for (const F of this.fly.slice()) { F.t += dt / 0.45; const k = Math.min(1, F.t); F.g.position.lerpVectors(F.from, F.to, k); F.g.position.y += Math.sin(k * Math.PI) * 0.5; F.g.rotation.y += dt * 12; F.g.userData.L.position.copy(F.g.position).y += 0.15;
-      if (k >= 1) { this.fly.splice(this.fly.indexOf(F), 1); F.g.rotation.y = rnd(0, 3); if (A.ctx) SND.kata && SND.kata(F.g.position.clone(), 0.4); CHEM.lure(F.g.position.clone().setY((F.g.position.y > 1.6) ? LH : 0)); { const g = F.g; SHOT.watch('it_chem', () => g.position, { maxD: 12, margin: 0.85, win: 2, hold: 0.25 }); } } }   /* 2026-11-19 94番：落ちたライトが映った時だけコメント */
+      if (k >= 1) { this.fly.splice(this.fly.indexOf(F), 1); F.g.rotation.y = rnd(0, 3); if (A.ctx) SND.kata && SND.kata(F.g.position.clone(), 0.4); CHEM.lure(F.g.position.clone().setY((F.g.position.y > 1.6) ? LH : 0)); { const g = F.g; SHOT.watch('it_chemLand', () => g.position, { maxD: 12, margin: 0.85, win: 2, hold: 0.25 }); } } }   /* 2026-11-19 94番：落ちたライトが映った時だけコメント */
     try { this.toolUi(); } catch (e) { }
     const id = this.item; if (!this.g) return;
     this.g.visible = !!id && !world.selfie && !this.hiding() && (world.state === 'play' || world.state === 'paused');   /* 隠れている間は手を見せない */
@@ -25947,7 +25989,7 @@ CHIP_DESC.ghostCut = ['見返した動画に、撮った覚えのない短いカ
 AW_HINT.ghostCut = ['長く撮った動画を、あとで見返すと', 'rewatch a long video afterward'];
 TKTXT.ghostCut = [CHIP_DESC.ghostCut[0], '撮った■えのない■■', '見返した■■に、■った■えのない■いカットが入っていた。…■が撮ったの？'];
 Object.assign(EN, { '撮った覚えのない映像': 'Footage you never shot' });
-if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, GHOSTCUT, ROOMX, DIRX: DIR, EVX: EV, ARARE, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
+if (TEST && window.__G) Object.assign(window.__G, { REP, XCHAT, CHATLOG, NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, GHOSTCUT, ROOMX, DIRX: DIR, EVX: EV, ARARE, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
