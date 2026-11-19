@@ -10865,7 +10865,7 @@ const MANN = {
     { const qs = location.search.match(/[?&]mannspot=(\w+)/); let k = qs ? qs[1] : pickW(world.wingOpen ? [['nurse', 0.5], ['ped', 0.2], ['r2', 0.15], ['b2', 0.15]] : [['nurse', 0.7], ['r2', 0.15], ['b2', 0.15]]);   /* 2026-11-16 新しい棟が開いていれば、理科室の台座の上に立つ回も（20%） */ if (k === 'ped' && !world.wingOpen && !qs) k = 'nurse'; if (k === 'b2' && world.maze) k = 'nurse'; if (!this.runPlan || world.mannRun) k = 'nurse';
       this.spotK = k; if (k === 'r2') { this.pos.set(7.5, 0, -17.55); this.heading = 0; } else if (k === 'b2') { this.pos.set(7.5, LH, -19.75); this.heading = Math.PI; } else if (k === 'ped') { this.pos.set(16.1, LH + 0.12, -39.7); this.heading = 0.35; }
       const c = this.col; c.x0 = this.pos.x - 0.22; c.x1 = this.pos.x + 0.22; c.z0 = this.pos.z - 0.2; c.z1 = this.pos.z + 0.2; c.lv = this.pos.y > 1.6 ? 1 : 0; this.jumpY = 0; this.vaultY = 0; this.vault = null; this.glassArmed = false; this.breach = null; }
-    this.reattach(); this.left = this.ORG.length; this.finalHunt = false;
+    this.reattach(); this.left = this.ORG.length; this.finalHunt = false; this.finW = 0; this.finT = 0;
     if (this.broken) for (const g of this.broken) g.visible = true; this.broken = [];
     this.cap = null; this.rattleStop(); this.col.on = true; this.root.rotation.set(0, this.heading, 0); this.root.position.copy(this.pos);
     this.setOp(1); this.play(null); this.tilt = 0; this.hy = -0.9; this.hp = 0.05; this.stare = null; this.stareT = 0; this.eye = V(0, 0, 0); this.lookHead();   // 2026-11-14 首は正面から見て左へ回したまま
@@ -11022,7 +11022,7 @@ const MANN = {
       if (['walk', 'hunt'].includes(this.st) || this._stuck) stuckWatch(this, this.pos, mv, dt, () => { if (onScreen(this.head(), 1.05) && clearLine(this.head(), [this.root])) return false; const n = nearestNode(this.pos.x, this.pos.z, undefined, this.pos.y), q = nodePos(n); this.pos.set(q.x, q.y || 0, q.z); this.apply(); this.path = []; this.rep = 0; if (this.st === 'walk') this.walkTo(pick(WD.dests)); });
       return this.updEnemy(dt);
     }
-    if (this.runPlan) return this.updRunEvent(dt);
+    if (this.runPlan) { this.finWatch(dt); return this.updRunEvent(dt); }
   },
   // ── イベント「走り出す人体模型」
   updRunEvent(dt) {
@@ -11078,9 +11078,9 @@ const MANN = {
     }
     // ── かくれんぼ1：放送室の鍵を開けると、飛び出してくる。捕まったら終わり。走り去るところを撮れたら50
     if (this.st === 'bcOut') {   // 扉が開くのを待って、ひと呼吸おいてから
-      this.t += dt; if (this.t > 0.95) {
+      this.t += dt; if (rec.active && dt > 0 && this.hideSeen()) this.seenRun = (this.seenRun || 0) + dt;   /* 2026-11-20 飛び出す瞬間も、逃げていく途中も、合わせて数える */ if (this.t > 0.95) {
         this.st = 'bcRun'; this.speed = 1; this.play('Run', 2.4); this.rattleStart(0.9); SND.knock(this.head(), 1.4); jumpSting('jump_b', 1.5, 3); world.vhs = Math.max(world.vhs || 0, 0.5);   // 扉の裏から飛び出す瞬間
-        this.path = [V(25.2, 0, -30.9), V(23.8, 0, -31.5), V(0.4, 0, -31.5), V(0.0, 0, -29.2)]; this.seenRun = 0;
+        this.path = [V(25.2, 0, -30.9), V(23.8, 0, -31.5), V(0.4, 0, -31.5), V(0.0, 0, -29.2)];
       }
       return;
     }
@@ -11089,7 +11089,7 @@ const MANN = {
       this.speed = Math.min(6.4, this.speed + dt * 12);
       const done = this.follow(dt, this.speed); this.apply(); this.stepTick(dt, 6.5);
       const H2 = this.head();
-      if (rec.active && seen(H2, { maxD: 22 })) this.seenRun += dt;
+      if (rec.active && this.hideSeen()) { this.seenRun = (this.seenRun || 0) + dt; if (this.seenRun > 0.3) award(hide ? 'mannHide2' : 'mannHide1', hide ? '内田くんとかくれんぼ2' : '内田くんとかくれんぼ1', 50); }   /* 2026-11-20 逃げていく途中を映しても取れる（走り終わるのを待たない） */
       if (!hide && Math.hypot(player.x - this.pos.x, player.z - this.pos.z) < 0.6 && Math.abs(this.pos.y - player.y) < 1) { this.rattleStop(); this.capture(); return; }
       // かくれんぼ2は、階段を降りて見えなくなったところで消える
       const out = hide ? (this.pos.y < 0.4 && !(onScreen(H2, 1.05) && clearLine(H2))) : done;
@@ -11104,9 +11104,9 @@ const MANN = {
     }
     // ── かくれんぼ2：2階のロッカーの中。開けると飛び出して、階段を降りて消える
     if (this.st === 'lkOut') {
-      this.t += dt; const lk = this.hideLk;
+      this.t += dt; const lk = this.hideLk; if (rec.active && this.hideSeen()) this.seenRun = (this.seenRun || 0) + dt;
       if (this.t > 0.45) {
-        this.st = 'lkRun'; this.speed = 2; this.play('Run', 2.4); this.rattleStart(0.9); this.seenRun = 0; this.outT = 0;
+        this.st = 'lkRun'; this.speed = 2; this.play('Run', 2.4); this.rattleStart(0.9); this.outT = 0;
         const front = lkP(lk, 0, 0, 0.9); const pts = [front];
         const n0 = nearestNode(front.x, front.z, undefined, LH), n1 = nearestNode(-0.2, -22, undefined, 0);
         for (const k of navPath(n0, n1)) pts.push(nodePos(k)); this.path = pts;
@@ -11141,11 +11141,18 @@ const MANN = {
     }
     return !this.path.length;
   },
-  onBcOpen() { if (this.st === 'bcWait') { this.st = 'bcOut'; this.t = 0; } },
+  onBcOpen() { if (this.st === 'bcWait') { this.st = 'bcOut'; this.t = 0; this.seenRun = 0; } },
   /* 2026-11-17 かくれんぼ1：扉が開いていた時は、放送室の奥の隅に体育座りで震えている。近づくと立ち上がり、1秒後に走り出す */
   bcCrouch() { try { this.mixer && this.mixer.stopAllAction(); } catch (e) { } this.cur = null; this.st = 'bcCrouch'; this.t = 0; this.pos.set(28.9, 0, -32.55); this.heading = -Math.PI * 0.75; this.tilt = 0; this.posePose('knees'); this.hy = 0; this.hp = 0.25; this.hyBase = 0; this.lookHead(); this.fitTo(0, 'min'); this.setOp(1); },
   updBcCrouch(dt) { if (this.st === 'bcCrouch') { if (player.lv === 0 && !player.hidden && Math.hypot(player.x - this.pos.x, player.z - this.pos.z) < 3.2) { this.st = 'bcRise'; this.t = 0; this.restPose(); this.pos.y = 0; this.heading = this.toPlayer(); this.hp = 0; this.apply(); this.play(null); SND.knock(this.head(), 1.2); playSfx('metal_rattle', { pos: this.head(), ref: 0.6, dur: 0.4 }); } return true; }
-    if (this.st === 'bcRise') { this.t += dt; this.face(this.toPlayer(), dt, 6); this.apply(); if (this.t >= 1) { this.st = 'bcOut'; this.t = 1; this.updRunEvent(0); if (this.path && this.path.length) this.path.unshift(V(26.6, 0, -30.85)); } return true; } return false; },
+    if (this.st === 'bcRise') { this.t += dt; this.face(this.toPlayer(), dt, 6); this.apply(); if (this.t >= 1) { this.st = 'bcOut'; this.t = 1; this.seenRun = 0; this.updRunEvent(0); if (this.path && this.path.length) this.path.unshift(V(26.6, 0, -30.85)); } return true; } return false; },
+  hideSeen() { const H = this.head(); if (seen(H, { maxD: 22 })) return true; const b = V(this.pos.x, this.pos.y + 0.9, this.pos.z); return seen(b, { maxD: 22 }); },   /* 2026-11-20 顔が向こうを向いていても、体が映っていればよい */
+  finWatch(dt) {   /* 2026-11-20 かくれんぼFINAL：見つけた瞬間を逃しても、飛び上がる所・落ちる所・バラバラになった後（25秒以内）を7m以内で合計0.4秒映せば取れる */
+    if (!this.finW || world.t > this.finW || !rec.active || awarded.has('mannHide3')) return;
+    let v = this.root.visible && this.st !== 'gone' && seen(this.head(), { maxD: 7 });
+    if (!v) { const ig = [this.root, ...(this.pcs || []).map(pc => pc.m).filter(Boolean)]; for (const pc of this.pcs || []) { if (!pc.m || !pc.m.visible) continue; if (seen(pc.m.getWorldPosition(V()), { maxD: 7, ignore: ig })) { v = true; break; } } }   /* 部品そのもので見通しがさえぎられないように */
+    if (v) { this.finT = (this.finT || 0) + dt; if (this.finT >= 0.4) award('mannHide3', '内田くんとかくれんぼFINAL', 300); }
+  },
   hideEv() { return ['run', 'bcWait', 'bcCrouch', 'bcRise', 'bcOut', 'bcRun', 'lkWait', 'lkOut', 'lkRun', 'bedWait', 'bedOut', 'h3Wait', 'h3Leap', 'h3Fall', 'leap'].includes(this.st); },   /* かくれんぼの間（盛り塩は効かない） */
   setupHide2() {   // 突き当たりの床・階段・2階のロッカーの前に臓器を1つずつ。人体模型はそのロッカーの中
     const cands = lockers.filter(l => l.lv === 1 && !l.locked && !l.noHide && l !== (ITEM && ITEM.lockLk));
@@ -11162,7 +11169,7 @@ const MANN = {
   },
   onLockerOpen(lk) {   // ロッカーを開けた
     if (this.st !== 'lkWait' || lk !== this.hideLk) return false;
-    this.st = 'lkOut'; this.t = 0; this.pos.copy(lkP(lk, 0, 0, 0.05)); this.heading = lk.yaw + Math.PI; this.tilt = 0; this.apply(); this.setOp(1); this.play('Run', 1.2);
+    this.st = 'lkOut'; this.t = 0; this.seenRun = 0; this.pos.copy(lkP(lk, 0, 0, 0.05)); this.heading = lk.yaw + Math.PI; this.tilt = 0; this.apply(); this.setOp(1); this.play('Run', 1.2);
     SND.knock(lk.center, 1.5); playSfx('metal_rattle', { pos: lk.center, ref: 0.6, dur: 0.5 }); jumpSting('jump_a', 1.5, 3); world.vhs = Math.max(world.vhs || 0, 0.55);
     return true;
   },
@@ -11205,6 +11212,7 @@ const MANN = {
     spread: { UpperL: [0, 0, -1.25], UpperR: [0, 0, 1.25], ThighL: [0, 0, 0.35], ThighR: [0, 0, -0.35], Head: [-0.3, 0, 0] },
   },
   h3Found() {   // 見つけた瞬間：撮っていればFINAL。以後、逆さ女との交代が解禁
+    this.finW = world.t + 25; this.finT = 0;
     if (rec.active && seen(this.head(), { maxD: 7 })) award('mannHide3', '内田くんとかくれんぼFINAL', 300);
     try { localStorage.setItem('yt_mann_unlock', '1'); } catch (e) { }
     jumpSting('jump_b', 1.5, 3); world.vhs = Math.max(world.vhs || 0, 0.7);
@@ -11232,7 +11240,7 @@ const MANN = {
   },
   onDuvet(b) {   // 布団をめくった
     if (this.st !== 'bedWait' || b !== this.bed) return;
-    this.st = 'bedOut'; this.t = 0;
+    this.st = 'bedOut'; this.t = 0; this.finW = world.t + 25; this.finT = 0;
     if (rec.active && seen(b.top, { maxD: 5 })) award('mannHide3', '内田くんとかくれんぼFINAL', 300);
     try { localStorage.setItem('yt_mann_unlock', '1'); } catch (e) { }
     // 2026-11-14 めくった瞬間から、寝ている姿を0.3秒ほど見せてから跳ね上がる（びっくり音は飛び上がる瞬間）
@@ -15533,7 +15541,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.49';
+const VERSION = '0.18.50';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
