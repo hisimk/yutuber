@@ -15435,7 +15435,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.86';
+const VERSION = '0.17.87';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -25952,7 +25952,7 @@ Object.assign(EN, { 'キーの表示': 'Key hints', '画面に出す操作の文
    ・数字は GHOSTCUT.CFG。確認用：?ghostcut（必ず）／?ghostcut=1〜7（パターンを決める）
    ========================================================= */
 const GHOSTCUT = {
-  CFG: { p: 0.04, mulOuma: 2, mulUrah: 2, minDur: 30, w: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 2.5, 7: 2.5 }, len: { 1: 1.0, 2: 0.3, 3: 0.2, 4: 0.6, 5: 0.1, 6: 1.0, 7: 1.0 }, noise: 0.07 },
+  CFG: { p: 0.04, mulOuma: 2, mulUrah: 2, minDur: 30, w: { 1: 1, 2: 1, 3: 1, 4: 1, 6: 2.5, 7: 2.5 }, len: { 1: 1.0, 2: 0.3, 3: 0.2, 4: 0.6, 6: 1.0, 7: 1.0 }   /* 2026-11-19 120番：パターン5（最後の1コマ）はなくした */, noise: 0.07 },
   trail: [], cur: null, kok: null, pia: null, run: null,
   sample() { if (world.state !== 'play') return; if (this.run !== world.runId) { this.run = world.runId; this.trail = []; this.kok = null; this.pia = null; this.cur = null; }
     const z = playerZone(); this.trail.push({ rt: rec.time || 0, on: !!rec.active, wt: world.t, x: player.x, y: player.y || 0, z: player.z, yaw: player.yaw, zone: z }); if (this.trail.length > 1600) this.trail.splice(0, 400);
@@ -25964,16 +25964,15 @@ const GHOSTCUT = {
     this.cur = null; const dur = rec.time || 0, F = this.force(); if (F === null && dur < this.CFG.minDur) return; if (dur < 4) return;
     let p = this.CFG.p; if (world.ouma) p *= this.CFG.mulOuma; if (world.urahSeen || (typeof URAH !== 'undefined' && URAH.on)) p *= this.CFG.mulUrah; if (F === null && !(Math.random() < p)) return;
     const T = this.trail.filter(q => q.wt > 1), paused = T.filter(q => !q.on && q.rt > 1 && q.rt < dur - 2), cls = T.filter(q => q.on && ['R2', 'R3', '2A', '2B'].includes(q.zone)), cor = T.filter(q => q.on && ['A', 'B', 'L', 'W', '2C', '2D', 'E'].includes(q.zone));
-    const ok = { 1: cor.length > 0 || T.length > 0, 2: cls.length > 0, 3: true, 4: paused.length > 0, 5: true, 6: !!this.kok, 7: !!this.pia };
-    let pat = F && ok[F] ? F : F ? F : null; if (!pat) { const c = Object.keys(ok).filter(k => ok[k]).map(k => [+k, this.CFG.w[k]]); pat = pickW(c); }
-    const len = this.CFG.len[pat], tmin = 5, tmax = Math.max(tmin + 0.5, dur - 5); let t = pat === 5 ? Math.max(0.5, dur - 0.15) : tmin + Math.random() * (tmax - tmin);
+    const ok = { 1: cor.length > 0 || T.length > 0, 2: cls.length > 0, 3: true, 4: paused.length > 0, 6: !!this.kok, 7: !!this.pia };
+    let pat = F && ok[F] ? F : F && F !== 5 && this.CFG.w[F] ? F : null; if (!pat) { const c = Object.keys(ok).filter(k => ok[k]).map(k => [+k, this.CFG.w[k]]); pat = pickW(c); }
+    const len = this.CFG.len[pat], tmin = 5, tmax = Math.max(tmin + 0.5, dur - 5); let t = tmin + Math.random() * (tmax - tmin);
     let frames = [], q = null;
     try {
       if (pat === 1) { q = pick(cor.length ? cor : T); frames = [this.snapBehind(q, 3.6), this.snapBehind(q, 3.0)]; t = clamp(q.rt, tmin, tmax); }
       else if (pat === 2) { q = pick(cls); frames = [this.snapRoom(q)]; t = clamp(q.rt, tmin, tmax); }
       else if (pat === 3) frames = [this.snapStatic()];
       else if (pat === 4) { q = pick(paused); frames = [this.snapPaused(q)]; t = clamp(q.rt, tmin, tmax); }
-      else if (pat === 5) frames = [this.snapFace()];
       else if (pat === 6) frames = [this.snapKok(this.kok)];
       else if (pat === 7) frames = [this.snapPiano(this.pia)];
     } catch (e) { console.warn('ghostcut', e); }
@@ -26011,9 +26010,6 @@ const GHOSTCUT = {
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y * W + x) * 4, dx = (x - W / 2) / 70, dy = (y - H * 0.45) / 92, face = Math.exp(-(dx * dx + dy * dy) * 1.6), eye = Math.exp(-(((x - W / 2 - 22) / 9) ** 2 + ((y - H * 0.42) / 6) ** 2)) + Math.exp(-(((x - W / 2 + 22) / 9) ** 2 + ((y - H * 0.42) / 6) ** 2));
       let v = Math.random() * 255; v = v * (1 - face * 0.22) + face * 26 - eye * 90; d[i] = d[i + 1] = d[i + 2] = clamp(v, 0, 255); d[i + 3] = 255; }
     g.putImageData(im, 0, 0); return cv; },
-  snapFace() { const W = 270, H = 480, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
-    try { const im = TX.face.image; g.filter = 'grayscale(1) contrast(1.9) brightness(.5) blur(1.2px)'; g.drawImage(im, -W * 0.45, -H * 0.05, W * 1.9, H * 1.15); g.filter = 'none'; } catch (e) { g.fillStyle = '#ddd'; g.beginPath(); g.ellipse(W / 2, H / 2, W * 0.42, H * 0.36, 0, 0, 7); g.fill(); }
-    { const v = g.createRadialGradient(W / 2, H * 0.45, W * 0.2, W / 2, H * 0.45, W * 0.85); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.9)'); g.fillStyle = v; g.fillRect(0, 0, W, H); } return cv; },
   /* 見返す画面に重ねて出す */
   el(VP) { if (this.cv && this.cv.parentNode === VP.box) return this.cv; const c = this.cv = document.createElement('canvas'); c.id = 'vpGhost'; c.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1'; VP.box.appendChild(c); return c; },
   draw(VP) { const C = this.cur; if (!C || !VP.box || !VP.v) return; const cv = this.el(VP), G = VP.g(), on = G >= C.t && G < C.t + C.len;
@@ -26029,14 +26025,14 @@ const GHOSTCUT = {
     2: [['今教室に誰かいた', 'someone was in the classroom'], ['真ん中に立ってた', 'standing in the middle'], ['一瞬すぎる', 'way too quick'], ['{T} 止めて見て', 'pause at {T}']],
     3: [['砂嵐に顔なかった？', 'was there a face in the static?'], ['スクショ勢たのむ', 'screenshot people, please'], ['ノイズの中に目がある', 'there are eyes in the noise'], ['気のせいじゃない', 'not my imagination']],
     4: [['この時間って録画止めてたよね？', 'weren’t you paused at this time?'], ['時刻おかしくない？', 'isn’t the timestamp wrong?'], ['誰が回してたん', 'who was recording?'], ['止めてる間も撮られてたってこと？', 'it kept filming while paused?']],
-    5: [['最後の顔だれ', 'whose face was that at the end'], ['最後だけコマ送りして', 'frame-step the very end'], ['終わったと思ったのに', 'thought it was over'], ['目合った', 'we made eye contact']],
     6: [['指、多くない？', 'too many fingers?'], ['横に誰か座ってる', 'someone’s sitting next to you'], ['一人でやってたよね？', 'you were alone, right?'], ['ちゃんと帰ってもらった？', 'did you send it back properly?']],
     7: [['横に立ってるの誰', 'who’s standing beside you'], ['譜めくりさん？', 'a page turner?'], ['肖像画こっち見てる', 'the portraits are watching'], ['誰に聞かせてたの', 'who were you playing for']],
     9: [['編集で入れたやろ', 'you edited that in'], ['機材トラブルじゃね？', 'just an equipment glitch?'], ['これガチのやつでは', 'this might be the real deal'], ['心霊スポットで機材バグるのあるある', 'gear glitching at haunted spots is classic']] },
   addChat(d) { const C = this.cur; if (!C || C.runId !== world.runId || !d || !d.items) return; const U = Math.max(6, (d.users || []).length || 12), fmtT = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`, end = d.end ? d.end.R + 2.5 : 1e9;
     const add = (t, l, i) => { if (t > end) return; d.items.push([Math.round(t * 100) / 100, Math.floor(Math.random() * U), 'x.gc.' + i, l[0].replace('{T}', fmtT(C.t)), l[1].replace('{T}', fmtT(C.t))]); };
-    const P = this.CM, base = C.pat === 5 ? C.t + 0.4 : C.t + C.len + 1, s1 = pick(P[0]); add(base, s1, 'a');
-    const sp = P[C.pat].slice().sort(() => Math.random() - 0.5).slice(0, 2); sp.forEach((l, i) => add(base + 1.2 + i * 1.4, l, 'b' + i)); add(base + 4.5, pick(P[9]), 'c');
+    /* 2026-11-19 120番：コメントは1〜2件。パターンごとの反応を1件＋半分の動画で、短い反応（前）かうたがう声（後）を1件 */
+    const P = this.CM, base = C.t + C.len + 1; add(base + 1.2, pick(P[C.pat]), 'b0');
+    if (Math.random() < 0.5) { if (Math.random() < 0.5) add(base, pick(P[0]), 'a'); else add(base + 4.5, pick(P[9]), 'c'); }
     d.items.sort((a, b) => a[0] - b[0]); },
 };
 setInterval(() => { try { GHOSTCUT.sample(); } catch (e) { } }, 500);
