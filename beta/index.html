@@ -399,7 +399,7 @@
   #endCm{position:absolute;left:0;right:0;top:0;padding:calc(54px + env(safe-area-inset-top)) 16px 26px;background:linear-gradient(rgba(0,0,0,.62),rgba(0,0,0,.35) 75%,rgba(0,0,0,0));opacity:0;transition:opacity .6s;display:flex;flex-direction:column;gap:5px;pointer-events:none}#endCm.on{opacity:1}
   #endCm .ec{color:#fff;font-size:13px;line-height:1.35;text-shadow:0 1px 3px #000;animation:ecIn .3s ease-out}#endCm .ec i{font-style:normal;color:#9fd0ff;margin-right:6px;font-size:11.5px}#endCm .ec i.eu{display:inline-block;width:15px;height:15px;margin:0 7px -3px 0;border-radius:50%;background:#8a8f96 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='6' r='3' fill='%23e8e8e8'/%3E%3Cpath d='M2.5 15c.6-3.2 2.8-4.8 5.5-4.8s4.9 1.6 5.5 4.8z' fill='%23e8e8e8'/%3E%3C/svg%3E") center/100% no-repeat}#endTx.low{top:auto;bottom:calc(11% + env(safe-area-inset-bottom));transform:none;padding:14px 4px 10px;text-shadow:0 1px 3px #000,0 0 12px rgba(0,0,0,.95)}#endTx .enCat{display:block;width:75px;height:75px;margin:14px auto 0;image-rendering:pixelated}#endTx .enShot{margin-bottom:0}#endTx .enShot small{display:block;font-size:20px;font-weight:800;letter-spacing:.12em;color:#ffe7b0;margin-bottom:16px}#endTx .enShot b{display:block;font-size:24px;font-weight:700;letter-spacing:.06em}#endHint{position:absolute;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom));text-align:center;color:#e8e2d6;font-size:12.5px;opacity:0;transition:opacity .8s;pointer-events:none;text-shadow:0 1px 4px #000}#endHint.on{opacity:.85}@keyframes ecIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   #endUI video{filter:brightness(.82)}
-  #endFade{position:absolute;inset:0;background:#000;opacity:0;transition:opacity .8s;pointer-events:none}#endFade.on{opacity:1}
+  #endFade{position:absolute;inset:0;background:#000;opacity:0;transition:opacity .8s;pointer-events:none}#endTx{z-index:3}#endFade{z-index:2}#endFade.on{opacity:1}
   #endSkip{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;padding:6px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.35);color:#ddd;font-size:12px;opacity:0;transition:opacity .6s;pointer-events:none}#endSkip.on{opacity:.8;pointer-events:auto}
   .bagTabs{display:flex;gap:6px;padding:8px 12px 2px}.bagTabs button{flex:1;padding:8px 6px;border-radius:9px;background:#26262a;color:#bbb;border:1px solid #3a3a40;font-weight:700;font-size:13px}.bagTabs button.on{background:#ffd34d;color:#1a1a1a;border-color:#ffd34d}#invTabs{padding:4px 0 8px}
   #bagUI{position:fixed;inset:0;z-index:72;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:16px}#bagUI.show{display:flex}
@@ -15462,7 +15462,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.01';
+const VERSION = '0.18.02';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -22516,7 +22516,7 @@ const ENDING = {
     if (!list) return; const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
     for (const c of list.slice(0, 40)) this.cmT.push(setTimeout(() => { const d = document.createElement('div'); d.className = 'ec'; d.innerHTML = `<i class="eu"></i>` + esc(c.s);   /* 2026-11-17 名前は出さない（人のアイコンとコメントだけ） */ el.appendChild(d); while (el.children.length > 6) el.firstChild.remove(); }, Math.max(0, c.t) * 1000)); },
   async play(done) {
-    this.real = this.due(); if (this.real) STATS.fixClear();   /* 124番：初めてのエンディング（倒した瞬間に止めた時間。念のためここでも） */
+    this.real = this.due(); if (this.real) STATS.fixClear(); this.sbDone = false;   /* 124番：初めてのエンディング（倒した瞬間に止めた時間。念のためここでも） */
     if (this.running) return; this.running = true; const el = this.ui(), cv = $('#endCv'), cx = cv.getContext('2d'), v1 = $('#endVid'), v2 = $('#endVid2'); let phase = 'school', alive = true; const W = () => { const dp = Math.min(2, devicePixelRatio || 1), w = Math.round((cv.clientWidth || renderer.domElement.clientWidth || innerWidth) * dp), h = Math.round((cv.clientHeight || renderer.domElement.clientHeight || innerHeight) * dp); if (w > 0 && h > 0 && (cv.width !== w || cv.height !== h)) { cv.width = w; cv.height = h; } }; W();   /* 2026-11-19 PCは縦長の枠の中なので、画面全体ではなく枠の大きさで描く（横に広い大きさで描いて縦長に縮めていたため、縦に引き伸ばされていた） */
     const fin = () => { if (!alive) return; alive = false; this.stopMusic(); this.mute(false); this.figHide(); if (this.shots0) TOUR.SHOTS = this.shots0; try { localStorage.setItem(this.KEY, '1'); } catch (e) { } this.fade(true); setTimeout(() => { el.remove(); this.running = false; if (done) done(); if (world.state === 'title') titleSeKick(); }, 1200); };   /* スタート画面に戻ったら、虫の声をまた鳴らす */
     this.look(el); this.figInit();
@@ -22537,11 +22537,10 @@ const ENDING = {
     this.page(null); await wait(0.8); if (!alive) return;
     /* 2. 盛り上がった3場面（足りない分は学校の映像のまま） */
     const clips = await clipsP; let vi = 0; const SP0 = this.statPages();   /* 2026-11-19 動画撮影と記録は画面のまん中に（コメントは左上に小さくまとまるので重なりは気にしない） */   /* 2026-11-17 記録は盛り上がった場面にも重ねて（コメントと重ならない下の方に） */
-    for (let i = 0; i < (SUN ? 0 : 3); i++) { if (!alive) return; const c = clips[i]; this.fade(true); this.page(null); await wait(0.8); if (!alive) return; setTimeout(() => { if (alive && (SP0[i] || c)) this.page(c ? this.shotBy() : SP0[i]); }, 900); if (c && SP0[i]) setTimeout(() => { if (alive) this.page(SP0[i]); }, 4000);   /* 2026-11-19 「動画撮影 ○○」だけを先に出し、そのあとに記録 */   /* 2026-11-17 過去の動画の場面には「動画撮影　その人の名前」 */
+    for (let i = 0; i < (SUN ? 0 : 3); i++) { if (!alive) return; const c = clips[i], sb = c && !this.sbDone; if (sb) this.sbDone = true; this.fade(true); await wait(0.8); if (!alive) return; setTimeout(() => { if (alive && (SP0[i] || sb)) this.page(sb ? this.shotBy() : SP0[i]); }, 900); if (sb && SP0[i]) setTimeout(() => { if (alive) this.page(SP0[i]); }, 4000);   /* 2026-11-19 「動画撮影 ○○」は最初の1回だけ。記録は暗転の間も消さずに、次の記録に切りかわるまで出したまま */   /* 2026-11-17 過去の動画の場面には「動画撮影　その人の名前」 */
       if (c) { phase = 'clip'; this.duck(0.5); this.comments(c.cm || []); const v = vi++ % 2 ? v2 : v1, o = v === v1 ? v2 : v1; v.src = c.url; v.muted = false; v.volume = 0.4; v.ontimeupdate = () => { if (c.endAt && v.currentTime >= c.endAt) v.pause(); };   /* 2026-11-17 曲を上げ、動画の音は控えめに。結果カードの手前で止める */ try { await new Promise(r => { v.onloadedmetadata = r; setTimeout(r, 1500); }); v.currentTime = c.at; await v.play(); } catch (e) { } v.classList.add('on'); o.classList.remove('on'); try { o.pause(); } catch (e) { } this.fade(false); await wait(7); this.comments(null); }
       else { phase = 'school'; this.duck(0.75); v1.classList.remove('on'); v2.classList.remove('on'); TOUR.i = (3 + i * 2) % TOUR.SHOTS.length; TOUR.t0 = performance.now() / 1000; this.fade(false); await wait(7); } }
-    this.page(null);
-    /* 3. 夕方の教室：記録 → Thank you → まんま */
+    /* 3. 夕方の教室：記録 → Thank you → まんま（記録は暗転の間も出したまま） */
     this.fade(true); this.duck(0.75); await wait(1); if (!alive) return; for (const v of [v1, v2]) { v.classList.remove('on'); try { v.pause(); } catch (e) { } } phase = 'sunset'; await wait(0.3); this.fade(false); await wait(2);
     for (const p of SUN ? SP0 : SP0.slice(3)) { if (!alive) return; this.page(p); await wait(5.5); }
     await wait(3); if (!alive) return; this.page(`<div class="enTY">Thank you for playing!</div>`); await wait(6);   /* 2026-11-17 Thank you は最後（今までの「まんま mamma」の所）に。名前と猫は制作のページへ */
