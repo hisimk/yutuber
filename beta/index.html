@@ -417,7 +417,19 @@
   #bagUI .shList{overflow-y:auto;padding:0 10px 12px}#bagUI .shSec{color:#ffd34d;font-weight:800;font-size:14px;margin:12px 4px 4px}#bagUI .shSec small{display:block;color:#8f8a82;font-weight:400;font-size:11px;line-height:1.5}
   #bagUI .shIt{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid #222226}#bagUI .shIt.sel{background:rgba(255,211,77,.07)}#bagUI .shIt img{width:40px;height:40px;flex:none;border-radius:10px;background:rgba(255,255,255,.06);object-fit:contain}
   #bagUI .shTx{flex:1;min-width:0}#bagUI .shTx b{display:block;font-size:14px;color:#fff}#bagUI .shTx small{display:block;font-size:11px;color:#8f8a82;line-height:1.5}
-  #bagUI .fav{flex:none;background:none;border:0;font-size:20px;color:#8f8a82;padding:0 2px}#bagUI .fav.on{color:#ffd34d} #bagUI .shIt{align-items:flex-start} #bagUI .shIt img{margin-top:2px} #bagUI .shAct{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:6px} #bagUI .shAct .shCar{padding:6px 12px}
+  #bagUI .fav{flex:none;background:none;border:0;font-size:20px;color:#8f8a82;padding:0 2px}#bagUI .fav.on{color:#ffd34d}
+  #bagUI .shIt.bgR{display:grid;grid-template-columns:36px minmax(0,1fr) auto;grid-template-areas:"i n a" "d d d";align-items:center;column-gap:8px;row-gap:4px;padding:8px 4px}
+  #bagUI .bgR img{grid-area:i;width:36px;height:36px}
+  #bagUI .bgN{grid-area:n;display:flex;align-items:center;min-width:0;font-size:14px;font-weight:700;color:#fff}
+  #bagUI .bgN .ytag,#bagUI .bgN .shN{flex:none}
+  #bagUI .bgNm{flex:0 1 auto;min-width:0;overflow:hidden;white-space:nowrap}
+  #bagUI .bgNm>span{display:inline-block}
+  #bagUI .bgNm.mq{-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
+  #bagUI .bgNm.mq>span{animation:bgMq var(--mqT,7s) ease-in-out infinite}
+  @keyframes bgMq{0%,30%{transform:translateX(0)}60%,80%{transform:translateX(var(--mq,0))}95%,100%{transform:translateX(0)}}
+  #bagUI .bgR .shAct{grid-area:a;display:flex;align-items:center;gap:6px}
+  #bagUI .bgR .shAct .shCar{padding:6px 11px}
+  #bagUI .bgD{grid-area:d;display:block;font-size:11px;color:#8f8a82;line-height:1.5}
   #bagUI .shCar{flex:none;padding:8px 10px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid #ffd34d;background:none;color:#ffd34d;white-space:nowrap}#bagUI .shCar.on{background:#ffd34d;color:#111}#bagUI .shCar:disabled{opacity:.4}
   #bagUI .shEmpty{font-size:12px;color:#8f8a82;padding:10px 4px}
   #shopUI,#shopPop{position:fixed;inset:0;z-index:72;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:16px}
@@ -15495,7 +15507,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.14';
+const VERSION = '0.18.15';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -21218,22 +21230,25 @@ Object.assign(SHOP, {
       el.querySelector('.yes').onclick = () => { if (this.buy(id, n)) { try { if (!A.ctx) initAudio(); A.ctx && A.ctx.resume && A.ctx.resume(); (hasSfx('buy_se') ? Promise.resolve() : sfxDecode('buy_se')).then(() => playSfx('buy_se', { ear: 0 })); } catch (e) { } el.classList.remove('show'); toast(en ? 'Purchased' : '買いました', 1200); this.openUI(); this.title(); } }; };
     draw(); el.classList.add('show');
   },
+  /* 2026-11-19 持ち物の1行：上の段に［絵・名前（長い時はゆっくり横に流れる）・札・個数・★・ボタン］、下の段に説明（横はばいっぱい） */
+  bagRow(img, name, tags, desc, act, cls = '') { return `<div class="shIt bgR${cls}"><img src="${img}"><div class="bgN"><span class="bgNm"><span>${name}</span></span>${tags}</div>${act ? `<div class="shAct">${act}</div>` : ''}<small class="bgD">${desc}</small></div>`; },
+  bagMq(el) { for (const w of el.querySelectorAll('.bgNm')) { const t = w.firstElementChild, over = t.scrollWidth - w.clientWidth; w.classList.toggle('mq', over > 2); if (over > 2) { w.style.setProperty('--mq', -(over + 6) + 'px'); w.style.setProperty('--mqT', (6 + over / 25).toFixed(1) + 's'); } } },
   /* ── 持ち物（持ち込む道具を選ぶ） */
   openBag() {
     this.icons();
     const en = LANG === 'en', d = this.load(), lim = ECON.carry[this.rank()], cl = this.carryList(); let el = $('#bagUI');
     if (!el) { el = document.createElement('div'); el.id = 'bagUI'; el.className = 'shopLike'; document.body.appendChild(el); el.addEventListener('click', e => { e.stopPropagation(); if (e.target.id === 'bagUI') { el.classList.remove('show'); this.title(); } }); for (const t of ['pointerdown', 'touchstart', 'touchmove']) el.addEventListener(t, e => e.stopPropagation(), { passive: true }); }
-    const perm = PERM.owned().map(id => `<div class="shIt"><img src="${PERM_IMG[id]}"><div class="shTx"><b>${TR(PERM.DEFS[id].name)}${YTAG.tag(id)}</b><small>${YTAG.desc(id, TR(PERM.DEFS[id].desc || ''))}</small></div></div>`);
-    const looks = ECON.items.filter(it => it[3] === 'look' && d.look[it[0]] && ['goldphone', 'goldframe'].includes(it[0])).map(it => `<div class="shIt"><img src="${ITEM_IMG[it[0]]}"><div class="shTx"><b>${TR(ITEM.defs[it[0]].name)}${YTAG.tag(it[0])}</b><small>${YTAG.desc(it[0], TR(ITEM.defs[it[0]].desc))}</small></div></div>`);
+    const perm = PERM.owned().map(id => this.bagRow(PERM_IMG[id], TR(PERM.DEFS[id].name), YTAG.tag(id), YTAG.desc(id, TR(PERM.DEFS[id].desc || ''))));
+    const looks = ECON.items.filter(it => it[3] === 'look' && d.look[it[0]] && ['goldphone', 'goldframe'].includes(it[0])).map(it => this.bagRow(ITEM_IMG[it[0]], TR(ITEM.defs[it[0]].name), YTAG.tag(it[0]), YTAG.desc(it[0], TR(ITEM.defs[it[0]].desc))));
     const uses = ECON.sorted().filter(it => (it[3] === 'use' && this.cnt(it[0]) > 0) || (it[3] === 'look' && d.look[it[0]] && !['goldphone', 'goldframe'].includes(it[0]))).sort((a, b) => (cl.includes(a[0]) ? cl.indexOf(a[0]) : 999) - (cl.includes(b[0]) ? cl.indexOf(b[0]) : 999)).map(it => { const id = it[0], on = cl.includes(id), fav = this.favs().includes(id), full = !on && cl.length >= lim;
-      return `<div class="shIt${on ? ' sel' : ''}"><img src="${ITEM_IMG[id]}"><div class="shTx"><b>${TR(ITEM.defs[id].name)}${YTAG.tag(id)}<span class="shN">×${it[3] === 'look' ? 1 : this.cnt(id)}</span></b><small>${YTAG.desc(id, TR(ITEM.defs[id].desc))}</small><div class="shAct"><button class="fav${fav ? ' on' : ''}" data-f="${id}" aria-label="★">${fav ? '★' : '☆'}</button><button class="shCar${on ? ' on' : ''}" data-c="${id}"${(full || fav) ? ' disabled' : ''}>${on ? (en ? 'Bring' : '持ち込む') : (en ? 'Leave' : '置いていく')}</button></div></div></div>`; });   /* 2026-11-19 ★とボタンは説明の下へ（説明の列が細くならないように） */
+      return this.bagRow(ITEM_IMG[id], TR(ITEM.defs[id].name), `${YTAG.tag(id)}<span class="shN">×${it[3] === 'look' ? 1 : this.cnt(id)}</span>`, YTAG.desc(id, TR(ITEM.defs[id].desc)), `<button class="fav${fav ? ' on' : ''}" data-f="${id}" aria-label="★">${fav ? '★' : '☆'}</button><button class="shCar${on ? ' on' : ''}" data-c="${id}"${(full || fav) ? ' disabled' : ''}>${on ? (en ? 'Bring' : '持ち込む') : (en ? 'Leave' : '置いていく')}</button>`, on ? ' sel' : ''); });   /* 2026-11-19 ★とボタンは右上（名前の段）に。説明は下の段に横はばいっぱい */
     el.innerHTML = `<div class="shBox"><div class="shHead"><b>${en ? 'Bag' : '持ち物'}</b><span class="carHd"><i class="carSl">${Array.from({ length: lim }, (_, i) => cl[i] ? `<em class="on"><img src="${ITEM_IMG[cl[i]]}" alt=""></em>` : '<em></em>').join('')}</i>${en ? 'Bringing' : '持ち込み'} <b>${cl.length} / ${lim}</b></span><button class="shX">×</button></div><div class="shList">
       <div class="shSec">${en ? 'Tools to bring in' : '持ち込む道具'}<small>${en ? `Up to ${lim} per run. ★ = always bring. Used tools are gone; unused ones stay.` : `1周に${lim}つまで。★お気に入りは、選ばなくても自動で持ち込みます。使った物はなくなり、使わなければ残ります。`}</small></div>${uses.join('') || `<div class="shEmpty">${en ? 'No tools yet. Buy them in the shop.' : 'まだありません。ショップで買えます。'}</div>`}
       <div class="shSec">${en ? 'Key items' : 'だいじなもの'}<small>${en ? 'Never lost, even if caught. Not counted in what you bring.' : '捕まってもなくならない物。持ち込む数には入りません。'}</small></div>${[...perm, ...looks].join('') || `<div class="shEmpty">${en ? 'None yet' : 'まだありません'}</div>`}</div></div>`;
     el.querySelector('.shX').onclick = e => { e.stopPropagation(); el.classList.remove('show'); this.title(); };
     el.querySelectorAll('[data-c]').forEach(b => b.onclick = e => { e.stopPropagation(); this.toggleCarry(b.dataset.c); this.openBag(); });
     el.querySelectorAll('[data-f]').forEach(b => b.onclick = e => { e.stopPropagation(); if (!this.toggleFav(b.dataset.f)) toast(en ? 'You cannot bring more' : 'これ以上は持ち込めません', 1500); this.openBag(); });
-    el.classList.add('show');
+    el.classList.add('show'); requestAnimationFrame(() => this.bagMq(el));
   },
   title() {
     const d = this.load(), en = LANG === 'en'; let row = $('#shopRow'); { const old = $('#shopBtn'); if (old && !old.closest('#shopRow')) old.remove(); }
