@@ -13622,6 +13622,7 @@ function render() {
   GEAR.after();   // 2026-11-14 ワイプカメラの小窓
   CALL.after();   // 2026-11-15 着信の画面（録画にも入る）
   if (!fx && RECV.want()) RECV.copy();   /* 録画用の画面へ（いつもの映像） */
+  if (typeof AIM !== 'undefined' && AIM.sc && AIM.line && AIM.line.visible) { const ac = renderer.autoClear; renderer.autoClear = false; renderer.render(AIM.sc, cam); renderer.autoClear = ac; }   /* 2026-11-19 110番：軌道の線は録画のあとに重ねる（録画には映らない） */
 }
 /* 2026-11-15 タイトル画面の背景：校舎の紹介映像（ゲームの3Dの校舎をそのまま撮る。動画ファイルは使わない）
    ・決めた場所を、1か所6〜8秒ずつ、ゆっくりパン／前進。次の場所へは暗転でつなぎ、最後まで行ったら最初から
@@ -15430,7 +15431,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.77';
+const VERSION = '0.17.78';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -25735,11 +25736,12 @@ if ((TEST || BETA) && /[?&]torch\b/.test(location.search)) { const B1 = SHOP.beg
 const AIM = {
   on: false, t0: 0, HOLD_MS: 140,
   init() { if (this.line) return; const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3 * 96), 3)); g.setDrawRange(0, 0);
-    this.line = new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0xc8f2ff, transparent: true, opacity: 0.42, depthWrite: false, depthTest: true })); this.line.frustumCulled = false; this.line.renderOrder = 7; this.line.visible = false; scene.add(this.line);
-    this.ring = new THREE.Mesh(new THREE.RingGeometry(0.15, 0.21, 32), new THREE.MeshBasicMaterial({ color: 0xc8f2ff, transparent: true, opacity: 0.6, depthWrite: false, side: THREE.DoubleSide })); this.ring.renderOrder = 7; this.ring.visible = false; this.ring.frustumCulled = false; scene.add(this.ring); },
+    this.line = new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0xc8f2ff, transparent: true, opacity: 0.32, depthWrite: false, depthTest: false })); this.sc = new THREE.Scene(); this.line.frustumCulled = false; this.line.renderOrder = 7; this.line.visible = false; this.sc.add(this.line);
+    this.ring = new THREE.Mesh(new THREE.RingGeometry(0.15, 0.21, 32), new THREE.MeshBasicMaterial({ color: 0xc8f2ff, transparent: true, opacity: 0.45, depthWrite: false, depthTest: false, side: THREE.DoubleSide })); this.ring.renderOrder = 7; this.ring.visible = false; this.ring.frustumCulled = false; this.sc.add(this.ring); },
   kind() { const id = HAND.item; return ['ball', 'chem', 'buzzer'].includes(id) && HAND.toolLabel() ? id : null; },
-  start() { if (this.on) return; const k = this.kind(); if (!k) { HAND.useTool(); return; } this.on = true; this.t0 = performance.now(); this.init(); },
-  release() { if (!this.on) return; this.on = false; this.hide(); const k = this.kind(); if (!k) return; HAND.useTool(this.plan(k)); },
+  /* 2026-11-19 110番：押したらすぐ投げる（長押しはやめた）。続けて押しても0.35秒は2回投げない */
+  start() { const k = this.kind(); if (!k) { HAND.useTool(); return; } const now = performance.now(); if (now - (this.lastT || 0) < 350) return; this.lastT = now; this.init(); HAND.useTool(this.plan(k)); },
+  release() { },
   hide() { if (this.line) { this.line.visible = false; this.ring.visible = false; } },
   hand() { camera.updateMatrixWorld(); return camera.localToWorld(V(0.08, -0.17, -0.4)); },
   /* まっすぐ前へ投げる物：届く所と、壁に当たる所 */
@@ -25758,7 +25760,7 @@ const AIM = {
     for (let i = 0; i < 300; i++) { const ev = KBALL.step(b, 1 / 60); if (i % 2 === 1) pts.push(b.p.clone()); if (ev) { land = ev.k === 'ground' ? ev.p.clone().setY(b.fy + 0.02) : ev.p.clone(); n = ev.k === 'ground' ? null : ev.n; pts.push(land.clone()); break; } }
     if (!land) land = b.p.clone().setY(b.fy + 0.02);
     return { b0, pts, land, n }; },
-  tick() { if (!this.on) return; const k = this.kind(); if (!k) { this.on = false; this.hide(); return; } if (performance.now() - this.t0 < this.HOLD_MS) return;
+  tick() { const k = this.kind(); if (!k) { this.hide(); return; } this.init();   /* 2026-11-19 110番：投げる道具を持っている間は、いつも線と円を出す */
     const P = this.plan(k), A = this.line.geometry.attributes.position, m = Math.min(96, P.pts.length); for (let i = 0; i < m; i++) A.setXYZ(i, P.pts[i].x, P.pts[i].y, P.pts[i].z); A.needsUpdate = true; this.line.geometry.setDrawRange(0, m); this.line.geometry.computeBoundingSphere();
     this.line.visible = true; this.ring.visible = true; this.ring.position.copy(P.land); if (P.n) { this.ring.lookAt(P.land.clone().add(P.n)); } else this.ring.rotation.set(-Math.PI / 2, 0, 0); },
 };
