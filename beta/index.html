@@ -15430,7 +15430,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.75';
+const VERSION = '0.17.76';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -25838,7 +25838,111 @@ for (const b of document.querySelectorAll('#hintSeg button')) b.addEventListener
 Object.assign(EN, { 'キーの表示': 'Key hints', '画面に出す操作の文字': 'Key labels shown on screen', '最初だけ': 'At first', 'いつも': 'Always', '出さない': 'Never', '左クリック': 'Left click', '右クリック': 'Right click', 'ホイール': 'Wheel', '調べる・開ける・隠れる': 'Interact / open / hide', '録画の開始・停止': 'Start/stop recording', 'ズーム': 'Zoom' });
 /* じゆうちょう・絵画を開いた時 */
 { let was = ''; new MutationObserver(() => { const H = document.documentElement.classList, now = H.contains('jyOn') ? 'jiyu' : H.contains('ptOn') ? 'paint' : ''; if (now && now !== was) try { KH.screen(now); } catch (e) { } was = now; }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] }); }
-if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, ROOMX, DIRX: DIR, EVX: EV, ARARE, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
+/* =========================================================
+   2026-11-19 108番：撮った覚えのない映像（見返した動画に、撮っていない短いカットが勝手に入っている）
+   ・プレイ中は何も起きない。録画を締める時にくじを引き、当たればカットの絵を作っておく（その周の撮れ高にも入る）
+   ・見返す画面（VP）で、決めた時間にだけ動画の上へ重ねて出す（保存する動画ファイルには入らない）
+   ・数字は GHOSTCUT.CFG。確認用：?ghostcut（必ず）／?ghostcut=1〜7（パターンを決める）
+   ========================================================= */
+const GHOSTCUT = {
+  CFG: { p: 0.04, mulOuma: 2, mulUrah: 2, minDur: 30, w: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 2.5, 7: 2.5 }, len: { 1: 1.0, 2: 0.3, 3: 0.2, 4: 0.6, 5: 0.1, 6: 1.0, 7: 1.0 }, noise: 0.07 },
+  trail: [], cur: null, kok: null, pia: null, run: null,
+  sample() { if (world.state !== 'play') return; if (this.run !== world.runId) { this.run = world.runId; this.trail = []; this.kok = null; this.pia = null; this.cur = null; }
+    const z = playerZone(); this.trail.push({ rt: rec.time || 0, on: !!rec.active, wt: world.t, x: player.x, y: player.y || 0, z: player.z, yaw: player.yaw, zone: z }); if (this.trail.length > 1600) this.trail.splice(0, 400);
+    try { if (typeof KOK !== 'undefined' && KOK.on && !this.kok) this.kok = { x: player.x, y: player.y || 0, z: player.z, yaw: player.yaw }; } catch (e) { }
+    try { if (typeof PIANO !== 'undefined' && PIANO.on && !this.pia) this.pia = { x: player.x, y: player.y || 0, z: player.z, yaw: player.yaw }; } catch (e) { } },
+  force() { const m = (TEST || BETA || DEV) && location.search.match(/[?&]ghostcut(?:=(\d))?/); return m ? (m[1] ? +m[1] : 0) : null; },
+  /* 録画を締める時：くじ → パターン → 絵を作る */
+  decide() {
+    this.cur = null; const dur = rec.time || 0, F = this.force(); if (F === null && dur < this.CFG.minDur) return; if (dur < 4) return;
+    let p = this.CFG.p; if (world.ouma) p *= this.CFG.mulOuma; if (world.urahSeen || (typeof URAH !== 'undefined' && URAH.on)) p *= this.CFG.mulUrah; if (F === null && !(Math.random() < p)) return;
+    const T = this.trail.filter(q => q.wt > 1), paused = T.filter(q => !q.on && q.rt > 1 && q.rt < dur - 2), cls = T.filter(q => q.on && ['R2', 'R3', '2A', '2B'].includes(q.zone)), cor = T.filter(q => q.on && ['A', 'B', 'L', 'W', '2C', '2D', 'E'].includes(q.zone));
+    const ok = { 1: cor.length > 0 || T.length > 0, 2: cls.length > 0, 3: true, 4: paused.length > 0, 5: true, 6: !!this.kok, 7: !!this.pia };
+    let pat = F && ok[F] ? F : F ? F : null; if (!pat) { const c = Object.keys(ok).filter(k => ok[k]).map(k => [+k, this.CFG.w[k]]); pat = pickW(c); }
+    const len = this.CFG.len[pat], tmin = 5, tmax = Math.max(tmin + 0.5, dur - 5); let t = pat === 5 ? Math.max(0.5, dur - 0.15) : tmin + Math.random() * (tmax - tmin);
+    let frames = [], q = null;
+    try {
+      if (pat === 1) { q = pick(cor.length ? cor : T); frames = [this.snapBehind(q, 3.6), this.snapBehind(q, 3.0)]; t = clamp(q.rt, tmin, tmax); }
+      else if (pat === 2) { q = pick(cls); frames = [this.snapRoom(q)]; t = clamp(q.rt, tmin, tmax); }
+      else if (pat === 3) frames = [this.snapStatic()];
+      else if (pat === 4) { q = pick(paused); frames = [this.snapPaused(q)]; t = clamp(q.rt, tmin, tmax); }
+      else if (pat === 5) frames = [this.snapFace()];
+      else if (pat === 6) frames = [this.snapKok(this.kok)];
+      else if (pat === 7) frames = [this.snapPiano(this.pia)];
+    } catch (e) { console.warn('ghostcut', e); }
+    frames = frames.filter(Boolean); if (!frames.length) frames = [this.snapStatic()];
+    this.cur = { pat, t: Math.round(t * 100) / 100, len, frames, runId: world.runId, dur };
+    try { award('ghostCut', '撮った覚えのない映像', 70); } catch (e) { }
+    if (TEST || DEV) console.log('GHOSTCUT', pat, this.cur.t.toFixed(1), len);
+  },
+  /* 3Dの絵：主人公のカメラを一時的に動かして1枚撮る（スマホのライトもそこから当たる） */
+  snap(pos, look, setup) { const W = 270, H = Math.round(270 * (canvas.height / Math.max(1, canvas.width))) || 480, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const P = camera.position.clone(), Q = camera.quaternion.clone(), fov = camera.fov, av = { v: avatar.root.visible, p: avatar.root.position.clone(), r: avatar.root.rotation.y };
+    let undo = null; try { camera.position.copy(pos); camera.lookAt(look); camera.fov = 62; camera.updateProjectionMatrix(); camera.updateMatrixWorld(true); undo = setup && setup();
+      renderer.setRenderTarget(null); renderer.render(scene, camera); const g = cv.getContext('2d'); g.drawImage(renderer.domElement, 0, 0, W, H);
+      /* 録画らしく：少し暗く・粗く・ノイズ */
+      const sm = document.createElement('canvas'); sm.width = W / 3 | 0; sm.height = H / 3 | 0; sm.getContext('2d').drawImage(cv, 0, 0, sm.width, sm.height); g.imageSmoothingEnabled = false; g.drawImage(sm, 0, 0, W, H);
+      g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(0, 0, W, H); const im = g.getImageData(0, 0, W, H), d = im.data; for (let i = 0; i < d.length; i += 4) { const n = (Math.random() - 0.5) * 34; d[i] += n; d[i + 1] += n; d[i + 2] += n; } g.putImageData(im, 0, 0);
+    } finally { camera.position.copy(P); camera.quaternion.copy(Q); camera.fov = fov; camera.updateProjectionMatrix(); camera.updateMatrixWorld(true); avatar.root.visible = av.v; avatar.root.position.copy(av.p); avatar.root.rotation.y = av.r; try { undo && undo(); } catch (e) { } }
+    return cv; },
+  fwd(yaw) { return V(-Math.sin(yaw), 0, -Math.cos(yaw)); },
+  safe(p, lv) { const [x, z] = collide(p.x, p.z, 0.25, lv); return V(x, p.y, z); },
+  avAt(q, yaw) { avatar.root.visible = true; avatar.root.position.set(q.x, q.y, q.z); avatar.root.rotation.y = yaw + Math.PI; avatar.root.updateMatrixWorld(true); },
+  ghostAt(p, faceTo) { if (typeof WD !== 'undefined' && WD.borrowed) return null; borrowWoman(); const yaw = Math.atan2(faceTo.x - p.x, faceTo.z - p.z); woman.root.rotation.set(0, yaw, 0); woman.root.position.set(p.x, p.y || 0, p.z); woman.root.updateMatrixWorld(true); return () => releaseWoman(); },
+  snapBehind(q, back) { const f = this.fwd(q.yaw), lv = q.y > 1.6 ? 1 : 0, c = this.safe(V(q.x - f.x * back, q.y + 1.55, q.z - f.z * back), lv); c.x += (Math.random() - 0.5) * 0.08; c.y += (Math.random() - 0.5) * 0.05;
+    return this.snap(c, V(q.x + f.x * 0.6, q.y + 1.25, q.z + f.z * 0.6), () => { this.avAt(q, q.yaw); }); },
+  snapRoom(q) { const R = rooms[q.zone], ds = (R && R.desks) || [], cx = ds.length ? ds.reduce((a, d) => a + (d.x ?? d.position?.x ?? 0), 0) / ds.length : q.x, cz = ds.length ? ds.reduce((a, d) => a + (d.z ?? d.position?.z ?? 0), 0) / ds.length : q.z;
+    const eye = V(q.x, q.y + 1.55, q.z), mid = V(cx, q.y, cz); return this.snap(eye, V(cx, q.y + 1.3, cz), () => this.ghostAt(mid, eye)); },
+  snapPaused(q) { const f = this.fwd(q.yaw), lv = q.y > 1.6 ? 1 : 0, c = this.safe(V(q.x - f.x * 4, q.y + 1.7, q.z - f.z * 4), lv), cv = this.snap(c, V(q.x, q.y + 1.1, q.z), null), g = cv.getContext('2d');
+    const s = 23 * 3600 + 41 * 60 + Math.floor(q.wt), hh = String(Math.floor(s / 3600) % 24).padStart(2, '0'), mm = String(Math.floor(s / 60) % 60).padStart(2, '0'), ss = String(s % 60).padStart(2, '0');
+    g.font = '700 15px ui-monospace,monospace'; g.fillStyle = 'rgba(255,255,255,.85)'; g.fillText(`REC  ${hh}:${mm}:${ss}`, 12, cv.height - 16); g.fillStyle = '#e33'; g.beginPath(); g.arc(cv.width - 18, 20, 5, 0, 7); g.fill(); return cv; },
+  snapKok(k) { const f = this.fwd(k.yaw), r = V(-f.z, 0, f.x), lv = k.y > 1.6 ? 1 : 0, c = this.safe(V(k.x - f.x * 1.5 + r.x * 0.5, k.y + 2.15, k.z - f.z * 1.5 + r.z * 0.5), lv), side = V(k.x + r.x * 0.75, k.y, k.z + r.z * 0.75);
+    return this.snap(c, V(k.x + f.x * 0.5, k.y + 0.7, k.z + f.z * 0.5), () => { this.avAt(k, k.yaw); return this.ghostAt(side, V(k.x + f.x * 0.6, k.y, k.z + f.z * 0.6)); }); },
+  snapPiano(k) { const f = this.fwd(k.yaw), r = V(-f.z, 0, f.x), lv = k.y > 1.6 ? 1 : 0, c = this.safe(V(k.x - f.x * 4.2, k.y + 1.75, k.z - f.z * 4.2), lv), side = V(k.x + r.x * 0.8 + f.x * 0.3, k.y, k.z + r.z * 0.8 + f.z * 0.3);
+    return this.snap(c, V(k.x, k.y + 1.1, k.z), () => { this.avAt(k, k.yaw); return this.ghostAt(side, V(k.x, k.y, k.z)); }); },
+  snapStatic() { const W = 270, H = 480, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d'), im = g.createImageData(W, H), d = im.data;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y * W + x) * 4, dx = (x - W / 2) / 70, dy = (y - H * 0.45) / 92, face = Math.exp(-(dx * dx + dy * dy) * 1.6), eye = Math.exp(-(((x - W / 2 - 22) / 9) ** 2 + ((y - H * 0.42) / 6) ** 2)) + Math.exp(-(((x - W / 2 + 22) / 9) ** 2 + ((y - H * 0.42) / 6) ** 2));
+      let v = Math.random() * 255; v = v * (1 - face * 0.22) + face * 26 - eye * 90; d[i] = d[i + 1] = d[i + 2] = clamp(v, 0, 255); d[i + 3] = 255; }
+    g.putImageData(im, 0, 0); return cv; },
+  snapFace() { const W = 270, H = 480, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    try { const im = TX.face.image; g.filter = 'grayscale(1) contrast(1.9) brightness(.5) blur(1.2px)'; g.drawImage(im, -W * 0.45, -H * 0.05, W * 1.9, H * 1.15); g.filter = 'none'; }
+    { const v = g.createRadialGradient(W / 2, H * 0.45, W * 0.2, W / 2, H * 0.45, W * 0.85); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.9)'); g.fillStyle = v; g.fillRect(0, 0, W, H); } catch (e) { g.fillStyle = '#ddd'; g.beginPath(); g.ellipse(W / 2, H / 2, W * 0.42, H * 0.36, 0, 0, 7); g.fill(); }
+    g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(0, 0, W, H); return cv; },
+  /* 見返す画面に重ねて出す */
+  el(VP) { if (this.cv && this.cv.parentNode === VP.box) return this.cv; const c = this.cv = document.createElement('canvas'); c.id = 'vpGhost'; c.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1'; VP.box.appendChild(c); return c; },
+  draw(VP) { const C = this.cur; if (!C || !VP.box || !VP.v) return; const cv = this.el(VP), G = VP.g(), on = G >= C.t && G < C.t + C.len;
+    if (!on) { if (this.vis) { cv.getContext('2d').clearRect(0, 0, cv.width, cv.height); this.vis = false; } this.lastG = G; return; }
+    if (!this.vis && (this.lastG ?? -1) < C.t && !VP.v.paused) { try { playSfx('static_raw', { gain: 0.14, dur: 0.12 }) || SND.glitch(0.08); } catch (e) { } }
+    this.vis = true; this.lastG = G; const bw = VP.box.clientWidth, bh = VP.box.clientHeight; if (cv.width !== bw || cv.height !== bh) { cv.width = bw; cv.height = bh; }
+    const V2 = VP.v, vw = V2.videoWidth || 430, vh = V2.videoHeight || 932, s2 = Math.min(bw / vw, bh / vh), W = vw * s2, H = vh * s2, X = (bw - W) / 2, Y = (bh - H) / 2, g = cv.getContext('2d'); g.clearRect(0, 0, bw, bh);
+    const k = (G - C.t) / C.len, fr = C.frames[Math.min(C.frames.length - 1, Math.floor(k * C.frames.length))], nz = this.CFG.noise; g.drawImage(fr, X, Y, W, H);
+    const edge = (G - C.t < nz) || (C.t + C.len - G < nz); if (edge) { const im = g.getImageData(X | 0, Y | 0, Math.max(1, W | 0), Math.max(1, H | 0)), d = im.data; for (let i = 0; i < d.length; i += 4) { const v = Math.random() * 255; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; } g.putImageData(im, X | 0, Y | 0); } },
+  /* コメント：カットの1〜3秒あと */
+  CM: { 0: [['ん？', 'hm?'], ['今なんか…', 'wait, what was…'], ['え？', 'huh?']],
+    1: [['これ誰が撮ってんの？', 'who is filming this?'], ['ソロ配信じゃなかった？', 'wasn’t this a solo stream?'], ['カメラマンおらんやろ', 'there’s no camera operator'], ['後ろにもう一人いる…', 'there’s someone else behind…']],
+    2: [['今教室に誰かいた', 'someone was in the classroom'], ['真ん中に立ってた', 'standing in the middle'], ['一瞬すぎる', 'way too quick'], ['{T} 止めて見て', 'pause at {T}']],
+    3: [['砂嵐に顔なかった？', 'was there a face in the static?'], ['スクショ勢たのむ', 'screenshot people, please'], ['ノイズの中に目がある', 'there are eyes in the noise'], ['気のせいじゃない', 'not my imagination']],
+    4: [['この時間って録画止めてたよね？', 'weren’t you paused at this time?'], ['時刻おかしくない？', 'isn’t the timestamp wrong?'], ['誰が回してたん', 'who was recording?'], ['止めてる間も撮られてたってこと？', 'it kept filming while paused?']],
+    5: [['最後の顔だれ', 'whose face was that at the end'], ['最後だけコマ送りして', 'frame-step the very end'], ['終わったと思ったのに', 'thought it was over'], ['目合った', 'we made eye contact']],
+    6: [['指、多くない？', 'too many fingers?'], ['横に誰か座ってる', 'someone’s sitting next to you'], ['一人でやってたよね？', 'you were alone, right?'], ['ちゃんと帰ってもらった？', 'did you send it back properly?']],
+    7: [['横に立ってるの誰', 'who’s standing beside you'], ['譜めくりさん？', 'a page turner?'], ['肖像画こっち見てる', 'the portraits are watching'], ['誰に聞かせてたの', 'who were you playing for']],
+    9: [['編集で入れたやろ', 'you edited that in'], ['機材トラブルじゃね？', 'just an equipment glitch?'], ['これガチのやつでは', 'this might be the real deal'], ['心霊スポットで機材バグるのあるある', 'gear glitching at haunted spots is classic']] },
+  addChat(d) { const C = this.cur; if (!C || C.runId !== world.runId || !d || !d.items) return; const U = Math.max(6, (d.users || []).length || 12), fmtT = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`, end = d.end ? d.end.R + 2.5 : 1e9;
+    const add = (t, l, i) => { if (t > end) return; d.items.push([Math.round(t * 100) / 100, Math.floor(Math.random() * U), 'x.gc.' + i, l[0].replace('{T}', fmtT(C.t)), l[1].replace('{T}', fmtT(C.t))]); };
+    const P = this.CM, base = C.pat === 5 ? C.t + 0.4 : C.t + C.len + 1, s1 = pick(P[0]); add(base, s1, 'a');
+    const sp = P[C.pat].slice().sort(() => Math.random() - 0.5).slice(0, 2); sp.forEach((l, i) => add(base + 1.2 + i * 1.4, l, 'b' + i)); add(base + 4.5, pick(P[9]), 'c');
+    d.items.sort((a, b) => a[0] - b[0]); },
+};
+setInterval(() => { try { GHOSTCUT.sample(); } catch (e) { } }, 500);
+{ const F0 = finalizeRec; finalizeRec = function () { try { GHOSTCUT.decide(); } catch (e) { console.warn(e); } return F0(...arguments); }; }
+{ const B1 = CHAT.build.bind(CHAT); CHAT.build = function (P) { const d = B1(P); try { GHOSTCUT.addChat(d); } catch (e) { } return d; }; }
+{ const R0 = VPLAY.run.bind(VPLAY); VPLAY.run = function () { R0(); if (this._gcLoop) return; this._gcLoop = true; const f = () => { try { if (this.shown && this.shown()) GHOSTCUT.draw(this); } catch (e) { } requestAnimationFrame(f); }; requestAnimationFrame(f); }; }
+Object.assign(AW_TABLE, { ghostCut: ['A', 70] }); COL.LIST.push(['ghostCut', '撮った覚えのない映像', 70]);
+CHIP_DESC.ghostCut = ['見返した動画に、撮った覚えのない短いカットが入っていた。…誰が撮ったの？', 'Rewatching the video, there was a short cut you don’t remember filming. …Who filmed it?'];
+AW_HINT.ghostCut = ['長く撮った動画を、あとで見返すと', 'rewatch a long video afterward'];
+TKTXT.ghostCut = [CHIP_DESC.ghostCut[0], '撮った■えのない■■', '見返した■■に、■った■えのない■いカットが入っていた。…■が撮ったの？'];
+Object.assign(EN, { '撮った覚えのない映像': 'Footage you never shot' });
+if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, GHOSTCUT, ROOMX, DIRX: DIR, EVX: EV, ARARE, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
