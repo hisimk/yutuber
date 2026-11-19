@@ -15064,7 +15064,7 @@ $('#goBtn').addEventListener('click', () => {
   HAZURE.roll();
   world.channel = ($('#chName').value || '').trim() || '心霊チャンネル';
   world.chRaw = ($('#chName').value || '').trim(); world.yomi = world.chRaw ? ($('#chYomi').value || '').trim() : '';
-  CHATLOG.reset(); world.chatRk = yrankIdx(ACH.load().total); world.chatM = YRANK[world.chatRk][3]; world.chatName = chatCallName(); world.chatNick = NICK.of(world.chRaw, world.yomi); world.chatLang = LANG;   // 2026-11-14 チャット：撮影開始時のランク倍率と呼び名をこの動画に固定
+  CHATLOG.reset(); world.chatRk = yrankIdx(ACH.load().total); world.chatM = YRANK[world.chatRk][3]; world.chatName = chatCallName(); world.chatNick = NICK.of(world.chRaw, world.yomi); try { world.chatNick3 = ENDCM.nick3(world.chRaw, world.yomi, world.chatNick); } catch (e) { world.chatNick3 = null; } world.chatLang = LANG;   // 2026-11-14 チャット：撮影開始時のランク倍率と呼び名をこの動画に固定
   NEWEV.decide(); PHAN.begin(); ENEMY.decide(); OUMA.decide(); MANN.reset(); WD.init(); WARP.reset(); VO.stopAll(); FIXCAM.reset(); CROUCH.reset(); UNDER.reset(); CALL.reset(); FDET.reset(); if (LID.list.length) LID.reset(); DIR.planRun(); OUMA.plan(); MINOR.reset(); SELF.reset(); MD.reset(); DOORS2.reset(); TAP.reset(); F2.reset(); SP.reset(); NEKO.reset(); OFUDA.reset(); ITEM.reset(); MAZE.after(); SNAKE.reset(); UWA.reset(); TEN.reset(); SHOP.beginRun(); GG.reset(); POLT.reset(); MF.reset(); STREETFIG.reset(); EXITF.reset(); STAY.reset(); RED.reset(); MG.reset();
   if (MIC30) CONFIG.recMaxSec = 30;   // 2026-11-14 開発用の30秒テスト（本番の120秒は変えない）
   $('#start').classList.remove('show');
@@ -15433,7 +15433,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.83';
+const VERSION = '0.17.84';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16111,7 +16111,12 @@ const CHATGEN = {
     // 結末（結果カードが映っている間だけ）
     if (end.ec) {
       const n = Math.max(1, Math.min(6, Math.round(N * 0.45)));
-      for (let i = 0; i < n; i++) { const t = end.R + 0.5 + i * (2.4 / n) + rnd2(0, 0.25); const cat = end.lost ? (end.capRec === false ? 'ending_cutoff' : pickR(['ending_capture', 'ending_capture', 'peril_slang'])) : pickR(['ending_return', 'ending_return', 'name_return', 'relief_short']); const x = line(cat, { end: !end.lost }); if (x) out.push([t, 'g', x, 9, end.R]); }
+      /* 2026-11-19 116番：無事に帰れた時、半分くらいの動画で「おつ○○〜」を1件（終わりの件数は増やさない）。117番：出だしが同じ言葉（おつ・おか など）が並ばないように */
+      const otsuI = !end.lost && o.nick && R() < ENDCM.CFG.otsu ? Math.floor(R() * n) : -1, pre = new Set();
+      for (let i = 0; i < n; i++) { const t = end.R + 0.5 + i * (2.4 / n) + rnd2(0, 0.25);
+        if (i === otsuI) { const x = ENDCM.otsu(o, R); if (x) { out.push([t, 'g', x, 9, end.R]); pre.add(x.ja.slice(0, 2)); continue; } }
+        let x = null; for (let k = 0; k < 3 && !x; k++) { const cat = end.lost ? (end.capRec === false ? 'ending_cutoff' : pickR(['ending_capture', 'ending_capture', 'peril_slang'])) : pickR(['ending_return', 'ending_return', 'name_return', 'relief_short']); const y = line(cat, { end: !end.lost }); if (y && !pre.has(y.ja) && (k === 2 || !pre.has(String(y.ja || '').slice(0, 2)))) x = y; }
+        if (x) { out.push([t, 'g', x, 9, end.R]); pre.add(String(x.ja || '').slice(0, 2)); pre.add(x.ja); } }
     }
     // 追跡中（映っている・聞こえる間）と、収まった後
     const spans = (k) => { const r = []; let on = null; for (const e of ev) if (e.k === k) { if (e.on && on === null) on = e.t; else if (!e.on && on !== null) { r.push([on, e.t]); on = null; } } if (on !== null) r.push([on, end.R]); return r; };
@@ -16275,8 +16280,8 @@ const CHAT = {
   cur: null,
   build(P) {
     if (!CHATLOG.end) CHATLOG.finish();
-    const d = { v: 3, dict: CHAT_DICT.v, seed: chatHash(world.runId || String(Date.now())), P, M: world.chatM || 1, rk: world.chatRk || 0, name: world.chatName ?? chatCallName(), nick: world.chatNick ?? null, lang: world.chatLang || LANG, segs: CHATLOG.segs.map(s => [Math.round(s[0] * 100) / 100, Math.round(s[1] * 100) / 100]), end: CHATLOG.end };
-    try { d.items = CHATGEN.make({ seed: d.seed, log: CHATLOG.ev, end: d.end, P, M: d.M, rk: d.rk, name: d.name, nick: d.nick }); d.users = null; } catch (e) { console.warn('チャットを作れませんでした', e); d.items = []; }
+    const d = { v: 3, dict: CHAT_DICT.v, seed: chatHash(world.runId || String(Date.now())), P, M: world.chatM || 1, rk: world.chatRk || 0, name: world.chatName ?? chatCallName(), nick: world.chatNick ?? null, nick3: world.chatNick3 ?? null, lang: world.chatLang || LANG, segs: CHATLOG.segs.map(s => [Math.round(s[0] * 100) / 100, Math.round(s[1] * 100) / 100]), end: CHATLOG.end };
+    try { d.items = CHATGEN.make({ seed: d.seed, log: CHATLOG.ev, end: d.end, P, M: d.M, rk: d.rk, name: d.name, nick: d.nick, nick3: d.nick3 }); d.users = null; } catch (e) { console.warn('チャットを作れませんでした', e); d.items = []; }
     // 話者の名前と色（生成と同じシードで並べ直す）
     d.users = CHAT.usersOf(d.seed, d.lang);
     try { KOK.chat(d); } catch (e) { console.warn('こっくりさんのコメント', e); }
@@ -22846,6 +22851,19 @@ const REP = {
   },
   ids(g, tr) { return (this.L[g] && this.L[g][tr] || []).map((x, i) => 'rp.' + g + '.' + tr + '.' + i); },
 };
+/* 2026-11-19 116番：終わりの「おつ○○〜」／117番：終わりのコメントを増やす */
+const ENDCM = {
+  CFG: { otsu: 0.5, three: 0.5 },   /* 無事に帰れた動画で「おつ○○〜」が出る割合／3音の名前の時に3音で呼ぶ割合 */
+  /* 下の名前のよみが3音なら、その3音（「こん○○〜」と同じ書き方：カタカナの人はカタカナ） */
+  nick3(raw, yomi, h) { if (!h) return null; const f = NICK.full(raw, yomi); if (!f || !f.g) return null; const g = NICK.hira(String(f.g)); if (!/^[ぁ-ゖー]+$/.test(g) || NICK.mora(g).length !== 3) return null; const out = /^[ァ-ヺー]+$/.test(h) ? NICK.kata(g) : g; return out === h ? null : out; },
+  otsu(o, R) { const n = o.nick3 && R() < this.CFG.three ? o.nick3 : o.nick; if (!n) return null;
+    const J = [`おつ${n}〜`, `おつ${n}`, `おつ${n}！`, `おつ${n}ー`, `おつ${n}でした`, `おつ${n}〜〜`], E = [`gg ${n}!`, `good work ${n}`, `otsu ${n}!`, `gg ${n}`, `nice one ${n}`, `otsu ${n}~`];
+    const i = Math.floor(R() * J.length); return { id: 'nick_otsu', ja: J[i], en: E[i] }; },
+};
+{ const add = (cat, pre, L) => { const ids = L.map((x, i) => pre + (i + 1)); L.forEach((x, i) => { CHAT_DICT.t[ids[i]] = x; }); CHAT_DICT.c[cat] = (CHAT_DICT.c[cat] || []).concat(ids); };
+  add('ending_return', 'context.ending_return.v117_', [['おつかれ！', 'good work!'], ['おつおつ', 'gg gg'], ['乙', 'gg'], ['おつでした', 'thanks for the video'], ['帰還おめ', 'congrats on getting back'], ['生きててえらい', 'proud of you for surviving'], ['今日も無事でなにより', 'glad you made it again today'], ['ちゃんと帰ってきた', 'you actually came back'], ['いい動画だった', 'good video'], ['最後までドキドキした', 'tense till the very end'], ['次も見る', 'watching the next one too'], ['ゆっくり休んで', 'get some rest']]);
+  add('name_return', 'short-name.name_return.v117_', [['{name}おつでした', 'good work, {name}'], ['{name}今日もありがとう', 'thanks again today, {name}'], ['{name}ゆっくり休んで', 'get some rest, {name}'], ['さすが{name}', 'that is our {name}']]);
+  add('ending_capture', 'context.ending_capture.v117_', [['お大事に…', 'take care...'], ['無茶しすぎ', 'you pushed it too far'], ['次はちゃんと帰ってこよう', 'come back safe next time'], ['救急車呼ぶ？', 'should we call an ambulance?'], ['最後まで撮っててえらい…', 'respect for filming till the end...'], ['見てて痛かった', 'that hurt to watch']]); }
 /* 2026-11-19 115番：動画の始めの「本編と関係ないコメント」（あいさつ・こん○○・1コメ争い・その返し・前回〜系）を減らす */
 const OPENCM = {
   CFG: { nick: 0.5, nameHello: 0.5, hello: 0.6, hello2: 0.3, c1p: [0.25, 0.04], c1n: [1, 1, 2, 2, 3, 4], c1re: 0.35,
@@ -26035,7 +26053,7 @@ CHIP_DESC.ghostCut = ['見返した動画に、撮った覚えのない短いカ
 AW_HINT.ghostCut = ['長く撮った動画を、あとで見返すと', 'rewatch a long video afterward'];
 TKTXT.ghostCut = [CHIP_DESC.ghostCut[0], '撮った■えのない■■', '見返した■■に、■った■えのない■いカットが入っていた。…■が撮ったの？'];
 Object.assign(EN, { '撮った覚えのない映像': 'Footage you never shot' });
-if (TEST && window.__G) Object.assign(window.__G, { XEXT2, OPENCM, GOAL, REP, XCHAT, CHATLOG, NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, GHOSTCUT, ROOMX, DIRX: DIR, EVX: EV, ARARE, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
+if (TEST && window.__G) Object.assign(window.__G, { ENDCM, XEXT2, OPENCM, GOAL, REP, XCHAT, CHATLOG, NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, GHOSTCUT, ROOMX, DIRX: DIR, EVX: EV, ARARE, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
