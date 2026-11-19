@@ -4347,7 +4347,7 @@ const NOWIND = true;   // 2026-11-16 風の音（割れた窓・2階の非常口
 const OUMA_MATS = { sky: [], pool: [] };   // 2026-11-16 逢魔が時に色を変える物（窓の外の空・床の月明かり）
 const NOSG = false, SG_CUT = true, NOSG_AW = ['mirrorDoor', 'mirrorGiant', 'cornerFace', 'mirrorFlash'];
 /* 2026-11-20 撮れ高テストのFB：消す撮れ高（29個）。撮れ高は付かず、コレクション・メモ・テストの一覧からも外す。現象だけのものは現象も止める（AWDEL.off）。もう撮った人の記録は残したまま */
-const AW_DEL = ['mirrorLag', 'drainEye', 'mirrorGirl', 'peek', 'boardLunge', 'smudge', 'fireFace', 'slideCreep', 'f2stairFace', 'f2fall', 'f2libChair', 'ductHand', 'ceilingDrop', 'fireExit', 'winSneak', 'tubeFlick', 'f2turnFace', 'battery1', 'chaseSelfie', 'micRunScream', 'turnFace', 'spHead', 'spDescend', 'urahReach', 'urahPeek', 'urahSlip', 'matador', 'tapRun'];
+const AW_DEL = ['micLate', 'mirrorLag', 'drainEye', 'mirrorGirl', 'peek', 'boardLunge', 'smudge', 'fireFace', 'slideCreep', 'f2stairFace', 'f2fall', 'f2libChair', 'ductHand', 'ceilingDrop', 'fireExit', 'winSneak', 'tubeFlick', 'f2turnFace', 'battery1', 'chaseSelfie', 'micRunScream', 'turnFace', 'spHead', 'spDescend', 'urahReach', 'urahPeek', 'urahSlip', 'matador', 'tapRun'];
 const awDel = k => AW_DEL.includes(String(k)) || AW_DEL.includes(String(k).replace(/\d+$/, ''));   /* 番号つき（mirrorGirl1 など）も */   /* 2026-11-19 142番：11/16に止めていた逆さ女の驚かしのうち5つ（トイレの個室・ノックのあと振り向き・クマのあと振り向き・階段の顔・インカメラの肩越し）はもどした。SG_CUT＝消した3つ（鏡の戸と巨大な顔・鏡のまたたき・角の先の顔）。NOSG_AW＝消した撮れ高（コレクション・メモ・撮れ高テストから外す。撮った記録は残す） */
 const player = { x: 0, z: 3.4, y: 0, lv: 0, camY: 0, yaw: 0, pitch: 0, speed: 0, stepAcc: 0, stillT: 0, bob: 0, walked: 0, turnAcc: 0, lastYaw: 0 };
 const look = { yaw: 0, pitch: 0 };
@@ -14484,7 +14484,7 @@ const VOICE = {
       const a = T - E.t;
       if (!E.sl) {
         if (this.onset && a <= 2) { E.sl = E.ldPre < 0.05 ? 'scream' : 'x'; if (E.sl === 'scream') this.give('micScream', T); }
-        else if (this.onset && a > 2 && a <= 5) { if (this.sum('sp', E.t, E.t + 2) <= 0.3 && okAll(E.t, T)) { E.sl = 'late'; this.give('micLate', T); } else E.sl = 'x'; }
+        else if (this.onset && a > 2) { E.sl = 'x'; }   /* 2026-11-20 158番：「遅れてくる恐怖」は消した */
         else if (a > 5) E.sl = 'none';
       }
       if (!E.sd && a >= 6) { E.sd = true; const s = this.sum('sp', E.t + 1, E.t + 6); if (E.pre5 >= 3 && s <= 0.05 && okAll(E.t - 5, E.t + 6)) this.give('micSilent', T); else W.micSilent = `遭遇${E.t.toFixed(1)}s: 前5秒の発話${E.pre5.toFixed(1)}s(要3) 後1〜6秒の発話${s.toFixed(1)}s(要0) マイク${okAll(E.t - 5, E.t + 6) ? '正常' : '途切れ'}`; }
@@ -14495,7 +14495,7 @@ const VOICE = {
         else if (E.r === 1) { let safe = false; if (!this.chase) { try { safe = !CHATLOG.threat(); } catch (e) { } } if (spNow) { E.r = -1; W.micResume = `遭遇${E.t.toFixed(1)}s: 安全になる前に話した`; } else if (safe) { if (E.sf0 === undefined) E.sf0 = T; if (T - E.sf0 >= 3) { E.r = 2; E.ts = T; } } else E.sf0 = undefined; if (a > 60) E.r = -1; if (E.r === 1) W.micResume = `遭遇${E.t.toFixed(1)}s: 黙った・安全待ち${E.sf0 !== undefined ? (T - E.sf0).toFixed(1) + '/3s' : ''}`; }
         else if (E.r === 2) { const s = this.sum('sp', E.ts, T); if (s >= 2) { E.r = 9; this.give('micResume', T); } else if (T - E.ts > 10) { E.r = -1; W.micResume = `遭遇${E.t.toFixed(1)}s: 安全後10秒で${s.toFixed(1)}s(要2)`; } else W.micResume = `安全後の発話 ${s.toFixed(1)}/2s`; }
       }
-      if (!E.sl) W.micScream = W.micLate = `遭遇${E.t.toFixed(1)}s から${a.toFixed(1)}s 大声待ち（0〜2秒＝悲鳴一閃／2〜5秒＝遅れてくる恐怖・最初の2秒の発話${this.sum('sp', E.t, Math.min(T, E.t + 2)).toFixed(1)}s）`;
+      if (!E.sl) W.micScream = `遭遇${E.t.toFixed(1)}s から${a.toFixed(1)}s 大声待ち（0〜2秒＝悲鳴一閃）`;
     }
     this.enc = this.enc.filter(E => !(E.sl && E.sd && (E.r < 0 || E.r === 9)) && T - E.t < 90);
     if (!this.enc.length) { if (!this.got.micScream) W.micScream = W.micScream || '怪異が十分に映っていない'; }
@@ -15620,7 +15620,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.59';
+const VERSION = '0.18.60';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16380,7 +16380,7 @@ const CHATGEN = {
       if (len > 30 && R() < 0.25) cand.push(rnd2(10, len - 5));
       let n = 0, lt = -99; for (const t of cand.sort((a, b) => a - b)) { if (n >= 2 || t - lt < 20 || t > end.R - 0.3) continue; bg.push([t, 'kuru', 21]); n++; lt = t; } }
     // 2026-11-14 マイク系の撮れ高への反応（完成動画で聞こえる声を根拠に。条件が成立してから 0.4〜1.5秒後）
-    { const MC = { micLoud: 'mic_loud_voice', micScream: 'mic_scream', micLate: 'mic_late', micRunScream: 'mic_runscream', micChaseTalk: 'mic_chasetalk', micHideLoud: 'mic_hideloud', micHideTalk: 'mic_hidetalk', micQuiet: 'mic_quiet', micHush: 'mic_hush', micSilent: 'mic_silent_a', micResume: 'mic_resume' };
+    { const MC = { micLoud: 'mic_loud_voice', micScream: 'mic_scream', micRunScream: 'mic_runscream', micChaseTalk: 'mic_chasetalk', micHideLoud: 'mic_hideloud', micHideTalk: 'mic_hidetalk', micQuiet: 'mic_quiet', micHush: 'mic_hush', micSilent: 'mic_silent_a', micResume: 'mic_resume' };
       const spk = ev.filter(e => e.k === 'spk'), talkingAt = t => { let on = false; for (const e of spk) { if (e.t > t) break; on = !!e.on; } return on; };
       for (const e of ev) { if (e.k !== 'mic') continue; const a = e.a;
         if (a === 'micNonstop') {   // 動画の後半、実況が続いている所で
