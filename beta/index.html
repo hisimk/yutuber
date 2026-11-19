@@ -397,7 +397,7 @@
   #endTx .enR{display:flex;justify-content:space-between;gap:12px;padding:9px 4px;border-bottom:1px solid rgba(255,235,200,.25);font-size:15px}#endTx .enR b{color:#ffe1a0;font-weight:800}
   #endTx .enTY{font-size:30px;font-weight:800;letter-spacing:.04em}#endTx .enM img{width:112px;height:112px;display:block;margin:0 auto 12px;image-rendering:pixelated}#endTx .enLogo{display:block;width:min(calc(var(--vw, 1vw) * 30),120px);margin:6px auto 0;filter:drop-shadow(0 2px 8px rgba(0,0,0,.8))}#endTx .enM div{font-size:22px;letter-spacing:.14em}
   #endCm{position:absolute;left:0;right:0;top:0;padding:calc(54px + env(safe-area-inset-top)) 16px 26px;background:linear-gradient(rgba(0,0,0,.62),rgba(0,0,0,.35) 75%,rgba(0,0,0,0));opacity:0;transition:opacity .6s;display:flex;flex-direction:column;gap:5px;pointer-events:none}#endCm.on{opacity:1}
-  #endCm .ec{color:#fff;font-size:13px;line-height:1.35;text-shadow:0 1px 3px #000;animation:ecIn .3s ease-out}#endCm .ec i{font-style:normal;color:#9fd0ff;margin-right:6px;font-size:11.5px}#endCm .ec i.eu{display:inline-block;width:15px;height:15px;margin:0 7px -3px 0;border-radius:50%;background:#8a8f96 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='6' r='3' fill='%23e8e8e8'/%3E%3Cpath d='M2.5 15c.6-3.2 2.8-4.8 5.5-4.8s4.9 1.6 5.5 4.8z' fill='%23e8e8e8'/%3E%3C/svg%3E") center/100% no-repeat}#endTx.low{top:auto;bottom:calc(11% + env(safe-area-inset-bottom));transform:none;padding:14px 4px 10px;text-shadow:0 1px 3px #000,0 0 12px rgba(0,0,0,.95)}#endTx .enCat{display:block;width:75px;height:75px;margin:14px auto 0;image-rendering:pixelated}#endTx .enShot{margin-bottom:18px}#endTx .enShot small{display:block;font-size:20px;font-weight:800;letter-spacing:.12em;color:#ffe7b0;margin-bottom:16px}#endTx .enShot b{display:block;font-size:24px;font-weight:700;letter-spacing:.06em}#endHint{position:absolute;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom));text-align:center;color:#e8e2d6;font-size:12.5px;opacity:0;transition:opacity .8s;pointer-events:none;text-shadow:0 1px 4px #000}#endHint.on{opacity:.85}@keyframes ecIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  #endCm .ec{color:#fff;font-size:13px;line-height:1.35;text-shadow:0 1px 3px #000;animation:ecIn .3s ease-out}#endCm .ec i{font-style:normal;color:#9fd0ff;margin-right:6px;font-size:11.5px}#endCm .ec i.eu{display:inline-block;width:15px;height:15px;margin:0 7px -3px 0;border-radius:50%;background:#8a8f96 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='6' r='3' fill='%23e8e8e8'/%3E%3Cpath d='M2.5 15c.6-3.2 2.8-4.8 5.5-4.8s4.9 1.6 5.5 4.8z' fill='%23e8e8e8'/%3E%3C/svg%3E") center/100% no-repeat}#endTx.low{top:auto;bottom:calc(11% + env(safe-area-inset-bottom));transform:none;padding:14px 4px 10px;text-shadow:0 1px 3px #000,0 0 12px rgba(0,0,0,.95)}#endTx .enCat{display:block;width:75px;height:75px;margin:14px auto 0;image-rendering:pixelated}#endTx .enShot{margin-bottom:0}#endTx .enShot small{display:block;font-size:20px;font-weight:800;letter-spacing:.12em;color:#ffe7b0;margin-bottom:16px}#endTx .enShot b{display:block;font-size:24px;font-weight:700;letter-spacing:.06em}#endHint{position:absolute;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom));text-align:center;color:#e8e2d6;font-size:12.5px;opacity:0;transition:opacity .8s;pointer-events:none;text-shadow:0 1px 4px #000}#endHint.on{opacity:.85}@keyframes ecIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   #endUI video{filter:brightness(.82)}
   #endFade{position:absolute;inset:0;background:#000;opacity:0;transition:opacity .8s;pointer-events:none}#endFade.on{opacity:1}
   #endSkip{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;padding:6px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.35);color:#ddd;font-size:12px;opacity:0;transition:opacity .6s;pointer-events:none}#endSkip.on{opacity:.8;pointer-events:auto}
@@ -965,7 +965,7 @@
       <div class="opt col volX" id="setVolBgmRow"><div class="optTop"><div>BGM<small>追跡の曲・結果画面の曲・エンディングの曲など</small></div><div class="val" id="vBgmVal">100%</div></div><input class="rng" id="vBgm" data-k="bgm" type="range" min="0" max="100" step="5" value="100"></div>
       <div class="opt col volX" id="setVolFxRow"><div class="optTop"><div>効果音<small>足音・怪異の声・物が壊れる音・環境音など</small></div><div class="val" id="vFxVal">100%</div></div><input class="rng" id="vFx" data-k="fx" type="range" min="0" max="100" step="5" value="100"></div>
       <div class="opt col volX" id="setVolUiRow"><div class="optTop"><div>画面の操作音<small>ボタン・メニューの音（動かすと試しに鳴ります）</small></div><div class="val" id="vUiVal">100%</div></div><input class="rng" id="vUi" data-k="ui" type="range" min="0" max="100" step="5" value="100"></div>
-      <div class="opt col" id="setSensRow"><div class="optTop"><div>視点を動かす速さ<small>なぞった時・ドラッグした時の回りやすさ</small></div><div class="val" id="sensVal">×1.0</div></div><input class="rng" id="sensRange" type="range" min="0.4" max="2" step="0.1" value="1"></div>
+      <div class="opt col" id="setSensRow"><div class="optTop"><div>視点を動かす速さ<small>なぞった時・ドラッグした時の回りやすさ</small></div><div class="val" id="sensVal">×1.0</div></div><input class="rng" id="sensRange" type="range" min="0.3" max="3" step="0.1" value="1"></div>
       <div class="opt col" id="setGsRow"><div class="optTop"><div>ジャイロの感度<small>スマホを動かした時の、視点の動く量</small></div><div class="val" id="gsVal">×1.0</div></div><input class="rng" id="gsRange" type="range" min="0.5" max="2" step="0.1" value="1"></div>
       <div class="opt" id="setFearRow"><div>怖さ<small>「小」にすると、ジャンプスケアの描写と、取得できる撮れ高が減ります。</small></div><div class="seg" id="fearSeg"><button data-f="lo">小</button><button data-f="hi">大</button></div></div>
       <div class="opt" id="setDiffRow"><div>難易度<small>ハード：怪異が早く出て足も速く、隠れていても見つかりやすい。怪異に声でも気づかれるようになります。報酬1.2倍。</small></div><div class="seg" id="diffSeg"><button data-d="normal">ふつう</button><button data-d="hard">ハード</button></div></div>
@@ -1549,6 +1549,7 @@ function plane(w, h, mat, x, y, z, ry = 0, rx = 0, o = {}) {
 }
 
 /* ---------- 言語（日本語／English）：画面の文言は T() で英語に置き換える。英語の表が無い文言は日本語のまま ---------- */
+const SENS_BASE = 0.4;   /* 2026-11-19 視点を動かす速さ：設定の×1.0＝前の×0.4（本人がちょうどよいと感じた速さ） */
 let LANG = 'ja'; try { const l = localStorage.getItem('yt_lang'); if (l === 'en' || l === 'ja') LANG = l; } catch (e) { }
 const EN = {
   '机の陰で息を殺す': 'Holding your breath behind a desk', '神回の動画を端末に残す': 'Keep top-episode videos on this device', '動画はこの端末の中だけに保存され、外部には送られません。1本あたり最大で約50MBです。': 'Videos are stored only on this device and never sent anywhere. Up to about 50 MB each.', '動画はこの端末の中だけに保存され、外部には送られません。': 'Videos are stored only on this device and never sent anywhere.', '1本あたり最大で約50MBです。': 'Up to about 50 MB each.', '上位3位まで': 'Top 3', '1位だけ': 'Top 1 only', '残さない': "Don't keep", '保存している動画はありません': 'No saved videos', 'この動画を消す': 'Delete this video', 'この回の動画を消しますか？': 'Delete the video for this episode?', '内訳は残ります。': 'The breakdown will stay.', 'やめる': 'Cancel', '消す': 'Delete', '動画は残さない設定です（設定で変えられます）': 'Videos are set not to be kept (you can change this in Settings)', '端末の空きが少なめです': 'Your device is low on space', '神回の動画は1本あたり最大で約50MBです。空きが足りない時は、動画を保存せずに内訳だけ残します。「1位だけ」か「残さない」にすると安心です。': 'Each top-episode video can be up to about 50 MB. If space runs short, only the breakdown is kept. "Top 1 only" or "Don\'t keep" is safer.', 'このまま': 'Keep as is', '1位だけにする': 'Switch to Top 1 only', '動画を保存できませんでした': "Couldn't save the video", '端末の空きが足りないため、この回の動画は保存していません（内訳とランキングは残っています）。設定の「神回の動画を端末に残す」で本数を減らすと、空きが増えます。': 'There wasn\'t enough space, so this episode\'s video wasn\'t saved (the breakdown and ranking are kept). Keeping fewer videos in Settings frees up space.', 'ベッドの下にもぐる': 'Under the bed', 'ピアノの下にもぐる': 'Under the piano', 'ベッドの下でやり過ごす': 'Waited it out under the bed', 'ピアノの下でやり過ごす': 'Waited it out under the piano', 'やり過ごしたはずの逆さの顔': 'The upside-down face, after it left', '非通知の着信に出た': 'Answered an unknown caller', 'いま、あなたのうしろにいるの': "I'm right behind you now", '振り返ると電話の主': 'Turned around, and she was there', '誰もいない場所に顔を検出': 'A face detected where no one is', '大量に検出された顔': 'Faces detected everywhere', '出る': 'Get out', '窓の下をくぐり抜ける': 'Sneaking under the windows', 'もはや筋トレ動画': 'Basically a workout video now', 'しゃがむ': 'Crouch', '立つ': 'Stand', 'しゃがむ・立つ': 'Crouch / stand', 'しゃがむと窓の下や机の陰に隠れられます': 'Crouch to hide below windows or behind desks',
@@ -4297,7 +4298,7 @@ const MLOCK = {
 };
 addEventListener('mousemove', e => {
   if (!MLOCK.on()) return;
-  const s = CONFIG.lookSens * CONFIG.mouseLookMul * (typeof opt !== 'undefined' && opt.sens || 1) / Math.max(0.8, Math.sqrt(zoom));
+  const s = CONFIG.lookSens * CONFIG.mouseLookMul * (typeof opt !== 'undefined' && opt.sens || 1) * SENS_BASE / Math.max(0.8, Math.sqrt(zoom));
   look.yaw -= e.movementX * s; look.pitch = clamp(look.pitch - e.movementY * s, -1.54, 1.54);
 });
 setInterval(() => {
@@ -4324,7 +4325,7 @@ const CURHIDE = { t: 0, set(v) { document.documentElement.classList.toggle('curH
 addEventListener('mousemove', e => {
   const fr = PCLOOK.free(e); if (FRAME.on) CURHIDE.move(fr);
   if (!fr || e.buttons) return;   // ドラッグ中はドラッグの見回しだけ
-  const s = CONFIG.lookSens * CONFIG.mouseLookMul * (typeof opt !== 'undefined' && opt.sens || 1) / Math.max(0.8, Math.sqrt(zoom));
+  const s = CONFIG.lookSens * CONFIG.mouseLookMul * (typeof opt !== 'undefined' && opt.sens || 1) * SENS_BASE / Math.max(0.8, Math.sqrt(zoom));
   look.yaw -= e.movementX * s; look.pitch = clamp(look.pitch - e.movementY * s, -1.54, 1.54);
 });
 document.addEventListener('mouseleave', () => { PCLOOK.edge = 0; }); addEventListener('blur', () => { PCLOOK.edge = 0; });
@@ -4349,7 +4350,7 @@ touchEl.addEventListener('pointermove', e => {
     let vx = (x - stickO.x) / 52, vy = (y - stickO.y) / 52; const m = Math.hypot(vx, vy); if (m > 1) { vx /= m; vy /= m; }
     input.sx = vx; input.sy = vy; knob.style.transform = `translate(${vx * 36}px,${vy * 36}px)`;
   } else if (p.role === 'look') {
-    const s = CONFIG.lookSens * (typeof opt !== 'undefined' && opt.sens || 1) * (e.pointerType === 'touch' ? CONFIG.touchLookMul : 1) / Math.max(0.8, Math.sqrt(zoom));
+    const s = CONFIG.lookSens * (typeof opt !== 'undefined' && opt.sens || 1) * SENS_BASE * (e.pointerType === 'touch' ? CONFIG.touchLookMul : 1) / Math.max(0.8, Math.sqrt(zoom));
     look.yaw -= dx * s; look.pitch = clamp(look.pitch - dy * s, -1.54, 1.54);
   }
 }, { passive: false });
@@ -14052,10 +14053,10 @@ try {
   const sv = JSON.parse(localStorage.getItem('yt_settings') || '{}');
   // 2026-11-13 ジャイロと実況マイクは最初からオン（PCにジャイロはないのでオフ）。この版より前に保存した設定も一度だけ新しい初期値にそろえる
   if (sv.v === 2) { opt.gyro = !!sv.gyro; opt.mic = !!sv.mic; } else { opt.gyro = !FRAME.on; opt.mic = true; } if (typeof sv.bright === 'number') opt.bright = sv.bv === 2 ? sv.bright : Math.max(-5, Math.min(5, sv.bright + 2));   /* 前の目盛りで保存した値は、見た目の明るさが変わらないよう+2して引き継ぐ */
-  if (typeof sv.tilt === 'boolean') opt.tilt = sv.tilt; if (typeof sv.vol === 'number') opt.vol = clamp(sv.vol, 0, 1); for (const k of ['bgm', 'fx', 'ui']) if (typeof sv['v_' + k] === 'number') opt['v_' + k] = clamp(sv['v_' + k], 0, 1); if (typeof sv.sens === 'number') opt.sens = clamp(sv.sens, 0.4, 2); if (typeof sv.gsens === 'number') opt.gsens = clamp(sv.gsens, 0.5, 2);
+  if (typeof sv.tilt === 'boolean') opt.tilt = sv.tilt; if (typeof sv.vol === 'number') opt.vol = clamp(sv.vol, 0, 1); for (const k of ['bgm', 'fx', 'ui']) if (typeof sv['v_' + k] === 'number') opt['v_' + k] = clamp(sv['v_' + k], 0, 1); if (typeof sv.sens === 'number') opt.sens = sv.sensV === 2 ? clamp(sv.sens, 0.3, 3) : (sv.sens === 1 ? 1 : clamp(sv.sens / SENS_BASE, 0.3, 3));   /* 2026-11-19 前の×0.4を新しい×1.0に（前の値は ÷0.4 で引きつぐ。さわっていない×1.0は新しい×1.0） */ if (typeof sv.gsens === 'number') opt.gsens = clamp(sv.gsens, 0.5, 2);
   /* 2026-11-17 音の出力先の設定はなくした（パソコン・ブラウザの設定で変える）。前に選んだ出力も使わない */ if (sv.midi) opt.midi = true; if (typeof sv.midiIn === 'string') opt.midiIn = sv.midiIn; if (sv.screen === 'full') opt.screen = 'full'; if (sv.quality === 'lite') opt.quality = 'lite'; if (sv.fps === 60) opt.fps = 60;
 } catch (e) { }
-function saveOpts() { try { localStorage.setItem('yt_settings', JSON.stringify({ v: 2, bv: 2, gyro: opt.gyro, tilt: opt.tilt, mic: opt.mic, bright: opt.bright, vol: opt.vol, v_bgm: opt.v_bgm ?? 1, v_fx: opt.v_fx ?? 1, v_ui: opt.v_ui ?? 1, sens: opt.sens, gsens: opt.gsens ?? 1, sink: opt.sink, midi: opt.midi, midiIn: opt.midiIn, screen: opt.screen, quality: opt.quality, fps: opt.fps })); } catch (e) { } }
+function saveOpts() { try { localStorage.setItem('yt_settings', JSON.stringify({ v: 2, bv: 2, gyro: opt.gyro, tilt: opt.tilt, mic: opt.mic, bright: opt.bright, vol: opt.vol, v_bgm: opt.v_bgm ?? 1, v_fx: opt.v_fx ?? 1, v_ui: opt.v_ui ?? 1, sens: opt.sens, sensV: 2, gsens: opt.gsens ?? 1, sink: opt.sink, midi: opt.midi, midiIn: opt.midiIn, screen: opt.screen, quality: opt.quality, fps: opt.fps })); } catch (e) { } }
 const brightK = v => Math.pow(1.09, v - 2);   /* 2026-11-17 本人の判断：前の「-2」の明るさを、新しい「0」（基準）に */   // 明るさ：-5〜+5 の段階 → 画面の中間の明るさの持ち上げ量
 postMat.uniforms.bright.value = brightK(opt.bright);
 /* 2026-11-14 画質：標準／軽い（重いPC向け）。軽い＝描画の解像度を下げ、影を切り、ぼかしの回数を減らす。
@@ -15461,7 +15462,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.99';
+const VERSION = '0.18.00';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -21686,7 +21687,7 @@ Object.assign(URFUDA, {
   revTick(dt) {
     const R = this.rv; if (!R) return; R.t += dt; const U = URAH, up = U.pos.clone(), dir = V(up.x - R.p.x, 0, up.z - R.p.z); const d = Math.max(0.01, dir.length()); dir.multiplyScalar(1 / d);
     /* 撮れていれば「最高の撮れ高」 */
-    if (rec.active && (seen(U.head('noh'), { maxD: 16, margin: 1.15 }) || seen(sgHead(V()), { maxD: 16, margin: 1.15 }))) { R.seenT += dt; if (R.seenT > 3) award('urahRevenge', '最高の撮れ高', 1000); }
+    if (rec.active && (seen(U.head('noh'), { maxD: 16, margin: 1.15 }) || seen(sgHead(V()), { maxD: 16, margin: 1.15 }))) { R.seenT += dt; if (R.seenT > 3) STATS.fixClear(), award('urahRevenge', '最高の撮れ高', 1000); }
     if (R.ph === 'turn') {   /* 2026-11-18 73番：その場でくるっと振り返る（約0.6秒）→ すぐ体当たりへ */
       const k = smooth(0.1, 0.7, R.t), ty = Math.atan2(dir.x, dir.z); let dy = ty - R.y0; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
       SG.root.position.copy(R.p); SG.root.rotation.set(0, R.y0 + dy * k, Math.sin(R.t * 17) * 0.04); WD.pos.copy(R.p);
@@ -22414,6 +22415,8 @@ const STATS = {
     d.seal += [world.sealedWoman, world.sealedSpider, world.sealedMann].filter(Boolean).length;
     const met = []; if (world.phanRun) met.push('naka'); else if (world.enemy1) met.push(world.enemy1); if (URAH.on && world.urahSeen) met.push('urah'); for (const k of met) d.met[k] = (d.met[k] | 0) + 1; this.save(); },
   /* 2026-11-19 124番：総プレイ時間（play・秒）。校舎の中で遊んでいる間（world.state が 'play'）だけ数える。clear＝初めてエンディングが流れた時の総プレイ時間（固定） */
+  /* 2026-11-19 オフタリサマを倒した瞬間に、クリアにかかった時間を止める（初めての時だけ） */
+  fixClear() { try { const d = this.load(); if (d.clear == null && localStorage.getItem(ENDING.KEY) !== '1') { d.clear = d.play || 0; this.save(); } } catch (e) { } },
   hm(s, en) { s = Math.round(s || 0); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60; return h ? `${h}${en ? 'h ' : '時間'}${m}${en ? 'm' : '分'}` : `${m}${en ? 'm ' : '分'}${ss}${en ? 's' : '秒'}`; },
   first() { const d = this.load(); let t = d.first; try { for (const b of ACH.load().best) { const x = Date.parse(b.d); if (x && x < t) t = x; } const c = COL.load(); for (const k in c.items) { const x = Date.parse(c.items[k].first); if (x && x < t) t = x; } } catch (e) { } return t; },
 };
@@ -22446,7 +22449,7 @@ const ENDING = {
       : [['累計いいね数', N(a.total)], ['流れたコメントの総数', N(d.cm) + '件'], ['合計の撮影時間', hm(d.rec)], ['撮影した本数', N(d.vids) + '本'], ['撮れ高コレクション', `${got} / ${COL.LIST.length}種`], ['一番伸びた動画', N(bestN) + 'いいね'], ['稼いだお金の合計', N(d.yen) + '円'], ['捕まった回数', N(d.cap) + '回'], ['封印した怪異の数', N(d.seal) + '体'], ['初投稿からの日数', N(days) + '日']];
     const head = `<div class="enH">${en ? 'Your record' : 'これまでの記録'}</div>`, pages = []; for (const [i, n] of [[0, 3], [3, 3], [6, 2], [8, 2]]) pages.push(head + R.slice(i, i + n).map(([k, v]) => `<div class="enR"><span>${k}</span><b>${v}</b></div>`).join(''));
     /* 2026-11-19 124番：最後のページにクリアまでのプレイ時間（クリア前に見た時は、その時の総プレイ時間） */
-    { const cl = d.clear != null; pages.push(`<div class="enH">${cl ? (en ? 'Time to clear' : 'クリアまでのプレイ時間') : (en ? 'Total play time' : 'これまでのプレイ時間')}</div><div class="enBig">${STATS.hm(cl ? d.clear : d.play, en)}</div>`); }
+    { const cl = this.real && d.clear != null; pages.push(`<div class="enH">${cl ? (en ? 'Time to clear' : 'クリアにかかった時間') : (en ? 'Total play time' : 'これまでのプレイ時間')}</div><div class="enBig">${STATS.hm(cl ? d.clear : d.play, en)}</div>`); }   /* 2026-11-19 倒した時のエンディング＝クリアにかかった時間／設定から見た時＝これまでのプレイ時間 */
     return pages; },
   cat() { if (ENDING_CAT) return ENDING_CAT; const c = document.createElement('canvas'); c.width = c.height = 160; const g = c.getContext('2d'); g.fillStyle = '#f2ece2'; g.beginPath(); g.moveTo(34, 62); g.lineTo(46, 20); g.lineTo(70, 46); g.lineTo(90, 46); g.lineTo(114, 20); g.lineTo(126, 62); g.quadraticCurveTo(140, 130, 80, 138); g.quadraticCurveTo(20, 130, 34, 62); g.fill(); g.fillStyle = '#2a2420'; for (const x of [62, 98]) { g.beginPath(); g.ellipse(x, 84, 5, 7, 0, 0, 7); g.fill(); } g.beginPath(); g.moveTo(76, 100); g.lineTo(84, 100); g.lineTo(80, 105); g.fill(); g.strokeStyle = '#2a2420'; g.lineWidth = 2; g.beginPath(); g.moveTo(80, 105); g.quadraticCurveTo(74, 113, 68, 108); g.moveTo(80, 105); g.quadraticCurveTo(86, 113, 92, 108); g.stroke(); return c.toDataURL(); },
   music() { try { if (!A.ctx) initAudio(); const ctx = A.ctx; ctx.resume && ctx.resume(); const out = ctx.createGain(); out.gain.value = 0.75; out.connect(VOLX.bgmSpk()); this.mg = out;   /* 2026-11-17 曲は学校の音（A.master）を通さない */ this.srcs = [];   /* 2026-11-17 エンディング曲（提供・約63秒）を1回だけ */
@@ -22479,9 +22482,9 @@ const ENDING = {
   /* 2026-11-17 学校の映像を指（なぞる）やジャイロで見回せる。場面が変わると正面に戻る */
   look(el) { const L = this.lk = { y: 0, p: 0, dy: 0, dp: 0, i: -1, g0: null, down: null };
     el.addEventListener('pointerdown', e => { if (e.target.id === 'endSkip') return; L.down = { x: e.clientX, y: e.clientY, dy: L.dy, dp: L.dp }; });
-    el.addEventListener('pointermove', e => { if (!L.down) return; const k = 3.2 / Math.max(320, innerWidth); L.dy = L.down.dy + (e.clientX - L.down.x) * k; L.dp = clamp(L.down.dp + (e.clientY - L.down.y) * k, -0.9, 0.9); });
-    for (const t of ['pointerup', 'pointercancel', 'pointerleave']) el.addEventListener(t, () => { L.down = null; });
-    const h = document.createElement('div'); h.id = 'endHint'; h.textContent = LANG === 'en' ? (gyro.on ? 'Look around by moving your phone or dragging' : 'Drag to look around') : (gyro.on ? 'スマホを動かすか、指でなぞると見回せます' : (matchMedia('(pointer: coarse)').matches ? '指でなぞると見回せます' : 'ドラッグで見回せます')); /* 2026-11-17 「指でなぞると見回せます」は出さない */ },
+    el.addEventListener('pointermove', e => { if (!L.down && e.pointerType === 'mouse') { const r = el.getBoundingClientRect(), nx = clamp((e.clientX - r.left) / Math.max(1, r.width) * 2 - 1, -1, 1), ny = clamp((e.clientY - r.top) / Math.max(1, r.height) * 2 - 1, -1, 1); L.dy = -nx * 1.1; L.dp = clamp(-ny * 0.55, -0.9, 0.9); return; }   /* 2026-11-19 PC：クリックしなくても、マウスのある方を見る */ if (!L.down) return; const k = 3.2 / Math.max(320, innerWidth); L.dy = L.down.dy + (e.clientX - L.down.x) * k; L.dp = clamp(L.down.dp + (e.clientY - L.down.y) * k, -0.9, 0.9); });
+    for (const t of ['pointerup', 'pointercancel', 'pointerleave']) el.addEventListener(t, e => { L.down = null; if (t === 'pointerleave' && e.pointerType === 'mouse') { L.dy = 0; L.dp = 0; } });
+    const h = document.createElement('div'); h.id = 'endHint'; h.textContent = LANG === 'en' ? (gyro.on ? 'Look around by moving your phone or dragging' : matchMedia('(pointer: coarse)').matches ? 'Drag to look around' : 'Move the mouse to look around') : (gyro.on ? 'スマホを動かすか、指でなぞると見回せます' : (matchMedia('(pointer: coarse)').matches ? '指でなぞると見回せます' : 'マウスを動かすと見回せます')); /* 2026-11-17 「指でなぞると見回せます」は出さない */ },
   lookApply() { const L = this.lk; if (!L) return; if (L.i !== TOUR.i) { L.i = TOUR.i; L.dy = L.dp = 0; L.g0 = null; L.down = null; }
     let gy = 0, gp = 0; if (gyro.on && gyro.got) { if (!L.g0) L.g0 = { a: gyro.acc, p: gyro.pitch || 0 }; gy = gyro.acc - L.g0.a; gp = (gyro.pitch || 0) - L.g0.p; }
     L.y += (L.dy + gy - L.y) * 0.18; L.p += (clamp(L.dp + gp, -0.9, 0.9) - L.p) * 0.18; camera.rotation.y += L.y; camera.rotation.x = clamp(camera.rotation.x + L.p, -1.15, 1.15); camera.updateMatrixWorld(); },
@@ -22513,8 +22516,8 @@ const ENDING = {
     if (!list) return; const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
     for (const c of list.slice(0, 40)) this.cmT.push(setTimeout(() => { const d = document.createElement('div'); d.className = 'ec'; d.innerHTML = `<i class="eu"></i>` + esc(c.s);   /* 2026-11-17 名前は出さない（人のアイコンとコメントだけ） */ el.appendChild(d); while (el.children.length > 6) el.firstChild.remove(); }, Math.max(0, c.t) * 1000)); },
   async play(done) {
-    try { if (this.due()) { const d = STATS.load(); if (d.clear == null) { d.clear = d.play || 0; STATS.save(); } } } catch (e) { }   /* 124番：初めてのエンディングで、クリア時間を固定 */
-    if (this.running) return; this.running = true; const el = this.ui(), cv = $('#endCv'), cx = cv.getContext('2d'), v1 = $('#endVid'), v2 = $('#endVid2'); let phase = 'school', alive = true; const W = () => { cv.width = innerWidth * Math.min(2, devicePixelRatio || 1); cv.height = innerHeight * Math.min(2, devicePixelRatio || 1); }; W();
+    this.real = this.due(); if (this.real) STATS.fixClear();   /* 124番：初めてのエンディング（倒した瞬間に止めた時間。念のためここでも） */
+    if (this.running) return; this.running = true; const el = this.ui(), cv = $('#endCv'), cx = cv.getContext('2d'), v1 = $('#endVid'), v2 = $('#endVid2'); let phase = 'school', alive = true; const W = () => { const r = cv.getBoundingClientRect(), dp = Math.min(2, devicePixelRatio || 1); cv.width = Math.round((r.width || innerWidth) * dp); cv.height = Math.round((r.height || innerHeight) * dp); }; W();   /* 2026-11-19 PCは縦長の枠の中なので、画面全体ではなく枠の大きさで描く（横に広い大きさで描いて縦長に縮めていたため、縦に引き伸ばされていた） */
     const fin = () => { if (!alive) return; alive = false; this.stopMusic(); this.mute(false); this.figHide(); if (this.shots0) TOUR.SHOTS = this.shots0; try { localStorage.setItem(this.KEY, '1'); } catch (e) { } this.fade(true); setTimeout(() => { el.remove(); this.running = false; if (done) done(); if (world.state === 'title') titleSeKick(); }, 1200); };   /* スタート画面に戻ったら、虫の声をまた鳴らす */
     this.look(el); this.figInit();
     $('#endSkip').onclick = e => { e.stopPropagation(); fin(); }; setTimeout(() => $('#endSkip') && $('#endSkip').classList.add('on'), 2500);
@@ -22533,11 +22536,11 @@ const ENDING = {
     for (const p of SUN ? [] : this.credits()) { if (!alive) return; this.page(p); await wait(3.8); }
     this.page(null); await wait(0.8); if (!alive) return;
     /* 2. 盛り上がった3場面（足りない分は学校の映像のまま） */
-    const clips = await clipsP; let vi = 0; const SP0 = this.statPages(); $('#endTx').classList.add('low');   /* 2026-11-17 記録は盛り上がった場面にも重ねて（コメントと重ならない下の方に） */
-    for (let i = 0; i < (SUN ? 0 : 3); i++) { if (!alive) return; const c = clips[i]; this.fade(true); this.page(null); await wait(0.8); if (!alive) return; setTimeout(() => { if (alive && (SP0[i] || c)) this.page((c ? this.shotBy() : '') + (SP0[i] || '')); }, 900);   /* 2026-11-17 過去の動画の場面には「動画撮影　その人の名前」 */
+    const clips = await clipsP; let vi = 0; const SP0 = this.statPages();   /* 2026-11-19 動画撮影と記録は画面のまん中に（コメントは左上に小さくまとまるので重なりは気にしない） */   /* 2026-11-17 記録は盛り上がった場面にも重ねて（コメントと重ならない下の方に） */
+    for (let i = 0; i < (SUN ? 0 : 3); i++) { if (!alive) return; const c = clips[i]; this.fade(true); this.page(null); await wait(0.8); if (!alive) return; setTimeout(() => { if (alive && (SP0[i] || c)) this.page(c ? this.shotBy() : SP0[i]); }, 900); if (c && SP0[i]) setTimeout(() => { if (alive) this.page(SP0[i]); }, 4000);   /* 2026-11-19 「動画撮影 ○○」だけを先に出し、そのあとに記録 */   /* 2026-11-17 過去の動画の場面には「動画撮影　その人の名前」 */
       if (c) { phase = 'clip'; this.duck(0.5); this.comments(c.cm || []); const v = vi++ % 2 ? v2 : v1, o = v === v1 ? v2 : v1; v.src = c.url; v.muted = false; v.volume = 0.4; v.ontimeupdate = () => { if (c.endAt && v.currentTime >= c.endAt) v.pause(); };   /* 2026-11-17 曲を上げ、動画の音は控えめに。結果カードの手前で止める */ try { await new Promise(r => { v.onloadedmetadata = r; setTimeout(r, 1500); }); v.currentTime = c.at; await v.play(); } catch (e) { } v.classList.add('on'); o.classList.remove('on'); try { o.pause(); } catch (e) { } this.fade(false); await wait(7); this.comments(null); }
       else { phase = 'school'; this.duck(0.75); v1.classList.remove('on'); v2.classList.remove('on'); TOUR.i = (3 + i * 2) % TOUR.SHOTS.length; TOUR.t0 = performance.now() / 1000; this.fade(false); await wait(7); } }
-    this.page(null); $('#endTx').classList.remove('low');
+    this.page(null);
     /* 3. 夕方の教室：記録 → Thank you → まんま */
     this.fade(true); this.duck(0.75); await wait(1); if (!alive) return; for (const v of [v1, v2]) { v.classList.remove('on'); try { v.pause(); } catch (e) { } } phase = 'sunset'; await wait(0.3); this.fade(false); await wait(2);
     for (const p of SUN ? SP0 : SP0.slice(3)) { if (!alive) return; this.page(p); await wait(5.5); }
@@ -24154,7 +24157,8 @@ Object.assign(CHAT_DICT.t, { 'hh.0': ['静かにしろw', 'shhh lol'], 'hh.1': [
    ========================================================= */
 const DIFF = { KEY: 'yt_diff',
   UNLOCK: 4,   /* 2026-11-18 ハードは大物幽tuberから（それまでは「ふつう」のまま・灰色で選べない） */
-  open() { try { return SHOP.rank() >= this.UNLOCK; } catch (e) { return false; } },
+  /* 2026-11-19 一度ハードを選べるようになったら、チャンネルを爆破しても選べる（yt_hard_unlock は爆破で消さない） */
+  open() { try { if (localStorage.getItem('yt_hard_unlock') === '1') return true; if (SHOP.rank() >= this.UNLOCK) { localStorage.setItem('yt_hard_unlock', '1'); return true; } return false; } catch (e) { return false; } },
   get() { if ((TEST || BETA) && /[?&]hard\b/.test(location.search)) return 'hard'; if (!this.open()) return 'normal'; try { return localStorage.getItem(this.KEY) === 'hard' ? 'hard' : 'normal'; } catch (e) { return 'normal'; } },
   set(v) { try { localStorage.setItem(this.KEY, v); } catch (e) { } this.sync(); },
   hard() { return world.state === 'title' ? this.get() === 'hard' : !!world.hardRun; },
