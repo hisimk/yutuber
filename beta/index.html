@@ -5288,7 +5288,7 @@ const WD = {
       let ok = false;
       if (dd < (world.bneko ? 12 : 9.5) && enemySees(head)) {
         const fwd = V(Math.sin(this.heading + SG.ovYaw), 0, Math.cos(this.heading + SG.ovYaw)); const to = V(player.x - this.pos.x, 0, player.z - this.pos.z).normalize();
-        ok = fwd.dot(to) > Math.cos(world.bneko ? 1.15 : 0.95) || dd < 1.6 || NOISE.fresh(this.pos) || (PHAN.on && -fwd.dot(to) > Math.cos(0.95));   // 2026-11-15 ナカヨシは背中の頭（人体模型）でも見る   // 2026-11-14 鈴や笛の音が聞こえたら、向きに関係なく気づく（見通せる時だけ）
+        ok = fwd.dot(to) > Math.cos(world.bneko ? 1.15 : 0.95) || dd < 1.6 || (NOISE.own && NOISE.fresh(this.pos)) || (PHAN.on && -fwd.dot(to) > Math.cos(0.95));   // 2026-11-15 ナカヨシは背中の頭（人体模型）でも見る   // 2026-11-14 鈴や笛の音が聞こえたら、向きに関係なく気づく（見通せる時だけ）
       } else if (!NOISE.used && NOISE.fresh(this.pos, 0.8) && !this.scripted && !this.borrowed && this.wait <= 0) { NOISE.used = true; if (chance(0.35)) this.goTo(V(NOISE.x, NOISE.y, NOISE.z)); }   // 見えない所の音：ときどき様子を見に来る
       this.detect = ok ? this.detect + dt : Math.max(0, this.detect - dt * 0.5);
       if (this.detect > 0.6) { this.detect = 0; CH.start(); }
@@ -9180,7 +9180,8 @@ const NEKO = {
    ========================================================= */
 const NOISE = {   // 2026-11-14 鈴やリコーダーの音：近くの怪異に気づかれやすくなる（壁越しに居場所を知らせ続けはしない）
   t: -99, x: 0, z: 0, y: 0, r: 0, used: true,
-  make(r) { if (typeof URINT !== 'undefined') URINT.noise(r > 9 ? 'flute' : 'bell'); if (world.t - this.t < 0.4 && r <= this.r) return; this.t = world.t; this.x = player.x; this.z = player.z; this.y = player.y; this.r = r; this.used = false; },
+  /* 2026-11-19 98番：p を渡すと、その場所の音（投げた物・蹴った物）。プレイヤーの居場所は伝えない。kind：オフタリサマの数え方（null で数えない） */
+  make(r, p, kind) { const own = !p; if (typeof URINT !== 'undefined' && kind !== null) URINT.noise(kind || (r > 9 ? 'flute' : 'bell')); if (world.t - this.t < 0.4 && r <= this.r && (own || !this.own)) return; this.t = world.t; const q = p || player; this.x = q.x; this.z = q.z; this.y = (q.y || 0); this.r = r; this.used = false; this.own = own; },
   fresh(p, k = 1) { return world.t - this.t < 1.2 && Math.abs((p.y || 0) - this.y) < 2 && Math.hypot(p.x - this.x, p.z - this.z) < this.r * k; },
   reset() { this.t = -99; this.r = 0; this.used = true; },
 };
@@ -15398,7 +15399,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.65';
+const VERSION = '0.17.66';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -21004,7 +21005,11 @@ const BUZZ = { reset() { this.on = null; if (this.gnd) { scene.remove(this.gnd);
   update(dt) { const B = this.on; if (!B || !A.ctx) return; B.t += dt; B.nx -= dt; if (B.nx <= 0) { B.nx = 0.13; B.k = !B.k; tn(panAt(B.p, 2.2, 0.9, undefined, 1), { t: A.ctx.currentTime, type: 'square', f0: B.k ? 3300 : 2700, f1: B.k ? 3300 : 2700, dur: 0.11, peak: 0.08 });   /* 2026-11-17 ブザーらしく速く・2音で */ } if (Math.floor(B.t) % 5 === 0 && Math.floor(B.t - dt) % 5 !== 0) this.lure(); if (B.t > 20) this.on = null; } };
 { const U0 = BUZZ.update.bind(BUZZ); BUZZ.update = function (dt) { try { this.flyTick(dt); } catch (e) { } return U0(dt); }; }
 const CHEM = { list: [], reset() { for (const c of this.list) scene.remove(c); this.list = []; },
-  use() { const f = camFwd(); f.y = 0; f.normalize(); const [x, z] = collide(player.x + f.x * 1.6, player.z + f.z * 1.6, 0.2, player.lv); const g = new THREE.Group(); g.position.set(x, player.y + 0.03, z); const m = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.15, 6), new THREE.MeshBasicMaterial({ color: 0x7cff70 })); m.rotation.z = Math.PI / 2; m.rotation.y = rnd(0, 3); g.add(m); const L = new THREE.PointLight(0x5cff60, 0.9, 4.5, 2); L.position.y = 0.15; g.add(L); scene.add(g); this.list.push(g); SND.kata && SND.kata(g.position.clone(), 0.4); NOISE.make(5); } };
+  use() { const f = camFwd(); f.y = 0; f.normalize(); const [x, z] = collide(player.x + f.x * 1.6, player.z + f.z * 1.6, 0.2, player.lv); const g = new THREE.Group(); g.position.set(x, player.y + 0.03, z); const m = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.15, 6), new THREE.MeshBasicMaterial({ color: 0x7cff70 })); m.rotation.z = Math.PI / 2; m.rotation.y = rnd(0, 3); g.add(m); const L = new THREE.PointLight(0x5cff60, 0.9, 4.5, 2); L.position.y = 0.15; g.add(L); scene.add(g); this.list.push(g); SND.kata && SND.kata(g.position.clone(), 0.4); CHEM.lure(g.position.clone().setY(player.lv ? LH : 0)); },
+  /* 2026-11-19 98番：落ちたケミカルライトの所に、近くの怪異が少しだけ気を取られる（ブザーより弱い：届く距離が短い・確率） */
+  LURE: { wd: 12, urah: 10, mann: 10, p: 0.7 },
+  lure(p) { const L = this.LURE; if (TEST || DEV) console.log('CHEM lure', p.x.toFixed(1), p.z.toFixed(1)); if (!(Math.random() < L.p) && !(TEST && /[?&]chemlure\b/.test(location.search))) { NOISE.make(3, p, null); return; }
+    try { if (CH.state === 'off' && !WD.borrowed && Math.abs((WD.pos.y || 0) - p.y) < 1.5 && WD.pos.distanceTo(p) < L.wd) WD.goTo(p); } catch (e) { } try { if (urahShown() && !URAH.chasing() && Math.abs(URAH.pos.y - p.y) < 1.5 && Math.hypot(URAH.pos.x - p.x, URAH.pos.z - p.z) < L.urah) URAH.alertAt(p); } catch (e) { } try { if (world.mannRun && MANN.st === 'walk' && Math.abs(MANN.pos.y - p.y) < 1.5 && Math.hypot(MANN.pos.x - p.x, MANN.pos.z - p.z) < L.mann) MANN.walkTo(nearestNode(p.x, p.z, undefined, p.y)); } catch (e) { } NOISE.make(3, p, null); } };
 const CANDLE = { reset() { if (this.g) { camera.remove(this.g); this.g = null; } this.t = 0; },
   use() { this.reset(); const g = new THREE.Group(); g.position.set(0.16, -0.2, -0.32); const w = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.09, 8), new THREE.MeshLambertMaterial({ color: 0xf2ead8 })); g.add(w); const fl = new THREE.Mesh(new THREE.SphereGeometry(0.009, 6, 5), new THREE.MeshBasicMaterial({ color: 0xffc860 })); fl.scale.y = 1.8; fl.position.y = 0.06; g.add(fl); const L = new THREE.PointLight(0xffa850, 0.8, 5, 2); L.position.y = 0.08; g.add(L); camera.add(g); Object.assign(this, { g, fl, L, t: 180 }); },
   update(dt) { if (!this.g) return; this.t -= dt; let near = 99; try { near = Math.min(near, ...[WD.pos, SP.pos, MANN.pos, URAH.on && URAH.pos].filter(p => p && Math.abs((p.y || 0) - player.y) < 2 && (p !== WD.pos || (SG.opacity ?? 0) > 0.2 || CH.state !== 'off')).map(p => Math.hypot(p.x - player.x, p.z - player.z))); } catch (e) { }
@@ -22715,14 +22720,14 @@ const KBALL = {
   /* ボールが当たった所の窓ガラス（割れていない物だけ） */
   glassAt(x, z, y, lv) { for (const g of glassPanes) { const S = g.userData.sec; if (!S || !g.visible || (S.lv !== lv && S.lv !== -1)) continue; const along = S.axis === 'x' ? z : x, across = S.axis === 'x' ? x : z; if (along < S.lo - 0.05 || along > S.hi + 0.05 || Math.abs(across - S.c) > 0.45) continue; const yy = y - (lv ? LH : 0); if (yy < S.y - S.h / 2 || yy > S.y + S.h / 2) continue; return g; } return null; },
   breakGlass(b, ev) { const g = ev.g; if (!g || !g.visible) return; const lv0 = SP.lv; SP.lv = b.lv; try { SP.breakWindow(ev.p.x, ev.p.z); } catch (e) { } SP.lv = lv0; if (g.visible) return;
-    b.v.multiplyScalar(0.4); const gp = g.getWorldPosition(V()); this.lure(V(gp.x, b.fy, gp.z)); try { NOISE.make(7); } catch (e) { } if (TEST || DEV) console.log('BALL glass');
+    b.v.multiplyScalar(0.4); const gp = g.getWorldPosition(V()); this.lure(V(gp.x, b.fy, gp.z)); try { NOISE.make(7, V(gp.x, b.fy, gp.z), null); } catch (e) { } if (TEST || DEV) console.log('BALL glass');
     if (rec.active && seen(gp, { maxD: 16 })) { award('ballGlass', 'ボールで窓ガラスを割った', 40); }
     SHOT.watch('ballGlass', () => gp, { maxD: 16, margin: 0.9, win: 1.2, hold: 0.1 }); },
   use(P) { P = P || AIM.plan('ball'); const S0 = P.b0; const m = this.mesh(); m.position.copy(S0.p); scene.add(m);
     const b = { m, p: m.position, v: S0.v.clone(), lv: S0.lv, fy: S0.fy, t: 0, stop: 0, nb: 0 }; this.list.push(b); ballKickSe(m.position.clone(), 0.9); try { XCHAT.log('it_ball'); } catch (e) { }
     /* 2026-11-18 姿を見せている時（前兆の間・捕まえている時は除く）で14m以内だけ：オフタリサマの位置から、かなの声で「ケマリ、スル」（字幕なし）＋ボールに気を取られる */
     try { if (urahShown() && Math.hypot(URAH.pos.x - player.x, URAH.pos.z - player.z) < 14) setTimeout(() => { try { if (!urahShown()) return; URAHV.busy = 0; URAHV.say('x', URAH.face, { text: 'ケマリ、スル' }); URAH.alertAt(b.m.position.clone().setY(b.fy)); } catch (e) { } }, 900); } catch (e) { } },
-  lure(p) { try { if (CH.state === 'off' && !WD.borrowed && Math.abs((WD.pos.y || 0) - p.y) < 1.5 && WD.pos.distanceTo(p) < 30) WD.goTo(p); } catch (e) { } try { if (urahShown() && !URAH.chasing() && Math.abs(URAH.pos.y - p.y) < 1.5) URAH.alertAt(p); } catch (e) { } try { if (world.mannRun && MANN.st === 'walk' && Math.abs(MANN.pos.y - p.y) < 1.5) MANN.walkTo(nearestNode(p.x, p.z, undefined, p.y)); } catch (e) { } try { URINT.noise('buzzer'); } catch (e) { } NOISE.make(6); },
+  lure(p) { try { if (CH.state === 'off' && !WD.borrowed && Math.abs((WD.pos.y || 0) - p.y) < 1.5 && WD.pos.distanceTo(p) < 30) WD.goTo(p); } catch (e) { } try { if (urahShown() && !URAH.chasing() && Math.abs(URAH.pos.y - p.y) < 1.5) URAH.alertAt(p); } catch (e) { } try { if (world.mannRun && MANN.st === 'walk' && Math.abs(MANN.pos.y - p.y) < 1.5) MANN.walkTo(nearestNode(p.x, p.z, undefined, p.y)); } catch (e) { } try { URINT.noise('buzzer'); } catch (e) { } NOISE.make(6, p, null); },
   update(dt) {
     for (const b of this.list.slice()) { const p = b.m.position, v = b.v; b.t += dt;
       if (b.rest) continue;   /* 2026-11-17 止まったボールは床に残る（拾えばまた使える） */
@@ -22946,7 +22951,7 @@ const HAND = {
   near() { let n = 99; try { n = Math.min(n, ...[WD.pos, SP.pos, MANN.pos, URAH.on && URAH.pos].filter(p => p && Math.abs((p.y || 0) - player.y) < 2 && (p !== WD.pos || (SG.opacity ?? 0) > 0.2 || CH.state !== 'off')).map(p => Math.hypot(p.x - player.x, p.z - player.z))); } catch (e) { } return n; },
   update(dt) {
     for (const F of this.fly.slice()) { F.t += dt / 0.45; const k = Math.min(1, F.t); F.g.position.lerpVectors(F.from, F.to, k); F.g.position.y += Math.sin(k * Math.PI) * 0.5; F.g.rotation.y += dt * 12; F.g.userData.L.position.copy(F.g.position).y += 0.15;
-      if (k >= 1) { this.fly.splice(this.fly.indexOf(F), 1); F.g.rotation.y = rnd(0, 3); if (A.ctx) SND.kata && SND.kata(F.g.position.clone(), 0.4); NOISE.make(5); { const g = F.g; SHOT.watch('it_chem', () => g.position, { maxD: 12, margin: 0.85, win: 2, hold: 0.25 }); } } }   /* 2026-11-19 94番：落ちたライトが映った時だけコメント */
+      if (k >= 1) { this.fly.splice(this.fly.indexOf(F), 1); F.g.rotation.y = rnd(0, 3); if (A.ctx) SND.kata && SND.kata(F.g.position.clone(), 0.4); CHEM.lure(F.g.position.clone().setY((F.g.position.y > 1.6) ? LH : 0)); { const g = F.g; SHOT.watch('it_chem', () => g.position, { maxD: 12, margin: 0.85, win: 2, hold: 0.25 }); } } }   /* 2026-11-19 94番：落ちたライトが映った時だけコメント */
     try { this.toolUi(); } catch (e) { }
     const id = this.item; if (!this.g) return;
     this.g.visible = !!id && !world.selfie && !this.hiding() && (world.state === 'play' || world.state === 'paused');   /* 隠れている間は手を見せない */
@@ -25718,7 +25723,7 @@ Object.assign(EN, { 'ボールで窓ガラスを割った': 'Smashed a window wi
 /* 2026-11-19 95番：「部屋の隅に立つ子（定点カメラにだけ）」→「部屋の隅に立つ子」。コレクションの回数・歴代の神回の撮れ高名を引きつぐ */
 Object.assign(COL.RENAME, { '部屋の隅に立つ子（定点カメラにだけ）': '部屋の隅に立つ子' });
 { const L0 = ACH.load.bind(ACH), RN = { '部屋の隅に立つ子（定点カメラにだけ）': '部屋の隅に立つ子' }; ACH.load = function () { const d = L0(); if (d && !d._fg95) { for (const b of d.best || []) for (const e of b.ev || []) if (RN[e[0]]) e[0] = RN[e[0]]; d._fg95 = 1; this.save(); } return d; }; }
-if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
+if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
