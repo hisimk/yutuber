@@ -265,7 +265,9 @@
   #popInfo{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.66);padding:20px}#popInfo.show{display:flex}#popInfo .pBox{width:min(340px,100%);background:#161517;border:1px solid #3a3836;border-radius:16px;padding:20px 18px;color:#eee;font-size:14px;line-height:1.7}#popInfo h3{margin:0 0 8px;font-size:16px}#popInfo .pBtns{display:flex;gap:8px;margin-top:16px}#popInfo button{flex:1;min-height:42px;border-radius:10px;border:1px solid #444;background:#222;color:#fff;font:700 14px system-ui,-apple-system,"Hiragino Sans",sans-serif}#popInfo button.pri{background:#e0362f;border-color:#e0362f}
   #callHit .ck{position:absolute;right:-6px;top:-6px;min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border-radius:6px;background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.7);color:#fff;font:700 12px/18px system-ui,sans-serif;text-align:center;pointer-events:none}
   #callHit{position:fixed;inset:0;z-index:35;pointer-events:none;display:none}#callHit.show{display:block}#callHit button{position:absolute;border:none;background:transparent;border-radius:50%;pointer-events:auto;padding:0;cursor:pointer}#callHit #callEnd{display:none}#callHit.talk #callNo,#callHit.talk #callYes{display:none}#callHit.talk #callEnd{display:block}
-  #qualSeg,#fpsSeg,#fearSeg{flex:none}#qualSeg button,#fpsSeg button,#fearSeg button{white-space:nowrap;padding:7px 12px}
+  #qualSeg,#fpsSeg,#fearSeg,#hintSeg{flex:none}#hintSeg button{white-space:nowrap;padding:7px 9px}
+  #mouseList{display:grid;grid-template-columns:1fr auto;gap:6px 10px;margin:4px 0 10px;font-size:13px;color:#cfcac0}#mouseList b{font-weight:700;color:#e9e4da;text-align:right}
+  html.khHideRec #recKey,html.khHideCrouch #crouchKey{display:none!important}html.khNever #toolKey,html.khNever #recKey,html.khNever #crouchKey{display:none!important}html.khNever #actBtn[data-k]::after{display:none}html.khQuiet .jyTip{opacity:0;transition:opacity .6s}html.khQuiet.khIdle .jyTip{opacity:.45}#qualSeg button,#fpsSeg button,#fearSeg button{white-space:nowrap;padding:7px 12px}
   .opt .optTop{display:flex;justify-content:space-between;align-items:center;gap:10px}
   .rng{width:100%;accent-color:#e9e4da;margin:2px 0 0}
   .sel{width:100%;font-size:16px;padding:8px 9px;border-radius:8px;border:1px solid #333;background:#0b0b0c;color:#fff}
@@ -962,7 +964,7 @@
         <div class="opt col" id="setOutRow"><div class="optTop"><div>音の出力先<small id="outNote">ヘッドホンやスピーカーを選べます</small></div></div><select class="sel" id="outSel"><option value="">いつもの出力（パソコンの設定）</option></select></div>
         <div class="opt col" id="setMidiRow"><div class="optTop" id="setMidi"><div>電子ピアノ（MIDI）<small>USBでつないだ電子ピアノで音楽室のピアノを弾けます</small></div><div class="sw"></div></div><select class="sel" id="midiSel"><option value="">つないだ機器すべて</option></select><div id="midiNote"></div></div>
       </div>
-      <div id="setKeys"><div class="setSub">キー操作（PC）<small>ボタンを押してから、割り当てたいキーを押す</small></div><div id="keyList"></div><button class="setLink" id="keyReset">キー操作を初期設定にもどす</button></div>
+      <div id="setKeys"><div class="setSub">キー操作（PC）<small>ボタンを押してから、割り当てたいキーを押す</small></div><div class="opt" id="setHintRow"><div>キーの表示<small>画面に出す操作の文字</small></div><div class="seg" id="hintSeg"><button data-h="first">最初だけ</button><button data-h="always">いつも</button><button data-h="never">出さない</button></div></div><div id="keyList"></div><div id="mouseList"></div><button class="setLink" id="keyReset">キー操作を初期設定にもどす</button></div>
       <div id="setPad"><div class="setSub">コントローラー<small id="padName">つながっていません（PS・Xbox・Switchプロコンに対応）</small></div>
         <div class="opt col" id="padSensRow"><div class="optTop"><div>スティックの感度<small>右スティックで見回す速さ</small></div><div class="val" id="padSensVal">×1.0</div></div><input class="rng" id="padSens" type="range" min="0.4" max="2" step="0.1" value="1"></div>
         <div class="opt" id="padInvRow"><div>上下反転<small>右スティックの上下を逆にする</small></div><div class="sw"></div></div>
@@ -4285,7 +4287,8 @@ addEventListener('mousemove', e => {
 });
 document.addEventListener('mouseleave', () => { PCLOOK.edge = 0; }); addEventListener('blur', () => { PCLOOK.edge = 0; });
 touchEl.addEventListener('pointerdown', e => {
-  if (FRAME.on && e.pointerType === 'mouse' && MLOCK.ok() && !MLOCK.on()) { e.preventDefault(); MLOCK.req(); return; }   // 2026-11-15 PC：画面をクリックするとカーソルが消えて、マウスで見回せる（Escでカーソルが出る）
+  if (FRAME.on && e.pointerType === 'mouse' && MLOCK.ok() && !MLOCK.on()) { e.preventDefault(); MLOCK.req(); return; }
+  if (FRAME.on && e.pointerType === 'mouse' && MLOCK.on() && MOUSE.free()) { e.preventDefault(); if (e.button === 0) { if (actFn && $('#actBtn').classList.contains('show')) actFn(); } else if (e.button === 2) toggleRec(); return; }   /* 2026-11-19 103番：見回し中の左クリック＝調べる、右クリック＝録画 */   // 2026-11-15 PC：画面をクリックするとカーソルが消えて、マウスで見回せる（Escでカーソルが出る）
   e.preventDefault(); touchEl.setPointerCapture?.(e.pointerId);
   const [x, y] = toFrame(e.clientX, e.clientY);
   if (stickId === null && !(FRAME.on && e.pointerType === 'mouse') && x < vpW() * CONFIG.stickZone.maxX && y > vpH() * CONFIG.stickZone.minY) {   // 2026-11-14 PC（マウス）では出さない
@@ -4678,7 +4681,7 @@ function stopRec(reason) { if (reason === 'capture') world.capRec = true;   /* 2
   syncRecUI(); world.lastRecStop = world.t;
   for (const f of recStopListeners) f(reason);
 }
-function toggleRec() { if (world.state !== 'play' || world.dark) return; rec.active ? stopRec('user') : startRec(); }
+function toggleRec() { if (world.state !== 'play' || world.dark) return; try { KH.use('rec'); } catch (e) { } rec.active ? stopRec('user') : startRec(); }
 /* ---------- 動画の最後に付ける結果カード（2026-11-13） ----------
    帰還・やられた時に、録画をもう一度回して約3秒、結果（いいね数・上位の撮れ高・ゲーム名とURL）を映してから止める。
    SNSに動画だけ投稿されても結果とURLが伝わるように。画面にもそのまま映る（結果画面へのつなぎ）。 */
@@ -12734,7 +12737,7 @@ const CROUCH = {
   eye() { return lerp(CONFIG.eyeHeight, this.LOW, smooth(0, 1, this.k)); },
   spd() { return this.on ? 0.5 : 1; },
   can() { return world.state === 'play' && !player.hidden && !HIDE.lk && !CAP.on && !world.capture && !REVIVE.on && world.outro === 0 && !SET.open && !INV.open; },
-  toggle() { if (!this.on && !this.can()) return; if (this.on && world.state !== 'play') return; this.set(!this.on); },
+  toggle() { if (!this.on && !this.can()) return; if (this.on && world.state !== 'play') return; try { KH.use('crouch'); } catch (e) { } this.set(!this.on); },
   chasing() { return (CH.state && CH.state !== 'off') || SP.st === 'chase' || (world.mannRun && ['spot', 'windup', 'dash', 'skid', 'hunt'].includes(MANN.st)); },
   set(v, quiet) {
     if (v === this.on) return; this.on = v; const b = $('#crouchBtn'); if (b) { b.classList.toggle('on', v); b.querySelector('span').textContent = TR(v ? '立つ' : 'しゃがむ'); }
@@ -14561,7 +14564,7 @@ const KEYUI = {
     if (KB.wait) return; KB.wait = a; b.classList.add('wait'); b.textContent = TR('キーを押す…');
     const kd = e => {
       e.preventDefault(); e.stopImmediatePropagation(); removeEventListener("keydown", kd, true); KB.wait = null; keys[e.code] = false;
-      if (e.code !== 'Escape') { const other = Object.keys(KB.map).find(x => x !== a && KB.map[x] === e.code); if (other) KB.map[other] = KB.map[a]; KB.map[a] = e.code; KB.save(); hintsRefresh(); }   // ほかの操作と重なったら入れ替える
+      if (e.code !== 'Escape') { const other = Object.keys(KB.map).find(x => x !== a && KB.map[x] === e.code); if (other) KB.map[other] = KB.map[a]; KB.map[a] = e.code; KB.save(); try { KH.reset(a); if (other) KH.reset(other); } catch (x) { } hintsRefresh(); }   // ほかの操作と重なったら入れ替える
       this.draw();
     };
     addEventListener('keydown', kd, true);
@@ -15403,7 +15406,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.70';
+const VERSION = '0.17.71';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -20498,7 +20501,7 @@ if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, 
    ・音量・言語・キー操作・チャンネル名などの設定は残す。撮った映像は端末に保存していない（読み込み直しで消える）
    ========================================================= */
 const RESET = {
-  keys() { return [COL.KEY, ACH.KEY, PERM.KEY, 'yt_mann_unlock', 'yt_tut', PHAN.KEY, 'yt_wing_open', 'yt_bar1_open', 'yt_bar2_open', 'yt_start']; },   // 2026-11-15 ナカヨシの段階も0に
+  keys() { return [COL.KEY, ACH.KEY, PERM.KEY, 'yt_mann_unlock', 'yt_tut', 'yt_keyuse', PHAN.KEY, 'yt_wing_open', 'yt_bar1_open', 'yt_bar2_open', 'yt_start']; },   // 2026-11-15 ナカヨシの段階も0に
   ask() { $('#resetAsk').classList.add('show'); },
   no() { $('#resetAsk').classList.remove('show'); },
   yes() {
@@ -25769,6 +25772,35 @@ HMEMO.badge = function () { const r = this.cur && rkTxt(this.cur.r); if (!r) { I
     if (ss && world.state === 'play') { try { world.vhs = Math.max(world.vhs || 0, 0.9); const U = postMat.uniforms; U.tear.value = 0.6; setTimeout(() => { U.tear.value = 0; }, 380); noiseHit && noiseHit(0.8); } catch (e) { } try { if (rec.active) XCHAT.log('memoSS'); } catch (e) { } }
     return r; }; }
 { const J = [['これヤバいやつじゃない？', 'isn’t this a really bad one?'], ['紙、赤くない…？', 'is the paper… red?'], ['読まないほうがいいって', 'maybe don’t read that']]; XCHAT.LIST.memoSS = J.map((x, i) => 'hms.' + i); J.forEach((x, i) => { CHAT_DICT.t['hms.' + i] = x; }); }
+/* =========================================================
+   2026-11-19 103番：PCのマウス操作（左クリック＝調べる・右クリック＝録画・ホイール＝ズーム）と、キー表示は最初だけ
+   ・いつも出ているボタン（録画・しゃがむ）：KH.N 回使ったら、その操作のキー表示は出さない（設定「最初だけ」の時）
+   ・その場で出るボタン（調べる・道具・帰還・電話）：PC・コントローラーではいつも表示（設定「出さない」の時だけ消す）
+   ・たまに開く画面（じゆうちょう・絵画）：初めて開いた時は説明を出す。2回目からは隠し、何もしないで KH.IDLE 秒たつとうっすら出す
+   ・保存：yt_keyhint（設定）・yt_keyuse（回数・見た画面）。データを消すと最初からに戻る
+   ========================================================= */
+const MOUSE = { free() { const H = document.documentElement.classList; return world.state === 'play' && !H.contains('jyOn') && !H.contains('ptOn') && !(typeof PIANO !== 'undefined' && PIANO.on) && !(typeof INV !== 'undefined' && INV.open) && !(typeof SET !== 'undefined' && SET.open) && !(typeof KOK !== 'undefined' && KOK.on) && !(typeof PAINT !== 'undefined' && PAINT.on); } };
+addEventListener('wheel', e => { if (!FRAME.on || !MLOCK.on() || !MOUSE.free()) return; e.preventDefault(); const st = CONFIG.zoomStops; let i = st.indexOf(zoomTarget); if (i < 0) i = 0; const now = performance.now(); if (now - (MOUSE.wt || 0) < 140) return; MOUSE.wt = now; i = clamp(i + (e.deltaY < 0 ? 1 : -1), 0, st.length - 1); setZoom(st[i]); }, { passive: false });
+const KH = { N: 3, IDLE: 4, mode: 'first', d: null,
+  load() { if (this.d) return this.d; try { this.mode = localStorage.getItem('yt_keyhint') || 'first'; this.d = JSON.parse(localStorage.getItem('yt_keyuse') || '{}'); } catch (e) { this.d = {}; } this.d.u = this.d.u || {}; this.d.s = this.d.s || {}; return this.d; },
+  save() { try { localStorage.setItem('yt_keyuse', JSON.stringify(this.d)); localStorage.setItem('yt_keyhint', this.mode); } catch (e) { } },
+  use(a) { const d = this.load(); d.u[a] = (d.u[a] | 0) + 1; if (d.u[a] <= this.N) { this.save(); this.apply(); } },
+  reset(a) { const d = this.load(); delete d.u[a]; this.save(); this.apply(); },
+  show(a) { this.load(); return this.mode === 'always' || (this.mode === 'first' && (this.d.u[a] | 0) < this.N); },
+  apply() { this.load(); const H = document.documentElement.classList; H.toggle('khNever', this.mode === 'never'); H.toggle('khHideRec', !this.show('rec')); H.toggle('khHideCrouch', !this.show('crouch')); for (const b of document.querySelectorAll('#hintSeg button')) b.classList.toggle('on', b.dataset.h === this.mode); },
+  /* たまに開く画面：初めての時は説明を出す。2回目からは隠して、何もしない時だけうっすら */
+  screen(id) { const d = this.load(), H = document.documentElement.classList; const first = !d.s[id]; if (first) { d.s[id] = 1; this.save(); } const quiet = this.mode === 'never' || (!first && this.mode === 'first'); H.toggle('khQuiet', quiet); H.remove('khIdle'); this.idleT = performance.now(); this.scr = id; },
+  idle() { const H = document.documentElement.classList; if (!H.contains('khQuiet')) return; const on = H.contains('jyOn') || H.contains('ptOn'); if (!on) { H.remove('khQuiet', 'khIdle'); return; } if (this.mode !== 'never' && performance.now() - (this.idleT || 0) > this.IDLE * 1000) H.add('khIdle'); },
+  poke() { this.idleT = performance.now(); document.documentElement.classList.remove('khIdle'); },
+};
+for (const ev of ['pointerdown', 'keydown', 'wheel']) addEventListener(ev, () => { try { KH.poke(); } catch (e) { } }, { passive: true, capture: true });
+setInterval(() => { try { KH.idle(); } catch (e) { } }, 300);
+KH.apply();
+for (const b of document.querySelectorAll('#hintSeg button')) b.addEventListener('click', e => { e.stopPropagation(); KH.mode = b.dataset.h; KH.save(); KH.apply(); });
+{ const M = $('#mouseList'); if (M) { const L = [['左クリック', '調べる・開ける・隠れる'], ['右クリック', '録画の開始・停止'], ['ホイール', 'ズーム']]; M.innerHTML = L.map(([k, v]) => `<div>${v}</div><b>${k}</b>`).join(''); } }
+Object.assign(EN, { 'キーの表示': 'Key hints', '画面に出す操作の文字': 'Key labels shown on screen', '最初だけ': 'At first', 'いつも': 'Always', '出さない': 'Never', '左クリック': 'Left click', '右クリック': 'Right click', 'ホイール': 'Wheel', '調べる・開ける・隠れる': 'Interact / open / hide', '録画の開始・停止': 'Start/stop recording', 'ズーム': 'Zoom' });
+/* じゆうちょう・絵画を開いた時 */
+{ let was = ''; new MutationObserver(() => { const H = document.documentElement.classList, now = H.contains('jyOn') ? 'jiyu' : H.contains('ptOn') ? 'paint' : ''; if (now && now !== was) try { KH.screen(now); } catch (e) { } was = now; }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] }); }
 if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
