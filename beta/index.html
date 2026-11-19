@@ -6518,7 +6518,7 @@ function playFiller() {
 // 無人のロッカーから物音を鳴らして誘導する怪異は撤去（抽選・予約・再生とも行わない）。隠れる・開閉の音は操作と敵にひもづけて鳴らす
 delete EV.locker;
 const DIR = {
-  plan: [], active: null,
+  plan: [], active: null, STUCK: 60,   /* 2026-11-19 111番：現象が起きたまま、この秒数たっても終わらなければ自動で終わらせる */
   planRun() {
     CLOSED_STALL.pick();
     if (typeof BLEED !== 'undefined') BLEED.hide();   // 前の周回の天井の血の染みを消す
@@ -6544,7 +6544,7 @@ const DIR = {
   },
   start(e) {
     if (e.sg && WD.borrowed) return false;
-    this.active = e; e.tierUsed = null; MISS.start(e); for (const k of ['st', 'ph', 't', 'n1', 'screamed', 'placed', 'done1', 's', 'c', 'sh', 'br', 'laughed', 'hummed', 'ten', 'fi']) delete e[k];
+    this.active = e; this.at = world.t; e.tierUsed = null; MISS.start(e); for (const k of ['st', 'ph', 't', 'n1', 'screamed', 'placed', 'done1', 's', 'c', 'sh', 'br', 'laughed', 'hummed', 'ten', 'fi']) delete e[k];
     e.start(); if (DEV) console.log('START', e.id, e.variant || '');
     return true;
   },
@@ -6557,6 +6557,8 @@ const DIR = {
   },
   update(dt) {
     if (world.dark || world.capture) { if (this.active) this.end(this.active); return; }
+    /* 2026-11-19 111番：起きたまま DIR.STUCK 秒たっても終わらない現象は、自動で終わらせる（追われている・隠れている間に置き去りになった物も） */
+    if (this.active && world.t - (this.at ?? world.t) > this.STUCK) { const e = this.active; console.log('DIR_STUCK', e.id, (world.t - this.at).toFixed(0) + 's', e.st || e.ph || e.phase || ''); (this.stuckLog = this.stuckLog || []).push(e.id); this.end(e); return; }
     if (CH.state !== 'off' || player.hidden || HIDE.lk) return;   // 追跡中・隠れている間は他の怪異を重ねない
     if (this.active) { let r = false; try { r = this.active.update(dt); } catch (err) { console.warn(err); r = true; } if (r) this.end(this.active); return; }
     if (this.omen) { if (world.t < this.omen.until) return; const e = this.omen.e; this.omen = null; if (!e.done && e.ready()) { this.start(e); return; } }
@@ -15431,7 +15433,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.78';
+const VERSION = '0.17.79';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -22969,7 +22971,7 @@ const HAND = {
   blocks() { return false; },   /* 2026-11-19 87番：道具を持っていても、ふだんの調べる操作はいつも通り出す */
   hiding() { return !!player.hidden || (typeof HIDE !== 'undefined' && !!HIDE.lk) || (typeof UNDER !== 'undefined' && !!UNDER.on) || (typeof KOK !== 'undefined' && !!KOK.on); },
   /* 道具の操作（別のボタン・Qキー・コントローラーのLT/L2/ZL） */
-  toolLabel() { const id = this.item; if (!id || world.state !== 'play' || world.capture || this.hiding() || (typeof CAP !== 'undefined' && CAP.on)) return null; const H = document.documentElement.classList; if (H.contains('jyOn') || H.contains('ptOn') || (typeof PIANO !== 'undefined' && PIANO.on) || (typeof SCIRM !== 'undefined' && SCIRM.scope) || (typeof INV !== 'undefined' && INV.open) || (typeof SET !== 'undefined' && SET.open) || (typeof SPH !== 'undefined' && SPH.shareOn) || (typeof DIR !== 'undefined' && DIR.active)) return null; const T = (j, e) => LANG === 'en' ? e : j; return id === 'ball' ? T('蹴る', 'Kick') : id === 'chem' || id === 'buzzer' ? T('投げる', 'Throw') : null; },
+  toolLabel() { const id = this.item; if (!id || world.state !== 'play' || world.capture || this.hiding() || (typeof CAP !== 'undefined' && CAP.on)) return null; const H = document.documentElement.classList; if (H.contains('jyOn') || H.contains('ptOn') || (typeof PIANO !== 'undefined' && PIANO.on) || (typeof SCIRM !== 'undefined' && SCIRM.scope) || (typeof INV !== 'undefined' && INV.open) || (typeof SET !== 'undefined' && SET.open) || (typeof SPH !== 'undefined' && SPH.shareOn) || (typeof CALL !== 'undefined' && CALL.lockYaw !== undefined) || (typeof REVIVE !== 'undefined' && REVIVE.on) || world.outro > 0) return null;   /* 2026-11-19 111番：怪奇現象の最中（DIR.active）でも消さない。視点を取られる場面だけ、ほかの操作と同じく消す */ const T = (j, e) => LANG === 'en' ? e : j; return id === 'ball' ? T('蹴る', 'Kick') : id === 'chem' || id === 'buzzer' ? T('投げる', 'Throw') : null; },
   useTool(P) { const id = this.item; if (!this.toolLabel()) return; if (id === 'ball') { this.drop(); KBALL.use(P); } else if (id === 'chem') this.throwChem(P); else if (id === 'buzzer') { this.drop(); BUZZ.throwIt(P); } },
   toolUi() { const b = $('#toolBtn'); if (!b) return; if (!this.tbInit) { this.tbInit = true; const dn = e => { e.preventDefault(); e.stopPropagation(); try { b.setPointerCapture && b.setPointerCapture(e.pointerId); } catch (x) { } AIM.start(); }, up = e => { e.preventDefault(); e.stopPropagation(); AIM.release(); }; b.addEventListener('pointerdown', dn); b.addEventListener('pointerup', up); b.addEventListener('pointercancel', () => { AIM.on = false; AIM.hide(); }); for (const ev of ['touchstart', 'touchend', 'click', 'mousedown', 'mouseup']) b.addEventListener(ev, e => e.stopPropagation()); }   /* 2026-11-19 90番：押している間は線、はなすと投げる */ const L = this.toolLabel(), k = $('#toolKey');
     if (b._l !== L) { b._l = L; b.querySelector('span').textContent = L || ''; b.classList.toggle('show', !!L); }
