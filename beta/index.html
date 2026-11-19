@@ -1516,6 +1516,7 @@ const EN = {
   '振り向いた掲示板の女': 'The schoolgirl ghost at the notice board turns around',
   '音が出ないときは、画面をもう一度タップしてください': 'If there is no sound, tap the screen again.',
   '歩いたり見回したりして、画角を決めてください': 'Walk and look around to frame the shot', 'ここに設置': 'Place here', 'やめる': 'Cancel', '定点カメラを設置した。怪異が映ると自動で録画します': 'Fixed camera placed. It records automatically when something appears.', '定点カメラを回収した。持ち物からまた置けます': 'Fixed camera picked up. You can place it again from your items.', '定点カメラを回収する': 'Pick up the fixed camera', '置く': 'Place', '設置中': 'In use',
+  '定点': 'Fixed', 'スマホ＋定点 ×2': 'Phone + fixed ×2',
   '定点カメラを置いた。怪異が映ると自動で録画します（15秒まで）': 'Fixed camera placed. It records automatically when something appears (up to 15s).', '定点カメラの容量がいっぱいになった': 'The fixed camera is full', '定点': 'CAM2',
   '2台目のスマホを定点カメラに。持ち物から好きな場所に設置できる。画角に入った現象を自動で録画し（15秒まで）、スマホで撮っていない時でも撮れ高になる。録画中に映ると、動画の画面が定点カメラに切り替わる。所持しているとメモリーカードは出なくなる。': 'A second phone used as a fixed camera. Place it anywhere from your items. It automatically records anything that enters the frame (up to 15s), and counts as a highlight even when your phone isn’t filming. If it catches something while you’re recording, the video cuts to the fixed camera. Once owned, memory cards no longer appear.', '外カメラで録画している間、画面の隅にインカメラの小窓が映る。自分のリアクションと背後の怪異も一緒に録画でき、小窓に映った現象も撮れ高になる（一部をのぞく）。': 'While recording with the rear camera, a small selfie window appears in the corner. Your reactions and anything behind you are recorded too, and most things caught in the window count as highlights.',
   'ワイプカメラ': 'Wipe camera', '定点カメラ': 'Fixed camera', 'ここに置く': 'Place here', '置いた': 'Placed', 'リングライト': 'Ring light', 'ガンマイク': 'Shotgun mic', '予備バッテリー': 'Spare battery',
@@ -4816,7 +4817,7 @@ function awardCont(key, label, pps, dt, cap = 200) {
   const add = Math.min(cap - e.acc, pps * dt); e.acc = Math.min(cap, e.acc + pps * dt); e.sec += dt; e.pts = Math.floor(e.acc); e.label = `${label}（${Math.round(e.sec)}秒）`;
   if (add > 0 && closeUp()) closeBonus(add * (CLOSE.mul - 1));
 }
-function award(key, label, pts) { if (awarded.has(key)) return;  if (typeof KEHAI !== 'undefined') KEHAI.onAward(awBase(key)); if (typeof TIPS !== 'undefined') try { TIPS.onAward(awBase(key)); } catch (e) { } { const a = AW_TABLE[awBase(key)]; if (a) pts = a[1]; } awarded.set(key, true); const ev = { t: rec.time, label, pts, key }; if (seenVia === 'fix' && world.t - FIXCAM.hitT < 0.2) ev.cam = 'fix'; else if (seenVia === 'wipe') ev.cam = 'wipe';   /* 2026-11-14 どのカメラで撮れたか */ evidence.push(ev); CHATLOG.add('aw', { key, label, pts }); if (rec.active) CHATLOG.bhAward(key); likePop(ev); if (closeUp()) closeBonus(pts * (CLOSE.mul - 1)); if (TEST || DEV) console.log('EVIDENCE', key, rec.time.toFixed(2)); }
+function award(key, label, pts) { if (awarded.has(key)) return;  if (typeof KEHAI !== 'undefined') KEHAI.onAward(awBase(key)); if (typeof TIPS !== 'undefined') try { TIPS.onAward(awBase(key)); } catch (e) { } { const a = AW_TABLE[awBase(key)]; if (a) pts = a[1]; } awarded.set(key, true); const ev = { t: rec.time, label, pts, key }; if (seenVia === 'fix' && world.t - FIXCAM.hitT < 0.2) ev.cam = 'fix'; else if (seenVia === 'wipe') ev.cam = 'wipe';   /* 2026-11-14 どのカメラで撮れたか */ evidence.push(ev); try { BOTH.onAward(ev); } catch (e) { } CHATLOG.add('aw', { key, label, pts }); if (rec.active) CHATLOG.bhAward(key); likePop(ev); if (closeUp()) closeBonus(pts * (CLOSE.mul - 1)); if (TEST || DEV) console.log('EVIDENCE', key, rec.time.toFixed(2)); }
 function accum(key, cond, dt, need) { if (!cond) return false; evAcc[key] = (evAcc[key] || 0) + dt; return evAcc[key] >= need; }
 const _v = V(), _dir = V(), ray = new THREE.Raycaster();
 function onScreen(pos, margin = 1) { _v.copy(pos).project(camera); return _v.z < 1 && _v.z > -1 && Math.abs(_v.x) <= margin && Math.abs(_v.y) <= margin; }
@@ -4833,14 +4834,24 @@ function inFlash(pos, maxD = 14) { if (world.dark) return false; const d = camer
    前を向いていないと起きない怪異は、そもそもインカメラには映らない */
 function viewCam() { return world.selfie ? selfCam : camera; }
 let seenVia = '';   // 2026-11-14 最後に「映った」と判定したカメラ（main／self／wipe／fix）
-function seen(pos, { margin = 1, light = false, maxD = 30, ignore = [] } = {}) {
-  seenVia = '';
-  if (!rec.active) { if (FIXCAM.sees(pos, maxD, ignore)) { seenVia = 'fix'; FIXCAM.hitT = world.t; return true; } return false; }   // 2026-11-14 スマホで撮っていなくても、定点カメラに映れば
-  if (seenMain(pos, margin, light, maxD, ignore)) { seenVia = world.selfie ? 'self' : 'main'; return true; }
-  if (GEAR.wipeOn() && pos.distanceTo(camera.position) > 0.35) { _v.copy(pos).project(selfCam); if (_v.z < 1 && _v.z > -1 && Math.abs(_v.x) <= 1 && Math.abs(_v.y) <= 1 && selfCam.position.distanceTo(pos) <= maxD && !world.dark && clearLine(pos, ignore, selfCam.position)) { seenVia = 'wipe'; return true; } }   // ワイプカメラ（インカメラの小窓）に映った
-  if (FIXCAM.sees(pos, maxD, ignore)) { seenVia = 'fix'; FIXCAM.hitT = world.t; return true; }
+let seenPos = null, seenAt = -1;   // 2026-11-19 91番：最後に映った場所（同じフレームの award で、スマホと定点カメラの両方に映ったかを見る）
+function seen(pos, { margin = 1, light = false, maxD = 30, ignore = [], fixD } = {}) {
+  seenVia = ''; const fD = fixD ?? maxD;   /* fixD：定点カメラの時の距離（スマホの目の前で起きる物も、定点カメラならふつうの距離で数える） */
+  if (!rec.active) { if (FIXCAM.sees(pos, fD, ignore)) { seenVia = 'fix'; FIXCAM.hitT = world.t; seenPos = pos; seenAt = world.t; BOTH.hit('fix', pos); return true; } return false; }   // 2026-11-14 スマホで撮っていなくても、定点カメラに映れば
+  if (seenMain(pos, margin, light, maxD, ignore)) { seenVia = world.selfie ? 'self' : 'main'; seenPos = pos; seenAt = world.t; BOTH.hit('ph', pos); if (FIXCAM.placed && FIXCAM.sees(pos, fD, ignore)) BOTH.hit('fix', pos); return true; }
+  if (GEAR.wipeOn() && pos.distanceTo(camera.position) > 0.35) { _v.copy(pos).project(selfCam); if (_v.z < 1 && _v.z > -1 && Math.abs(_v.x) <= 1 && Math.abs(_v.y) <= 1 && selfCam.position.distanceTo(pos) <= maxD && !world.dark && clearLine(pos, ignore, selfCam.position)) { seenVia = 'wipe'; seenPos = pos; seenAt = world.t; BOTH.hit('ph', pos); if (FIXCAM.placed && FIXCAM.sees(pos, fD, ignore)) BOTH.hit('fix', pos); return true; } }   // ワイプカメラ（インカメラの小窓）に映った
+  if (FIXCAM.sees(pos, fD, ignore)) { seenVia = 'fix'; FIXCAM.hitT = world.t; seenPos = pos; seenAt = world.t; BOTH.hit('fix', pos); return true; }
   return false;
 }
+/* 2026-11-19 91番：同じ撮れ高を、自分のスマホ（ワイプも含む）と定点カメラの両方で撮れたら、いいね2倍（前後3秒・1.5m以内に映った時） */
+const BOTH = { W: 3, R: 1.5, fixH: [], phH: [], pend: [],
+  hit(kind, pos) { const L = kind === 'fix' ? this.fixH : this.phH, now = world.t; const last = L[L.length - 1]; if (last && last.t === now && last.p.distanceToSquared(pos) < 0.01) return; L.push({ p: pos.clone(), t: now }); while (L.length && (now - L[0].t > this.W || L.length > 60)) L.shift();
+    for (const P of this.pend.slice()) { if (now - P.t > this.W || now < P.t) { this.pend.splice(this.pend.indexOf(P), 1); continue; } if (P.need === kind && P.p.distanceTo(pos) < this.R) { this.pend.splice(this.pend.indexOf(P), 1); this.dbl(P.ev); } } },
+  onAward(ev) { if (seenAt !== world.t || !seenPos || ev.both || !(ev.pts > 0)) return; const need = ev.cam === 'fix' ? 'ph' : 'fix', L = need === 'fix' ? this.fixH : this.phH, p = seenPos;
+    if (need === 'ph' && !rec.active) return;   /* スマホで録画していない時は、定点カメラだけ（1倍） */
+    if (L.some(h => world.t - h.t <= this.W && world.t >= h.t && h.p.distanceTo(p) < this.R)) this.dbl(ev); else this.pend.push({ ev, p: p.clone(), t: world.t, need }); },
+  dbl(ev) { if (ev.both || !evidence.includes(ev)) return; ev.both = true; const add = ev.pts; ev.pts *= 2; if (TEST || DEV) console.log('BOTH x2', ev.key, ev.pts); try { likePop(Object.assign({}, ev, { pts: add, label: (LANG === 'en' ? 'Phone + fixed cam ×2' : 'スマホ＋定点 ×2') })); } catch (e) { } },
+};
 function seenMain(pos, margin, light, maxD, ignore) {
   const C = viewCam();
   if (C.position.distanceTo(pos) > maxD) return false;
@@ -5591,7 +5602,7 @@ const CAP = {
       if (chance(0.5)) { SG.ovYaw = clamp(SG.ovYaw + rnd(-0.06, 0.06), -0.5, 0.5); SG.ovPitch = clamp(SG.ovPitch + rnd(-0.04, 0.04), -0.35, 0.35); SG.ovRoll = clamp(SG.ovRoll + rnd(-0.08, 0.08), -0.38, 0.38); }
       this.flash = Math.max(0, (this.flash || 0) - dt); U.stat.value = this.flash > 0 || screamGap() ? 0.4 : 0.0;   // 叫びが途切れる瞬間に映像も飛ぶ
       if (t > 1.55 && !this.mo) { this.mo = 1; SG.ovYaw *= 0.3; SG.ovPitch *= 0.3; sgPlay('Scare_MouthOpen', 0); if (!this.seenS) wdScream(SCREAM_JAW); }   // 顎が開き始める瞬間に叫びが立ち上がる
-      if (seen(sgHead(V()), { maxD: 1.5 })) { if (this.ceil) award('ceilWoman', '上からくるぞ', 100); else award('capture', '逆さ女に襲われた瞬間', 120); }   /* 2026-11-17 天井の逆さ女は専用の撮れ高（襲われた瞬間とは重ならない） */
+      if (seen(sgHead(V()), { maxD: 1.5, fixD: 10 })) { if (this.ceil) award('ceilWoman', '上からくるぞ', 100); else award('capture', '逆さ女に襲われた瞬間', 120); }   /* 2026-11-17 天井の逆さ女は専用の撮れ高（襲われた瞬間とは重ならない） */
     }
     if (t > 2.3 && t < 2.5) { U.tear.value = 0.7; U.stat.value = Math.random() < 0.4 ? 0.8 : 0; }
     // ③ 音も映像も途中で途絶える
@@ -8441,7 +8452,7 @@ SP.update = function (dt) {
       if (this.strong) playSfx('capture_scream', { ear: 0, gain: 0.8, delay: 0.1, dur: 0.8 });
       world.vhs = Math.max(world.vhs, 0.6); focus.override = 0.4;
     }
-    if (this.hit && seen(fp, { maxD: 1.5, margin: 1.3 })) award('spLatch', 'クモ女に襲われる', 180);
+    if (this.hit && seen(fp, { maxD: 1.5, margin: 1.3, fixD: 10 })) award('spLatch', 'クモ女に襲われる', 180);
     if (this.hit && this.t > 0.85) { const U = postMat.uniforms; U.stat.value = Math.random() < 0.6 ? 0.8 : 0.2; U.tear.value = rnd(0.2, 0.7); world.vhs = 1; }
     if (this.t > 1.2) { if (ITEM.charm('spider')) { if (OFUDA.on) return; this.t = 100; const U = postMat.uniforms; U.stat.value = 0; U.tear.value = 0; world.vhs = 0.3; this.noChaseUntil = world.t + 25; this.lastDrop = world.t + 20; } else { if (REVIVE.tryRevive('spider')) return; this.gameOver(); return; } }   // おまもりがあれば一度だけ剥がれていく   // 2026-11-12 蜘蛛女に襲われたら、そこで終わり
     if (this.t > 99) { this.st = 'peel'; this.t = 0; spPlay('PeelAway', 0.08); this.P0 = this.wrap.position.clone(); this.Q0 = this.wrap.quaternion.clone(); focus.override = null;
@@ -13729,7 +13740,7 @@ function showResult(blobs) {
   const evs = evidence.slice().sort((a, b) => a.t - b.t);
   if (!evs.length) list.innerHTML = '<div class="ev none">撮れ高なし。次は仕込みをするべき？</div>';
   for (const e of evs) { const r = rankOf(e), d = document.createElement('div'); d.className = 'ev r-' + r.toLowerCase(); d.style.setProperty('--rc', RANK_COL[r]);
-    d.innerHTML = `<span class="t">${fmt(e.t)}</span><span class="n">${e.cam === 'fix' ? `<small style="color:#ff8a80;font-weight:700;margin-right:3px">${TR('定点')}</small>` : ''}${tjw(e.label)}</span><span class="p"><i class="like"></i>${e.pts}</span><span class="rk${r === 'PH' ? ' ph' : r === 'SS' ? ' ss' : r === 'S' ? ' s' : ''}"><small>レア</small><b>${rkTxt(r)}</b>${r === 'SS' ? '<i class="spk s1"></i><i class="spk s2"></i><i class="spk s3"></i>' : r === 'S' ? '<i class="spk s1"></i><i class="spk s2"></i>' : ''}</span>${fresh.has(COL.base(e.label)) ? '<span class="newTag">NEW</span>' : ''}`;
+    d.innerHTML = `<span class="t">${fmt(e.t)}</span><span class="n">${e.both ? `<small style="color:#ffd54f;font-weight:700;margin-right:3px">${TR('スマホ＋定点 ×2')}</small>` : e.cam === 'fix' ? `<small style="color:#ff8a80;font-weight:700;margin-right:3px">${TR('定点')}</small>` : ''}${tjw(e.label)}</span><span class="p"><i class="like"></i>${e.pts}</span><span class="rk${r === 'PH' ? ' ph' : r === 'SS' ? ' ss' : r === 'S' ? ' s' : ''}"><small>レア</small><b>${rkTxt(r)}</b>${r === 'SS' ? '<i class="spk s1"></i><i class="spk s2"></i><i class="spk s3"></i>' : r === 'S' ? '<i class="spk s1"></i><i class="spk s2"></i>' : ''}</span>${fresh.has(COL.base(e.label)) ? '<span class="newTag">NEW</span>' : ''}`;
     d.addEventListener('click', () => seekTo(e.t)); list.appendChild(d); RANK_IO && RANK_IO.observe(d); }
   attachVideo(blobs || [], !blobs);
   $('#saveMsg').textContent = ''; $('#result').classList.add('show'); $('#result').scrollTop = 0;
@@ -15375,7 +15386,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.59';
+const VERSION = '0.17.60';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -25588,7 +25599,7 @@ const WALLOG = { on: /[?&]wallog\b/.test(location.search), last: new Map(), n: 0
     for (const [k, o] of L) { if (!o || !o.pos) continue; const p = o.pos, q = this.last.get(k), lv = (p.y || 0) > 1.6 ? 1 : 0; this.last.set(k, { x: p.x, z: p.z, y: p.y || 0 });
       if (!q || Math.abs(q.y - (p.y || 0)) > 0.2 || stairZone(p.x, p.z)) continue; const m = Math.hypot(p.x - q.x, p.z - q.z); if (m < 0.02 || m > 1.5) continue;
       if (segBlocked(q.x, q.z, p.x, p.z, lv, -0.02)) { this.n++; console.log('WALL PASS', k, q.x.toFixed(2), q.z.toFixed(2), '->', p.x.toFixed(2), p.z.toFixed(2)); } } } };
-if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, WALLOG, SHOT, GRAF, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
+if (TEST && window.__G) Object.assign(window.__G, { NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
