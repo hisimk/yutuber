@@ -15433,7 +15433,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.17.82';
+const VERSION = '0.17.83';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16141,12 +16141,13 @@ const CHATGEN = {
     const bg = [];
     const firstSeg = ev.find(e => e.k === 'seg');
     // 2026-11-15 「こん◯◯〜」：配信の始めに、何人かが下の名前であいさつ（2〜4件・表記ゆれ）
-    if (o.nick && firstSeg && end.R > 1.5) { const n = o.nick, J = [`こん${n}〜`, `こん${n}`, `こん${n}～！`, `こん${n}〜〜`, `こん${n}ー`, `こん${n}！`], E = [`hi ${n}!`, `hey ${n}`, `hi ${n}~`, `hey ${n}!!`, `hii ${n}`, `hi ${n}`];
+    /* 2026-11-19 115番：始めのあいさつを減らす（数字は OPENCM.CFG） */ const IC = OPENCM.CFG; let nickOn = false;
+    if (o.nick && firstSeg && end.R > 1.5 && R() < IC.nick) { nickOn = true; const n = o.nick, J = [`こん${n}〜`, `こん${n}`, `こん${n}～！`, `こん${n}〜〜`, `こん${n}ー`, `こん${n}！`], E = [`hi ${n}!`, `hey ${n}`, `hi ${n}~`, `hey ${n}!!`, `hii ${n}`, `hi ${n}`];
       for (let i = J.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [J[i], J[j]] = [J[j], J[i]]; [E[i], E[j]] = [E[j], E[i]]; }
       const k = 1; /* 2026-11-16 「こん◯◯〜」は1つで十分 */ let t = firstSeg.t + rnd2(0.9, 1.7); for (let i = 0; i < k; i++) { out.push([t, 'g', { id: 'nick_hello', ja: J[i], en: E[i] }, 19, firstSeg.t]); t += rnd2(0.35, 0.9); } }
     // 2026-11-15 呼び名が作れない時は、「こん◯◯〜」はやめて、入力された名前のままであいさつ（1〜2件）
-    else if (o.name && firstSeg && end.R > 1.5) { const k = 1 + Math.floor(R() * 2); let t = firstSeg.t + rnd2(1.0, 1.8); for (let i = 0; i < k; i++) { const x = line('name_hello'); if (x) out.push([t, 'g', x, 19, firstSeg.t]); t += rnd2(0.5, 1.2); } }
-    if (firstSeg && end.R > 1.5) { const r = R(); bg.push([firstSeg.t + rnd2(0.6, 1.8), r < 0.55 ? 'hello' : r < 0.8 ? 'name_hello' : 'start', 20]); if (cls >= 2) bg.push([firstSeg.t + rnd2(2.2, 4.5), R() < 0.6 ? 'hello' : 'start', 12]); }
+    else if (o.name && !o.nick && firstSeg && end.R > 1.5 && R() < IC.nameHello) { const k = 1; let t = firstSeg.t + rnd2(1.0, 1.8); for (let i = 0; i < k; i++) { const x = line('name_hello'); if (x) out.push([t, 'g', x, 19, firstSeg.t]); t += rnd2(0.5, 1.2); } }
+    if (firstSeg && end.R > 1.5 && R() < IC.hello) { const r = R(); bg.push([firstSeg.t + rnd2(0.6, 1.8), nickOn ? 'start' : r < 0.55 ? 'hello' : r < 0.8 ? 'name_hello' : 'start', 20]); if (cls >= 2 && R() < IC.hello2) bg.push([firstSeg.t + rnd2(2.2, 4.5), nickOn || R() >= 0.6 ? 'start' : 'hello', 12]); }   /* 「こん○○〜」が出た動画は「こんばんは」系を出さない */
     const tagCat = { shuji: 'view_shuji', desk: 'view_desk', clock: 'view_clock', bed: 'view_bed', piano: 'view_piano', stairs: 'view_stairs', gear: 'view_broadcast_gear', bwin: 'view_broken_window', clean: 'view_cleaning', bag: 'view_bag', books: 'view_books' };
     const crN = { n: 0, t: -99 };   /* 2026-11-19 112番：しゃがんだ回数 */
     for (const e of ev) {
@@ -22015,25 +22016,30 @@ const XEXT2 = {
     const cap = world.state === 'over' && world.capBy ? (world.capBy === 'woman' && PHAN.on ? 'naka' : world.capBy) : null;
     try { PLOG.add({ id, at: now.getTime(), cap, likes: d.P | 0 }); } catch (e) { }
     /* ① 1コメ争い（ランクが高いほど人数が多い） */
-    if (R() < 0.5 + rk * 0.07) {
-      const n = [1, 2, 2, 3, 4, 6][rk] + (rk >= 5 ? Math.floor(R() * 3) : 0), us = users(n + 3), ts0 = d.items.map(x => x[0]).sort((a, b) => a - b); let t = 0.4 + R() * 0.6; const cl = [];
-      for (let i = 0; i < n; i++) { const l = rk >= 5 && R() < 0.75 ? L.c1[1] : pk(L.c1); push(t, l, us[i]); cl.push({ t, u: us[i], r: ts0.filter(x => x < t).length + cl.length + 1 }); t += 0.15 + R() * 0.5; }
+    const IC = OPENCM.CFG, mark = () => { const x = out[out.length - 1]; if (x) x.intro = 1; }, metaC = [];   /* 2026-11-19 115番 */
+    if (R() < IC.c1p[0] + rk * IC.c1p[1]) {
+      const n = IC.c1n[rk] + (rk >= 5 ? Math.floor(R() * 2) : 0), us = users(n + 3), ts0 = d.items.map(x => x[0]).sort((a, b) => a - b); let t = 0.4 + R() * 0.6; const cl = [];
+      for (let i = 0; i < n; i++) { const l = rk >= 5 && R() < 0.75 ? L.c1[1] : pk(L.c1); if (push(t, l, us[i])) mark(); cl.push({ t, u: us[i], r: ts0.filter(x => x < t).length + cl.length + 1 }); t += 0.15 + R() * 0.5; }
       let rt = t + 1 + R() * 0.8, ri = n; const w = cl.find(c => c.r === 1);
-      if (rk >= 5 && n >= 6) push(rt + 0.6, L.c1all[0], us[ri++]);
-      else { if (w) { push(rt, pk(L.c1ok), us[ri++]); rt += 1 + R(); } let k = 0; for (const c of cl) { if (c.r < 2 || c.r > 3 || k >= 2) continue; k++; if (R() < 0.3) push(rt, L.c1self[0], c.u); else push(rt, pk(c.r === 2 ? L.c1ng.concat(L.c1ng2) : L.c1ng), us[ri++ % us.length]); rt += 0.9 + R() * 1.2; } }
+      if (R() < IC.c1re) {   /* 返しは1件まで */
+        if (rk >= 5 && n >= 5) { if (push(rt + 0.6, L.c1all[0], us[ri++])) mark(); }
+        else if (w && R() < 0.5) { if (push(rt, pk(L.c1ok), us[ri++])) mark(); }
+        else { const c = cl.find(c => c.r >= 2 && c.r <= 3); if (c) { if (R() < 0.3 ? push(rt, L.c1self[0], c.u) : push(rt, pk(c.r === 2 ? L.c1ng.concat(L.c1ng2) : L.c1ng), us[ri++ % us.length])) mark(); } else if (w && push(rt, pk(L.c1ok), us[ri++])) mark(); } }
     }
     /* ② 遊び方の記録：久しぶり・1日に何周も・同じ怪異に何度も（それぞれ1周1回まで） */
-    if (prev && now.getTime() - prev.at >= 7 * 864e5) push(early(), pk(L.away));
-    const day = x => new Date(x).toDateString(); if (log.filter(x => day(x.at) === now.toDateString()).length + 1 >= 5 && R() < 0.6) push(early(), pk(L.many));
+    /* ②③④ は候補を集めて、1本に1件まで（ゆかりのある物を優先） */
+    if (prev && now.getTime() - prev.at >= 7 * 864e5 && R() < IC.meta.away) metaC.push([5, pk(L.away)]);
+    const day = x => new Date(x).toDateString(); if (log.filter(x => day(x.at) === now.toDateString()).length + 1 >= 5 && R() < IC.meta.many) metaC.push([2, pk(L.many)]);
     { const last5 = log.slice(-4).map(x => x.cap).concat([cap]), cnt = {}; for (const c of last5) if (c) cnt[c] = (cnt[c] || 0) + 1; const c0 = cap && cnt[cap] >= 3 ? cap : null;
       const cP = c0 || Object.keys(cnt).find(k => log.slice(-5).filter(x => x.cap === k).length >= 3);
-      if (cP && this.MON[cP] && R() < 0.6) { const ls = L.regN.filter(l => nm || !l[0].includes('{name}')), rep = { m: this.MON[cP], name: [nm, nm] }; push(c0 ? E + 0.6 + R() * 1.2 : early(), pk(ls), null, rep); } }
+      if (cP && this.MON[cP] && R() < 0.6) { const ls = L.regN.filter(l => nm || !l[0].includes('{name}')), rep = { m: this.MON[cP], name: [nm, nm] }; if (c0) push(E + 0.6 + R() * 1.2, pk(ls), null, rep); else if (R() < IC.meta.regN / 0.6) metaC.push([3, pk(ls), rep]); } }
     /* ③ 前の周の結果 */
     if (prev) { const pr = log.slice(-6, -1).map(x => x.likes || 0), avg = pr.length ? pr.reduce((a, b) => a + b, 0) / pr.length : 0;
-      if (prev.cap && R() < 0.5) push(early(), pk(L.prevCap));
-      else if ((pr.length ? prev.likes >= Math.max(400, avg * 1.5) : prev.likes >= 700) && R() < 0.5) push(early(), pk(L.prevHit)); }
+      if (prev.cap && R() < IC.meta.prevCap) metaC.push([5, pk(L.prevCap)]);
+      else if ((pr.length ? prev.likes >= Math.max(400, avg * 1.5) : prev.likes >= 700) && R() < IC.meta.prevHit) metaC.push([4, pk(L.prevHit)]); }
     /* ④ 曜日・時間帯（実際の時計） */
-    if (R() < 0.35) { const h = now.getHours(), w = now.getDay(); const g = h < 5 ? 'late' : (w === 0 && h >= 18) ? 'sun' : (w === 5 && h >= 18) ? 'fri' : h < 10 ? 'morn' : h === 12 ? 'noon' : w === 1 ? 'mon' : null; if (g) push(early(), pk(L[g])); }
+    if (R() < IC.meta.time) { const h = now.getHours(), w = now.getDay(); const g = h < 5 ? 'late' : (w === 0 && h >= 18) ? 'sun' : (w === 5 && h >= 18) ? 'fri' : h < 10 ? 'morn' : h === 12 ? 'noon' : w === 1 ? 'mon' : null; if (g) metaC.push([1, pk(L[g])]); }
+    if (metaC.length) { metaC.sort((a, b) => b[0] - a[0]); const m = metaC[0]; if (push(early(), m[1], null, m[2])) { const x = out[out.length - 1]; x.intro = 2; } }
     /* ⑤ これ案件？（100周に1回くらい・特に意味はない） */
     if (R() < 0.01) push(quiet(8, E - 3), L.anken[0]);
     /* ⑥ 怖い場面でコメントが増えた（5秒の間に、ふだんの2.5倍以上） */
@@ -22056,6 +22062,7 @@ const XEXT2 = {
     { const b = evidence.find(e => e.key === 'barBreak'); let v = null; try { v = localStorage.getItem('yt_ks_bar'); } catch (e) { }
       if (b && (!v || v === id)) { seq(b.t + 9 + R() * 4, this.ks1); try { localStorage.setItem('yt_ks_bar', id); } catch (e) { } } }
     if ((PHAN.runSt === 1 || PHAN.runSt === 2) && R() < 0.3) { const tr = d.items.filter(x => x[2] === 'troll').sort((a, b) => a[0] - b[0])[0]; if (tr) seq(tr[0] + 5 + R() * 4, this.ks2); }
+    try { OPENCM.cap(d, out, E); } catch (e) { console.warn('115', e); }
     if (out.length) d.items = d.items.concat(out).sort((a, b) => a[0] - b[0]);
   },
 };
@@ -22838,6 +22845,18 @@ const REP = {
       10: [['まだしゃがんでて草', 'still crouching lol']] },
   },
   ids(g, tr) { return (this.L[g] && this.L[g][tr] || []).map((x, i) => 'rp.' + g + '.' + tr + '.' + i); },
+};
+/* 2026-11-19 115番：動画の始めの「本編と関係ないコメント」（あいさつ・こん○○・1コメ争い・その返し・前回〜系）を減らす */
+const OPENCM = {
+  CFG: { nick: 0.5, nameHello: 0.5, hello: 0.6, hello2: 0.3, c1p: [0.25, 0.04], c1n: [1, 1, 2, 2, 3, 4], c1re: 0.35,
+    meta: { away: 1, many: 0.45, regN: 0.45, prevCap: 0.4, prevHit: 0.4, time: 0.25 }, win: 20, max: 3, maxShort: 1 },
+  GREET: /^(nick_hello|short-name\.(name_)?hello|context\.start)/,
+  /* 始めの win 秒に max 件まで（win 秒未満の動画は maxShort 件）。ゆかり（前回〜）→ あいさつ → 1コメ争いの順に残す */
+  cap(d, out, E) { const C = this.CFG, lim = E < C.win ? C.maxShort : C.max;
+    const A = d.items.filter(x => x[0] < C.win && this.GREET.test(x[2] || '')).map(x => [x, 1, 'd']).concat(out.filter(x => x.intro && x[0] < C.win).map(x => [x, x.intro === 2 ? 0 : 2, 'o']));
+    if (A.length <= lim) return; A.sort((a, b) => a[1] - b[1] || a[0][0] - b[0][0]); const drop = new Set(A.slice(lim).map(a => a[0]));
+    d.items = d.items.filter(x => !drop.has(x)); for (let i = out.length - 1; i >= 0; i--) if (drop.has(out[i])) out.splice(i, 1);
+    if (TEST || DEV) console.log('OPENCM cap', A.length, '->', lim); },
 };
 for (const g in REP.L) for (const tr in REP.L[g]) REP.L[g][tr].forEach((x, i) => { CHAT_DICT.t['rp.' + g + '.' + tr + '.' + i] = x; });
 XCHAT.LIST.it_chemLand = REP.ids('chemLand', 1); XCHAT.LIST.it_chemLure = REP.ids('chemLure', 1);
@@ -26016,7 +26035,7 @@ CHIP_DESC.ghostCut = ['見返した動画に、撮った覚えのない短いカ
 AW_HINT.ghostCut = ['長く撮った動画を、あとで見返すと', 'rewatch a long video afterward'];
 TKTXT.ghostCut = [CHIP_DESC.ghostCut[0], '撮った■えのない■■', '見返した■■に、■った■えのない■いカットが入っていた。…■が撮ったの？'];
 Object.assign(EN, { '撮った覚えのない映像': 'Footage you never shot' });
-if (TEST && window.__G) Object.assign(window.__G, { GOAL, REP, XCHAT, CHATLOG, NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, GHOSTCUT, ROOMX, DIRX: DIR, EVX: EV, ARARE, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
+if (TEST && window.__G) Object.assign(window.__G, { XEXT2, OPENCM, GOAL, REP, XCHAT, CHATLOG, NICK, NICKV, CHATGEN, TSE, ENDING, gyro, opt, AGEPAN, CHAT, CHATLOG, VHEAR, DIFF, HIDEX, NUI, LOCKX, KBALL, BUZZ, HAND, URPREY, URAHV, VOLX, URFUDA, urahShown, SPH, AW59, COL, AW_HINT, TKTXT, CHIP_DESC, XCHAT, ARARE, CHAT, TIPS, CHAT_DICT, CHATGEN, LABX, CBGM, HEART, CAB, chaseAudioStop, VPLAY, RES_CHAT, SHOP, SHIELD, URFUDA, LOCKX, LUCKFUDA, LID, stalls, lockers, flash, LIT, JIYU, PAD, rooms, KOK, camera, PAINT, ARTRM, OUMA, F2, VBGM, deskBusy, FIXCAM, GEAR, PERM, SHOPX: SHOP, RECV, RECG, GHOSTCUT, ROOMX, DIRX: DIR, EVX: EV, ARARE, ITEM_IMG, HMEMO, LOCKX, BZCAP, CHEM, NOISE, nearestNode, NAVT: NAV, TORCH, HAND, AIM, KBALL, BUZZ, WING, glassPanes, WALLOG, SHOT, GRAF, BOTH, FIXCAM_: FIXCAM, evidence, MANN, CONFIG, ITEM_TIER, NEWWING, FXEV, TALLY, POLT, attachVid: (b, p) => attachVideo(b, p), segI: () => segIdx });
 
 /* 2026-11-17 取り方のヒントの「人体模型」も内田くんに（37番の取りこぼし） */
 for (const k in AW_HINT) { const h = AW_HINT[k]; if (/人体模型/.test(h[0])) { h[0] = h[0].replace(/人体模型/g, '内田くん'); h[1] = h[1].replace(/the runaway mannequin/g, 'runaway Uchida-kun').replace(/the mannequin/g, 'Uchida-kun'); } }
