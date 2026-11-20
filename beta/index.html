@@ -472,7 +472,7 @@
   #xfer{position:fixed;inset:0;z-index:71;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:24px}
   #xfer.show{display:flex}
   #xfer .raBox{width:100%;max-width:340px;background:#151517;border:1px solid #333338;border-radius:16px;padding:20px 18px 14px;text-align:center}
-  #xfer .raT{font-size:17px;font-weight:800;color:#fff;letter-spacing:.04em}
+  #xfer .raT{font-size:17px;font-weight:800;color:#fff;letter-spacing:.04em}#xfer .xfMsg{margin-top:10px;font-size:13px;font-weight:700;color:#ffd34d;line-height:1.6;white-space:pre-line}
   #xfer p{font-size:13px;color:#bdb8ae;line-height:1.7;margin:10px 0 12px;text-align:left}
   #xfer .xfN{font-size:12px;color:#8f8a82;margin-top:-6px}
   #xfer .xfE{color:#ff7a70;min-height:1em;text-align:center;margin:8px 0 0}
@@ -1131,7 +1131,7 @@
     m.innerHTML = (en ? "Couldn't load the game. Please reload where your connection is good." : nb('読み込めませんでした。|通信のよい所で、|もう一度|読み込んでください。')) + '<br><button type="button" style="margin-top:16px;padding:12px 22px;border-radius:999px;border:1px solid #e9e4da;background:#e9e4da;color:#111;font:700 15px system-ui;letter-spacing:normal">' + (en ? 'Reload' : 'もう一度読み込む') + '</button>';
     m.querySelector('button').addEventListener('click', function () { location.reload(); }); d.appendChild(m); };
   window.__ytBootFail = fail;
-  setTimeout(slow, 10000); setTimeout(function () { if (el()) fail(); }, 20000);
+  setTimeout(slow, 10000); document.addEventListener('DOMContentLoaded', function () { setTimeout(function () { if (el()) fail(); }, 20000); });   // 20秒は、ページ全体が届いてから数える（通信が遅いだけの時に「読み込めませんでした」を出さない。それまでは「時間がかかっています」）
   addEventListener('error', function (e) { if (!el()) return; var t = e.target; if (t && t !== window && t.tagName !== 'SCRIPT') return; setTimeout(function () { if (el()) fail(); }, 3000); }, true);   // three.js などの script が読めない時・起動中のエラー（3秒たってもまだ LOADING の時だけ）
 })();
 </script>
@@ -4559,7 +4559,7 @@ $('#gyroBtn').addEventListener('click', e => { e.stopPropagation(); gyro.on ? di
 $('#centerBtn').addEventListener('click', e => { e.stopPropagation(); recenter(); });
 
 let toastT = null;
-function toast(msg, ms = 2600) { const el = $('#toast'); el.textContent = msg; el.style.whiteSpace = String(msg).includes('\n') ? 'pre-line' : ''; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), ms); }
+function toast(msg, ms = 2600) { const el = $('#toast'); el.textContent = msg; { const xb = document.querySelector('#xfer.show .raBox'); if (xb) { let m = xb.querySelector('.xfMsg'); if (!m) { m = document.createElement('div'); m.className = 'xfMsg'; xb.appendChild(m); } m.textContent = msg; clearTimeout(m._t); m._t = setTimeout(() => m.remove(), ms + 600); } }   /* 2026-11-20 184番の2：引き継ぎの画面を開いている時は、知らせが画面の後ろに隠れるので、引き継ぎの画面の中にも出す */ el.style.whiteSpace = String(msg).includes('\n') ? 'pre-line' : ''; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), ms); }
 
 // ── その場の操作ボタン（鍵・ノック・蛇口）
 let actFn = null, actLabel = '', actKey = false, actExit = false;
@@ -15687,7 +15687,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '0.18.76';
+const VERSION = '0.18.77';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
