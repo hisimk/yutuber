@@ -488,7 +488,7 @@
   #resetAsk .raD{font-size:13px;color:#bdb8ae;line-height:1.7;margin:12px 0 18px;text-align:left}
   #resetAsk .raBtns{display:flex;gap:10px}
   #resetAsk .raBtns button{flex:1;padding:12px 6px;border-radius:12px;font-size:15px;font-weight:700;border:1px solid #3a3a3e;background:#202024;color:#fff}
-  #resetAsk #resetYes{background:#e0332f;border-color:#e0332f}
+  #resetAsk #resetYes{background:#e0332f;border-color:#e0332f}#resetAsk #resetCancel{display:none;margin:14px auto 0;padding:6px 14px;background:none;border:none;color:#9a958c;font-size:13px;text-decoration:underline}#resetAsk.step2 #resetCancel{display:block}   /* 2026-11-20 175番の続き：2つ目の画面に「やめる」 */
   #setReset .rsSub{display:block;font-size:11px;color:#9a958c;font-weight:400;margin-top:2px}
   #boomFl{position:fixed;inset:0;z-index:9999;background:#fff;pointer-events:none;opacity:0;transition:opacity .55s ease-out}
   .achBox{grid-column:1/-1;border-radius:14px;padding:12px 13px 10px;background:linear-gradient(160deg,#1d1810,#121214 60%);border:1px solid rgba(255,211,77,.35);margin-bottom:4px}
@@ -1093,7 +1093,7 @@
   <button class="go" id="overBtn">タイトルにもどる</button>
   <button id="overVideo" style="display:none;margin-top:14px;font-size:13px;color:#cfcac0;background:none;border:1px solid #444;border-radius:10px;padding:10px 16px">残った映像を見る</button>
 </div>
-<div id="resetAsk"><div class="raBox"><div class="raT">チャンネルを爆破しますか？</div><div class="raD">累計いいね数・ランク・お金・持ち物・歴代の神回など、これまでのプレイデータが消えます。撮れ高のコレクションは、次の画面で残すかを選べます。</div><div class="raBtns"><button id="resetYes">爆破する</button><button id="resetNo">やめておく</button></div></div></div>
+<div id="resetAsk"><div class="raBox"><div class="raT">チャンネルを爆破しますか？</div><div class="raD">累計いいね数・ランク・お金・持ち物・歴代の神回など、これまでのプレイデータが消えます。撮れ高のコレクションは、次の画面で残すかを選べます。</div><div class="raBtns"><button id="resetYes">爆破する</button><button id="resetNo">やめておく</button></div><button id="resetCancel" type="button">やめる</button></div></div>
 <div id="rankPop"><div class="rpBox"><div id="rpT"></div><div id="rpFrom"></div><div id="rpTot"></div><div class="rpNote" id="rpNote"></div><button id="rpOk"></button></div></div>
 <div id="shAsk" role="dialog" aria-modal="true" aria-labelledby="shAskT"><div class="shBox"><button id="shAskX" class="mX" type="button">×</button><div id="shAskT"></div><p id="shAskS"></p><div class="shBtns"><button id="shAskNo" type="button"></button><button id="shAskYes" type="button"></button></div></div></div>
 <div id="vedit" role="dialog" aria-modal="true">
@@ -15705,7 +15705,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '0.18.84';
+const VERSION = '0.18.85';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -15988,7 +15988,7 @@ const NICK = {
     raw = String(raw || '').normalize('NFKC').trim(); yomi = String(yomi || '').normalize('NFKC').trim();
     // 2026-11-15 敬称（くん・ちゃん・さん・様・君・chan など）は外してから考える（たろうくん → たろう）
     const HON = /[ 　]*(くん|クン|ちゃん|チャン|さん|サン|さま|サマ|様|君|殿|どの|ちゃま|chan|kun|san|sama)$/i, cut = t => { return t.replace(HON, '').trim(); };
-    // 2026-11-15 「たろうチャンネル」「たろうの実況」「ゆいch」は、前の部分が名前（こんたろ〜）。「心霊チャンネル」のような一般的な言葉は除く
+    // 2026-11-15 「たろうチャンネル」「たろうの実況」「たろうch」は、前の部分が名前（こんたろ〜）。「心霊チャンネル」のような一般的な言葉は除く
     const CH = /^(.+?)[ 　・_-]*(?:の)?[ 　・_-]*(?:ゲーム実況|実況チャンネル|ゲームチャンネル|チャンネル|ちゃんねる|channel|ch\.?|tv|実況|じっきょう|配信|はいしん|公式|の部屋|部屋)$/i, chc = t => { const m = t.match(CH); return m ? m[1].trim() : t; };
     raw = cut(chc(raw)); yomi = cut(chc(yomi));
     if (/^(心霊|しんれい|シンレイ|ホラー|ほらー|怪談|オカルト|ゲーム|げーむ)$/.test(raw)) return null;
@@ -15997,7 +15997,7 @@ const NICK = {
     if (!raw || ng.test(raw) || ng.test(yomi)) return null;
     if (/^[\x20-\x7e]+$/.test(raw)) return null;   // 英字・数字・記号だけ
     if (yomi && !KANA.test(yomi)) yomi = '';
-    // 2026-11-15 「漢字＋かな」の名前（草野ゆい など）は、よみがなが無くても、かなの部分を下の名前として使う
+    // 2026-11-15 「漢字＋かな」の名前（山田たろう など）は、よみがなが無くても、かなの部分を下の名前として使う
     if (!yomi) { const m = raw.match(new RegExp('^' + KAN + '+([\u3041-\u3096\u30a1-\u30faー]+)$')); if (m) { const g = this.hira(m[1]), gm = this.mora(g); if (gm.length < 2 || gm.length >= 6) return null; const n = gm.slice(0, 2).join('');   /* 2026-11-15 こん◯◯は頭の2音を優先（たろう → たろ） */ this._last = { g, kata: KATA.test(m[1]) }; return KATA.test(m[1]) ? this.kata(n) : n; } }
     const rd = yomi || (KANA.test(raw) ? raw : ''); if (!rd) return null;   // 漢字の名前でよみがな無し
     let kataOut = /[ァ-ヺ]/.test(rd) && !/[ぁ-ゖ]/.test(rd);
@@ -20892,11 +20892,12 @@ const RESET = {
     /* 2026-11-20 175番の4：お金・持ち物・エンディングの記録も含めて、プレイの記録は全部消す（設定・言語・キー・難しさ・ハードの解放などの「設定」は残す） */
     SHOP.KEY, ENDING.KEY, 'yt_vidTitle', 'yt_newarea_aw', 'yt_wing_in', 'yt_exit_news', 'yt_ouma_seen', 'yt_hmemo_v1', 'yt_smemo_v1', 'yt_sph_v1', 'yt_plog_v1', 'yt_urah_v1', 'yt_mannran', 'yt_clear_note', 'yt_intro_cm', 'yt_ban_v1', 'yt_ks_bar', 'yt_clipped']; },   // 2026-11-15 ナカヨシの段階も0に
   nb(t) { return t.split('|').map(x => '<span style="display:inline-block">' + x + '</span>').join(''); },   /* 2026-11-20 175番：スマホの縦画面で言葉の途中で折り返さないよう、まとまりごとに区切る */
-  ask() { if (LANG !== 'en') document.querySelector('#resetAsk .raD').innerHTML = this.nb('累計いいね数・|ランク・|お金・|持ち物・|歴代の神回など、|これまでのプレイデータが|消えます。|撮れ高のコレクションは、|次の画面で|残すかを選べます。'); $('#resetAsk').classList.add('show'); },
+  ask() { const en = LANG === 'en', b = document.querySelector('#resetAsk .raBox'); this.keepCol = undefined; $('#resetAsk').classList.remove('step2'); b.querySelector('.raT').textContent = en ? 'Nuke your channel?' : 'チャンネルを爆破しますか？'; $('#resetYes').textContent = en ? 'Nuke it' : '爆破する'; $('#resetNo').textContent = en ? 'Never mind' : 'やめておく';   /* 175番の続き：「やめる」で閉じたあとに開き直しても、最初の画面から */
+    if (LANG === 'en') document.querySelector('#resetAsk .raD').textContent = 'Your play data will be erased, including total likes, rank, money, items, and your all-time best videos. On the next screen, you can choose whether to keep your capture collection.'; else document.querySelector('#resetAsk .raD').innerHTML = this.nb('累計いいね数・|ランク・|お金・|持ち物・|歴代の神回など、|これまでのプレイデータが|消えます。|撮れ高のコレクションは、|次の画面で|残すかを選べます。'); $('#resetAsk').classList.add('show'); },
   no() { $('#resetAsk').classList.remove('show'); },
   /* 2026-11-19 119番：「爆破する」を押したら、小さな爆発の音と画面が一瞬白く飛ぶ演出（0.7秒）のあと、今どおり消してスタート画面へ */
   /* 175番の4：「爆破する」を押したら、撮れ高のコレクションを残すかを聞く */
-  yes() { if (this.boomed) return; if (this.keepCol === undefined) { const en = LANG === 'en', b = document.querySelector('#resetAsk .raBox'); b.querySelector('.raT').innerHTML = en ? 'Keep your capture collection?' : this.nb('撮れ高の|コレクションは|残しますか？'); b.querySelector('.raD').innerHTML = en ? 'Everything else (likes, rank, money, items, top videos, endings seen) will be erased.' : this.nb('それ以外（累計いいね・|ランク・|お金・|持ち物・|歴代の神回・|エンディングを見た記録など）は、|すべて消えます。'); $('#resetYes').textContent = en ? 'Keep' : '残す'; $('#resetNo').textContent = en ? 'Erase all' : '全部消す'; this.keepCol = null; return; }
+  yes() { if (this.boomed) return; if (this.keepCol === undefined) { const en = LANG === 'en', b = document.querySelector('#resetAsk .raBox'); b.querySelector('.raT').innerHTML = en ? 'Keep your capture collection?' : this.nb('撮れ高の|コレクションは|残しますか？'); b.querySelector('.raD').innerHTML = en ? 'Everything else (likes, rank, money, items, top videos, endings seen) will be erased.' : this.nb('それ以外（累計いいね・|ランク・|お金・|持ち物・|歴代の神回・|エンディングを見た記録など）は、|すべて消えます。'); $('#resetYes').textContent = en ? 'Erase all' : '全部消す'; $('#resetNo').textContent = en ? 'Keep' : '残す'; $('#resetCancel').textContent = en ? 'Cancel' : 'やめる'; $('#resetAsk').classList.add('step2'); this.keepCol = null; return; }   /* 175番の続き：赤いボタンは危ない方（全部消す）に。安全な方（残す）は灰色 */
     this.boomed = true; try { $('#resetYes').disabled = $('#resetNo').disabled = true; } catch (e) { }
     try { if (ensureAudio()) { const t = A.ctx.currentTime; nb(A.master, { t, f: 900, f1: 70, type: 'lowpass', q: 0.7, a: 0.004, peak: 0.5, d: 0.75 }); tn(A.master, { t, type: 'sine', f0: 90, f1: 32, dur: 0.6, peak: 0.35 }); } } catch (e) { }
     try { const f = document.createElement('div'); f.id = 'boomFl'; document.body.appendChild(f); f.style.opacity = '1'; requestAnimationFrame(() => requestAnimationFrame(() => { f.style.opacity = '0'; })); } catch (e) { }
@@ -20913,8 +20914,9 @@ const RESET = {
 for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'touchmove']) $('#resetAsk').addEventListener(ev, e => e.stopPropagation(), { passive: true });
 $('#resetAsk').addEventListener('click', e => e.stopPropagation());
 $('#setReset').addEventListener('click', e => { e.stopPropagation(); RESET.ask(); });
-$('#resetNo').addEventListener('click', e => { e.stopPropagation(); if (RESET.keepCol === null) { RESET.keepCol = false; RESET.yes(); return; } RESET.no(); });
-$('#resetYes').addEventListener('click', e => { e.stopPropagation(); if (RESET.keepCol === null) RESET.keepCol = true; RESET.yes(); });
+$('#resetNo').addEventListener('click', e => { e.stopPropagation(); if (RESET.keepCol === null) { RESET.keepCol = true; RESET.yes(); return; } RESET.no(); });   // 2つ目の画面では「残す」
+$('#resetCancel').addEventListener('click', e => { e.stopPropagation(); if (RESET.boomed) return; RESET.keepCol = undefined; RESET.no(); });
+$('#resetYes').addEventListener('click', e => { e.stopPropagation(); if (RESET.keepCol === null) RESET.keepCol = false; RESET.yes(); });   // 2つ目の画面では「全部消す」
 
 /* =========================================================
    2026-11-16 引き継ぎコード（セーブデータを文字列にして書き出す・読み込む）
@@ -21313,7 +21315,7 @@ Object.assign(ITEM_ICON2, { bkey: 'data:image/webp;base64,UklGRk4TAABXRUJQVlA4WA
 for (const id of ['pmask', 'buzzer', 'chem', 'candle', 'spray', 'drink', 'stick', 'salt', 'beads', 'bkey', 'hoken', 'wneko', 'bneko', 'goldphone', 'goldframe']) ITEM_IMG[id] = ITEM_ICON2[id] || ITEM.fallbackIcon(id);
 /* 2026-11-16 栄養ドリンクG：栄養ドリンクの絵に「G」を重ねる */
 ITEM_IMG.drinkG = ITEM_ICON2.drinkG = ITEM_IMG.drink; ITEM_ICON2.sparebat = ITEM_IMG.sparebat; for (const [dst, src] of [['drinkG', 'drink'], ['sparebat', 'battery']]) {   /* 2026-11-19 135番：G の絵ができるまでは元の絵、できたら ITEM_ICON2 にも入れる（あとの準備で上書きされないように） */ const im = new Image(); im.onload = () => { const c = document.createElement('canvas'); c.width = c.height = 160; const x = c.getContext('2d'); x.drawImage(im, 0, 0, 160, 160); x.font = '900 64px system-ui,sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineWidth = 9; x.strokeStyle = '#1a1206'; x.strokeText('G', 112, 112); x.fillStyle = '#ffd34d'; x.fillText('G', 112, 112); ITEM_IMG[dst] = ITEM_ICON2[dst] = c.toDataURL('image/webp', 0.85); try { if (ITEM.ready && ITEM.img) { const i2 = new Image(); i2.onload = () => { ITEM.img[dst] = i2; if (ITEM.tex[dst]) { ITEM.tex[dst] = { w: ITEM.makeTex(dst, 'rgba(255,255,255,0.95)'), y: ITEM.makeTex(dst, 'rgba(255,205,40,1)') }; for (const it of ITEM.list) if (it.id === dst) ITEM.skin(it); } }; i2.src = ITEM_IMG[dst]; } } catch (e) { } }; im.src = ITEM_IMG[src]; }   /* 先に校舎の準備が済んでいたら、置いた物の光る絵も G 付きに作り直す */   /* 2026-11-17 モバイルバッテリーGにもG印 */
-Object.assign(EN, { 'タップで進む': 'Tap to continue', 'クリックで進む': 'Click to continue', '防犯ブザー': 'Safety buzzer', 'ケミカルライト': 'Glow stick', 'ろうそく': 'Candle', '使うと燭台ごと手に持って歩ける小さな明かり。怪異が近づくと炎がゆらぎ、とても近いとふっと消える。約3分で燃え尽きる。一度使うと、持ち帰れない。': 'A small light you carry, holder and all. The flame flickers when something comes near, and goes out when it gets very close. Burns out in about 3 minutes. Once used, you can’t take it home.', '使ったろうそく': 'Used candle', '残り': 'Left: ', 'キー': 'key', '手に持った道具を使う': 'Use the item in your hand', '虫よけスプレー': 'Bug spray', '栄養ドリンク': 'Energy drink', '栄養ドリンクG': 'Energy drink G', '体がとても軽くなった': 'You feel much lighter', '1分間、歩く速さが上がる。切れたあと少し息が上がる。': 'Walk faster for 1 minute. You get a little out of breath afterward.', '2分間、歩く速さが上がる（栄養ドリンクの上位版）。切れたあと少し息が上がる。': 'Walk faster for 2 minutes (upgraded energy drink). You get a little out of breath afterward.', '襲われても一度だけなかったことにする。': 'Undoes one attack, just once.', 'こわれかけの自撮り棒': 'Rickety selfie stick', '盛り塩': 'Salt mound', '数珠': 'Prayer beads', '金色のスマホ': 'Golden phone', '伝説のサムネイル枠': 'Legendary thumbnail frame', '投げる': 'Throw', '折って置く': 'Snap & drop', '火をつける': 'Light', '飲む': 'Drink', '置く': 'Place', 'ショップ': 'Shop' });
+Object.assign(EN, { 'タップで進む': 'Tap to continue', 'クリックで進む': 'Click to continue', '防犯ブザー': 'Safety buzzer', 'ケミカルライト': 'Glow stick', 'ろうそく': 'Candle', '折ると緑に光る棒。使うと手に持ち、まわりをぼんやり照らす。投げると落ちた所を照らし続け、その音に怪異が少し気を取られる。': 'A stick that glows green when you bend it. Hold it to dimly light your surroundings. Throw it and it keeps lighting where it lands, and the sound briefly distracts the ghosts.', 'モバイルバッテリー': 'Power bank', '画面の表示': 'Display mode', 'ウィンドウのまま遊ぶか、全画面で遊ぶか': 'Play in a window or in full screen', 'ウィンドウ': 'Window', '全画面': 'Full screen',   /* 2026-11-20 英語が抜けていた所（ケミカルライトの説明・モバイルバッテリー・画面の表示） */ '使うと燭台ごと手に持って歩ける小さな明かり。怪異が近づくと炎がゆらぎ、とても近いとふっと消える。約3分で燃え尽きる。一度使うと、持ち帰れない。': 'A small light you carry, holder and all. The flame flickers when something comes near, and goes out when it gets very close. Burns out in about 3 minutes. Once used, you can’t take it home.', '使ったろうそく': 'Used candle', '残り': 'Left: ', 'キー': 'key', '手に持った道具を使う': 'Use the item in your hand', '虫よけスプレー': 'Bug spray', '栄養ドリンク': 'Energy drink', '栄養ドリンクG': 'Energy drink G', '体がとても軽くなった': 'You feel much lighter', '1分間、歩く速さが上がる。切れたあと少し息が上がる。': 'Walk faster for 1 minute. You get a little out of breath afterward.', '2分間、歩く速さが上がる（栄養ドリンクの上位版）。切れたあと少し息が上がる。': 'Walk faster for 2 minutes (upgraded energy drink). You get a little out of breath afterward.', '襲われても一度だけなかったことにする。': 'Undoes one attack, just once.', 'こわれかけの自撮り棒': 'Rickety selfie stick', '盛り塩': 'Salt mound', '数珠': 'Prayer beads', '金色のスマホ': 'Golden phone', '伝説のサムネイル枠': 'Legendary thumbnail frame', '投げる': 'Throw', '折って置く': 'Snap & drop', '火をつける': 'Light', '飲む': 'Drink', '置く': 'Place', 'ショップ': 'Shop' });
 const SHOP = {
   KEY: 'yt_shop_v1',
   load() { if (this.d) return this.d; let d = null; try { d = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) { } this.d = d && typeof d.yen === 'number' ? d : { yen: 0, own: {}, look: {}, carry: [], seen: {}, stickT: 0 }; const q = (TEST || BETA || DEV) && location.search.match(/[?&]yen=(\d+)/); if (q) this.d.yen = +q[1]; return this.d; },
