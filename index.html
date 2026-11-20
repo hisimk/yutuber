@@ -15790,7 +15790,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '1.0.7';
+const VERSION = '1.0.8';
 const SHOOT = BETA && /[?&]shoot\b/.test(location.search);   /* 2026-11-20 動画撮影の素材用（?shoot）：「試し版」の表示を出さない */
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA && !SHOOT ? '（試し版）' : '');
 if (BETA && !SHOOT) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
@@ -23667,7 +23667,7 @@ Object.assign(EN, { 'トモダチ人形': 'Friend Doll', '持ち込むと顔が2
    ========================================================= */
 const SMEMO = { KEY: 'yt_smemo_v1', IDS: ['smemo1', 'smemo2', 'smemo3'],
   TXT: { smemo1: ['この先ヤバそう。\n絶対いい動画撮れる。\nどうやって入ろうか。', 'Looks dangerous up ahead. This will make a great video for sure. How do I get in?'],
-    smemo2: ['アイツ壁にぶつかるたびに\n臓器を落とすんだけど、\nあとで全部\n拾い直してるのかなwww', 'Every time that thing hits a wall it drops an organ. Does it go back and pick them all up later lol'],
+    smemo2: ['今日は内田くんと\nかくれんぼして遊んだ\n落ちた内臓を拾うのが\n大変だった', 'Played hide-and-seek with Uchida-kun today.\nPicking up the organs he dropped was hard work.'],   /* 2026-11-20 本人の決定：子どもの日記のような文に入れ替え */
     smemo3: ['もういいかい　もういいよ\nもういいよ　もういいよ\nしーっ\nふたりがさがしてる\nまえのかおと　うしろのかお\nふふ　ふふふ\nたのしい　たのしい　たのしい\nたのしい　たのしい　たのしい\nまたあそぼ\nぼそあたま　ぼたま', 'Ready or not? Ready. Ready. Ready.\nShh...\nThe two of them are looking\nthe front face and the back face\nhehe hehehe\nfun fun fun\nfun fun fun\nlet’s play again\nbosoatama  botama'] },
   load() { try { return JSON.parse(localStorage.getItem(this.KEY) || '{}') || {}; } catch (e) { return {}; } },
   got(id) { return !!this.load()[id] || false; },
@@ -23677,7 +23677,7 @@ const SMEMO = { KEY: 'yt_smemo_v1', IDS: ['smemo1', 'smemo2', 'smemo3'],
     for (const id of this.IDS) { if (!ITEM.get(id)) ITEM.add(id, V(0, -50, 0), 1); const it = ITEM.get(id); it.taken = true; it.lk = null; it.spot = null; it.pos.set(0, -50, 0); it.s.visible = false; }
     const put = (id, p, lv, lk) => { if (this.got(id) && !WF(id)) return; const it = ITEM.get(id); it.taken = false; it.lv = lv; it.lk = lk || null; it.spot = lk ? { type: 'locker', lk } : { type: 'floor', p: p.clone(), lv }; it.pos.copy(p); ITEM.skin(it); };
     put('smemo1', world.bar1Open && !world.bar2Open ? V(9.3, LH + 0.1, -31.5) : V(0, LH + 0.1, -31.4), 1);   /* 2026-11-17 閉まっているバリケードの2〜3m手前、廊下の真ん中 */
-    if (WF('smemo2') || (() => { try { return localStorage.getItem('yt_mannran') === '1'; } catch (e) { return false; } })()) put('smemo2', V(-2.62, 0.1, -15.83), 0);   /* 保健室の人体模型の前 */
+    if (WF('smemo2') || (this.got('smemo1') && (() => { try { return (ACH.load().best || []).some(b => (b.n | 0) >= 500); } catch (e) { return false; } })())) put('smemo2', V(-2.62, 0.1, -15.83), 0);   /* 保健室の人体模型の前。2026-11-20 本人の決定：バリケード前のメモ（smemo1）を拾ったことがあり、1本の動画で500いいね以上を取ったことがある時 */
     if (world.wingOpen) { const R = lockers.filter(l => l.red && l.hinge), free = R.filter(l => !ITEM.list.some(i => !i.taken && i.lk === l && !this.IDS.includes(i.id))), lk = (free.length ? free : R)[0] && pick(free.length ? free : R);
       if (lk) put('smemo3', lkP(lk, 0.05, 0.16, -0.2), lk.lv, lk); }
   },
@@ -23723,7 +23723,7 @@ const V2T = new THREE.Vector2();
 XCHAT.LIST.smemo1 = ['sm1.0', 'sm1.1', 'sm1.2', 'sm1.3']; XCHAT.LIST.smemo2 = ['sm2.0', 'sm2.1', 'sm2.2']; XCHAT.LIST.smemo3 = ['sm3.0', 'sm3.1', 'sm3.2', 'sm3.3', 'sm3.4', 'sm3.5'];
 XCHAT.ORD = ['smemo2', 'urFuda2', 'urSummon', 'phHit1', 'phHit2', 'phBack1', 'phBack2']; XCHAT.BIG.push('smemo3');
 Object.assign(CHAT_DICT.t, { 'sm1.0': ['誰のメモ？', 'whose note is this?'], 'sm1.1': ['前に来た人いるじゃん', 'someone was here before'], 'sm1.2': ['同業者で草', 'a fellow creator lol'], 'sm1.3': ['その人どうなったの…', 'what happened to them...'],
-  'sm2.0': ['アイツって誰', 'who is "that thing"'], 'sm2.1': ['人体模型でしょ', 'the anatomy model obviously'], 'sm2.2': ['臓器落とす人間がいるかよ！', 'what human drops organs!?'],
+  'sm2.0': ['内田くんって誰', 'who is Uchida-kun'], 'sm2.1': ['かくれんぼ…？', 'hide-and-seek...?'], 'sm2.2': ['内臓拾うのが大変ってなに', 'what do you mean picking up organs was hard'],
   'sm3.0': ['こっわ', 'terrifying'], 'sm3.1': ['おかしくなっちゃった', 'they lost it'], 'sm3.2': ['ぼそあたま…？', 'bosoatama...?'], 'sm3.3': ['まえのかおとうしろのかお', 'the front face and the back face'], 'sm3.4': ['字が震えてる', 'the handwriting is shaking'], 'sm3.5': ['鳥肌やばい', 'got goosebumps'] });
 /* 2026-11-17 設定に「エンディングを見る」（一度エンディングを見たら・スタート画面の時だけ）。?ownall（試し版）：ショップの道具を全部持っている状態 */
 { const S0 = SET.show.bind(SET); SET.show = function () { const r = S0.apply(this, arguments); try { let seen = false; try { seen = localStorage.getItem(ENDING.KEY) === '1'; } catch (e) { } $('#setEnding').style.display = (seen || BETA) && world.state === 'title' ? '' : 'none'; $('#setEnding').textContent = TR('エンディングを見る'); if (window.PLAY5 && world.state === 'title') ENDDIAG.show(); } catch (e) { } return r; }; }
