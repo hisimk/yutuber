@@ -1073,7 +1073,7 @@
   <button class="go" id="overBtn">タイトルにもどる</button>
   <button id="overVideo" style="display:none;margin-top:14px;font-size:13px;color:#cfcac0;background:none;border:1px solid #444;border-radius:10px;padding:10px 16px">残った映像を見る</button>
 </div>
-<div id="resetAsk"><div class="raBox"><div class="raT">チャンネルを爆破しますか？</div><div class="raD">集めた撮れ高、累計いいね数、歴代の神回など、これまでのプレイデータがすべて消えます。</div><div class="raBtns"><button id="resetYes">爆破する</button><button id="resetNo">やめておく</button></div></div></div>
+<div id="resetAsk"><div class="raBox"><div class="raT">チャンネルを爆破しますか？</div><div class="raD">累計いいね数・ランク・お金・持ち物・歴代の神回など、これまでのプレイデータが消えます。撮れ高のコレクションは、次の画面で残すかを選べます。</div><div class="raBtns"><button id="resetYes">爆破する</button><button id="resetNo">やめておく</button></div></div></div>
 <div id="rankPop"><div class="rpBox"><div id="rpT"></div><div id="rpFrom"></div><div id="rpTot"></div><div class="rpNote" id="rpNote"></div><button id="rpOk"></button></div></div>
 <div id="shAsk" role="dialog" aria-modal="true" aria-labelledby="shAskT"><div class="shBox"><button id="shAskX" class="mX" type="button">×</button><div id="shAskT"></div><p id="shAskS"></p><div class="shBtns"><button id="shAskNo" type="button"></button><button id="shAskYes" type="button"></button></div></div></div>
 <div id="vedit" role="dialog" aria-modal="true">
@@ -15229,10 +15229,10 @@ const NOTICE = {
     $('#nOk').onclick = () => { try { localStorage.setItem(this.KEY, '1'); } catch (e) { } try { ensureAudio(); PACALL.unlock(); } catch (e) { } el.classList.remove('show'); next(); };   // ここで音の準備（スマホは押した瞬間でないと音が出せない）
   },
   // 「旧校舎に入る」を初めて押した時：マイク・ジャイロの説明（選んだものだけ許可を求める）
-  needAsk() { if (this.FIRST) return true; if (TEST && !/[?&]notice/.test(location.search)) return false; try { return !localStorage.getItem(this.ASK); } catch (e) { return false; } },
+  needAsk() { if (this.answered) return false; if (this.FIRST) return true;   /* 2026-11-20 175番の1：このページでもう答えたら、もう聞かない（?first・保存できない環境でも始められる） */ if (TEST && !/[?&]notice/.test(location.search)) return false; try { return !localStorage.getItem(this.ASK); } catch (e) { return false; } },
   ask(go) {
     const el = this.el(), en = LANG === 'en', mob = this.mobile();
-    const done = (mic, gy) => { opt.mic = !!mic; if (mob) opt.gyro = !!gy; else opt.gyro = false; saveOpts(); try { SET.sync(); } catch (e) { } try { localStorage.setItem(this.ASK, '1'); } catch (e) { } el.classList.remove('show'); go(); };
+    const done = (mic, gy) => { this.answered = true; opt.mic = !!mic; if (mob) opt.gyro = !!gy; else opt.gyro = false; saveOpts(); try { SET.sync(); } catch (e) { } try { localStorage.setItem(this.ASK, '1'); } catch (e) { } el.classList.remove('show'); go(); };
     if (!mob) {
       el.innerHTML = `<div class="nBox"><h2>${en ? 'Use your microphone?' : 'マイクを使いますか？'}</h2><div class="nL"><i>🎙</i><div>${en ? 'Talk, scream — your voice might become a highlight!?' : '実況したり叫んだり、あなたの声が撮れ高になるかも！？'}</div></div><div class="nS">${en ? '* Your voice only goes into your recording and is never sent anywhere. You can change this later in Settings.' : '※ 声は録画に入るだけで、どこにも送られません。あとから設定でオン・オフできます。'}</div>
         <div class="nBtns"><button class="pri" data-c="mic">${en ? 'Use mic' : 'マイクを使う'}</button><button data-c="none">${en ? 'Play without' : '使わずに遊ぶ'}</button></div></div>`;
@@ -15666,12 +15666,12 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '0.18.70';
+const VERSION = '0.18.71';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
 const VDB = {
-  NAME: BETA ? (window.PLAY5 ? 'beta_yutuber_db_t5' : 'beta_yutuber_db') : 'yutuber_db', db: null,   /* 2026-11-17 確認用 ?play5 は別の保存場所（はじめに試し版の動画を写す） */
+  NAME: AWT_ON ? (BETA ? 'beta_yutuber_db_awt' : 'yutuber_db_awt') : BETA ? (window.PLAY5 ? 'beta_yutuber_db_t5' : 'beta_yutuber_db') : 'yutuber_db', db: null,   /* 2026-11-20 175番の2：撮れ高テストの動画は別の保存場所 */   /* 2026-11-17 確認用 ?play5 は別の保存場所（はじめに試し版の動画を写す） */
   open() {
     if (this.db) return Promise.resolve(this.db);
     return new Promise((ok, ng) => { try { const r = indexedDB.open(this.NAME, 1); r.onupgradeneeded = () => r.result.createObjectStore('vids'); r.onsuccess = () => { this.db = r.result; ok(this.db); }; r.onerror = () => ng(r.error); } catch (e) { ng(e); } });
@@ -20849,17 +20849,22 @@ if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, 
    ・音量・言語・キー操作・チャンネル名などの設定は残す。撮った映像は端末に保存していない（読み込み直しで消える）
    ========================================================= */
 const RESET = {
-  keys() { return ['yt_stats_v1', 'yt_fuda1000', 'yt_pa_first', COL.KEY, ACH.KEY, PERM.KEY, 'yt_mann_unlock', 'yt_tut', 'yt_keyuse', PHAN.KEY, 'yt_wing_open', 'yt_bar1_open', 'yt_bar2_open', 'yt_start']; },   // 2026-11-15 ナカヨシの段階も0に
-  ask() { $('#resetAsk').classList.add('show'); },
+  keys() { return ['yt_stats_v1', 'yt_fuda1000', 'yt_pa_first', COL.KEY, ACH.KEY, PERM.KEY, 'yt_mann_unlock', 'yt_tut', 'yt_keyuse', PHAN.KEY, 'yt_wing_open', 'yt_bar1_open', 'yt_bar2_open', 'yt_start',
+    /* 2026-11-20 175番の4：お金・持ち物・エンディングの記録も含めて、プレイの記録は全部消す（設定・言語・キー・難しさ・ハードの解放などの「設定」は残す） */
+    SHOP.KEY, ENDING.KEY, 'yt_newarea_aw', 'yt_wing_in', 'yt_exit_news', 'yt_ouma_seen', 'yt_hmemo_v1', 'yt_smemo_v1', 'yt_sph_v1', 'yt_plog_v1', 'yt_urah_v1', 'yt_mannran', 'yt_clear_note', 'yt_intro_cm', 'yt_ban_v1', 'yt_ks_bar', 'yt_clipped']; },   // 2026-11-15 ナカヨシの段階も0に
+  nb(t) { return t.split('|').map(x => '<span style="display:inline-block">' + x + '</span>').join(''); },   /* 2026-11-20 175番：スマホの縦画面で言葉の途中で折り返さないよう、まとまりごとに区切る */
+  ask() { if (LANG !== 'en') document.querySelector('#resetAsk .raD').innerHTML = this.nb('累計いいね数・|ランク・|お金・|持ち物・|歴代の神回など、|これまでのプレイデータが|消えます。|撮れ高のコレクションは、|次の画面で|残すかを選べます。'); $('#resetAsk').classList.add('show'); },
   no() { $('#resetAsk').classList.remove('show'); },
   /* 2026-11-19 119番：「爆破する」を押したら、小さな爆発の音と画面が一瞬白く飛ぶ演出（0.7秒）のあと、今どおり消してスタート画面へ */
-  yes() { if (this.boomed) return; this.boomed = true; try { $('#resetYes').disabled = $('#resetNo').disabled = true; } catch (e) { }
+  /* 175番の4：「爆破する」を押したら、撮れ高のコレクションを残すかを聞く */
+  yes() { if (this.boomed) return; if (this.keepCol === undefined) { const en = LANG === 'en', b = document.querySelector('#resetAsk .raBox'); b.querySelector('.raT').innerHTML = en ? 'Keep your capture collection?' : this.nb('撮れ高の|コレクションは|残しますか？'); b.querySelector('.raD').innerHTML = en ? 'Everything else (likes, rank, money, items, top videos, endings seen) will be erased.' : this.nb('それ以外（累計いいね・|ランク・|お金・|持ち物・|歴代の神回・|エンディングを見た記録など）は、|すべて消えます。'); $('#resetYes').textContent = en ? 'Keep' : '残す'; $('#resetNo').textContent = en ? 'Erase all' : '全部消す'; this.keepCol = null; return; }
+    this.boomed = true; try { $('#resetYes').disabled = $('#resetNo').disabled = true; } catch (e) { }
     try { if (ensureAudio()) { const t = A.ctx.currentTime; nb(A.master, { t, f: 900, f1: 70, type: 'lowpass', q: 0.7, a: 0.004, peak: 0.5, d: 0.75 }); tn(A.master, { t, type: 'sine', f0: 90, f1: 32, dur: 0.6, peak: 0.35 }); } } catch (e) { }
     try { const f = document.createElement('div'); f.id = 'boomFl'; document.body.appendChild(f); f.style.opacity = '1'; requestAnimationFrame(() => requestAnimationFrame(() => { f.style.opacity = '0'; })); } catch (e) { }
     try { const b = document.querySelector('#resetAsk .raBox'); if (b && b.animate) b.animate([{ transform: 'translate(0,0)' }, { transform: 'translate(-6px,3px)' }, { transform: 'translate(5px,-4px)' }, { transform: 'translate(-3px,2px)' }, { transform: 'translate(0,0)' }], { duration: 350 }); } catch (e) { }
     setTimeout(() => this.wipe(), 700); },
   wipe() {
-    try { for (const k of this.keys()) localStorage.removeItem(k); for (let i = localStorage.length - 1; i >= 0; i--) { const k0 = localStorage.key(i), k = k0 && (BETA ? (k0.startsWith('beta:') ? k0.slice(5) : null) : (k0.startsWith('beta:') ? null : k0)); if (k && /^yutuber_/.test(k)) localStorage.removeItem(k); } } catch (e) { }
+    try { for (const k of this.keys()) if (!(this.keepCol && k === COL.KEY)) localStorage.removeItem(k); if (this.keepCol) localStorage.setItem(ACH.KEY, JSON.stringify({ v: 1, total: 0, best: [], ids: [] }));   /* コレクションを残しても、累計いいね（ランク）は0から（コレクションから計算し直さない） */ for (let i = localStorage.length - 1; i >= 0; i--) { const k0 = localStorage.key(i), k = k0 && (BETA ? (k0.startsWith('beta:') ? k0.slice(5) : null) : (k0.startsWith('beta:') ? null : k0)); if (k && /^yutuber_/.test(k) && !(this.keepCol && (k === COL.KEY || k === ACH.KEY))) localStorage.removeItem(k); } } catch (e) { }
     try { resultUrls.forEach(u => URL.revokeObjectURL(u)); } catch (e) { }
     COL.data = null; ACH.d = null; PERM.d = null; PHAN.d = null;
     const go = () => { const u = new URL(location.href); u.searchParams.delete('perm'); location.replace(u.toString()); };   // スタート画面から（初めて遊ぶ時と同じ状態）
@@ -20869,8 +20874,8 @@ const RESET = {
 for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'touchmove']) $('#resetAsk').addEventListener(ev, e => e.stopPropagation(), { passive: true });
 $('#resetAsk').addEventListener('click', e => e.stopPropagation());
 $('#setReset').addEventListener('click', e => { e.stopPropagation(); RESET.ask(); });
-$('#resetNo').addEventListener('click', e => { e.stopPropagation(); RESET.no(); });
-$('#resetYes').addEventListener('click', e => { e.stopPropagation(); RESET.yes(); });
+$('#resetNo').addEventListener('click', e => { e.stopPropagation(); if (RESET.keepCol === null) { RESET.keepCol = false; RESET.yes(); return; } RESET.no(); });
+$('#resetYes').addEventListener('click', e => { e.stopPropagation(); if (RESET.keepCol === null) RESET.keepCol = true; RESET.yes(); });
 
 /* =========================================================
    2026-11-16 引き継ぎコード（セーブデータを文字列にして書き出す・読み込む）
@@ -20896,7 +20901,7 @@ const XFER = {
     this.backup(); },
   /* ── 予備（IndexedDB） */
   db() { return new Promise((ok, ng) => { try { const r = indexedDB.open('yt_backup', 1); r.onupgradeneeded = () => r.result.createObjectStore('b'); r.onsuccess = () => ok(r.result); r.onerror = () => ng(r.error); } catch (e) { ng(e); } }); },
-  slot() { return BETA ? 'beta' : 'main'; },
+  slot() { return (BETA ? 'beta' : 'main') + (AWT_ON ? '_awt' : ''); },   /* 175番の2：撮れ高テストの予備は別の場所 */
   prog(d) { const j = k => { try { return JSON.parse(d[k] || 'null'); } catch (e) { return null; } }; const c = j(COL.KEY), a = j(ACH.KEY); return !!((c && c.items && Object.keys(c.items).length) || (a && (a.total > 0 || (a.best && a.best.length))) || (c && c.runs > 0)); },   /* 遊んだ記録が入っているか */
   backup() { const d = this.snap(); if (!this.prog(d)) return; this.db().then(db => { const tx = db.transaction('b', 'readwrite'); tx.objectStore('b').put({ t: Date.now(), d }, this.slot()); }).catch(() => { }); },
   wipe() { return this.db().then(db => new Promise(ok => { const tx = db.transaction('b', 'readwrite'); tx.objectStore('b').delete(this.slot()); tx.oncomplete = ok; tx.onerror = ok; })).catch(() => { }); },
@@ -23448,7 +23453,7 @@ const HAND = {
 HAND.vl = { l: new THREE.PointLight(0xffa850, 0, 5, 2), lv: -1 }; LPOOL.src.push(HAND.vl);   /* 手に持った明かり：シーンに足さず、光の枠を借りる（足すと描き直しでカクつく） */
 CHEM.vl = [0, 1, 2].map(() => { const e = { l: new THREE.PointLight(0x5cff60, 0, 4.5, 2), lv: -1 }; LPOOL.src.push(e); return e; }); CHEM.k = 0;
 CHEM.reset = function () { for (const c of this.list) scene.remove(c); this.list = []; for (const e of this.vl) e.l.intensity = 0; };
-Object.assign(EN, { 'チャンネルを爆破する': 'Nuke the channel', '（データをリセット）': '(Reset data)', 'チャンネルを爆破しますか？': 'Nuke your channel?', '集めた撮れ高、累計いいね数、歴代の神回など、これまでのプレイデータがすべて消えます。': 'All your play data will be erased, including collected highlights, total likes, and your all-time best videos.', '爆破する': 'Nuke it', 'やめておく': 'Never mind', '手に持っている': 'In your hand', 'しまう': 'Put away', 'はい': 'Yes', 'いいえ': 'No', '部屋の中でお使いください': 'Please use it inside a room' });
+Object.assign(EN, { 'チャンネルを爆破する': 'Nuke the channel', '（データをリセット）': '(Reset data)', 'チャンネルを爆破しますか？': 'Nuke your channel?', '集めた撮れ高、累計いいね数、歴代の神回など、これまでのプレイデータがすべて消えます。': 'All your play data will be erased, including collected highlights, total likes, and your all-time best videos.', '累計いいね数・ランク・お金・持ち物・歴代の神回など、これまでのプレイデータが消えます。撮れ高のコレクションは、次の画面で残すかを選べます。': 'Your play data will be erased, including total likes, rank, money, items, and your all-time best videos. On the next screen, you can choose whether to keep your capture collection.', '爆破する': 'Nuke it', 'やめておく': 'Never mind', '手に持っている': 'In your hand', 'しまう': 'Put away', 'はい': 'Yes', 'いいえ': 'No', '部屋の中でお使いください': 'Please use it inside a room' });
 /* 持っている間は、帰還以外の「調べる」は出さない */
 { const OA0 = offerAction; offerAction = function (label, fn, opt) { if (HAND.blocks() && !HAND.own && !(opt && opt.exit)) return; return OA0(label, fn, opt); }; }
 { const O0 = ITEM.offer.bind(ITEM); ITEM.offer = function () { HAND.offer(); return O0(); }; }
@@ -26332,9 +26337,14 @@ const PLACE = {
     this.sW = this.mat(0xffffff, 0.45); this.sR = this.mat(0xff3b30, 0.5); this.sg = new THREE.Group(); this.sc.add(this.sg); this.hide(); },
   pile(m, x, y, z, G) { const pl = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.016, 14), m); pl.position.set(x, y + 0.008, z); const co = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.13, 12), m); co.position.set(x, y + 0.08, z); G.add(pl, co); },
   /* 盛り塩の仮置き：SALT2.place と同じ形（入口ごとに左右2つと線） */
-  saltGhost(T) { const key = T.ok ? 'w' + T.room + T.lv : 'r', G = this.sg; if (this.sKey !== key || !T.ok) { while (G.children.length) G.remove(G.children[0]); this.sKey = key; const y = T.lv ? LH : 0;
+  /* 2026-11-20 175番の3：置けない所の赤い形は一度だけ作って位置だけ動かす。入口の形を作り直す時は、古い形・材質を片付ける */
+  saltGhost(T) { const key = T.ok ? 'w' + T.room + T.lv : 'r', G = this.sg, y = T.lv ? LH : 0;
+    if (!this.sRG) { this.sRG = new THREE.Group(); this.pile(this.sR, 0, 0, 0, this.sRG); }
+    if (this.sKey !== key) { for (const c of G.children.slice()) { G.remove(c); if (c === this.sRG) continue; c.traverse(o => { if (o.isMesh) { o.geometry.dispose(); if (o.material !== this.sW && o.material !== this.sR) o.material.dispose(); } }); } this.sKey = key;
       if (T.ok) for (const D of T.ds) { const side = V(-D.dir.z, 0, D.dir.x), c = D.P.clone().addScaledVector(D.dir, 0.22), m = D === T.D ? this.sW : this.mat(0xffffff, 0.22); for (const k of [-0.62, 0.62]) { const q = c.clone().addScaledVector(side, k); this.pile(m, q.x, y, q.z, G); } const ln = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.004, 0.035), m); ln.position.set(c.x, y + 0.004, c.z); ln.rotation.y = Math.atan2(side.x, side.z) + Math.PI / 2; G.add(ln); }
-      else this.pile(this.sR, T.p.x, y, T.p.z, G); } G.visible = true; },
+      else G.add(this.sRG); }
+    if (!T.ok) this.sRG.position.set(T.p.x, y, T.p.z);
+    G.visible = true; },
   hide() { if (this.jg) this.jg.visible = false; if (this.sg) this.sg.visible = false; this.vis = false; this.t = null; },
   can() { const id = HAND.item; if (id !== 'jiyu' && id !== 'salt') return false; if (world.state !== 'play' || world.capture || HAND.hiding() || (typeof CAP !== 'undefined' && CAP.on)) return false; const H = document.documentElement.classList; return !(H.contains('jyOn') || H.contains('ptOn') || (typeof PIANO !== 'undefined' && PIANO.on) || (typeof SCIRM !== 'undefined' && SCIRM.scope) || (typeof INV !== 'undefined' && INV.open) || (typeof SET !== 'undefined' && SET.open) || (typeof CALL !== 'undefined' && CALL.lockYaw !== undefined) || (typeof REVIVE !== 'undefined' && REVIVE.on)); },
   tick() { this.init(); if (!this.can()) { this.hide(); return; } const id = HAND.item;
