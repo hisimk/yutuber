@@ -2493,7 +2493,7 @@ box(0.26, 0.05, 7.8, M.concrete, -9.73, 0.975, -13);
   /* 2026-11-15 入れない2階（渡り廊下の上）は、南の端（2階の廊下の東の壁）も北の端（新しい棟の廊下の南の壁）もシャッターで閉まっている（調べられない） */
   { const mkT = (w, h, fn) => { const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return L({ map: t }); };
     const sh = mkT(64, 256, (x, w, h) => { x.fillStyle = '#7a7e80'; x.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 8) { x.fillStyle = 'rgba(0,0,0,.28)'; x.fillRect(0, y, w, 2); x.fillStyle = 'rgba(255,255,255,.08)'; x.fillRect(0, y + 2, w, 1); } x.fillStyle = 'rgba(60,40,30,.25)'; for (let i = 0; i < 30; i++) x.fillRect(Math.random() * w, Math.random() * h, 2, 6); });
-    const S = (w, x, z, ry) => { const m = plane(w, 2.0, sh, x, 1.0, z, ry); box(ry ? 0.08 : w + 0.1, 0.12, ry ? w + 0.1 : 0.08, M.metal, x, 2.06, z, { occ: false }); return m; };
+    const S = (w, x, z, ry) => { const m = plane(w, 2.0, sh, x, 1.0, z, ry); const side = Math.abs(Math.sin(ry)) > 0.5; box(side ? 0.08 : w + 0.1, 0.12, side ? w + 0.1 : 0.08, M.metal, x, 2.06, z, { occ: false }); return m; };   /* 2026-11-20 向きが180度のシャッターで、上の枠が廊下へ突き出す棒になっていたのを直す */
     S(3.0, 20.5, -30.04, Math.PI); S(3.0, 1.46, -6.5, -Math.PI / 2); }   /* 2026-11-15 壁の端の面と同じ所に重なってちらついていたので、見る側へ少しだけ出す */
   /* 入れない2階（外側の箱だけ）：1階の南の廊下の上・渡り廊下の上。窓の中は真っ暗 */
   { const dk = new THREE.MeshBasicMaterial({ color: 0x030304, side: THREE.DoubleSide });
@@ -15650,7 +15650,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.67';
+const VERSION = '0.18.68';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
