@@ -5404,7 +5404,7 @@ const WD = {
     }
     sgUpdate(dt, CH.state === 'off' && this.wait > 0 ? 0.35 : 1);
     patrolNeckUpdate(dt, SG.ready && SG.root.visible && !this.glance && CH.state === 'off');
-    if (player.hidden && (SG.opacity ?? 1) > 0.15 && accum('slit', seen(V(this.pos.x, this.pos.y + 1.3, this.pos.z), { maxD: 4, margin: 1.15, ignore: HIDE.lk ? (HIDE.lk.parts || [HIDE.lk.door]) : [] }), dt, 0.1)) award('slitCloth', 'ロッカーの前を横切る赤い布', 60);   // 隠れている間に前を横切ったら
+    if (player.hidden && HIDE.lk && !(typeof UNDER !== 'undefined' && UNDER.on) && (SG.opacity ?? 1) > 0.15 && accum('slit',   /* 2026-11-20 143番：ロッカーの時だけ */ seen(V(this.pos.x, this.pos.y + 1.3, this.pos.z), { maxD: 4, margin: 1.15, ignore: HIDE.lk ? (HIDE.lk.parts || [HIDE.lk.door]) : [] }), dt, 0.1)) award('slitCloth', 'ロッカーの前を横切る赤い布', 60);   // 隠れている間に前を横切ったら
     // 採点：実際に見えて録画されたときだけ
     if (this.vis > 0.5) {
       if (accum('sgSeen', seen(head, { maxD: 26 }), dt, 0.25)) award('wander', '暗がりを滑る逆さ女', 40);
@@ -8459,7 +8459,7 @@ function spPlay(name, fade = 0.15) { const a = SP.act[name]; if (!a || SP.cur ==
 function spFacePos(out = V()) { SP.wrap.updateMatrixWorld(true); return SP.faceOff ? SP.face.localToWorld(out.copy(SP.faceOff)) : SP.face.getWorldPosition(out); }
 
 /* ---------- 1周ぶんの準備（巣は毎周はじめから実在） ---------- */
-SP.reset = function () {
+SP.reset = function () { if (this.mixer) this.mixer.timeScale = 1;
   for (const w of this.webs) w.o.parent && w.o.parent.remove(w.o);
   this.webs = []; this.st = 'none'; this.flag = false; this.decided = false; this.over = false; this.noChaseUntil = 0; this.lastWarp = -99; this.lastDrop = -99; this.stepStop(true); this.onFloor = false; this.lastFloor = -99; if (this.thread) this.thread.visible = false; if (this.broken) { for (const g of this.broken) g.visible = true; this.broken = []; } this.tilt = null; this.winLowUntil = 0; this.doorT = 0;
   if (!this.webSrc) return;
@@ -8547,6 +8547,20 @@ SP.warp = function () {
   this.lastWarp = world.t; this.tgt = null; this.stepStop(true); this.stepGap = 0;   // 足音の発生点も到着側へ
   if (TEST || DEV) console.log('SPIDER warp', from.def.id, '->', to.def.id);
 };
+/* 2026-11-20 144番：天敵（オフタリサマ）から、消えずに倍の速さで這って逃げる。逃げ道がない・見えなくなったら巣へ移る */
+SP.flee = function (from) { this.st = 'flee'; this.t = 0; this.fleeWant = undefined; this.fleeFrom = from.clone(); this.fleeSeen = 0; this.mixer.timeScale = 2.2; if (!this.onFloor) spPlay('CeilingCrawl', 0.1); this.stepGap = 0; };
+SP.updFlee = function (dt) {
+  const d = V(this.pos.x - this.fleeFrom.x, 0, this.pos.z - this.fleeFrom.z); if (d.lengthSq() < 1e-4) d.set(Math.sin(this.yaw), 0, Math.cos(this.yaw)); d.normalize();
+  this.fleeRe = (this.fleeRe || 0) - dt; if (this.fleeRe <= 0 || this.fleeWant === undefined) { this.fleeRe = 0.3; const base = Math.atan2(d.x, d.z), lv = this.lv, free = a => { for (let r = 0.3; r <= 1.2; r += 0.3) { const x = this.pos.x + Math.sin(a) * r, z = this.pos.z + Math.cos(a) * r, [cx, cz] = collide(x, z, 0.3, lv); if (Math.hypot(cx - x, cz - z) > 0.01) return false; } return true; };   /* 遠ざかる向きのうち、ふさがっていない向き */
+    this.fleeWant = base; for (const o of [0, 0.6, -0.6, 1.2, -1.2, 1.8, -1.8]) if (free(base + o)) { this.fleeWant = base + o; break; } }
+  const want = this.fleeWant, dh = Math.atan2(Math.sin(want - this.yaw), Math.cos(want - this.yaw)); this.yaw += clamp(dh, -6 * dt, 6 * dt);
+  const sp = 2.3 * (Math.abs(dh) > 1.2 ? 0.35 : 1), nx = this.pos.x + Math.sin(this.yaw) * sp * dt, nz = this.pos.z + Math.cos(this.yaw) * sp * dt, [cx, cz] = collide(nx, nz, 0.3, this.lv), blocked = Math.hypot(cx - nx, cz - nz) > 0.01 || zoneOf(nx, nz, (this.lv ? LH : 0) + 1) === 'X';
+  if (!blocked) { this.pos.x = nx; this.pos.z = nz; } else this.yaw += dt * 3;
+  this.apply(); this.stepUpdate(dt, !blocked);
+  const fp = spFacePos(V()); if (seen(fp, { maxD: 16 })) { this.fleeSeen += dt; if (rec.active && this.fleeSeen > 0.5) { award('tenteki', '天敵から逃げるクモ女', 60); } }
+  const vis = seen(fp, { maxD: 30, margin: 1.1 });
+  if ((this.t > 3.5 && !vis) || this.t > 9) { this.mixer.timeScale = 1; if (this.onFloor) { this.onFloor = false; this.hairFix && this.hairFix(0); } this.st = 'crawl'; this.warp(); this.noChaseUntil = world.t + 20; }
+};
 SP.canDrop = function () {
   return !world.noCatch && world.t - this.lastDrop > (world.spray ? 50 : 22) && world.t - this.spawnT > 6 && CH.state === 'off' && !player.hidden && !HIDE.lk && !CAP.on && !DIR.active && !F2.busy && !WD.borrowed && !world.selfie && world.outro <= 0 && this.lv === player.lv && !stairZone(player.x, player.z);
 };
@@ -8567,6 +8581,7 @@ SP.update = function (dt) {
   if (this.firstChaseAt && world.t > this.firstChaseAt) { this.firstChaseAt = 0; if (this.st === 'crawl' && this.lv === player.lv && !player.hidden) this.startChase(); }   // お札で封じた後は、しばらく出てこない
   this.mixer.update(dt); this.t += dt;
   if (this.st === 'preyed') return;   /* 2026-11-16 オフタリサマに狙われている（動きは URPREY が決める。巣は移らない） */
+  if (this.st === 'flee') { this.updFlee(dt); return; }
   // 奇跡の3ショット：インカメラに、自分・クモ女・逆さ女が一緒に写る（2026-11-14 途中の版で抜け落ちていたので戻した）
   if (false) {   /* 2026-11-16 奇跡の3ショットは消した（なかよしスリーショットにまとめた） */
     const inSelf = p => { const q = p.clone().project(selfCam); return q.z < 1 && q.z > -1 && Math.abs(q.x) < 0.92 && Math.abs(q.y) < 0.92 && selfCam.position.distanceTo(p) < 14 && clearLine(p, [this.wrap], selfCam.position); };
@@ -10398,7 +10413,7 @@ const MISS = {
 /* 2026-11-19 81番：名前が長くなった撮れ高だけ、言葉の途中で切れないように「まとまり」で折り返す（全体に効くしくみではなく、この名前だけ） */
 const TJW = { '教室に立つ女子高生の霊': ['教室に立つ', '女子高生の霊'], 'ズームで迫り来る女子高生の霊': ['ズームで', '迫り来る', '女子高生の霊'], '振り返った女子高生の霊の黒い目': ['振り返った', '女子高生の霊の黒い目'],
   '鏡の中だけに映る背後の女子高生の霊': ['鏡の中だけに映る', '背後の', '女子高生の霊'], '2階の窓の外を滑っていく女子高生の霊': ['2階の窓の外を', '滑っていく女子高生の霊'], '本を開いて立つ女子高生の霊': ['本を開いて立つ', '女子高生の霊'],
-  'かくれんぼの少女の霊': ['かくれんぼの', '少女の霊'], '赤い折り鶴をたどって': ['赤い折り鶴を', 'たどって'] };
+  'かくれんぼの少女の霊': ['かくれんぼの', '少女の霊'] };
 const TJW_S = new Set(['振り返った女子高生の霊の黒い目', '2階の窓の外を滑っていく女子高生の霊']);   /* この2つは、スマホで3行になってカードからはみ出すので、少しだけ小さい字で2行に */
 function tjw(t) { const s = String(t), b = s.replace(/（[^）]*秒）$/, ''), P = TJW[b]; if (!P) return s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]); return '<span style="word-break:keep-all;overflow-wrap:anywhere' + (TJW_S.has(b) ? ';font-size:' + (b.length > 16 ? '.8em' : '.88em') : '') + '">' + P.join('<wbr>') + '</span>' + s.slice(b.length); }   /* まとまりの間だけで折り返す（1つのまとまりが入らない時だけ、その中で折り返す） */
 const COL = {
@@ -13432,6 +13447,14 @@ function tick(now) {
     let m = tryMove(player.x + vx * dt, player.z + vz * dt) || tryMove(player.x + vx * dt, player.z) || tryMove(player.x, player.z + vz * dt);
     if (m) { player.x = m[0]; player.z = m[1]; player.y = m[2]; if (m[3]) { player.airV = 0; player.airX = vx * 0.6; player.airZ = vz * 0.6; } }
     else { const g = groundAt(player.x, player.z, player.y); if (Math.abs(g - player.y) <= 0.42) player.y = g; }
+    /* 2026-11-20 147番：オフタリサマの体をすり抜けないように、プレイヤーだけをやわらかく押し返す（半径0.55m・同じ階・隠れていない時）。1秒以上ほとんど動けない時は、1.5秒だけすり抜けを許す */
+    try { const U = URAH, on = U.on && U.root.visible && U.pos && !player.hidden && !HIDE.lk && !(typeof UNDER !== 'undefined' && UNDER.on) && Math.abs(U.pos.y - player.y) < 1.2 && !stairZone(player.x, player.z) && world.t > (world.urPassUntil || 0);
+      if (on) { const dx = player.x - U.pos.x, dz = player.z - U.pos.z, dd = Math.hypot(dx, dz), Rr = 0.55;
+        if (dd < Rr) { const ux = dd > 1e-3 ? dx / dd : Math.sin(player.yaw), uz = dd > 1e-3 ? dz / dd : Math.cos(player.yaw), k = Math.min(1, dt * 14), tx = U.pos.x + ux * Rr, tz = U.pos.z + uz * Rr, [cx, cz] = collide(player.x + (tx - player.x) * k, player.z + (tz - player.z) * k);
+          const before = world.urPushP || [player.x, player.z]; player.x = cx; player.z = cz;
+          if (Math.hypot(player.x - before[0], player.z - before[1]) < 0.15) { world.urPushT = (world.urPushT || 0) + dt; if (world.urPushT > 1) { world.urPassUntil = world.t + 1.5; world.urPushT = 0; world.urPushP = null; } } else { world.urPushT = 0; world.urPushP = [player.x, player.z]; }
+          if (!world.urPushP) world.urPushP = [player.x, player.z]; }
+        else { world.urPushT = 0; world.urPushP = null; } } } catch (e) { }
     }
     collide.esOn = false;
     player.lv = player.y > 1.6 ? 1 : 0;
@@ -13452,7 +13475,8 @@ function tick(now) {
   const shY = (Math.sin(shakeT * 1.3) * 0.004 + Math.sin(shakeT * 2.9) * 0.002) / zoom + Math.sin(player.bob) * 0.006 * walkAmt + (world.camShake ? (Math.random() - 0.5) * 0.012 * world.camShake : 0);   /* 2026-11-15 小さく揺れる */
   const shX = (Math.sin(shakeT * 1.1 + 1) * 0.004 + Math.sin(shakeT * 3.7) * 0.0015) / zoom + (world.camShake ? (Math.random() - 0.5) * 0.012 * world.camShake : 0);
   let outroP = 0; if (world.outro > 0) { world.outro += dt; outroP = smooth(0, 0.9, world.outro - 1); }
-  camera.position.set(player.x, player.camY + (world.inDuct ? DUCT.eye() : CROUCH.eye()) + Math.abs(Math.sin(player.bob * 0.5)) * 0.03 * walkAmt - outroP * 0.45, player.z);
+  /* 2026-11-20 151番：オフタリサマの足音のたびに、下へ少し沈んで戻る（上下だけ） */ if (world.stepDip) { world.stepDipT = (world.stepDipT || 0) + dt; } const dipK = world.stepDip ? Math.sin(Math.PI * clamp((world.stepDipT || 0) / 0.22, 0, 1)) * world.stepDip : 0; if ((world.stepDipT || 0) > 0.22) world.stepDip = 0;
+  camera.position.set(player.x, player.camY + (world.inDuct ? DUCT.eye() : CROUCH.eye()) + Math.abs(Math.sin(player.bob * 0.5)) * 0.03 * walkAmt - outroP * 0.45 - dipK, player.z);
   if (UNDER.on) camera.position.copy(UNDER.cam);
   KOK.cam(camera.position);   // 2026-11-15 こっくりさん：机の前に座った目の高さへ   // 2026-11-15 ベッド・ピアノの下
   if (player.hidden && HIDE.lk) {   // ロッカーの扉の内側、スリットの高さ
@@ -13494,7 +13518,7 @@ function tick(now) {
   updateInteractions();
   DIM.update(dt); applyLights(dt); FL.update(dt); STAIRBLINK.update(dt);
   WD.update(dt);
-  CH.update(dt); MANN.update(dt); PHAN.update(dt); PHAN.tintUpd(dt); SMASH.update(dt); URAH.update(dt); KEHAI.update(dt); WINDAMB.update(dt); cvoiceUpdate(dt);
+  CH.update(dt); MANN.update(dt); PHAN.update(dt); PHAN.tintUpd(dt); SMASH.update(dt); URAH.update(dt); try { if (URAH.on && URAH.root.visible) { URAH.root.updateMatrixWorld(true); URFUDA.follow(); } } catch (e) { }   /* 2026-11-20 148番：骨が動いたあと（描く直前）にもお札を合わせ直す */ KEHAI.update(dt); WINDAMB.update(dt); cvoiceUpdate(dt);
   HIDE.update(dt);
   // 2026-11-14 追われている間の継続点（1秒あたり）：撮りながら逃げる＝逆さ女4・クモ女5・人体模型6／インカメラに追ってくる姿が映る＝逆さ女8・クモ女10・人体模型12
   if (rec.active && world.state === 'play' && !CAP.on) {
@@ -15620,7 +15644,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.60';
+const VERSION = '0.18.61';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -19727,6 +19751,9 @@ const URSTEP = {
       if (ch && !far) { if (x < 0.45) stomp(rnd(0.6, 0.95)); else if (x < 0.8) dino(rnd(0.55, 0.9)); else { stomp(rnd(0.45, 0.7)); dino(rnd(0.4, 0.6)); } }
       else { const kk = near ? 1.6 : 1; if (x < 0.3) stomp(rnd(0.35, 0.6) * kk); else if (x < 0.48) dino(rnd(0.3, 0.5) * kk); else if (x < 0.56) { stomp(0.3 * kk); dino(0.25 * kk); } } }
     if (ch && !far && CBGM.g && A.ctx) { const t = A.ctx.currentTime; CBGM.duckUntil = t + 0.35; }   /* 足音の瞬間だけ、追跡の曲を少し下げる */
+    /* 2026-11-20 151番：足音に合わせて画面が上下にゆれる。同じ階の15m以内で近いほど強く。違う階は1〜2割（階段のあたりは少し強め）。怖さ「小」は半分 */
+    if (!far && world.state === 'play' && !player.hidden) { const cp = camera.position, other = Math.abs(p.y - cp.y) > 2.2, n = clamp(1 - d / 15, 0, 1), sm = n * n * (3 - 2 * n), k = other ? (stairZone(cp.x, cp.z) ? 0.22 : 0.12) : 1;
+      let a = 0.026 * sm * k * (H ? 1.35 : 1) * (FEAR.lo() ? 0.5 : 1); if (a > 0.0015) { world.stepDip = Math.max(a, world.stepDipT < 0.22 ? (world.stepDip || 0) : 0); world.stepDipT = 0; } }
   },
 };
 const URASP = {
@@ -21737,7 +21764,7 @@ const URFUDA = {
     URAH.frozen = true; URAH.route = []; URAH.restArm && URAH.restArm(); try { URAH.scream(face, false); } catch (e) { }
     const away = V(URAH.pos.x - player.x, 0, URAH.pos.z - player.z); if (away.lengthSq() < 1e-4) away.set(Math.sin(URAH.by), 0, Math.cos(URAH.by)); away.normalize();
     this.st = { k: 'stun', t: 0, away, p0: URAH.pos.clone(), dur: 2, dfl: true }; URAH.st = 'stun';
-    this.dfx(fp); this.dflText(); try { fudaFlash(); } catch (e) { }
+    this.dfx(fp); toast(LANG === 'en' ? 'The charm was repelled' : 'お札が弾かれた', 1800); try { fudaFlash(); } catch (e) { }   /* 2026-11-20 149番：大きな「弾かれた！」はやめて、小さいお知らせに */
     if (rec.active && world.t - (this.dflCm || -99) > 8 && SHOT.now(fp.p, { maxD: 9, margin: 0.8 })) { this.dflCm = world.t; try { XCHAT.log('urDeflect'); } catch (e) { } }   /* はじかれた所が映っていたら */
     if (TEST || DEV) console.log('URFUDA deflect', face);
   },
@@ -23037,12 +23064,12 @@ const LORE = {
   /* ⑨ クモ女とオフタリサマ */
   updFlee(dt) {
     const F = this.flee; F.cd -= dt; if (F.cd > 0) return;
-    if (typeof URAH === 'undefined' || !URAH.on || !SP.pos || ['none', 'inv', 'jump'].includes(SP.st) || world.enemy1 !== 'spider') return;
+    if (typeof URAH === 'undefined' || !URAH.on || !SP.pos || ['none', 'inv', 'jump', 'flee', 'drop', 'latch', 'peel', 'sealed', 'preyed', 'descend', 'land'].includes(SP.st) || world.enemy1 !== 'spider') return;
     const sl = SP.lv || 0, ul = URAH.pos.y > 1.6 ? 1 : 0; if (sl !== ul) return; if (Math.hypot(SP.pos.x - URAH.pos.x, SP.pos.z - URAH.pos.z) > 7) return;
     F.cd = 40; const vis = seen(SP.pos.clone(), { maxD: 16 });
     playSfx('psycho_scream', { pos: SP.pos.clone(), ref: 1.2, gain: 1.0, rate: 1.25, dur: 1.4 }); setTimeout(() => { try { playSfx('throat_rasp', { pos: URAH.pos.clone(), ref: 1.2, gain: 1.0, rate: 0.55, dur: 1.6 }); } catch (e) { } }, 450);
-    try { if (['chase', 'fcrawl'].includes(SP.st)) SP.endChase(); else SP.warp(); SP.noChaseUntil = world.t + 20; } catch (e) { }
-    if (rec.active && vis) { award('tenteki', '天敵', 60); try { XCHAT.log('tenteki'); } catch (e) { } }
+    try { SP.flee(URAH.pos); SP.noChaseUntil = world.t + 20; } catch (e) { }   /* 2026-11-20 144番：ワープせず、走って逃げる */
+    if (rec.active && vis) { award('tenteki', '天敵から逃げるクモ女', 60); try { XCHAT.log('tenteki'); } catch (e) { } }
     if (TEST || DEV) console.log('LORE spider flees from urah', vis);
   },
 };
@@ -24406,7 +24433,7 @@ const DIFF = { KEY: 'yt_diff',
   hard() { return world.state === 'title' ? this.get() === 'hard' : !!world.hardRun; },
   base: null,
   apply() { const B = this.base || (this.base = { wm: CONFIG.womanChaseMul, wx: CONFIG.womanChaseMax, sm: CONFIG.spiderChaseMul, sx: CONFIG.spiderChaseMax, st: Object.assign({}, CONFIG.stalker), md: MANN_DASH.speed, hk: URAH_CFG.hannyaK.slice(), nk: URAH_CFG.nohK.slice(), hd: CONFIG.hideMinDist });
-    const k = world.hardRun ? 1.2 : 1; CONFIG.womanChaseMul = B.wm * k; CONFIG.womanChaseMax = B.wx * k; CONFIG.spiderChaseMul = B.sm * k; CONFIG.spiderChaseMax = B.sx * k;
+    const k = world.hardRun ? 1.05 : 1; CONFIG.womanChaseMul = B.wm * k;   /* 2026-11-20 164番：ハードの怪異の速さ 1.2倍 → 1.05倍 */ CONFIG.womanChaseMax = B.wx * k; CONFIG.spiderChaseMul = B.sm * k; CONFIG.spiderChaseMax = B.sx * k;
     CONFIG.stalker.startSpeed = B.st.startSpeed * k; CONFIG.stalker.maxSpeed = B.st.maxSpeed * k; MANN_DASH.speed = B.md * k; URAH_CFG.hannyaK = B.hk.map(x => x * k); URAH_CFG.nohK = B.nk.map(x => x * k);
     CONFIG.hideMinDist = B.hd * (world.hardRun ? 1.5 : 1); },
   sync() { const v = this.get(), ttl = world.state === 'title';
@@ -26128,7 +26155,7 @@ const GIRL = {
     if (this.pend && world.t > 1.2) { this.pend = false; if (!this.ready) this.load().then(() => { if (world.state === 'play') this.setup(); }); else this.setup(); }
     const cp = camera.position;
     /* 折り鶴：映ったら */
-    if (this.crane && this.crane.parent) { const p = this.crane.getWorldPosition(V()); if (rec.active && p.distanceTo(cp) < 4 && onScreen(p, 0.9) && clearLine(p.clone().setY(p.y + 0.05))) { this.craneSeenT += dt; if (this.craneSeenT > 0.6 && !this.craneFilmed) { this.craneFilmed = true; this.log('gCrane'); } } }
+    /* 2026-11-20 157番：折り鶴を映した時のコメントはなくした（折り鶴の置物は残す） */
     if (this.done || !this.on || !this.cur) return;
     const h = this.head(), d = h.distanceTo(cp), same = Math.abs(this.pos.y - (player.lv ? LH : 0)) < 1, vis = this.pose === 'locker' && this.lk ? this.lkVis(h, d, same) : same && d < 14 && onScreen(h, 1.0) && clearLine(h, this.cur.H.meshes);
     if (this.st === 'hide') {
@@ -26182,17 +26209,15 @@ const GIRL = {
 try { JIYU.W.word = JIYU.W.word.filter(w => w[0] !== 'ここ わたしの せき'); } catch (e) { }
 SFX_CREDITS.push({ id: 'girl_cry', title: '13175_girl_crying_with_covered_face.wav', author: '提供素材', license: '提供素材', edit: 'モノラル・64kbps' }, { id: 'girl_giggle', title: 'Girl_Giggle_01.wav', author: '提供素材', license: '提供素材', edit: 'モノラル・64kbps' });
 Object.assign(AW_TABLE, { girlFound: ['A', 60] }); COL.LIST.push(['girlFound', 'かくれんぼの少女の霊', 60]);
-Object.assign(CHIP_DESC, { girlFound: ['教室に隠れていた少女の霊を見つけた。少女はくすくす笑って、すっと消えた。', 'You found a little girl ghost hiding in a classroom. She giggled and faded away.'],
-  girlClue: ['赤い折り鶴が置いてあった教室で、少女の霊を見つけた。', 'You found the little girl ghost in the classroom with the red paper crane.'] });
-Object.assign(AW_HINT, { girlFound: ['教室のロッカー・机の陰・部屋の隅をさがす', 'search classroom lockers, behind desks and corners'], girlClue: ['赤い折り鶴を撮ってから、その教室で少女の霊を見つける', 'film the red paper crane, then find the little girl ghost in that room'] });
-Object.assign(EN, { 'かくれんぼの少女の霊': 'The hide-and-seek little girl ghost', '赤い折り鶴をたどって': 'Following the red crane' });
+Object.assign(CHIP_DESC, { girlFound: ['教室に隠れていた少女の霊を見つけた。少女はくすくす笑って、すっと消えた。', 'You found a little girl ghost hiding in a classroom. She giggled and faded away.'] });
+Object.assign(AW_HINT, { girlFound: ['教室のロッカー・机の陰・部屋の隅をさがす', 'search classroom lockers, behind desks and corners'] });
+Object.assign(EN, { 'かくれんぼの少女の霊': 'The hide-and-seek little girl ghost' });
 { const J = { gSeen: [['ちっちゃい子いる', 'there’s a little kid'], ['かくれんぼ？', 'hide and seek?'], ['みつけちゃった', 'found her'], ['え、子ども？', 'wait, a child?'], ['こっち見てない？', 'is she looking this way?']],
     gGone: [['消えた…', 'she vanished...'], ['どこいった？', 'where did she go?'], ['いまの子だれ', 'who was that kid']],
     gCry: [['泣き声しない？', 'is someone crying?'], ['だれか泣いてる…', 'someone’s crying...'], ['子どもの声？', 'a child’s voice?']],
-    gGig: [['いま笑った？', 'did someone just laugh?'], ['くすくす聞こえた', 'I heard giggling'], ['子どもの笑い声…', 'a child’s laugh...']],
-    gCrane: [['赤い折り鶴', 'a red paper crane'], ['なんで鶴？', 'why a crane?'], ['だれが折ったんだろ', 'who folded that']] };
+    gGig: [['いま笑った？', 'did someone just laugh?'], ['くすくす聞こえた', 'I heard giggling'], ['子どもの笑い声…', 'a child’s laugh...']] };
   for (const w in J) { XCHAT.LIST[w] = J[w].map((x, i) => 'gx.' + w + '.' + i); J[w].forEach((x, i) => { CHAT_DICT.t['gx.' + w + '.' + i] = x; }); }
-  try { LABX.RAW.G.push('gx.gSeen.0', 'gx.gGone.0', 'gx.gCry.0'); LABX.RAW.K.push('gx.gCrane.2', 'gx.gSeen.1'); LABX.RAW.I.push('gx.gSeen.4'); LABX.L = null; } catch (e) { } }
+  try { LABX.RAW.G.push('gx.gSeen.0', 'gx.gGone.0', 'gx.gCry.0'); LABX.RAW.K.push('gx.gSeen.1'); LABX.RAW.I.push('gx.gSeen.4'); LABX.L = null; } catch (e) { } }
 if (TEST && window.__G) Object.assign(window.__G, { GIRL });
 
 /* 2026-11-19 83番：ワイプカメラ・定点カメラの説明文が、言葉の途中で折り返さないように（その2つの文の中の言葉だけ、見えない「つなぎ」の文字で一続きにする。全体に効くしくみではない） */
@@ -27016,6 +27041,7 @@ for (let i = COL.LIST.length - 1; i >= 0; i--) if (awDel(COL.LIST[i][0])) COL.LI
    name：新しい名前（en：英語の名前）／rk・pts：レア度と点数／desc：説明文／hint：取り方のヒント／tk：かすれたメモの伏せ字（名前・説明） */
 Object.assign(AW_TABLE, { tDoorOpen: ['C', 20] }); COL.LIST.push(['tDoorOpen', '勝手に開くトイレの扉', 20]); Object.assign(EN, { '勝手に開くトイレの扉': 'The toilet stall door that opened by itself' });   /* 2026-11-20 勝手に開くトイレの扉（TDOOR） */
 var AWFIX = {
+  tenteki: { name: '天敵から逃げるクモ女', en: 'The Spider Woman fleeing her natural enemy', desc: ['クモ女がオフタリサマを見て、悲鳴をあげて逃げていった。…異様に怖がっているようだ。', 'The Spider Woman saw Ofutari-sama, shrieked, and fled. …She seems strangely terrified.'], tk: ['天敵から逃げる■■■', '■■■がオフタリサマを見て、■■をあげて逃げていった。…■■に怖がっているようだ。'] },
   runner: { name: '窓の外を歩く少女の霊', en: 'The little girl outside the window', hint: ['窓の外を見ていると', 'watch outside the window'], desc: ['窓のすぐ外を、小さな女の子が歩いていた。近づくと、くすくす笑って、ふっと消えた。', 'A little girl walked just outside the window. She giggled — and was gone.'], tk: ['窓の外を歩く■■の■', '窓のすぐ外を、■■な■の■が歩いていた。近づくと、くすくす■って、ふっと■■た。'] },
   lookBack: { hint: ['前を歩く女子高生の霊', 'the schoolgirl ghost walking ahead'] },
   curtFeet: { hint: ['2階の教室の、窓のカーテンの下', 'under the window curtain in a 2F classroom'], desc: ['教室の窓のカーテンがふくらんで、その下から、上履きの足が覗いていた。', 'The classroom curtain bulged, and a pair of school shoes peeked out from under it.'], tk: ['カーテンの下の■', '教室の窓のカーテンがふくらんで、その下から、上ばきの■がのぞいていた。'] },
