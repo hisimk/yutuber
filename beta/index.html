@@ -15687,7 +15687,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '0.18.72';
+const VERSION = '0.18.73';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -20872,7 +20872,7 @@ if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, 
 const RESET = {
   keys() { return ['yt_stats_v1', 'yt_fuda1000', 'yt_pa_first', COL.KEY, ACH.KEY, PERM.KEY, 'yt_mann_unlock', 'yt_tut', 'yt_keyuse', PHAN.KEY, 'yt_wing_open', 'yt_bar1_open', 'yt_bar2_open', 'yt_start',
     /* 2026-11-20 175番の4：お金・持ち物・エンディングの記録も含めて、プレイの記録は全部消す（設定・言語・キー・難しさ・ハードの解放などの「設定」は残す） */
-    SHOP.KEY, ENDING.KEY, 'yt_newarea_aw', 'yt_wing_in', 'yt_exit_news', 'yt_ouma_seen', 'yt_hmemo_v1', 'yt_smemo_v1', 'yt_sph_v1', 'yt_plog_v1', 'yt_urah_v1', 'yt_mannran', 'yt_clear_note', 'yt_intro_cm', 'yt_ban_v1', 'yt_ks_bar', 'yt_clipped']; },   // 2026-11-15 ナカヨシの段階も0に
+    SHOP.KEY, ENDING.KEY, 'yt_vidTitle', 'yt_newarea_aw', 'yt_wing_in', 'yt_exit_news', 'yt_ouma_seen', 'yt_hmemo_v1', 'yt_smemo_v1', 'yt_sph_v1', 'yt_plog_v1', 'yt_urah_v1', 'yt_mannran', 'yt_clear_note', 'yt_intro_cm', 'yt_ban_v1', 'yt_ks_bar', 'yt_clipped']; },   // 2026-11-15 ナカヨシの段階も0に
   nb(t) { return t.split('|').map(x => '<span style="display:inline-block">' + x + '</span>').join(''); },   /* 2026-11-20 175番：スマホの縦画面で言葉の途中で折り返さないよう、まとまりごとに区切る */
   ask() { if (LANG !== 'en') document.querySelector('#resetAsk .raD').innerHTML = this.nb('累計いいね数・|ランク・|お金・|持ち物・|歴代の神回など、|これまでのプレイデータが|消えます。|撮れ高のコレクションは、|次の画面で|残すかを選べます。'); $('#resetAsk').classList.add('show'); },
   no() { $('#resetAsk').classList.remove('show'); },
