@@ -15691,7 +15691,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '0.18.79';
+const VERSION = '0.18.80';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -21251,7 +21251,7 @@ const ECON = {
   items: [
     ['battery2', 1000, 1, 'use'], ['buzzer', 1500, 1, 'use'], ['recorder', 300, 1, 'use'],
     ['shades', 200, 1, 'look'], ['party', 200, 1, 'look'], ['ears', 200, 1, 'look'], ['hood', 200, 1, 'look'],
-    ['chem', 1500, 'wing', 'use'], ['candle', 3000, 'wing', 'use'],
+    ['chem', 1500, 1, 'use'], ['candle', 3000, 1, 'use'],   /* 2026-11-20 182番：バリケードを壊さなくても、駆け出しで並ぶ（前は 'wing'） */
     ['battery', 5000, 2, 'use'], ['bell', 5000, 2, 'use'], ['spray', 3000, 2, 'use'], ['drink', 6000, 2, 'use'], ['stick', 5000, 2, 'use'],
     ['omamori', 25000, 3, 'use'], ['sparebat', 12000, 3, 'use'], ['pmask', 15000, 3, 'use'], ['drinkG', 14000, 3, 'use'],
     ['bkey', 3000, 3, 'use'], ['hoken', 4000, 2, 'use'],
@@ -21363,8 +21363,8 @@ const SHOP = {
     if (world.state !== 'title') return;   /* 2026-11-16 ゲームを始めた後に出ないように（次にタイトルに戻った時に出す） */
     const d = this.load(), r = this.rank(), msgs = [], en = LANG === 'en';
     if (r >= 1 && !d.seen.open) { d.seen.open = 1; msgs.push(en ? 'The <b class="nY">shop</b> is now open! Spend the money you earn on tools for your next run.' : '<b class="nY">ショップ</b>が解放されました。<br>稼いだお金で、探索に持って入る道具を買えます。'); }
-    if (r >= 1 && this.wing() && !d.seen.wing) { d.seen.wing = 1; msgs.push(en ? 'New items are in the <b class="nY">shop</b>.' : '<b class="nY">ショップ</b>に新しい品物が並びました。'); }
-    for (const k of ECON.sponsor) if (r >= k && !d.seen['sp' + k]) { d.seen['sp' + k] = 1; const c = ECON.items.filter(it => it[3] === 'use' && it[2] !== 'wing' && it[2] <= r && !this.has(it[0])); if (c.length) { const it = c.sort((a, b) => b[1] - a[1])[Math.floor(Math.random() * Math.min(3, c.length))]; this.give(it[0]); msgs.push((en ? 'A gift from a sponsor:<br>' : 'スポンサーから届きました。<br>') + `<img src="${ITEM_IMG[it[0]]}" alt="" style="width:84px;height:84px;object-fit:contain;display:block;margin:8px auto 6px"><b class="nY">${TR(ITEM.defs[it[0]].name)}</b>` + YTAG.tag(it[0], 'got'));   /* 126番：届いた物の絵も */ } }
+    if (r >= 1 && this.wing() && !d.seen.wing && ECON.items.some(it => it[2] === 'wing')) {   /* 182番：'wing' の品物がない時は「新しい品物が並びました」を出さない */ d.seen.wing = 1; msgs.push(en ? 'New items are in the <b class="nY">shop</b>.' : '<b class="nY">ショップ</b>に新しい品物が並びました。'); }
+    for (const k of ECON.sponsor) if (r >= k && !d.seen['sp' + k]) { d.seen['sp' + k] = 1; const c = ECON.items.filter(it => it[3] === 'use' && it[2] !== 'wing' && it[0] !== 'chem' && it[0] !== 'candle' && it[2] <= r && !this.has(it[0]));   /* 182番：スポンサーの贈り物の候補は今のまま（前は 'wing' だったケミカルライト・ろうそくは入れない） */ if (c.length) { const it = c.sort((a, b) => b[1] - a[1])[Math.floor(Math.random() * Math.min(3, c.length))]; this.give(it[0]); msgs.push((en ? 'A gift from a sponsor:<br>' : 'スポンサーから届きました。<br>') + `<img src="${ITEM_IMG[it[0]]}" alt="" style="width:84px;height:84px;object-fit:contain;display:block;margin:8px auto 6px"><b class="nY">${TR(ITEM.defs[it[0]].name)}</b>` + YTAG.tag(it[0], 'got'));   /* 126番：届いた物の絵も */ } }
     this.save(); if (msgs.length) this.pop(msgs);
   },
   pop(msgs, title) { if (title) NOTE.show({ body: msgs }); else for (const m of msgs) NOTE.show({ body: [m] }); },   /* 2026-11-16 お知らせにそろえる（1つずつ順番に） */
