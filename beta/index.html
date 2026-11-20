@@ -15687,7 +15687,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '0.18.74';
+const VERSION = '0.18.75';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -15968,9 +15968,9 @@ const NICK = {
   mora(s) { const a = []; for (const c of s) { if (/[ゃゅょぁぃぅぇぉゎャュョァィゥェォヮ]/.test(c) && a.length) a[a.length - 1] += c; else a.push(c); } return a; },
   of(raw, yomi) {
     raw = String(raw || '').normalize('NFKC').trim(); yomi = String(yomi || '').normalize('NFKC').trim();
-    // 2026-11-15 敬称（くん・ちゃん・さん・様・君・chan など）は外してから考える（げんきくん → げんき）
+    // 2026-11-15 敬称（くん・ちゃん・さん・様・君・chan など）は外してから考える（たろうくん → たろう）
     const HON = /[ 　]*(くん|クン|ちゃん|チャン|さん|サン|さま|サマ|様|君|殿|どの|ちゃま|chan|kun|san|sama)$/i, cut = t => { return t.replace(HON, '').trim(); };
-    // 2026-11-15 「げんきチャンネル」「げんきの実況」「ゆいch」は、前の部分が名前（こんげん〜）。「心霊チャンネル」のような一般的な言葉は除く
+    // 2026-11-15 「たろうチャンネル」「たろうの実況」「ゆいch」は、前の部分が名前（こんたろ〜）。「心霊チャンネル」のような一般的な言葉は除く
     const CH = /^(.+?)[ 　・_-]*(?:の)?[ 　・_-]*(?:ゲーム実況|実況チャンネル|ゲームチャンネル|チャンネル|ちゃんねる|channel|ch\.?|tv|実況|じっきょう|配信|はいしん|公式|の部屋|部屋)$/i, chc = t => { const m = t.match(CH); return m ? m[1].trim() : t; };
     raw = cut(chc(raw)); yomi = cut(chc(yomi));
     if (/^(心霊|しんれい|シンレイ|ホラー|ほらー|怪談|オカルト|ゲーム|げーむ)$/.test(raw)) return null;
@@ -15980,7 +15980,7 @@ const NICK = {
     if (/^[\x20-\x7e]+$/.test(raw)) return null;   // 英字・数字・記号だけ
     if (yomi && !KANA.test(yomi)) yomi = '';
     // 2026-11-15 「漢字＋かな」の名前（草野ゆい など）は、よみがなが無くても、かなの部分を下の名前として使う
-    if (!yomi) { const m = raw.match(new RegExp('^' + KAN + '+([\u3041-\u3096\u30a1-\u30faー]+)$')); if (m) { const g = this.hira(m[1]), gm = this.mora(g); if (gm.length < 2 || gm.length >= 6) return null; const n = gm.slice(0, 2).join('');   /* 2026-11-15 こん◯◯は頭の2音を優先（げんき → げん） */ this._last = { g, kata: KATA.test(m[1]) }; return KATA.test(m[1]) ? this.kata(n) : n; } }
+    if (!yomi) { const m = raw.match(new RegExp('^' + KAN + '+([\u3041-\u3096\u30a1-\u30faー]+)$')); if (m) { const g = this.hira(m[1]), gm = this.mora(g); if (gm.length < 2 || gm.length >= 6) return null; const n = gm.slice(0, 2).join('');   /* 2026-11-15 こん◯◯は頭の2音を優先（たろう → たろ） */ this._last = { g, kata: KATA.test(m[1]) }; return KATA.test(m[1]) ? this.kata(n) : n; } }
     const rd = yomi || (KANA.test(raw) ? raw : ''); if (!rd) return null;   // 漢字の名前でよみがな無し
     let kataOut = /[ァ-ヺ]/.test(rd) && !/[ぁ-ゖ]/.test(rd);
     const R = this.hira(rd).replace(/ +/g, ' ').trim(), flat = R.replace(/ /g, ''), fm = this.mora(flat).length;
@@ -16004,7 +16004,7 @@ const NICK = {
     // 4) 分けられない時：4音以下ならそのまま
     if (!g) { if (fm <= 4) g = flat; else return null; }
     const gm = this.mora(g); if (gm.length < 2 || gm.length >= 6) return null;
-    const n = gm.slice(0, 2).join('');   /* 2026-11-15 こん◯◯は頭の2音を優先（げんき → げん） */
+    const n = gm.slice(0, 2).join('');   /* 2026-11-15 こん◯◯は頭の2音を優先（たろう → たろ） */
     this._last = { g, kata: kataOut }; return kataOut ? this.kata(n) : n;
   },
   /* 2026-11-17 46番：よくある下の名前の読み（男女あわせて約480。作業担当が、昔から多い名前と最近人気の名前の読みから作った一覧。名字と下の名前の分け方を当てやすくするための補助） */
@@ -16016,7 +16016,7 @@ const NICK = {
 function chatCallName() {
   const clean = s => String(s || '').replace(/[\u0000-\u001f\u007f\u2028\u2029]/g, '').replace(/\s+/g, ' ').trim();
   let n = clean(world.chRaw);   /* 2026-11-14 呼び名＝名前（別の呼び名の欄はやめた） */ if (!n) return '';   // 空なら、表示の時に「主」／streamer を使う
-  /* 2026-11-15 「げんきチャンネル」「げんきの実況」のような名前は、名前の部分に「さん」を付けて呼ぶ（げんきさん） */
+  /* 2026-11-15 「たろうチャンネル」「たろうの実況」のような名前は、名前の部分に「さん」を付けて呼ぶ（たろうさん） */
   { const m = n.match(/^(.+?)[ 　・_-]*(?:の)?[ 　・_-]*(?:ゲーム実況|実況チャンネル|ゲームチャンネル|チャンネル|ちゃんねる|ﾁｬﾝﾈﾙ|channel|ch\.?|ｃｈ|ＣＨ|tv|ＴＶ|実況|配信|公式|の部屋|部屋)$/i);
     if (m) { const b = m[1].trim(); if (b && !/^[\x20-\x7e]*\d+$/.test(b) && !/^(心霊|しんれい|シンレイ|ホラー|ほらー|怪談|オカルト|ゲーム|げーむ)$/.test(b)) n = /(さん|様|くん|君|ちゃん|さま)$/.test(b) ? b : b + 'さん'; } }
   { const g = NICK.given(n, world.yomi); if (g) n = g; }   /* 2026-11-16 名字がはっきり分かる時は、下の名前で呼ぶ（加藤純一 → 純一） */
