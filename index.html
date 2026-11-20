@@ -230,6 +230,7 @@
   .title{font-family:"Shippori Mincho",serif;font-weight:800;font-size:56px;letter-spacing:.18em;margin:0 0 6px;color:#e9e4da;text-shadow:0 0 24px rgba(255,40,40,.25)}
   .sub{font-size:13px;color:#9a958c;margin-bottom:22px;letter-spacing:.08em}
   .sub.tSub{white-space:nowrap;letter-spacing:.03em;font-size:min(13px,calc(var(--vw, 1vw) * 3.4))}   /* 2026-11-17 タイトル下の文は1行に */
+  .sub.tSub.tGoal{white-space:normal;text-align:center;line-height:1.55;font-size:min(13.5px,calc(var(--vw, 1vw) * 3.6))}.tGoal span{display:block;white-space:nowrap}.tGoal span+span{font-weight:700}.tGoal b{color:#ff4a4a;font-weight:800}   /* 2026-11-20 198番：ゴールの1文（「、」のあとでだけ折り返す） */
   .opts{width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
   .opt{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-radius:12px;background:#121214;border:1px solid #26262a;font-size:15px}
   .stSeg{display:flex;gap:6px}.stSeg button{font:inherit;font-size:12px;padding:6px 9px;border-radius:8px;border:1px solid #3a3a40;background:#1c1c20;color:#bbb}.stSeg button.on{background:#e8e2d4;color:#111;border-color:#e8e2d4}
@@ -8764,8 +8765,9 @@ SP.updFloor = function (dt, fp) {
   }
   if (this.st === 'fcrawl') {   // 床を這う
     const p = V(this.pos.x, this.pos.y + 0.4, this.pos.z);
-    const spot = this.lv === player.lv && world.t >= (this.noChaseUntil || 0) && !this.hiddenNow() && !CAP.on && world.outro <= 0 && !stairZone(player.x, player.z) && dH < 6 && enemySees(p, [this.wrap]);
-    if (spot && dH < 3.2 && !world.chkNoChase) { this.startJump(true); return; }   // 近くで見つかると跳び上がって天井から追ってくる
+    const fR = (world.bneko ? 10 : 8) * (world.t < (world.herbUntil || 0) ? 0.85 : 1);   /* 2026-11-20 本人の希望：床でも天井と同じ距離で気づく（5.5m → 8m。招き猫・ハーブも同じ） */
+    const spot = this.lv === player.lv && world.t >= (this.noChaseUntil || 0) && !this.hiddenNow() && !CAP.on && world.outro <= 0 && !stairZone(player.x, player.z) && dH < fR && enemySees(p, [this.wrap]);
+    if (spot && !world.chkNoChase) { this.startJump(true); return; }   /* 2026-11-20 本人の希望：床で気づく距離 3.2m → 5.5m */   // 近くで見つかると跳び上がって天井から追ってくる
     if (this.t > this.floorFor) { this.startJump(false); return; }
     if (!this.tgt) { const R = this.web.def.rect; this.tgt = V(rnd(R[0], R[1]), 0, rnd(R[2], R[3])); }
     const d = V(this.tgt.x - this.pos.x, 0, this.tgt.z - this.pos.z), L = d.length();
@@ -15788,7 +15790,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '1.0';
+const VERSION = '1.0.7';
 const SHOOT = BETA && /[?&]shoot\b/.test(location.search);   /* 2026-11-20 動画撮影の素材用（?shoot）：「試し版」の表示を出さない */
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA && !SHOOT ? '（試し版）' : '');
 if (BETA && !SHOOT) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
@@ -17192,7 +17194,7 @@ const RANKPOP = {
 $('#rpOk').addEventListener('click', e => { e.stopPropagation(); RANKPOP.close(); setTimeout(() => { try { SHOP.notify(); } catch (er) { } }, 250); });
 for (const t of ['pointerdown', 'touchstart']) $('#rankPop').addEventListener(t, e => e.stopPropagation(), { passive: true });
 try { PERM.rankSync(Math.min(ACH.load().rk || 0, yrankIdx(ACH.load().total))); } catch (e) { }   // 2026-11-14 すでにランクが上がっている人にも機材を渡す
-function RANKTAG() { try { SHOP.title(); } catch (e) { } const el = $('#rankTag'); if (!el) return; const d = ACH.load(), q = (TEST || BETA || DEV) && location.search.match(/[?&]rank=(\d)/); el.textContent = yrankName(q ? Math.min(5, +q[1]) : Math.min(d.rk || 0, yrankIdx(d.total))); }   /* 確認用 ?rank= の時は表示もそのランクに */
+function RANKTAG() { try { SHOP.title(); } catch (e) { } try { const g = document.querySelector('#start .tSub'); if (g) { g.classList.add('tGoal'); g.innerHTML = LANG === 'en' ? '<span>Make your name as a ghost-tuber with viral ghost videos</span><span>and uncover <b>the truth</b> behind the vanished ghost channel!</span>' : '<span>バズる心霊動画で幽tuberとして名を上げて</span><span>消えた心霊チャンネルの<b>真相</b>を追え！</span>'; g.style.fontSize = ''; requestAnimationFrame(() => { try { const pr = g.parentElement, W = Math.min(pr ? pr.clientWidth : 1e9, document.documentElement.clientWidth) - 28; if (!(W > 0)) return; let f = parseFloat(getComputedStyle(g).fontSize); for (let i = 0; i < 12 && [...g.children].some(c => c.scrollWidth > W + 0.5); i++) { f *= 0.94; g.style.fontSize = f + 'px'; } } catch (e) { } }); } } catch (e) { }   /* 2026-11-20 198番：タイトルの下の文を、ゲームのゴールの1文に */ const el = $('#rankTag'); if (!el) return; const d = ACH.load(), q = (TEST || BETA || DEV) && location.search.match(/[?&]rank=(\d)/); el.textContent = yrankName(q ? Math.min(5, +q[1]) : Math.min(d.rk || 0, yrankIdx(d.total))); }   /* 確認用 ?rank= の時は表示もそのランクに */
 RANKTAG();
 // コメントでの呼び名（任意）：空欄ならチャンネル名
 { const c = $('#callName'); if (c) { c.placeholder = cui('nick'); $('#callSum').textContent = cui('nick') + ' ›'; $('#callHint').textContent = cui('nickHint'); try { c.value = localStorage.getItem('yt_callName') || ''; } catch (e) { } c.addEventListener('input', () => { try { localStorage.setItem('yt_callName', c.value); } catch (e) { } }); } }
@@ -18400,8 +18402,8 @@ const WING = {
     if (world.state !== 'play') return;
     if (player.lv === 1) {
       const fw = camFwd(), B1 = this.B[0], B2 = this.B[1];
-      if (!B1.open && Math.abs(player.x) < 1.3 && player.z < -31.8 && player.z > -33 && fw.z < -0.5) wOffer(TR('調べる'), () => toast(TR('内側から何かが積んである…人の力ではどうにもならなさそう。'), 3200), barTouchCm());   /* 2026-11-18 美術室の扉① */
-      if (!B2.open && Math.abs(player.z + 31.5) < 1.5 && ((player.x > 10.2 && player.x < 11.4 && fw.x > 0.5) || (player.x > 12.2 && player.x < 13.4 && fw.x < -0.5))) wOffer(TR('調べる'), () => toast(TR('怪しいバリケード。自分の力では突進してもビクともしなそうだ。'), 3200), barTouchCm());   /* 2026-11-18 バリケード② */
+      if (!B1.open && Math.abs(player.x) < 1.3 && player.z < -31.8 && player.z > -33 && fw.z < -0.5) wOffer(TR('調べる'), () => INNERV.bar(), barTouchCm());   /* 200番 */   /* 2026-11-18 美術室の扉① */
+      if (!B2.open && Math.abs(player.z + 31.5) < 1.5 && ((player.x > 10.2 && player.x < 11.4 && fw.x > 0.5) || (player.x > 12.2 && player.x < 13.4 && fw.x < -0.5))) wOffer(TR('調べる'), () => INNERV.bar(), barTouchCm());   /* 200番 */   /* 2026-11-18 バリケード② */
     }
     const z = playerZone(); if (['2D', 'ART', 'SCI'].includes(z)) { if (!this.inWing) { this.inWing = true; let first = false; try { first = localStorage.getItem('yt_wing_in') !== '1'; localStorage.setItem('yt_wing_in', '1'); } catch (e) { } if (first || !this.inLogged) { this.inLogged = true; if (first) XCHAT.log('wingIn'); } } } else this.inWing = false;
   },
@@ -20674,6 +20676,7 @@ const PHAN = {
   update(dt) {
     if (this.stp && (!this.on || world.state !== 'play' || this.mode !== 'idle')) this.spStep(0);   /* 歩いていない時は足音を止める */
     if (!this.on || world.state !== 'play') return;
+    if (this.voicePend && this.voiceAt && world.t > this.voiceAt && !INNERV.hold && !INNERV.chasing()) { this.voicePend = false; INNERV.show(LANG === 'en' ? ['The voice it made as it vanished...', '...I think I\'d heard it many times on that channel.'] : ['怪異が消えるときの声が', '…あのチャンネルで何度も聞いた声だった気がした。']); }   /* 202番：ほかの怪異に追われている間は待つ */
     if (!SG.ready) return;
     if (SP.ready && SP.mixer && this.mode !== 'done') { if (!SP.cur || SP.cur !== SP.act.CeilingCrawl) spPlay('CeilingCrawl', 0); SP.mixer.update(dt * 1.3); }
     if (MANN.ready && this.mode !== 'done' && MANN.cur !== 'Run') MANN.play('Run', 1.15);
@@ -20785,6 +20788,7 @@ const PHAN = {
     world.vhs = Math.max(world.vhs, 0.7); try { PAD.hit && PAD.hit(1); } catch (e) { }
     wdScream(0.05, 0.9, 1.1); SND.glitch && SND.glitch(0.4); this.moan();   // 女の叫び・人体模型のきしみ・クモ女のささやきを混ぜて
     if (A.ctx && KANA.ok && KANA.ok()) { const pn = panAt(V(WD.pos.x, WD.pos.y + 1.4, WD.pos.z), 0.9, 1.6, undefined, 0); const len = SPV.speakFrags(pn, SPV.plan('みつけた').slice(0, 2), A.ctx.currentTime + 0.1); freeLater(len + 2, pn); }
+    { const d0 = this.load(); this.voicePend = (!this.rand && !d0.won) || /[?&]phanvoice\b/.test(location.search) && (TEST || BETA || DEV); this.voiceAt = 0; }   /* 2026-11-20 202番：初めて倒した時だけ、沈み切ったあとに心の声（記録は d.won をそのまま使う。?phanvoice で毎回） */
     if (!this.rand) { const d = this.load(); d.won = true; d.tries = 0; this.setStage(9); }   /* ランダムで出た周は、段階は変えない */
   },
   // 叫びの終わりに、小さく途切れるように「アアアア……リガト…」
@@ -20875,6 +20879,7 @@ const PHAN = {
       this.wf = 1; const fl = $('#itemFlash'); if (fl) { fl.style.transition = 'none'; fl.style.opacity = '0.95'; void fl.offsetWidth; fl.style.transition = 'opacity 1.1s'; fl.style.opacity = '0'; }   /* 2026-11-17 倒した：画面を一瞬白く（録画にも入る） */
       if (rec.active) award(PHAN_AW[0], PHAN_AW[1], PHAN_AW[2]);   // 沈みきった瞬間を録画していた時だけ
       CHATLOG.add('phanWin'); SND.thud(V(D.x, D.y0, D.z), 0.6);
+      if (this.voicePend) this.voiceAt = world.t + 1.6;   /* 202番：沈み切って1.6秒後 */
     }
     if (D.sunk && t > (D.backT || t) + 2.0) { this.armsOff(); this.mode = 'done'; SG.root.rotation.set(0, 0, 0); SG.ovRoll = 0; }   // 女は借りたまま（この周はもう出さない）
   },
@@ -21453,14 +21458,15 @@ const SHOP = {
     this.brought = got;
     const k = cap ? ECON.capture : 1, tipRe = /^¥[\d,]+$/, cur = typeof CHAT !== 'undefined' && CHAT.cur, phI = new Set((cur && cur.phIdx) || []), cm0 = ((cur && cur.items) || []).filter((x, i) => !x.some(v => typeof v === 'string' && tipRe.test(v)) && !phI.has(i) && !(typeof x[2] === 'string' && /^x\.ar\./.test(x[2]))).length, durS = cur && cur.end ? cur.end.R : (rec.time || 0), cm = Math.min(cm0, Math.ceil(durS * ECON.cmtPerSec) + 4);   /* 2026-11-19 105番：コメントの分のお金は、荒らし・荒れて足したコメントを数えず、録画の秒数で上限を付ける */   /* 投げ銭の帯は数えない */
     const likeY = Math.round(Math.max(0, likes) * ECON.like * ECON.mul[r]), cmtY = Math.round(cm * ECON.cmt[r] * ECON.mul[r]), base = likeY + cmtY, tips = typeof TIPS !== 'undefined' ? TIPS.sum() : 0, gross = base + tips, fee0 = cap ? Math.round(base * (1 - k)) : 0, fee = ins ? Math.round(fee0 / 2) : fee0, neko = wnk ? Math.round(base * 0.05) : 0, yen = gross - fee + neko;   /* 2026-11-16 襲われた時は「医療費」として、いいねとコメントの分の半分を引く（投げ銭は対象外） */
-    d.yen += yen; this.save(); this.last = { yen, likes, mul: ECON.mul[r], cap, tips, base, likeY, cmtY, cm, per: ECON.cmt[r], fee, ins, neko }; if (TEST || DEV) console.log('SHOP run', JSON.stringify(this.last)); return this.last;
+    if (cap) d.capN = (d.capN | 0) + 1;   /* 2026-11-20 本人の希望：2回目に捕まった時の結果画面で、医療費の決まりを知らせる */
+    d.yen += yen; this.save(); this.last = { yen, likes, mul: ECON.mul[r], cap, tips, base, likeY, cmtY, cm, per: ECON.cmt[r], fee, ins, neko, capNote: !!cap && d.capN === 2 }; if (TEST || DEV) console.log('SHOP run', JSON.stringify(this.last)); return this.last;
   },
   /* 使い切りの道具を使った時（その周の持ち込みなら、なくなる） */
   used(id) { },
   /* ── 結果画面の左上：収益（2行）。タップで内訳 */
   showRes(likes) {
     const L = this.endRun(likes), el = $('#permIcons'), en = LANG === 'en';
-    if ((this.brought || []).length && this.broughtRun !== world.runId) { this.broughtRun = world.runId; const B = this.brought; setTimeout(() => NOTE.show({ sub: en ? 'Brought back' : '持ち帰った物', body: [B.map(id => `<b class="nY">${TR(ITEM.defs[id] ? ITEM.defs[id].name : id)}</b>${YTAG.tag(id)}`).join('<br>'), en ? 'Added to your bag.' : '持ち物に入りました。'] }), 1200); }   /* 2026-11-16 校舎で拾って持ち帰った物を知らせる */ el.innerHTML = `<div id="resYen"><div class="ryL">${en ? 'Revenue' : '収益'}</div><div class="ryV">+0${en ? ' yen' : '円'}</div></div><div id="resCm"><div class="ryL">${en ? 'Comments' : 'コメント'}</div><div class="ryV">${L.cm.toLocaleString()}${en ? '' : '件'}</div></div>`;   /* 2026-11-16 コメント数も左上に */
+    if ((this.brought || []).length && this.broughtRun !== world.runId) { this.broughtRun = world.runId; const B = this.brought; setTimeout(() => NOTE.show({ sub: en ? 'Brought back' : '持ち帰った物', body: [B.map(id => `<b class="nY">${TR(ITEM.defs[id] ? ITEM.defs[id].name : id)}</b>${YTAG.tag(id)}`).join('<br>'), en ? 'Added to your bag.' : '持ち物に入りました。'] }), 1200); }   /* 2026-11-16 校舎で拾って持ち帰った物を知らせる */ if (L.capNote && this.capNoteRun !== world.runId) { this.capNoteRun = world.runId; setTimeout(() => NOTE.show({ body: [en ? 'When you get caught, <b class="nY">medical bills</b> cut that run\'s revenue in half.<br>Escape through the entrance to survive.' : '捕まると<b class="nY">医療費</b>により、その回の収益が半分になります。<br>出入り口から脱出すると生還できます。'] }), 1400); }   /* 2026-11-20 2回目に捕まった時だけ */ el.innerHTML = `<div id="resYen"><div class="ryL">${en ? 'Revenue' : '収益'}</div><div class="ryV">+0${en ? ' yen' : '円'}</div></div><div id="resCm"><div class="ryL">${en ? 'Comments' : 'コメント'}</div><div class="ryV">${L.cm.toLocaleString()}${en ? '' : '件'}</div></div>`;   /* 2026-11-16 コメント数も左上に */
     const v = el.querySelector('.ryV'), t0 = performance.now(), dur = 900, f = () => { const k = Math.min(1, (performance.now() - t0) / dur); v.textContent = '+' + Math.round(L.yen * k * (2 - k)).toLocaleString() + (en ? ' yen' : '円'); if (k < 1) requestAnimationFrame(f); }; requestAnimationFrame(f);
     el.onclick = e => { e.stopPropagation(); const c = '', f = n => n.toLocaleString(); { const b0 = $('#resBrk'); if (b0 && b0.classList.contains('show')) { b0.classList.remove('show'); return; } }   /* 2026-11-16 もう一度タップで閉じる */   /* 2026-11-16 内訳にコメントの分も */
       const brk = $('#resBrk') || (() => { const b = document.createElement('div'); b.id = 'resBrk'; document.body.appendChild(b); return b; })(), say = (m, ms) => { brk.innerHTML = m; brk.classList.add('show'); brk.onclick = ev => { ev.stopPropagation(); brk.classList.remove('show'); }; };   /* 結果画面の上に出す（toast は結果画面の下に隠れていた） */
@@ -23871,8 +23877,29 @@ Object.assign(SMEMO, {
     h.textContent = TR(FRAME.on ? 'クリックで閉じる' : 'タップで閉じる'); setTimeout(() => { if (this.hold) h.style.opacity = '1'; }, 700); },
   resume() { if (!this.hold || performance.now() - this.at < 700) return false; this.hold = false; const h = $('#smHint'); if (h) h.style.opacity = '0'; if (world.state === 'paused') { world.state = 'play'; lastT = performance.now(); } return true; },
 });
+/* 2026-11-20 200番：主人公の「心の声」。画面の真ん中に出して、時間を止める。タップ（クリック・キー）で進む。DOMなので録画には入らない */
+const INNERV = {
+  hold: false, at: 0,
+  chasing() { try { return (typeof CH !== 'undefined' && CH.state !== 'off') || (typeof SP !== 'undefined' && SP.st === 'chase') || (typeof MANN !== 'undefined' && (MANN.st === 'run' || MANN.st === 'dash')) || (typeof URAH !== 'undefined' && URAH.st && !['off', 'wait'].includes(URAH.st)); } catch (e) { return false; } },
+  bar() { const L = [TR('この先に撮れ高がありそうだ。'), TR('壊す方法を探ってもいいかもしれない。')]; if (this.chasing()) { toast(L.join(LANG === 'en' ? ' ' : ''), 3200); return; } this.show(L); },
+  show(lines) {
+    if (this.hold || world.state !== 'play') return;
+    let el = $('#innerV'); if (!el) { el = document.createElement('div'); el.id = 'innerV'; document.body.appendChild(el); }
+    el.innerHTML = `<div class="ivBand">${lines.map((t, i) => `<div class="ivL" style="animation-delay:${i * 0.7}s">${t}</div>`).join('')}</div><div class="ivHint">${TR(FRAME.on ? 'クリックで進む' : 'タップで進む')}</div>`;
+    requestAnimationFrame(() => { try { const W = Math.min(560, document.documentElement.clientWidth) - 40; const Ls = [...el.querySelectorAll('.ivL')]; let m = 1e9; for (const L of Ls) { let f = parseFloat(getComputedStyle(L).fontSize); for (let i = 0; i < 14 && L.scrollWidth > W; i++) { f *= 0.94; L.style.fontSize = f + 'px'; } m = Math.min(m, f); } for (const L of Ls) L.style.fontSize = m + 'px'; } catch (e) { } });   /* 行どうしの大きさはそろえる */   /* 1行ずつ、入らない時は文字を小さく（言葉の途中で折り返さない） */
+    el.classList.add('show'); this.hold = true; this.at = performance.now(); world.state = 'paused'; input.sx = input.sy = 0; try { $('#actBtn').classList.remove('show'); } catch (e) { }
+  },
+  close() { if (!this.hold || performance.now() - this.at < 900) return false; this.hold = false; const el = $('#innerV'); if (el) el.classList.remove('show'); if (world.state === 'paused') { world.state = 'play'; lastT = performance.now(); } return true; },
+};
+{ const st = document.createElement('style'); st.textContent = `#innerV{position:fixed;inset:0;z-index:61;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity .35s}#innerV.show{opacity:1;pointer-events:auto}
+#innerV .ivBand{width:100%;max-width:560px;padding:22px 18px;background:linear-gradient(90deg,transparent,rgba(8,8,10,.82) 14%,rgba(8,8,10,.82) 86%,transparent);text-align:center;animation:ivWob 3.2s ease-in-out infinite}
+#innerV .ivL{white-space:nowrap;width:max-content;max-width:none;margin:0 auto;color:#ecebe6;font:600 min(16px,calc(var(--vw, 1vw) * 4.1)) system-ui,sans-serif;letter-spacing:.05em;line-height:1.9;text-shadow:0 0 6px rgba(160,200,255,.35),1px 0 0 rgba(255,60,60,.25),-1px 0 0 rgba(60,160,255,.25);opacity:0;animation:ivIn .9s ease forwards}
+#innerV .ivHint{margin-top:16px;color:#bdbab2;font:600 12px system-ui,sans-serif;text-shadow:0 1px 4px #000;opacity:0;animation:ivIn .6s ease 1.3s forwards}
+@keyframes ivIn{from{opacity:0;filter:blur(3px)}to{opacity:1;filter:blur(0)}}@keyframes ivWob{0%,100%{transform:translateX(0)}50%{transform:translateX(.6px)}}`; document.head.appendChild(st); }
+for (const ev of ['pointerup', 'keydown']) addEventListener(ev, e => { if (!INNERV.hold) return; if (ev === 'keydown' && ['Escape', 'Tab'].includes(e.code)) return; if (INNERV.close() || true) { e.stopPropagation(); ev === 'keydown' && e.preventDefault(); } }, true);
+Object.assign(EN, { 'この先に撮れ高がありそうだ。': 'There might be good footage beyond here.', '壊す方法を探ってもいいかもしれない。': 'Maybe I should look for a way to break through.', 'タップで進む': 'Tap to continue', 'クリックで進む': 'Click to continue' });
 for (const ev of ['pointerup', 'keydown']) addEventListener(ev, e => { if (!SMEMO.hold) return; if (ev === 'keydown' && ['Escape', 'Tab'].includes(e.code)) return; if (SMEMO.resume()) { e.stopPropagation(); e.preventDefault && ev === 'keydown' && e.preventDefault(); } }, true);
-{ const P0 = PAD.press.bind(PAD); PAD.press = function (a) { if (SMEMO.hold) { SMEMO.resume(); return; } return P0(a); }; }
+{ const P0 = PAD.press.bind(PAD); PAD.press = function (a) { if (SMEMO.hold) { SMEMO.resume(); return; } if (INNERV.hold) { INNERV.close(); return; } return P0(a); }; }   /* 200番：心の声もコントローラーで進める */
 Object.assign(EN, { 'タップで閉じる': 'Tap to close', 'クリックで閉じる': 'Click to close' });
 if (TEST && window.__G) Object.assign(window.__G, { HAND, POP, DRIFT, KBALL, CEIL, FIXCAM, avatar, SMEMO, ENDING, IDLEC, CURTF, DARKK, TIPS, CHAT, escape, evidence, award, SHOP, ECON, ACH, ITEM, INV, BUZZ, CHEM, CANDLE, DRINK, STICK, PAINT, WING, CH, WD, SP, nodePos, clearLine, segBlocked, MINOR, HP, EV, DIR, URINT, URPREY, URAV, HANDS, HAND_SPOTS, POLT, MOVERS, UWA, GG_SPOTS, ABYSS, BUSTX, DOLLX, nearLook, setZoom(z) { zoom = zoomTarget = z; }, SCIRM, ARTRM, PMASK, COL, NAKA, TALLY, BROOMEV, AW_TABLE, CHIP_DESC, AW_HINT, GEAR, FIXCAM, RING, PERM, KANA, VO, PACALL, SPV, EV, seen, A, CH, HEART, CVOICE, wdScream, WARP, WD, ITEM, F2, PAD, QUALITY, opt, MP4FIX, rec, resultBlobs: () => resultBlobs, LOGOANIM, CHIP, VTITLE, NOISE, SNAKE, ACC, ACC_ICON, ACC_VIEW, award, CHATLOG, CHAT, CHATGEN, RES_CHAT, RANKPOP, yrankIdx, GOD, VDB, ACH, PERM, REVIVE, RESET, COL, escape, caught, DIR, SP, OFUDA, LUM, TRACE, HAZURE, seen, SFX_CREDITS, AW_TABLE, RANK_FIX, rankOf, MICLV, MIC, rec, opt, VED, RES_CHAT_: () => RES_CHAT, _attach: b => attachVideo(b), GODV: GOD, _blobs: () => resultBlobs, EVENTS: () => EV });
 /* 2026-11-14 PC：ウィンドウ／全画面（全画面はボタンを押した時と、旧校舎に入る時に切り替える。Escで戻したらウィンドウに） */
@@ -24057,7 +24084,7 @@ function trTree(root) {
     el.setAttribute(at, LANG === 'en' ? TR(el.getAttribute(key)) : el.getAttribute(key));
   }
 }
-function setLang(l) { LANG = l === 'en' ? 'en' : 'ja'; try { localStorage.setItem('yt_lang', LANG); } catch (e) { } document.documentElement.lang = LANG; renderHowto(); trTree(document.body); }
+function setLang(l) { LANG = l === 'en' ? 'en' : 'ja'; try { localStorage.setItem('yt_lang', LANG); } catch (e) { } document.documentElement.lang = LANG; renderHowto(); trTree(document.body); try { RANKTAG(); } catch (e) { } }   /* 198番：ゴールの文も言語に合わせる */
 new MutationObserver(ms => { if (LANG !== 'en') return; for (const m of ms) { if (m.type === 'characterData') trNode(m.target); else for (const a of m.addedNodes) { if (a.nodeType === 3) trNode(a); else if (a.nodeType === 1 && !I18N.skip(a)) trTree(a); } } })
   .observe(document.body, { childList: true, subtree: true, characterData: true });
 if (LANG === 'en') setLang('en');
@@ -24874,7 +24901,7 @@ Object.assign(EN, { 'ぬいぐるみに話しかける': 'Talking to the plush',
 /* =========================================================
    2026-11-18 スマホの通知（指示：メッセージ・さくこ）と、写真の共有イベント
    ・1周に起きるのは「着信」「写真の共有」「メッセージ（ふつう／さくこ）」のどれか1つだけ（重ならない）
-     着信の周（CALL.plan）は何も起きない。それ以外は、さくこ（条件を満たした時）→ 写真の共有 12% → ふつうのメッセージ 35%
+     着信の周（CALL.plan）は何も起きない。それ以外は、さくこ（条件を満たした時）→ 写真の共有 8% → ふつうのメッセージ 39%
    ・ふつうのメッセージ：1周に1通だけ。上に出る通知。横か上へスワイプで消せる。さわらなければ6秒で消える
    ・ふつうのメッセージを3通受け取ると「さくこ」が来るようになる（逆さ女が出ている周だけ）
      さくこ1件 → 消す → しばらくして2〜3件続けて → 少し間をおいて「うしろ」。その瞬間、逆さ女はもう真後ろにいる。振り返ると通常の追跡
@@ -24941,7 +24968,7 @@ const SPH = {
     const d = this.load(), fm = this.q('smsg'), fp = this.q('sphoto'), fs = this.q('sakuko');
     if (fs) { this.kind = 'saku'; world.womanUp = true; world.sealedWoman = false; }
     else if (fp) this.kind = 'photo'; else if (fm) this.kind = 'msg';
-    else if (!CALL.plan && !world.phanRun && !world.mannRun) { const sk = d.n >= this.FLAG_N && SHOP.wing() && (d.saku ? chance(0.06) : chance(0.6));   /* 189番：バリケードを壊したことがある時だけ（yt_bar1_open・yt_bar2_open・yt_wing_open のどれか） */ this.kind = sk ? 'saku' : pickW([['photo', 0.12], ['msg', 0.35], [null, 0.53]]); }
+    else if (!CALL.plan && !world.phanRun && !world.mannRun) { const sk = d.n >= this.FLAG_N && SHOP.wing() && (d.saku ? chance(0.06) : chance(0.6));   /* 189番：バリケードを壊したことがある時だけ（yt_bar1_open・yt_bar2_open・yt_wing_open のどれか） */ this.kind = sk ? 'saku' : pickW([['photo', 0.08], ['msg', 0.39], [null, 0.53]]); }   /* 2026-11-20 本人の希望：写真の共有 12%→8%、ふつうのメッセージ 35%→39% */
     const fast = !!(fm || fp || fs); this.at = world.t + (fast ? 6 : this.kind === 'photo' ? rnd(50, 180) : rnd(40, 160)); this.warpF = fp && fp[1] === 'warp';
     if (TEST || DEV) console.log('SPH plan', this.kind);
   },
