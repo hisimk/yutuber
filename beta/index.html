@@ -13372,7 +13372,7 @@ function updateInteractions() {
   }
   if (!HIDE.lk && !KOK.on && !SCIRM.scope) ITEM.offerPick();
   if (!actFn && !HIDE.lk) FIXCAM.offer();   // 2026-11-14 置いた定点カメラを回収
-  if ((player.z > 4.1 || (typeof NWX !== 'undefined' && NWX.onLanding())) && world.leftDoor && rec.time > 0.3 && !player.hidden && !world.capture && !world.dark && world.outro === 0 && !world.exitWait) offerAction(LANG === 'en' ? 'Return' : '帰還', () => doExit(), { exit: true });   // 2026-11-14 玄関：帰還する（黄色）
+  if ((player.z > 4.1 || (typeof NWX !== 'undefined' && NWX.onLanding())) && world.leftDoor && (rec.time > 0.3 || !world.tutFirst) && !player.hidden && !world.capture && !world.dark && world.outro === 0 && !world.exitWait) offerAction(LANG === 'en' ? 'Return' : '帰還', () => doExit(), { exit: true });   // 2026-11-14 玄関：帰還する（黄色）
   KOK.offer();   // 2026-11-15 紙に近づくと「こっくりさんを始める」
   if (typeof NEWWING !== 'undefined') NEWWING.offer();   // 2026-11-15 新しい棟・放送室
   offerUnder();   // 2026-11-15 しゃがんでベッド・ピアノに近づくと「下にもぐる」
@@ -13556,7 +13556,7 @@ function tick(now) {
     updateSuzumushi(dt);
   }
   // 玄関
-  const atDoor = (player.z > 4.1 || NWX.onLanding()) && world.leftDoor && rec.time > 0.3 && !player.hidden && !world.capture;   // 2026-11-12 帰れる条件：3m歩いた＋少しでも録画した
+  const atDoor = (player.z > 4.1 || NWX.onLanding()) && world.leftDoor && (rec.time > 0.3 || !world.tutFirst) && !player.hidden && !world.capture;   /* 2026-11-20 171番：録画しなくても帰れる（最初のチュートリアルの周だけは今どおり） */   // 2026-11-12 帰れる条件：3m歩いた＋少しでも録画した
   $('#exitBtn').classList.toggle('show', atDoor && !world.dark && world.outro === 0);
   if (world.dark && (player.z > 4.6 || (NWX.onLanding() && player.x > 28.9))) escape();
   if (world.outro > 1.9) escape();
@@ -13908,6 +13908,7 @@ function escape() {
   if (world.state !== 'play') return;
   const chased = (CH.state === 'chase' || CH.state === 'search' || CH.state === 'hunt') || (typeof SP !== 'undefined' && SP.st === 'chase') || (world.mannRun && ['spot', 'windup', 'dash', 'skid', 'hunt', 'stun', 'turn'].includes(MANN.st));
   world.state = 'end'; if (DIR.active) DIR.end(DIR.active);
+  if (!world.everRec && !rec.active && rec.time <= 0.05) { world.zeroRun = true; award('zeroShot', '撮れ高ゼロ', 0); for (let i = evidence.length - 1; i >= 0; i--) if (evidence[i].key !== 'zeroShot') evidence.splice(i, 1); }   /* 2026-11-20 171番：一度も録画せずに帰った */
   if (rec.active && rec.time > 20 && !evidence.some(e => (e.pts || 0) > 0)) CMX.log('cmZero');
   if (rec.active && world.t - (world.playT0 || 0) < 20) CMX.log('cmRTA');   /* 2026-11-16 20秒で帰還 */   /* 2026-11-16 撮れ高ゼロで帰る */
   if (rec.active) award('alive', 'いのちだいじに', 10);
@@ -15439,7 +15440,7 @@ if (CHK) {
       ['非常口の前', () => { tp(28.4, -31.5, 1, -Math.PI / 2); close(); }], ['非常口の外（踊り場）', () => { tp(30.6, -31.5, 1, Math.PI / 2); close(); }],
       ['東階段（2階・手前）', () => { tp(24, -30.6, 1, Math.PI); close(); }], ['東階段（1階）', () => { tp(24.9, -29.6, 0, Math.PI); close(); }], ['1階の体育館の扉', () => { tp(7.0, -32.0, 0, 0); close(); }],
       ['2-Aの窓から中庭ごし', () => { tp(12.8, -13, 1, -Math.PI / 2); close(); }],
-      ['バリケードの記録を消す（両方ふさぐ）', () => { try { for (const k of ['yt_bar1_open', 'yt_bar2_open', 'yt_wing_open']) localStorage.removeItem(k); } catch (e) { } toast('次の周から両方ふさがります'); }],
+      ['バリケードの記録を消す（両方ふさぐ・新エリア解放も）', () => { try { for (const k of ['yt_bar1_open', 'yt_bar2_open', 'yt_wing_open', 'yt_newarea_aw']) localStorage.removeItem(k); } catch (e) { } toast('次の周から両方ふさがります'); }],
     ]],
     ['新しい撮れ高', [
       ['周りの壁に目を開かせる（今いる場所で）', () => { const M = MINOR; M.eyOn = 0; M.eyDone = false; M.eyT = 99; M.eyForce = true; for (const e of M.WEYE.list) e.m.visible = false; close(); toast('録画中なら撮れ高になります'); }],
@@ -15644,7 +15645,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.61';
+const VERSION = '0.18.62';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -16496,6 +16497,7 @@ const CHAT = {
     if (!CHATLOG.end) CHATLOG.finish();
     const d = { v: 3, dict: CHAT_DICT.v, seed: chatHash(world.runId || String(Date.now())), P, M: world.chatM || 1, rk: world.chatRk || 0, name: world.chatName ?? chatCallName(), nick: world.chatNick ?? null, nick3: world.chatNick3 ?? null, lang: world.chatLang || LANG, segs: CHATLOG.segs.map(s => [Math.round(s[0] * 100) / 100, Math.round(s[1] * 100) / 100]), end: CHATLOG.end };
     try { d.items = CHATGEN.make({ seed: d.seed, log: CHATLOG.ev, end: d.end, P, M: d.M, rk: d.rk, name: d.name, nick: d.nick, nick3: d.nick3 }); d.users = null; } catch (e) { console.warn('チャットを作れませんでした', e); d.items = []; }
+    if (world.zeroRun) d.items = [];   /* 2026-11-20 171番：動画がないので、コメントは一切なし */
     // 話者の名前と色（生成と同じシードで並べ直す）
     d.users = CHAT.usersOf(d.seed, d.lang);
     try { KOK.chat(d); } catch (e) { console.warn('こっくりさんのコメント', e); }
@@ -18153,7 +18155,7 @@ const WING = {
   get open() { return !!world.wingOpen; },
   prep() {   /* 周の最初（ITEM や 怪異の通り道より先）：開いているかどうか */
     const ld = k => { try { return localStorage.getItem(k) === '1'; } catch (e) { return false; } };
-    this.build(); let o1 = ld('yt_bar1_open'), o2 = ld('yt_bar2_open') || ld('yt_wing_open');   /* 以前の記録（1か所だった頃）は②として引き継ぐ */
+    this.build(); let o1 = ld('yt_bar1_open'), o2 = ld('yt_bar2_open') || ld('yt_wing_open'); this.everOpen = !!(o1 || o2);   /* 172番：もう壊したことがあるか（試し版の開き方の前の、本当の記録） */   /* 以前の記録（1か所だった頃）は②として引き継ぐ */
     if (WF('wingopen')) o1 = o2 = true; if (WF('bar1open')) o1 = true; if (WF('bar2open')) o2 = true; if (WF('bar1close')) o1 = false; if (WF('bar2close')) o2 = false; if (WF('wingclose')) o1 = o2 = false;
     this.B[0].open = o1; this.B[1].open = o2; this.sync(); for (const b of this.B) this.show(b);
   },
@@ -18227,7 +18229,7 @@ const WING = {
     if (b.door) { b.doorFall = 0; }   /* 扉は内側へ倒れる */
     SND.bang(c, 1.6); SND.thud(c, 1.8); for (let i = 0; i < 7; i++) setTimeout(() => { SND.knock(c.clone().add(V(rnd(-1, 1), rnd(-0.8, 0.8), rnd(-1, 1))), 1.2); SND.kata && SND.kata(c, 1); }, 60 + i * rnd(60, 140));
     playSfx('metal_rattle', { pos: c, ref: 1.6, gain: 1.1 }); world.vhs = Math.max(world.vhs || 0, 0.8);
-    const wbVis = rec.active && camera.position.distanceTo(c) < 14 && [-1.2, -0.6, 0, 0.6, 1.2].some(x => { const p = V(b.x + x * cs, LH + 1.0, b.z - x * sn); return onScreen(p, 1.1) && clearLine(p, [], camera.position); }); if (rec.active) award('barBreak', 'バリケード突破', 150);   /* 2026-11-20 映していなくても、録画していれば取れる（コメントは今どおり映った時だけ） */   /* 崩れる瞬間（暗くても大きな音と動きで分かる） */
+    const wbVis = rec.active && camera.position.distanceTo(c) < 14 && [-1.2, -0.6, 0, 0.6, 1.2].some(x => { const p = V(b.x + x * cs, LH + 1.0, b.z - x * sn); return onScreen(p, 1.1) && clearLine(p, [], camera.position); }); if (rec.active) { let first = !this.everOpen; try { if (localStorage.getItem('yt_newarea_aw') === '1') first = false; } catch (e) { } if (first) { this.everOpen = true; try { localStorage.setItem('yt_newarea_aw', '1'); } catch (e) { } award('newArea', '新エリア解放', 500); } else award('barBreak', 'バリケードの破壊', 150); }   /* 2026-11-20 172番：初めての時だけ「新エリア解放」 */   /* 2026-11-20 映していなくても、録画していれば取れる（コメントは今どおり映った時だけ） */   /* 崩れる瞬間（暗くても大きな音と動きで分かる） */
     if (wbVis && SHOT.now(V(b.x, LH + 1.0, b.z), { maxD: 14, margin: 0.9 })) XCHAT.log('wingBreak'); if (TEST || DEV) console.log('WING broken', b.id);   /* 2026-11-17 コメント（誘導うますぎ等）は、崩れる所が映った時だけ */
     M.bonked = true; M.bonk();   /* バラバラになって、数秒動けない（壁に激突した時の動き） */
     if (M.dropParts) try { M.dropParts(['ArmL', 'ArmR'], 0.8); } catch (e) { }
@@ -27040,7 +27042,45 @@ for (let i = COL.LIST.length - 1; i >= 0; i--) if (awDel(COL.LIST[i][0])) COL.LI
 /* 2026-11-20 撮れ高テストのFB：名前・レア度・点数・文の直し（ここ1か所。いちばん最後に当てる）
    name：新しい名前（en：英語の名前）／rk・pts：レア度と点数／desc：説明文／hint：取り方のヒント／tk：かすれたメモの伏せ字（名前・説明） */
 Object.assign(AW_TABLE, { tDoorOpen: ['C', 20] }); COL.LIST.push(['tDoorOpen', '勝手に開くトイレの扉', 20]); Object.assign(EN, { '勝手に開くトイレの扉': 'The toilet stall door that opened by itself' });   /* 2026-11-20 勝手に開くトイレの扉（TDOOR） */
+
+/* =========================================================
+   2026-11-20 新しい撮れ高をまとめて足すしくみ（168〜173番・159〜170番）
+   addAw：レア度・点数・名前・説明文・ヒント・伏せ字・英語・コメントを一度に登録
+   ========================================================= */
+function addAw(k, rk, pts, name, en, desc, hint, tk, cm) {
+  AW_TABLE[k] = [rk, pts]; if (!COL.LIST.some(x => x[0] === k)) COL.LIST.push([k, name, pts]); CHIP_DESC[k] = desc; AW_HINT[k] = hint; TKTXT[k] = [desc[0], tk[0], tk[1]]; EN[name] = en;
+  if (cm && cm.length) { const ids = cm.map((x, i) => 'xa.' + k + '.' + i); cm.forEach((x, i) => { CHAT_DICT.t[ids[i]] = x; }); if (CHAT_DICT.ev) CHAT_DICT.ev[name] = ids; }
+}
+const XAW = {
+  carried(id) { try { return (SHOP.carried || []).includes(id); } catch (e) { return false; } },
+  reset() { this.wasRec = false; this.recN = 0; this.arr = -1; this.mw = 0; this.wm = 0; this.evN = 0; this.td = 0; this.lp = null; world.everRec = false; world.zeroRun = false; try { world.tutFirst = TUT.need(); } catch (e) { world.tutFirst = false; } },
+  update(dt) {
+    if (world.state !== 'play') { this.lp = null; return; }
+    /* 到着しました！：その周の最初の録画を自撮りで始めて、そのまま約2秒 */
+    if (rec.active && !this.wasRec) { this.recN++; this.arr = this.recN === 1 && world.selfie ? 0 : -1; }
+    this.wasRec = rec.active; if (rec.active) world.everRec = true;
+    if (this.arr >= 0) { if (rec.active && world.selfie) { this.arr += dt; if (this.arr >= 2) { award('arriveSelfie', '到着しました！', 10); this.arr = -1; } } else this.arr = -1; }
+    /* ムーンウォーク：見ている向きと反対へ、合計10m（前に進んだら数え直し。横歩き・向きを変えただけは数えない） */
+    { const cur = [player.x, player.z]; if (this.lp && rec.active && !player.hidden && !CROUCH.on && !stairZone(player.x, player.z) && player.airV === undefined) { const dx = cur[0] - this.lp[0], dz = cur[1] - this.lp[1], L = Math.hypot(dx, dz);
+        if (L > 0.002 && L < 1) { const f = camFwd(); f.y = 0; f.normalize(); const dot = (dx * f.x + dz * f.z) / L; if (dot < -0.7) this.mw += L; else if (dot > 0.3) this.mw = 0; if (this.mw >= 10) award('moonwalk', 'ムーンウォーク', 20); } }
+      this.lp = cur; }
+    /* メモリの無駄遣い：撮れ高が出ないまま、録画を合計30秒 */
+    if (evidence.length !== this.evN) { this.evN = evidence.length; this.wm = 0; }
+    if (rec.active) { this.wm += dt; if (this.wm >= 30) { award('wasteMem', 'メモリの無駄遣い', 20); this.wm = -1e9; } }
+    /* トモダチを連れてきた：トモダチ人形を持ち込んだ周に、オフタリサマを16m以内で合計1秒 */
+    try { if (rec.active && this.carried('tdoll') && URAH.on && URAH.root.visible && (seen(URAH.head('noh'), { maxD: 16 }) || seen(URAH.head('hannya'), { maxD: 16 }))) { this.td += dt; if (this.td >= 1) award('tdollUrah', 'トモダチを連れてきた', 40); } } catch (e) { }
+  },
+};
+{ const U0 = CMX.update.bind(CMX), R0 = CMX.reset.bind(CMX); CMX.update = function (dt) { U0(dt); try { XAW.update(dt); } catch (e) { if (TEST) console.warn('XAW', e); } }; CMX.reset = function () { R0(); try { XAW.reset(); } catch (e) { } }; }
+addAw('newArea', 'SS', 500, '新エリア解放', 'New area unlocked', ['内田くんが突っ込んで、ふさがれていたバリケードが崩れた。この先に、まだ誰も撮っていない校舎がある。', 'Uchida-kun crashed through and the barricade collapsed. Beyond it lies a part of the school no one has filmed yet.'], ['人体模型を誘って、バリケードを壊させる', 'lure the mannequin into the barricade'], ['新■■■解放', '■■くんが突っ込んで、ふさがれていた■■■■■が崩れた。この先に、まだ誰も■っていない■■がある。'], [['ついに開いた！', 'it finally opened!'], ['新エリアきた', 'new area!!'], ['内田くんナイス', 'nice one Uchida-kun'], ['この先どうなってんの', "what's beyond there"]]);
+addAw('arriveSelfie', 'D', 10, '到着しました！', 'We have arrived!', ['心霊スポットに到着。まずは自撮りでごあいさつ。…このあと何が映るかも知らずに。', 'Arrived at the haunted spot. First, a selfie to say hi. …Not knowing what the camera would catch next.'], ['最初の録画を、自撮りで始める', 'start your first recording with a selfie'], ['■■しました！', '心霊スポットに■■。まずは■■りでごあいさつ。…このあと何が映るかも知らずに。'], [['はじまった', "it's starting"], ['こんばんはー', 'good evening~'], ['顔出しきた', 'face reveal!']]);
+addAw('moonwalk', 'C', 20, 'ムーンウォーク', 'Moonwalk', ['前を見るのが怖くて、後ろ向きのまま廊下を進んだ。…それはそれで、怖い。', 'Too scared to look ahead, you walked the hallway backwards. …That is scary in its own way.'], ['後ろ向きのまま歩く', 'walk backwards'], ['■■■■■■■', '前を見るのが怖くて、■■■きのまま■■を進んだ。…それはそれで、こわい。'], [['ムーンウォークで草', 'moonwalking lol'], ['前見て前', 'look ahead!'], ['後ろ向きのほうが怖くない？', "isn't backwards scarier?"]]);
+addAw('wasteMem', 'C', 20, 'メモリの無駄遣い', 'Wasted memory', ['撮れ高が撮れないまま、メモリーの容量を無駄遣いした。', 'You burned through memory without catching anything worth showing.'], ['何も起きない所を、ずっと撮る', 'keep filming where nothing happens'], ['■■■の無駄遣い', '■■■が撮れないまま、メモリーの■■を無駄■■した。'], [['何も起きなくて草', 'nothing happening lol'], ['容量もったいない', 'what a waste of storage'], ['いつまで撮るの', 'how long are you gonna film this']]);
+addAw('tdollUrah', 'B', 40, 'トモダチを連れてきた', 'Brought a friend', ['トモダチ人形を連れてきたら、顔が2つある怪異があらわれた。…呼んでしまったのかもしれない。', 'You brought the friend doll, and the two-faced spirit appeared. …Maybe you called it here.'], ['トモダチ人形を持って、顔が2つある怪異に会う', 'meet the two-faced spirit while carrying the friend doll'], ['■■■■を連れてきた', '■■■■人形を連れてきたら、■が2つある■■があらわれた。…■■でしまったのかもしれない。'], [['人形が呼んだ？', 'did the doll call it?'], ['トモダチってそういう…', "so that's the 'friend'…"]]);
+addAw('zeroShot', 'D', 0, '撮れ高ゼロ', 'Zero footage', ['何も撮らずに帰ってきた。心霊スポットに来た意味とは。', 'You came home without filming a thing. What was the point of coming?'], ['何も撮らずに帰る', 'go home without filming anything'], ['■■■ゼロ', '何も■らずに帰ってきた。■■スポットに来た意味とは。'], null);
+try { const lb = AWT.R; lb.push({ t: '追加の撮れ高（怪異なし）', mon: 'なし', q: 'enemyat=999&nourah', items: [], catch: 0, force: [], list: [['arriveSelfie', 'ent', '最初の録画を、インカメラにしてから始める（2秒）'], ['moonwalk', 'c1', '後ろ向きのまま10m歩く'], ['wasteMem', 'c1', '撮れ高が出ないまま、録画を合計30秒'], ['zeroShot', 'ent', '録画を一度もせずに3m歩いて玄関から帰る']] }, { t: '追加の撮れ高（内田くん・オフタリサマ）', mon: '内田くん・オフタリサマ', q: 'enemy=mann&enemyat=0&bar1close&bar2close&urah&carry=tdoll', items: ['tdoll'], catch: 1, force: ['MANN', 'WING'], list: [['newArea', 'c1', '内田くんにバリケードを壊させる（バリケードを一度も壊していない記録の時だけ。試し版の設定「バリケードの記録を消す」と「新エリア解放の記録を消す」）'], ['tdollUrah', 'c1', 'トモダチ人形を持って、オフタリサマを1秒映す']] }); } catch (e) { console.warn('AWT add', e); }
 var AWFIX = {
+  barBreak: { name: 'バリケードの破壊', en: 'Breaking the barricade', rk: 'S', pts: 150, hint: ['人体模型を誘って、バリケードを壊させる', 'lure the mannequin into the barricade'], desc: ['人体模型の内田くんをうまく誘導して、バリケードを破壊させた。', 'You lured the mannequin Uchida-kun into smashing the barricade.'], tk: ['バリケードの■■', '■■■■の■■くんをうまく■■して、バリケードを■■させた。'] },
   tenteki: { name: '天敵から逃げるクモ女', en: 'The Spider Woman fleeing her natural enemy', desc: ['クモ女がオフタリサマを見て、悲鳴をあげて逃げていった。…異様に怖がっているようだ。', 'The Spider Woman saw Ofutari-sama, shrieked, and fled. …She seems strangely terrified.'], tk: ['天敵から逃げる■■■', '■■■がオフタリサマを見て、■■をあげて逃げていった。…■■に怖がっているようだ。'] },
   runner: { name: '窓の外を歩く少女の霊', en: 'The little girl outside the window', hint: ['窓の外を見ていると', 'watch outside the window'], desc: ['窓のすぐ外を、小さな女の子が歩いていた。近づくと、くすくす笑って、ふっと消えた。', 'A little girl walked just outside the window. She giggled — and was gone.'], tk: ['窓の外を歩く■■の■', '窓のすぐ外を、■■な■の■が歩いていた。近づくと、くすくす■って、ふっと■■た。'] },
   lookBack: { hint: ['前を歩く女子高生の霊', 'the schoolgirl ghost walking ahead'] },
@@ -27057,7 +27097,6 @@ var AWFIX = {
   jyHand: { hint: ['置いたじゆうちょうを、のぞいて撮る', 'peek into the notebook you set down and film it'], desc: ['置いたじゆうちょうに、自分のものではない赤い字が書かれていった。', 'Red writing that wasn’t yours appeared in the notebook you set down.'], tk: ['■■の■■', '置いたじゆうちょうに、■■のものではない■い■が書かれていった。'] },
   canvasGrow: { hint: ['美術室のキャンバスを、近くで撮る', 'film the art room canvas up close'] },
   redHands: { hint: ['美術室の床', 'the art room floor'] },
-  barBreak: { rk: 'S', pts: 150, hint: ['人体模型を誘う', 'lure the mannequin'], desc: ['人体模型の内田くんをうまく誘導してバリケードを破壊させた。', 'You lured the mannequin Uchida-kun into smashing the barricade.'], tk: ['■■■■■■■', '■■■■の■■くんをうまく■■してバリケードを■■させた。'] },
   micSilent: { desc: ['ずっとしゃべり続けていたのに、急に黙りこんだ。…どうした？', 'You had been talking nonstop, then suddenly went silent. …What happened?'], hint: ['しゃべり続けたあと、急に黙る', 'talk nonstop, then suddenly go quiet'], tk: ['■に■■', 'ずっとしゃべり■■■■いたのに、■■■■■■■んだ。…どうした？'] },
   tDoorOpen: { desc: ['閉まっていたトイレの個室の扉が、ギィ…と音を立てて、ひとりでに開いた。中には、誰もいない。', 'A closed toilet stall door creaked open on its own. No one was inside.'], hint: ['閉まった個室の扉', 'a closed stall door'], tk: ['■■に開くトイレの■', '閉まっていたトイレの個室の■が、ギィ…と音を立てて、■■■■に開いた。中には、だれもいない。'] },
   stallFeet: { rk: 'B', pts: 40 },
