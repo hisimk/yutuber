@@ -15645,7 +15645,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.62';
+const VERSION = '0.18.63';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -18408,7 +18408,7 @@ const ARTRM = {
     /* 壁一面の自画像（東の壁＝理科室との境） */
     {
       const pm = PORT_IMG.map(u => { const c = document.createElement('canvas'); c.width = 160; c.height = 200; const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; const im = new Image(); im.onload = () => { const x = c.getContext('2d'); x.fillStyle = '#efe6cf'; x.fillRect(0, 0, 160, 200); x.drawImage(im, 8, 8, 144, 144); x.strokeStyle = 'rgba(60,50,40,.55)'; x.lineWidth = 2; x.beginPath(); x.moveTo(30, 178); x.lineTo(130, 178); x.stroke(); t.needsUpdate = true; }; im.src = u; return L({ map: t }); });   /* 2026-11-15 提供素材の子どもの自画像10枚（目が真っ黒な1枚だけは中央に1回） */
-      for (let r = 0; r < 3; r++) for (let c = 0; c < 9; c++) { const k = r === 1 && c === 4 ? 7 : [0, 1, 2, 3, 4, 5, 6, 8, 9][(r * 4 + c) % 9]; const m = WB.pl(st, 0.3, 0.38, pm[k], 14.88, 1.15 + r * 0.45, -39.9 + c * 0.75, 0, -Math.PI / 2, rnd(-0.04, 0.04)); m.userData.keep = true; } }
+      this.portMat = pm[7]; this.portSlots = []; for (let r = 0; r < 3; r++) for (let c = 0; c < 9; c++) { const k = [0, 1, 2, 3, 4, 5, 6, 8, 9][(r * 4 + c) % 9]; this.portSlots.push(V(14.88, LH + 1.15 + r * 0.45, -39.9 + c * 0.75));   /* 2026-11-20 156番：ふだんは普通の絵だけ（目の真っ黒な絵は PORTX がたまに1枚だけ） */ const m = WB.pl(st, 0.3, 0.38, pm[k], 14.88, 1.15 + r * 0.45, -39.9 + c * 0.75, 0, -Math.PI / 2, rnd(-0.04, 0.04)); m.userData.keep = true; } }
     /* 床の絵の具の跡 */
     for (let i = 0; i < 10; i++) { const m = WB.pl(st, rnd(0.08, 0.3), rnd(0.06, 0.22), WB.mat([0xa83030, 0x3050a0, 0xd0b030, 0x309050][i % 4]), rnd(3, 13), 0.003 + i * 0.0003, rnd(-40, -34), -Math.PI / 2, 0, rnd(0, 6)); m.userData.keep = true; }
     WB.bake(st);
@@ -23056,7 +23056,8 @@ const LORE = {
       /* 2026-11-20 FB：鏡の中の自分の顔が真っ赤になる（画面全体は赤くしない）。ノイズと驚かす音。少し短く。最後の一瞬だけ、頭が上下逆さに（首は動かさない） */
       if (t > 0.7 && !M.red) { M.red = true; setRedFace(avatar, true, false); playSfx('noise_rise_cut', { ear: 0, gain: 0.9 }); jumpSting('jump_b', 1, 3); noiseHit(0.7); world.vhs = Math.max(world.vhs || 0, 0.6); award('mirrorPossess', '撮れ高に取り憑かれた女', 100); this.mark('mirror'); try { XCHAT.log('mirrorPossess'); } catch (e) { } }
       if (t > 1.95) { M.ph = 2; M.tilt = 0; M.red = false; setRedFace(avatar, false); try { if (M.hp0) avatar.bones.Head.position.copy(M.hp0); } catch (e) { } world.avatarOverride = false; } return; }
-    if (this.done('mirror') || !rec.active || player.lv !== 0) { M.t = 0; return; }
+    let busy2 = false; try { busy2 = NOME.hidden() || RFX.st === 'on'; } catch (e) { }   /* 2026-11-20 なんで私だけ・反射の中だけに と同時に起きない */
+    if (this.done('mirror') || !rec.active || player.lv !== 0 || busy2) { M.t = 0; return; }
     const f = camFwd(); const ok = player.x > 3.2 && player.x < 3.52 && Math.abs(player.z + 2.7) < 1.15   /* 2026-11-20 FB：鏡にぐっと近づいた時だけ（スマホが画面から外れて、鏡の中の顔が見える距離） */ && f.x < -0.8 && Math.abs(player.pitch) < 0.4 && !world.selfie;
     if (ok) { M.t += dt; M.gap = 0; } else { M.gap += dt; if (M.gap > 0.5) M.t = 0; }
     if (M.t >= 8) { M.ph = 1; M.k = 0; M.red = false; playSfx('static_cam', { ear: 0, gain: 0.5 });   /* 2026-11-20 FB：10秒 → 8秒 */ world.avatarOverride = true; avatar.c.pose = 'stand'; }   /* 鏡の中の自分がスマホを下ろし、顔を見せて傾く */
@@ -27079,6 +27080,74 @@ addAw('wasteMem', 'C', 20, 'メモリの無駄遣い', 'Wasted memory', ['撮れ
 addAw('tdollUrah', 'B', 40, 'トモダチを連れてきた', 'Brought a friend', ['トモダチ人形を連れてきたら、顔が2つある怪異があらわれた。…呼んでしまったのかもしれない。', 'You brought the friend doll, and the two-faced spirit appeared. …Maybe you called it here.'], ['トモダチ人形を持って、顔が2つある怪異に会う', 'meet the two-faced spirit while carrying the friend doll'], ['■■■■を連れてきた', '■■■■人形を連れてきたら、■が2つある■■があらわれた。…■■でしまったのかもしれない。'], [['人形が呼んだ？', 'did the doll call it?'], ['トモダチってそういう…', "so that's the 'friend'…"]]);
 addAw('zeroShot', 'D', 0, '撮れ高ゼロ', 'Zero footage', ['何も撮らずに帰ってきた。心霊スポットに来た意味とは。', 'You came home without filming a thing. What was the point of coming?'], ['何も撮らずに帰る', 'go home without filming anything'], ['■■■ゼロ', '何も■らずに帰ってきた。■■スポットに来た意味とは。'], null);
 try { const lb = AWT.R; lb.push({ t: '追加の撮れ高（怪異なし）', mon: 'なし', q: 'enemyat=999&nourah', items: [], catch: 0, force: [], list: [['arriveSelfie', 'ent', '最初の録画を、インカメラにしてから始める（2秒）'], ['moonwalk', 'c1', '後ろ向きのまま10m歩く'], ['wasteMem', 'c1', '撮れ高が出ないまま、録画を合計30秒'], ['zeroShot', 'ent', '録画を一度もせずに3m歩いて玄関から帰る']] }, { t: '追加の撮れ高（内田くん・オフタリサマ）', mon: '内田くん・オフタリサマ', q: 'enemy=mann&enemyat=0&bar1close&bar2close&urah&carry=tdoll', items: ['tdoll'], catch: 1, force: ['MANN', 'WING'], list: [['newArea', 'c1', '内田くんにバリケードを壊させる（バリケードを一度も壊していない記録の時だけ。試し版の設定「バリケードの記録を消す」と「新エリア解放の記録を消す」）'], ['tdollUrah', 'c1', 'トモダチ人形を持って、オフタリサマを1秒映す']] }); } catch (e) { console.warn('AWT add', e); }
+
+/* =========================================================
+   2026-11-20 156番：美術室の自画像。周ごとに25%で、27枚のうち1枚が、目を離したすきに目の真っ黒な絵に変わる
+   ========================================================= */
+const PORTX = {
+  reset() { this.on = chance(0.25) || /[?&]scaryport/.test(location.search) && (TEST || BETA); this.shown = false; this.film = 0; this.slot = null; if (this.m) this.m.visible = false; },
+  update(dt) {
+    if (!this.on || world.state !== 'play' || typeof ARTRM === 'undefined' || !ARTRM.built || !ARTRM.portSlots) return;
+    if (!this.slot) this.slot = pick(ARTRM.portSlots);
+    if (!this.m) { this.m = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.38), ARTRM.portMat); this.m.rotation.y = -Math.PI / 2; this.m.visible = false; scene.add(this.m); }
+    const p = this.slot, wp = V(p.x - 0.006, p.y, p.z);
+    if (!this.shown) { if (player.lv === 1 && playerZone() === 'ART' && !onScreen(wp, 1.15)) { this.shown = true; this.m.position.copy(wp); this.m.visible = true; } return; }
+    if (rec.active && seen(wp, { maxD: 2.5, margin: 0.8 })) { this.film += dt; if (this.film >= 1) award('scaryPort', '怖い似顔絵', 40); }
+  },
+};
+/* =========================================================
+   2026-11-20 155番：トイレの鏡に、自分だけが映らなくなる（なんで私だけ）
+   ・鏡の前（近く）にいる時に、周ごとに15%。見ている間に、ふっと消える。トイレを出るか20秒で戻る
+   ・自分の映っていない鏡を録画で1秒映してから、ズーム／二度見（5秒以内）／インカメラ、のどれかで撮れ高
+   ========================================================= */
+const NOME = {
+  reset() { this.roll = chance(0.15) || /[?&]nome/.test(location.search) && (TEST || BETA); this.st = 'off'; this.t = 0; this.seen = 0; this.away = -1; this.z0 = 1; },
+  front() { return player.lv === 0 && player.x > 3.2 && player.x < 4.8 && Math.abs(player.z + 2.7) < 1.3; },
+  mirrorSeen() { return seen(V(3.17, 1.6, -2.7), { maxD: 3.5, margin: 0.95 }); },
+  busy() { try { return LORE.mirror.ph === 1 || (typeof RFX !== 'undefined' && RFX.st === 'on'); } catch (e) { return false; } },
+  update(dt) {
+    if (world.state !== 'play') return;
+    if (this.st === 'off') { if (this.roll && this.front() && !this.busy() && !world.selfie && this.mirrorSeen()) { this.t += dt; if (this.t > 1.5) { this.st = 'on'; this.t = 0; this.roll = false; } } return; }
+    if (this.st !== 'on') return;
+    this.t += dt; if (playerZone() !== 'T' || this.t > 20) { this.st = 'done'; return; }
+    const vis = this.mirrorSeen();
+    if (rec.active && vis && !world.selfie) { this.seen += dt; if (this.away >= 0 && this.seen > 0.3 && this.away < 5 && this.hadSeen) this.hit(); }
+    if (this.seen >= 1) { this.hadSeen = true; if (zoom > this.z0 + 0.3) this.hit(); }
+    if (this.hadSeen && !vis) { if (this.away < 0) { this.away = 0; this.seen = 0; } this.away += dt; if (world.selfie && rec.active) this.hit(); }
+    if (vis) { if (this.away >= 5) this.away = -1; } else this.z0 = zoom;
+    if (!vis && this.away < 0) this.z0 = zoom;
+  },
+  hit() { if (rec.active) award('nomeMirror', 'なんで私だけ', 60); },
+  hidden() { return this.st === 'on'; },
+};
+{ let ms = null; wrapReflector(mirror, pre => { if (!NOME.hidden()) return; if (!ms) { ms = []; avatar.root.traverse(o => { if (o.isMesh) ms.push(o); }); } if (pre) { for (const o of ms) { o.userData.nmv = o.visible; o.visible = false; } } else for (const o of ms) o.visible = o.userData.nmv ?? true; }); }
+/* =========================================================
+   2026-11-20 154番：反射の中だけに（鏡・昇降口のガラスの中だけ、背中にぴったり逆さ女。音なし）
+   ・逆さ女がその周に出ていない時だけ。鏡かガラスの前で録画中にそれを映している時、周ごとに20%
+   ・大きく振り返ったら（約120度）消える。その周はもう出ない。怖さ「小」では起きない
+   ========================================================= */
+const RFX = {
+  reset() { this.roll = chance(0.2) || /[?&]mirrorback/.test(location.search) && (TEST || BETA); this.st = 'off'; this.t = 0; this.face = 0; this.yaw0 = 0; this.where = null; },
+  spot() { if (player.lv !== 0) return null; if (player.x > 3.2 && player.x < 4.8 && Math.abs(player.z + 2.7) < 1.3 && seen(V(3.17, 1.6, -2.7), { maxD: 3.5, margin: 0.95 })) return 'mirror'; if (Math.abs(player.x) < 3 && player.z > 3.6 && player.z < 5.9 && seen(V(player.x, 1.4, 5.94), { maxD: 3, margin: 0.95 })) return 'glass'; return null; },
+  free() { try { return !womanOn() && !WD.borrowed && !(typeof PHAN !== 'undefined' && PHAN.on) && SG.ready && !SG.root.visible && !FEAR.lo() && !world.mannRun && LORE.mirror.ph !== 1 && !NOME.hidden(); } catch (e) { return false; } },
+  update(dt) {
+    if (world.state !== 'play') return;
+    if (this.st === 'off') { if (!this.roll || !rec.active || world.selfie || !this.free()) return; const w = this.spot(); if (w) { this.t += dt; if (this.t > 1.2) { this.st = 'on'; this.where = w; this.t = 0; this.yaw0 = player.yaw; this.roll = false; if (TEST || DEV) console.log('RFX on', w); } } else this.t = 0; return; }
+    if (this.st !== 'on') return;
+    this.t += dt; const dy = Math.abs(Math.atan2(Math.sin(player.yaw - this.yaw0), Math.cos(player.yaw - this.yaw0)));
+    if (dy > 2.1 || !this.free() || this.t > 40 || player.lv !== 0) { this.st = 'done'; try { if (rec.active && dy > 2.1) XCHAT.log('rfxGone'); } catch (e) { } return; }
+    if (dy < 1.2) this.yaw0 = player.yaw * 0.1 + this.yaw0 * 0.9;   /* 少しずつ向きを変えるのは、振り返りとは数えない */
+    if (rec.active && !world.selfie && this.spot()) { this.face += dt; if (this.face >= 1) { award('reflectBack', '反射の中だけに', 120); } }
+  },
+  place() { const f = camFwd(); f.y = 0; f.normalize(); const rx = -f.z, rz = f.x, x = player.x - f.x * 0.4 + rx * 0.3, z = player.z - f.z * 0.4 + rz * 0.3;   /* 肩ごしに少しのぞく位置 */ SG.root.position.set(x, 0, z); SG.root.rotation.set(0, Math.atan2(f.x, f.z), 0); SG.root.updateMatrixWorld(true); },
+};
+for (const rf of [mirror, doorGlass]) wrapReflector(rf, pre => { if (RFX.st !== 'on') return; if (pre) { RFX.keep = [SG.root.visible, SG.opacity]; RFX.place(); sgSetOpacity(1); SG.root.visible = true; } else if (RFX.keep) { sgSetOpacity(RFX.keep[1]); SG.root.visible = RFX.keep[0]; } });
+{ const U0 = CMX.update.bind(CMX), R0 = CMX.reset.bind(CMX); CMX.update = function (dt) { U0(dt); for (const M of [PORTX, NOME, RFX]) try { M.update(dt); } catch (e) { if (TEST) console.warn('XAW2', e); } }; CMX.reset = function () { R0(); for (const M of [PORTX, NOME, RFX]) try { M.reset(); } catch (e) { } }; }
+addAw('scaryPort', 'B', 40, '怖い似顔絵', 'The scary portrait', ['美術室に並んだ自画像の1枚だけ、目が真っ黒に塗りつぶされていた。さっきは、普通の顔だったはず。', 'One of the self-portraits in the art room had its eyes blacked out. A moment ago, it was a normal face.'], ['美術室の壁の自画像', 'the self-portraits on the art room wall'], ['怖い■■■', '美術室に並んだ■■■の1枚だけ、■が真っ黒にぬりつぶされていた。さっきは、普通の■だったはず。'], [['1枚だけ目やばい', 'just that one has those eyes'], ['さっきあんなだった？', 'was it like that before?'], ['目が黒い…', 'the eyes are black…']]);
+addAw('nomeMirror', 'A', 60, 'なんで私だけ', 'Why only me', ['トイレの鏡に、自分だけが映っていなかった。後ろの個室は、ちゃんと映っているのに。', 'You were missing from the restroom mirror. The stalls behind you were reflected just fine.'], ['鏡に映る自分を、よく見る', 'look closely at yourself in the mirror'], ['なんで■だけ', 'トイレの■に、■■だけが映っていなかった。うしろの■■は、ちゃんと映っているのに。'], [['映ってなくない？', "you're not in the mirror?"], ['え、主どこ', 'wait where are you'], ['吸血鬼かな', 'vampire?']]);
+addAw('reflectBack', 'S', 120, '反射の中だけに', 'Only in the reflection', ['鏡に映った自分の背中に、逆さまの女がぴったりついていた。振り返っても、誰もいない。', 'In the reflection, an upside-down woman clung to your back. You turned around — no one was there.'], ['鏡やガラスに映る、自分の後ろ', 'what is behind you in mirrors and glass'], ['■■の中だけに', '鏡に映った■■の背中に、逆さまの■がぴったりついていた。ふり返っても、■もいない。'], [['後ろ！', 'behind you!'], ['鏡見て', 'look at the mirror'], ['背中に何かいる', "something's on your back"]]);
+XCHAT.LIST.rfxGone = ['xa.rfx.0', 'xa.rfx.1']; Object.assign(CHAT_DICT.t, { 'xa.rfx.0': ['いない…', "she's gone…"], 'xa.rfx.1': ['え、今いたよね', 'wait, she was just there'] });
+try { AWT.R.push({ t: '追加の撮れ高（鏡・美術室）', mon: 'なし', q: 'enemyat=999&nourah&wingopen&scaryport&nome&mirrorback', items: [], catch: 0, force: [], list: [['nomeMirror', 'toilet', '鏡に近づいて映す。自分が消えたら、ズーム・二度見・インカメラのどれか'], ['reflectBack', 'toilet', '録画しながら鏡（または昇降口のガラス）を映す。背中の逆さ女を1秒。振り返ると消える'], ['scaryPort', 'art', '美術室の自画像の壁から目を離してから、目の黒い1枚を近く（2.5m）で1秒']] }); } catch (e) { }
 var AWFIX = {
   barBreak: { name: 'バリケードの破壊', en: 'Breaking the barricade', rk: 'S', pts: 150, hint: ['人体模型を誘って、バリケードを壊させる', 'lure the mannequin into the barricade'], desc: ['人体模型の内田くんをうまく誘導して、バリケードを破壊させた。', 'You lured the mannequin Uchida-kun into smashing the barricade.'], tk: ['バリケードの■■', '■■■■の■■くんをうまく■■して、バリケードを■■させた。'] },
   tenteki: { name: '天敵から逃げるクモ女', en: 'The Spider Woman fleeing her natural enemy', desc: ['クモ女がオフタリサマを見て、悲鳴をあげて逃げていった。…異様に怖がっているようだ。', 'The Spider Woman saw Ofutari-sama, shrieked, and fled. …She seems strangely terrified.'], tk: ['天敵から逃げる■■■', '■■■がオフタリサマを見て、■■をあげて逃げていった。…■■に怖がっているようだ。'] },
