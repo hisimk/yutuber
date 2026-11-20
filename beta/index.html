@@ -15788,7 +15788,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '1.0.2';
+const VERSION = '1.0.3';
 const SHOOT = BETA && /[?&]shoot\b/.test(location.search);   /* 2026-11-20 動画撮影の素材用（?shoot）：「試し版」の表示を出さない */
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA && !SHOOT ? '（試し版）' : '');
 if (BETA && !SHOOT) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
@@ -21453,14 +21453,15 @@ const SHOP = {
     this.brought = got;
     const k = cap ? ECON.capture : 1, tipRe = /^¥[\d,]+$/, cur = typeof CHAT !== 'undefined' && CHAT.cur, phI = new Set((cur && cur.phIdx) || []), cm0 = ((cur && cur.items) || []).filter((x, i) => !x.some(v => typeof v === 'string' && tipRe.test(v)) && !phI.has(i) && !(typeof x[2] === 'string' && /^x\.ar\./.test(x[2]))).length, durS = cur && cur.end ? cur.end.R : (rec.time || 0), cm = Math.min(cm0, Math.ceil(durS * ECON.cmtPerSec) + 4);   /* 2026-11-19 105番：コメントの分のお金は、荒らし・荒れて足したコメントを数えず、録画の秒数で上限を付ける */   /* 投げ銭の帯は数えない */
     const likeY = Math.round(Math.max(0, likes) * ECON.like * ECON.mul[r]), cmtY = Math.round(cm * ECON.cmt[r] * ECON.mul[r]), base = likeY + cmtY, tips = typeof TIPS !== 'undefined' ? TIPS.sum() : 0, gross = base + tips, fee0 = cap ? Math.round(base * (1 - k)) : 0, fee = ins ? Math.round(fee0 / 2) : fee0, neko = wnk ? Math.round(base * 0.05) : 0, yen = gross - fee + neko;   /* 2026-11-16 襲われた時は「医療費」として、いいねとコメントの分の半分を引く（投げ銭は対象外） */
-    d.yen += yen; this.save(); this.last = { yen, likes, mul: ECON.mul[r], cap, tips, base, likeY, cmtY, cm, per: ECON.cmt[r], fee, ins, neko }; if (TEST || DEV) console.log('SHOP run', JSON.stringify(this.last)); return this.last;
+    if (cap) d.capN = (d.capN | 0) + 1;   /* 2026-11-20 本人の希望：2回目に捕まった時の結果画面で、医療費の決まりを知らせる */
+    d.yen += yen; this.save(); this.last = { yen, likes, mul: ECON.mul[r], cap, tips, base, likeY, cmtY, cm, per: ECON.cmt[r], fee, ins, neko, capNote: !!cap && d.capN === 2 }; if (TEST || DEV) console.log('SHOP run', JSON.stringify(this.last)); return this.last;
   },
   /* 使い切りの道具を使った時（その周の持ち込みなら、なくなる） */
   used(id) { },
   /* ── 結果画面の左上：収益（2行）。タップで内訳 */
   showRes(likes) {
     const L = this.endRun(likes), el = $('#permIcons'), en = LANG === 'en';
-    if ((this.brought || []).length && this.broughtRun !== world.runId) { this.broughtRun = world.runId; const B = this.brought; setTimeout(() => NOTE.show({ sub: en ? 'Brought back' : '持ち帰った物', body: [B.map(id => `<b class="nY">${TR(ITEM.defs[id] ? ITEM.defs[id].name : id)}</b>${YTAG.tag(id)}`).join('<br>'), en ? 'Added to your bag.' : '持ち物に入りました。'] }), 1200); }   /* 2026-11-16 校舎で拾って持ち帰った物を知らせる */ el.innerHTML = `<div id="resYen"><div class="ryL">${en ? 'Revenue' : '収益'}</div><div class="ryV">+0${en ? ' yen' : '円'}</div></div><div id="resCm"><div class="ryL">${en ? 'Comments' : 'コメント'}</div><div class="ryV">${L.cm.toLocaleString()}${en ? '' : '件'}</div></div>`;   /* 2026-11-16 コメント数も左上に */
+    if ((this.brought || []).length && this.broughtRun !== world.runId) { this.broughtRun = world.runId; const B = this.brought; setTimeout(() => NOTE.show({ sub: en ? 'Brought back' : '持ち帰った物', body: [B.map(id => `<b class="nY">${TR(ITEM.defs[id] ? ITEM.defs[id].name : id)}</b>${YTAG.tag(id)}`).join('<br>'), en ? 'Added to your bag.' : '持ち物に入りました。'] }), 1200); }   /* 2026-11-16 校舎で拾って持ち帰った物を知らせる */ if (L.capNote && this.capNoteRun !== world.runId) { this.capNoteRun = world.runId; setTimeout(() => NOTE.show({ body: [en ? 'When you get caught, <b class="nY">medical bills</b> cut that run\'s revenue in half.<br>Escape through the entrance to survive.' : '捕まると<b class="nY">医療費</b>により、その回の収益が半分になります。<br>出入り口から脱出すると生還できます。'] }), 1400); }   /* 2026-11-20 2回目に捕まった時だけ */ el.innerHTML = `<div id="resYen"><div class="ryL">${en ? 'Revenue' : '収益'}</div><div class="ryV">+0${en ? ' yen' : '円'}</div></div><div id="resCm"><div class="ryL">${en ? 'Comments' : 'コメント'}</div><div class="ryV">${L.cm.toLocaleString()}${en ? '' : '件'}</div></div>`;   /* 2026-11-16 コメント数も左上に */
     const v = el.querySelector('.ryV'), t0 = performance.now(), dur = 900, f = () => { const k = Math.min(1, (performance.now() - t0) / dur); v.textContent = '+' + Math.round(L.yen * k * (2 - k)).toLocaleString() + (en ? ' yen' : '円'); if (k < 1) requestAnimationFrame(f); }; requestAnimationFrame(f);
     el.onclick = e => { e.stopPropagation(); const c = '', f = n => n.toLocaleString(); { const b0 = $('#resBrk'); if (b0 && b0.classList.contains('show')) { b0.classList.remove('show'); return; } }   /* 2026-11-16 もう一度タップで閉じる */   /* 2026-11-16 内訳にコメントの分も */
       const brk = $('#resBrk') || (() => { const b = document.createElement('div'); b.id = 'resBrk'; document.body.appendChild(b); return b; })(), say = (m, ms) => { brk.innerHTML = m; brk.classList.add('show'); brk.onclick = ev => { ev.stopPropagation(); brk.classList.remove('show'); }; };   /* 結果画面の上に出す（toast は結果画面の下に隠れていた） */
