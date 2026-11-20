@@ -12816,12 +12816,12 @@ const raysN = [[0, 0], [0.13, 0], [-0.13, 0], [0, 0.13], [0, -0.13]];
 const _v2 = new THREE.Vector2();
 function updateFocus(dt) {
   let dC = 30, dN = 30;
-  for (let i = 0; i < raysN.length; i++) {
+  const since = world.t - focus.lastZoomMove, needN = focus.override == null && !world.selfie && since >= 0.08 && since < 0.32;   /* 2026-11-20 177番の1：周りの4点（dN）は使う時だけ調べる。ほかの時は真ん中の1回だけ（dN は真ん中と同じ値になる。結果は今と同じ） */
+  for (let i = 0, nR = needN ? raysN.length : 1; i < nR; i++) {
     ray.setFromCamera(_v2.set(raysN[i][0], raysN[i][1]), camera); ray.far = 40;
     const h = ray.intersectObjects(focusables, false).find(h => h.object.visible && (!h.object.userData.human || h.object.userData.human.opacity > 0.3));
     const d = h ? h.distance : 30; if (i === 0) dC = d; dN = Math.min(dN, d);
   }
-  const since = world.t - focus.lastZoomMove;
   let target;
   if (focus.override != null) target = focus.override; else if (world.selfie) target = 0.6;
   else if (since < 0.08) target = focus.dist;
@@ -15687,7 +15687,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '0.18.73';
+const VERSION = '0.18.74';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -26343,8 +26343,13 @@ const PLACE = {
     for (let i = 1; i <= 5; i++) { const k = i / 5, x = lerp(player.x, q.x, k), z = lerp(player.z, q.z, k), [cx, cz] = collide(x, z, 0.12, player.lv); if (Math.abs(cx - x) + Math.abs(cz - z) > 0.03) return null; } q.y = ly; return q; },
   jTarget() { if (JIYU.placed) return null; const f = camFwd(), fh = V(f.x, 0, f.z).normalize(), by = Math.atan2(-fh.x, -fh.z), ly = player.lv ? LH : 0; if (f.y > 0.15) return null;
     let T = null, best = this.CFG.deskD; const cone = (p) => { const dx = p.x - player.x, dz = p.z - player.z, dd = Math.hypot(dx, dz); return dd <= best && (fh.x * dx + fh.z * dz) / (dd || 1) >= 0.5 ? dd : null; };
-    for (const rk in rooms) for (const d of (rooms[rk] && rooms[rk].desks) || []) { if (!d || !d.g || !d.g.visible) continue; const p = d.g.getWorldPosition(V()); if (Math.abs(p.y - ly) > 1) continue; const dd = cone(p); if (dd === null || KOK.desk === d || deskBusy(d, JIYU.g)) continue; best = dd; T = { desk: d, by, p: d.g.localToWorld(V(0, 0.757, 0)), kind: 'desk' }; }
-    for (const S of this.SURF()) { if (S.lv !== player.lv) continue; const dd = cone(S.p); if (dd === null || this.busy(S.p)) continue; best = dd; T = { by, p: S.p.clone(), kind: 'table' }; }
+    /* 2026-11-20 177番の2：前にある机の候補を先に集めて近い順に並べ、近い机から物が乗っていないかを調べる（置ける机が見つかったら止める）。
+       選ばれる場所は今と同じ（一番近い空いた机。同じ距離なら、今までどおりあとの方）。台も、選ばれた机より近い物だけを近い順に調べる */
+    const byNear = (a, b) => a.dd - b.dd || b.i - a.i, dc = [];
+    for (const rk in rooms) for (const d of (rooms[rk] && rooms[rk].desks) || []) { if (!d || !d.g || !d.g.visible) continue; const p = d.g.getWorldPosition(V()); if (Math.abs(p.y - ly) > 1) continue; const dd = cone(p); if (dd === null || KOK.desk === d) continue; dc.push({ dd, i: dc.length, d }); }
+    dc.sort(byNear); for (const c of dc) if (!deskBusy(c.d, JIYU.g)) { best = c.dd; T = { desk: c.d, by, p: c.d.g.localToWorld(V(0, 0.757, 0)), kind: 'desk' }; break; }
+    const sc = []; for (const S of this.SURF()) { if (S.lv !== player.lv) continue; const dd = cone(S.p); if (dd === null) continue; sc.push({ dd, i: sc.length, S }); }
+    sc.sort(byNear); for (const c of sc) if (!this.busy(c.S.p)) { best = c.dd; T = { by, p: c.S.p.clone(), kind: 'table' }; break; }
     if (T) return T; const q = this.floorPt(this.CFG.floor[1]); return q ? { by, p: q, kind: 'floor' } : null; },
   /* 盛り塩：見ている入口（その部屋の入口すべて）。なければ赤（見ている床） */
   doorsOf(room, lv) { const k = room + lv; this.dc = this.dc || {}; return this.dc[k] || (this.dc[k] = SALT2.doors(room, lv)); },
