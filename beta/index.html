@@ -15789,7 +15789,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '0.18.93';
+const VERSION = '0.18.94';
 const SHOOT = BETA && /[?&]shoot\b/.test(location.search);   /* 2026-11-20 動画撮影の素材用（?shoot）：「試し版」の表示を出さない */
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA && !SHOOT ? '（試し版）' : '');
 if (BETA && !SHOOT) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
@@ -23407,6 +23407,8 @@ Object.assign(ECON, {
   tipEvery: 60,                                  /* 安い投げ銭：録画中、平均この秒数に1回 */
   tipAfterAward: 0.3,                            /* 撮れ高の直後に安い投げ銭が来る確率 */
   tipSmall: [[100, 0.7], [200, 0.2], [500, 0.1]],
+  /* 2026-11-20 本人の判断：¥100が多すぎるので減らす。ランクが上がるほど高い額が来やすい（¥1,000も混ぜる）。1周の上限（tipCap）は今のまま＝回数は減って1回の額が上がる */
+  tipSmallR: [null, null, [[100, 0.35], [200, 0.3], [500, 0.25], [1000, 0.1]], [[100, 0.25], [200, 0.3], [500, 0.3], [1000, 0.15]], [[100, 0.15], [200, 0.25], [500, 0.35], [1000, 0.25]], [[100, 0.08], [200, 0.17], [500, 0.35], [1000, 0.4]]],
   tipMidS: 0.12, tipMidChase: 1 / 240,            /* ¥1,000〜2,000：S・SSの直後の確率／追われながら撮っている時の1秒あたりの確率 */
   tipCol: { 100: '#2a6fd6', 200: '#21a6c9', 500: '#25a55a', 1000: '#d8b414', 2000: '#e2731c', 5000: '#d9408f', 10000: '#d1222b' },
 });
@@ -23421,7 +23423,7 @@ const TIPS = {
   smallSum() { return (this.list || []).filter(t => !t.big).reduce((a, t) => a + t.yen, 0); },
   cap() { return ECON.tipCap[SHOP.runRank ?? 0] || 0; },
   give(yen) { if (!this.ok() || this.smallSum() + yen > this.cap()) return false; this.list.push({ yen, t: rec.time }); CHATLOG.add('tip', { yen }); if (TEST || DEV) console.log('TIP', yen, this.sum()); return true; },
-  small() { this.give(pickW(ECON.tipSmall)); },
+  small() { this.give(pickW(ECON.tipSmallR[SHOP.runRank ?? 0] || ECON.tipSmall)); },
   update(dt) { if (!this.ok()) return; const k = (this.mode() === 'on' ? 8 : 1) * this.rate(), ch = typeof KEHAI !== 'undefined' && KEHAI.chasing();   /* 2026-11-16 2,000円以下はランクの倍率で出やすく */
     if (Math.random() < dt / ECON.tipEvery * k) this.small(); if (ch && Math.random() < dt * ECON.tipMidChase * k) this.give(Math.random() < 0.7 ? 1000 : 2000);
     if (this.pend && this.pend.length) { if (ch) this.bigNow(rnd(800, 2500)); else if (rec.time >= this.fbAt) this.bigNow(0); }   /* 5,000円・1万円：追われている最中を優先。なければ録画中のどこか */
