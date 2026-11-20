@@ -1121,6 +1121,18 @@
 <div id="saveNote"><div id="snBox"><button id="snX" class="mX" type="button" aria-label="閉じる">×</button><div id="snT"></div><p id="snB"></p><p id="snH"></p><p id="snN"></p><button id="snOk"></button></div></div>
 <div id="loading"><div>LOADING</div><div class="ghL" aria-hidden="true"></div></div>
 <script>
+/* 2026-11-20 185番：タイトルに戻る時などの読み込み直しで、LOADING の画面が一瞬大きさを変えて見えるのを防ぐ。
+   PC の縦長の枠（430×932 に拡大・縮小）や、スマホを横にした時の回転は、ゲーム本体（module）が読み込まれてからかかっていた。
+   そのため最初の数コマは枠なしの大きさで LOADING が描かれ、本体が動いた所で急に大きさが変わっていた。
+   ここ（#loading のすぐあと）で、本体と同じ計算を先にかけておく（本体の frameFit・rotFit があとで同じ値をかけ直す） */
+(function () { try {
+  var de = document.documentElement, b = document.body; if (!b) return;
+  var pc = matchMedia('(hover: hover) and (pointer: fine)').matches || /[#&?]pcf/.test(location.href);
+  var fit = function () { if (pc) { var k = Math.min(innerWidth / 430, innerHeight / 932), x = Math.round((innerWidth - 430 * k) / 2), y = Math.round((innerHeight - 932 * k) / 2); de.classList.add('pcFrame'); b.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + k + ')'; return; }
+    var on = matchMedia('(pointer: coarse)').matches && innerWidth > innerHeight; if (!on) return; var a = (screen.orientation && typeof screen.orientation.angle === 'number') ? screen.orientation.angle : (window.orientation || 0); a = ((a % 360) + 360) % 360;
+    de.classList.add('rot'); b.style.width = innerHeight + 'px'; b.style.height = innerWidth + 'px'; b.style.transform = a === 270 ? 'translate(' + innerWidth + 'px,0px) rotate(90deg)' : 'translate(0px,' + innerHeight + 'px) rotate(-90deg)'; de.style.setProperty('--vw', innerHeight / 100 + 'px'); de.style.setProperty('--vh', innerWidth / 100 + 'px'); };
+  fit(); if (pc) addEventListener('resize', fit);   // 全画面が解けて大きさが変わった時も、本体が動く前から合わせ直す
+} catch (e) { } })();
 /* 2026-11-20 184番の1：読み込みに失敗した時に「LOADING」のまま止まらないようにする（ゲーム本体より前の、ふつうの script で見張る）。
    10秒で「時間がかかっています…」、20秒たっても LOADING が消えない時・読み込みの途中でエラーが出た時は、案内と「もう一度読み込む」ボタンを出す。
    案内は #loading の中に出すので、ふつうに読み込めたら LOADING と一緒に消える */
@@ -15691,7 +15703,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '0.18.81';
+const VERSION = '0.18.82';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
