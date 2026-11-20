@@ -7,13 +7,15 @@
 (function () { try { if (/\/beta\//.test(location.pathname) || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) || location.protocol === 'file:') return; if (location.search || location.hash) history.replaceState(null, '', location.pathname); } catch (e) { } })();
 /* 2026-11-17 試し版の確認用 ?play5：ランク5・ショップの道具を全部持った状態で遊ぶ。
    本番と同じ保存場所を使わないよう、いまの記録を写した「確認用の保存場所（T5:）」で遊ぶ（本番・ふだんの試し版の記録は変わらない） */
-(function () { var q = location.search; if (!/[?&]play5\b/.test(q) || !/\/beta\//.test(location.pathname)) return;
-  var P = 'T5:', S = Storage.prototype, g = S.getItem, s = S.setItem, r = S.removeItem;
+/* 2026-11-20 試し版の ?shoot：動画撮影の素材用。?play5 と同じ（伝説・道具全部・別の保存場所 SH:）に、所持金を最大にして、上の「試し版」の帯を出さない。
+   タイトルの左下で、出す怪異（ふつう／逆さ女／オフタリサマ）を選べる（選ぶと読み込み直す。?shootmon=woman|urah） */
+(function () { var q = location.search; if (!/[?&](play5|shoot)\b/.test(q) || !/\/beta\//.test(location.pathname)) return; var SHOOT = /[?&]shoot\b/.test(q);
+  var P = SHOOT ? 'SH:' : 'T5:', S = Storage.prototype, g = S.getItem, s = S.setItem, r = S.removeItem;
   /* 2026-11-17 v2：写す時に神回の一覧だけ空にする（本番の神回が上位を埋めていて、ここで撮った動画が残らなかったため）。?play5reset で作り直し */
-  try { if (g.call(localStorage, 'T5:__init') !== '2' || /[?&]play5reset\b/.test(q)) { var old = []; for (var i0 = 0; i0 < localStorage.length; i0++) { var k0 = localStorage.key(i0); if (k0.indexOf(P) === 0) old.push(k0); } for (var i1 = 0; i1 < old.length; i1++) r.call(localStorage, old[i1]);
-      var ks = []; for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k.indexOf(P) !== 0) ks.push(k); } for (var j = 0; j < ks.length; j++) try { var v = g.call(localStorage, ks[j]); if (/(^|:)yutuber_achieve_v1$/.test(ks[j])) { try { var a = JSON.parse(v); if (a) { a.best = []; v = JSON.stringify(a); } } catch (e) { } } s.call(localStorage, P + ks[j], v); } catch (e) { } s.call(localStorage, 'T5:__init', '2'); } } catch (e) { }
+  try { if (g.call(localStorage, P + '__init') !== '2' || /[?&]play5reset\b/.test(q)) { var old = []; for (var i0 = 0; i0 < localStorage.length; i0++) { var k0 = localStorage.key(i0); if (k0.indexOf(P) === 0) old.push(k0); } for (var i1 = 0; i1 < old.length; i1++) r.call(localStorage, old[i1]);
+      var ks = []; for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k.indexOf(P) !== 0) ks.push(k); } for (var j = 0; j < ks.length; j++) try { var v = g.call(localStorage, ks[j]); if (/(^|:)yutuber_achieve_v1$/.test(ks[j])) { try { var a = JSON.parse(v); if (a) { a.best = []; v = JSON.stringify(a); } } catch (e) { } } s.call(localStorage, P + ks[j], v); } catch (e) { } s.call(localStorage, P + '__init', '2'); } } catch (e) { }
   S.getItem = function (k) { return g.call(this, this === localStorage ? P + k : k); }; S.setItem = function (k, v) { return s.call(this, this === localStorage ? P + k : k, v); }; S.removeItem = function (k) { return r.call(this, this === localStorage ? P + k : k); };
-  if (!/[?&]rank=/.test(q)) history.replaceState(null, '', location.pathname + q + '&rank=5&shopall&perm=all&wingopen&ownall' + location.hash);
+  if (!/[?&]rank=/.test(q)) { q = q + '&rank=5&shopall&perm=all&wingopen&ownall' + (SHOOT ? '&yen=9999999' : ''); var mon = (q.match(/[?&]shootmon=(\w+)/) || [])[1]; if (SHOOT && mon === 'woman') q += '&enemy=woman&enemyat=0&nourah'; if (SHOOT && mon === 'urah') q += '&urah&urahat=0&enemyat=999'; history.replaceState(null, '', location.pathname + q + location.hash); }
   window.PLAY5 = true; })();
 </script>
 <meta charset="utf-8">
@@ -15787,9 +15789,10 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '0.18.90';
-for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
-if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
+const VERSION = '0.18.91';
+const SHOOT = BETA && /[?&]shoot\b/.test(location.search);   /* 2026-11-20 動画撮影の素材用（?shoot）：「試し版」の表示を出さない */
+for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA && !SHOOT ? '（試し版）' : '');
+if (BETA && !SHOOT) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
 const VDB = {
   NAME: AWT_ON ? (BETA ? 'beta_yutuber_db_awt' : 'yutuber_db_awt') : BETA ? (window.PLAY5 ? 'beta_yutuber_db_t5' : 'beta_yutuber_db') : 'yutuber_db', db: null,   /* 2026-11-20 175番の2：撮れ高テストの動画は別の保存場所 */   /* 2026-11-17 確認用 ?play5 は別の保存場所（はじめに試し版の動画を写す） */
@@ -23715,7 +23718,14 @@ const ENDDIAG = { async show() { let el = $('#endDiag'); if (!el) { el = documen
     el.textContent = `神回 ${best.length}件（上位${top.length}件）／動画を残した ${vs.length}件／端末にある ${inDb}件／エンディングに使える ${c.length}本・残す本数の設定 ${GKEEP.get()}`; } catch (e) { el.textContent = '確認できませんでした：' + (e && e.message || e); } } };
 $('#setEnding').addEventListener('click', e => { e.stopPropagation(); if (world.state !== 'title' || ENDING.running) return; SET.hide(); setTimeout(() => ENDING.play(() => { world.state = 'title'; }), 200); });
 Object.assign(EN, { 'エンディングを見る': 'Watch the ending' });
-if (WF('ownall')) { const d = SHOP.load(); for (const it of ECON.items) { if (it[3] === 'look') d.look[it[0]] = true; else d.own[it[0]] = Math.max(d.own[it[0]] | 0, YTAG.KEEP.includes(it[0]) || ['goldphone', 'goldframe'].includes(it[0]) ? 1 : 5); } SHOP.save(); }
+if (WF('ownall')) { const d = SHOP.load(); for (const it of ECON.items) { if (it[3] === 'look') d.look[it[0]] = true; else d.own[it[0]] = Math.max(d.own[it[0]] | 0, YTAG.KEEP.includes(it[0]) || ['goldphone', 'goldframe'].includes(it[0]) ? 1 : (SHOOT ? 99 : 5)); } SHOP.save(); }
+/* 2026-11-20 ?shoot：タイトルの左下で、出す怪異を選ぶ（選ぶと読み込み直す） */
+if (SHOOT) { const cur = (location.search.match(/[?&]shootmon=(\w+)/) || [])[1] || '', el = document.createElement('div'); el.id = 'shootMon';
+  el.style.cssText = 'position:fixed;left:10px;bottom:calc(var(--sab) + 10px);z-index:12;display:flex;gap:4px;align-items:center;font:600 11px system-ui;color:#bbb;background:rgba(0,0,0,.55);padding:5px 6px;border-radius:10px';
+  el.innerHTML = '<span style="margin-right:2px">怪異</span>' + [['', 'ふつう'], ['woman', '逆さ女'], ['urah', 'オフタリサマ']].map(([k, n]) => `<button data-k="${k}" style="font:600 11px system-ui;padding:4px 7px;border-radius:8px;border:1px solid #555;background:${k === cur ? '#e8e2d4' : '#1c1c20'};color:${k === cur ? '#111' : '#ddd'}">${n}</button>`).join('');
+  for (const t of ['pointerdown', 'touchstart']) el.addEventListener(t, e => e.stopPropagation(), { passive: true });
+  el.addEventListener('click', e => { e.stopPropagation(); const b = e.target.closest('button'); if (!b) return; location.href = location.pathname + '?shoot' + (b.dataset.k ? '&shootmon=' + b.dataset.k : ''); });
+  document.body.appendChild(el); setInterval(() => { el.style.display = world.state === 'title' ? 'flex' : 'none'; }, 300); }
 /* 2026-11-17 結果画面で「再撮影」「タイトルにもどる」を押した時、動画の処理・神回の保存が終わっていなければ、終わるまで待ってから進む
    （待たずに読み込み直すと、上位3位の回でも動画が残らず、エンディングにも入らなかった） */
 { const S0 = ACH.saveVid.bind(ACH); ACH.saveVid = function (blobs) { const p = Promise.resolve(S0(blobs)).catch(() => { }); this.busy = (this.busy || 0) + 1; p.finally(() => { this.busy--; }); return p; }; }
