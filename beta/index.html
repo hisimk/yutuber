@@ -15687,7 +15687,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '0.18.77';
+const VERSION = '0.18.78';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -22475,7 +22475,7 @@ CHAT_DICT.c.ending_cutoff = ['ec.cut.01', 'ec.cut.02', 'ec.cut.03', 'ec.cut.04',
   pl.addEventListener('click', e => { e.stopPropagation(); $('#settings').classList.add('pad'); try { PADUI.draw(); } catch (_) { } box.scrollTop = 0; });
   pane('setKeysPane', en ? 'Key controls' : 'キー操作', keys); pane('setPadPane', en ? 'Controller' : 'コントローラー', pad);
   const order = [head(en ? 'Controls' : '操作'), ...ids(['setGyro', 'setTilt', 'setGsRow', 'setSensRow']), kl, pl,
-    head(en ? 'Sound' : '音'), ...ids(['setVolRow', 'setVolBgmRow', 'setVolFxRow', 'setVolUiRow', 'setMicRow', 'setMidiRow']),   /* 2026-11-18 音量を4つに */
+    head(en ? 'Sound' : '音'), ...ids(['setMicRow', 'setVolRow', 'setVolBgmRow', 'setVolFxRow', 'setVolUiRow', 'setMidiRow']),   /* 2026-11-18 音量を4つに。2026-11-20 180番：実況マイクをいちばん上に */
     head(en ? 'Display' : '画面'), ...ids(['setFpsRow', 'setQualRow', 'setBright', 'setScreenRow']),
     head(en ? 'Data & more' : 'データ・その他'), ...ids(['setGodRow', 'setLang', 'setTut', 'setCol', 'setNotice', 'setXfer', 'setReset', 'setPlay', 'verSet', 'setHome', 'setClose'])];
   const rest = [...M.children].filter(c => !order.includes(c) && c.id !== 'setPC' && c.id !== 'setKeys' && c.id !== 'setPad');
