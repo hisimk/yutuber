@@ -2328,7 +2328,7 @@ function nearestNode(x, z, zone, y = 0) {
 /* 2026-11-19 104番：捕まえる前に、間に壁・閉まった戸がないか */
 function catchClear(a, lv) { return !segBlocked(a.x, a.z, player.x, player.z, lv, 0.02) && !closedDoorOn(a.x, a.z, player.x, player.z, lv); }
 function onSegNav(pos, p0, p1) { const ax = p1.x - p0.x, az = p1.z - p0.z, L2 = ax * ax + az * az; if (L2 < 0.01) return false; const t = ((pos.x - p0.x) * ax + (pos.z - p0.z) * az) / L2; if (t <= 0.02 || t > 1) return false; const lx = p0.x + ax * t - pos.x, lz = p0.z + az * t - pos.z; return lx * lx + lz * lz < 0.36 && Math.abs((p0.y || 0) + ((p1.y || 0) - (p0.y || 0)) * t - (pos.y || 0)) < 0.6; }   /* 2026-11-19 点 p0→p1 の線の上（途中）にいるか */
-function navSkip(pos, path) { if (path.length >= 2) { const a = nodePos(path[1]), p0 = nodePos(path[0]), lv = (pos.y || 0) > 1.6 ? 1 : 0; if (Math.abs((a.y || 0) - (pos.y || 0)) < 0.3 && !stairZone(pos.x, pos.z) && !segBlocked(pos.x, pos.z, a.x, a.z, lv, 0.15)) return path.slice(1);
+function navSkip(pos, path) { if (path.length >= 2) { const a = nodePos(path[1]), p0 = nodePos(path[0]), lv = (pos.y || 0) > 1.6 ? 1 : 0; if (onSegNav(pos, p0, a)) return path.slice(1);   /* 2026-11-20 195番：もう最初の点と次の点の間（同じ道の上）にいる時は、最初の点へ戻らない。階段の途中では、いちばん近い点が後ろ（上り・下りの反対側）になり、道を引き直すたびに引き返して行ったり来たりしていた */ if (Math.abs((a.y || 0) - (pos.y || 0)) < 0.3 && !stairZone(pos.x, pos.z) && !segBlocked(pos.x, pos.z, a.x, a.z, lv, 0.15)) return path.slice(1);
     /* 2026-11-19 階段の入口：最初の点が後ろ（廊下）にあって、次の点の方が近い時は、戻らずに次の点へ（行ったり来たりしてつっかえていた） */ if (stairZone(pos.x, pos.z) && Math.hypot(a.x - pos.x, a.z - pos.z) < Math.hypot(a.x - p0.x, a.z - p0.z) && Math.abs((a.y || 0) - (pos.y || 0)) < 0.9 && !segBlocked(pos.x, pos.z, a.x, a.z, lv, 0.1)) return path.slice(1); return path; } return path.length && path[0] && Math.hypot(nodePos(path[0]).x - pos.x, nodePos(path[0]).z - pos.z) < 0.2 ? path.slice(1) : path; }
 const nodePos = k => V(NAV[k][0], NAV[k][3] || 0, NAV[k][1]);
 
@@ -15789,7 +15789,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '0.18.92';
+const VERSION = '0.18.93';
 const SHOOT = BETA && /[?&]shoot\b/.test(location.search);   /* 2026-11-20 動画撮影の素材用（?shoot）：「試し版」の表示を出さない */
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA && !SHOOT ? '（試し版）' : '');
 if (BETA && !SHOOT) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
@@ -20023,7 +20023,7 @@ const URAHT = {
   god: false, target: true,
   load() { try { const d = JSON.parse(localStorage.getItem('yt_urah_test') || '{}'); this.god = !!d.god; this.target = d.target !== false; } catch (e) { } },
   save() { try { localStorage.setItem('yt_urah_test', JSON.stringify({ god: this.god, target: this.target })); } catch (e) { } },
-  on() { return (TEST || BETA || DEV) && /[?&]urah\b/.test(location.search); },
+  on() { return (TEST || BETA || DEV) && /[?&]urah\b/.test(location.search) && !SHOOT; },   /* 2026-11-20 撮影用（?shoot）では、遊び用のパネル（無敵など）を出さない */
   init() {
     if (!this.on() || this.el) return; this.load(); URAH.blind = !this.target;
     const el = this.el = document.createElement('div'); el.id = 'urahTest';
