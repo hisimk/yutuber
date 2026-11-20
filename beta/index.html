@@ -4832,11 +4832,17 @@ const ENDCARD = {
         const imgs = {}, ld = Promise.all([loadImg(TITLE_LOGO).then(i => imgs.logo = i).catch(() => { }), loadImg(LIKE_PNG).then(i => imgs.like = i).catch(() => { })]);
         const noise = Array.from({ length: 900 }, () => [Math.random(), Math.random(), Math.random() * 0.04]);
         let t0 = 0;
+        /* 2026-11-20 174番：描く途中でエラーが出ても、片付けて必ず次へ進む（時間切れ10秒でも必ず終わる） */
+        let fin = false; const end = () => { if (fin) return; fin = true; clearTimeout(guard); try { tex.dispose(); } catch (e) { } done(); }, guard = setTimeout(() => { console.warn('結果カードが時間切れ'); end(); }, 10000);
         const step = now => {
-          if (!t0) t0 = now; const t = (now - t0) / 1000; this.draw(g, W, H, t, { lost, total, top, imgs, noise, money }); tex.needsUpdate = true;
-          renderer.setRenderTarget(null); renderer.render(sc, cam); RECV.copy();
-          if (t < this.dur) { requestAnimationFrame(step); return; }
-          tex.dispose(); done();
+          if (fin) return;
+          try {
+            if ((TEST || BETA) && /[?&]ecfail\b/.test(location.search)) throw new Error('ecfail（試し版だけの確認用）');
+            if (!t0) t0 = now; const t = (now - t0) / 1000; this.draw(g, W, H, t, { lost, total, top, imgs, noise, money }); tex.needsUpdate = true;
+            renderer.setRenderTarget(null); renderer.render(sc, cam); RECV.copy();
+            if (t < this.dur) { requestAnimationFrame(step); return; }
+          } catch (e) { console.warn('結果カードの描画', e); }
+          end();
         };
         Promise.race([ld, new Promise(ok => setTimeout(ok, 400))]).then(() => requestAnimationFrame(step));
       } catch (e) { done(); }
@@ -15660,7 +15666,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '0.18.69';
+const VERSION = '0.18.70';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -20883,7 +20889,11 @@ const XFER = {
   b64d(s) { const b = atob(s.replace(/-/g, '+').replace(/_/g, '/')); return new TextDecoder().decode(Uint8Array.from(b, c => c.charCodeAt(0))); },
   code() { const body = this.b64e(JSON.stringify({ v: 1, t: Date.now(), beta: !!BETA, d: this.snap() })); return this.PFX + '.' + body + '.' + this.sum(body); },
   parse(code) { try { const s = String(code || '').replace(/\s+/g, ''); const [p, body, sm] = s.split('.'); if (p !== this.PFX || !body || this.sum(body) !== sm) return null; const o = JSON.parse(this.b64d(body)); return o && o.v === 1 && o.d && typeof o.d === 'object' ? o : null; } catch (e) { return null; } },
-  apply(o) { for (const k of this.keys()) localStorage.removeItem(k); for (const k in o.d) if (this.mine(k)) localStorage.setItem(k, String(o.d[k])); this.backup(); },
+  apply(o) {   /* 2026-11-20 174番：書く前に今の保存を退避。途中で失敗したら元に戻して、失敗を知らせる（呼ぶ側で受ける） */
+    const old = {}; for (const k of this.keys()) { const v = localStorage.getItem(k); if (v !== null) old[k] = v; }
+    try { for (const k of this.keys()) localStorage.removeItem(k); let n = 0; for (const k in o.d) if (this.mine(k)) { if ((TEST || BETA) && /[?&]xffail\b/.test(location.search) && ++n > 2) throw new Error('xffail（試し版だけの確認用）'); localStorage.setItem(k, String(o.d[k])); } }
+    catch (e) { try { for (const k of this.keys()) localStorage.removeItem(k); for (const k in old) localStorage.setItem(k, old[k]); } catch (e2) { } throw e; }
+    this.backup(); },
   /* ── 予備（IndexedDB） */
   db() { return new Promise((ok, ng) => { try { const r = indexedDB.open('yt_backup', 1); r.onupgradeneeded = () => r.result.createObjectStore('b'); r.onsuccess = () => ok(r.result); r.onerror = () => ng(r.error); } catch (e) { ng(e); } }); },
   slot() { return BETA ? 'beta' : 'main'; },
@@ -20915,7 +20925,7 @@ const XFER = {
     on('xfPickB', () => $('#xfPick').click());
     if (v === 'in') $('#xfPick').onchange = e => { const f = e.target.files && e.target.files[0]; if (f) f.text().then(t => { $('#xfTx').value = t.trim(); }); };
     on('xfLoad', () => { const o = this.parse($('#xfTx').value); if (!o) { $('#xfErr').textContent = T('このコードは使えません', 'This code cannot be used.'); return; } this.pending = o; this.view('ask'); });
-    on('xfNo', () => this.view('in')); on('xfYes', () => { try { this.apply(this.pending); } catch (e) { } toast(T('セーブデータを読み込みました', 'Save data loaded'), 1500); setTimeout(() => location.reload(), 600); });
+    on('xfNo', () => this.view('in')); on('xfYes', () => { try { this.apply(this.pending); } catch (e) { console.warn('引き継ぎ', e); toast(T('読み込めませんでした。元のデータのままです', "Couldn't load the code. Your data is unchanged"), 2600); this.view('in'); return; } toast(T('セーブデータを読み込みました', 'Save data loaded'), 1500); setTimeout(() => location.reload(), 600); });   /* 174番：全部書けた時だけ「読み込みました」 */
   },
 };
 for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'touchmove']) $('#xfer').addEventListener(ev, e => e.stopPropagation(), { passive: true });
