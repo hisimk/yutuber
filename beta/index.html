@@ -230,7 +230,7 @@
   .title{font-family:"Shippori Mincho",serif;font-weight:800;font-size:56px;letter-spacing:.18em;margin:0 0 6px;color:#e9e4da;text-shadow:0 0 24px rgba(255,40,40,.25)}
   .sub{font-size:13px;color:#9a958c;margin-bottom:22px;letter-spacing:.08em}
   .sub.tSub{white-space:nowrap;letter-spacing:.03em;font-size:min(13px,calc(var(--vw, 1vw) * 3.4))}   /* 2026-11-17 タイトル下の文は1行に */
-  .sub.tSub.tGoal{white-space:normal;text-align:center;line-height:1.55;font-size:min(13.5px,calc(var(--vw, 1vw) * 3.6))}.tGoal span{display:inline-block}.tGoal b{color:#ff4a4a;font-weight:800}   /* 2026-11-20 198番：ゴールの1文（「、」のあとでだけ折り返す） */
+  .sub.tSub.tGoal{white-space:normal;text-align:center;line-height:1.55;font-size:min(13.5px,calc(var(--vw, 1vw) * 3.6))}.tGoal span{display:block;white-space:nowrap}.tGoal span+span{font-weight:700}.tGoal b{color:#ff4a4a;font-weight:800}   /* 2026-11-20 198番：ゴールの1文（「、」のあとでだけ折り返す） */
   .opts{width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
   .opt{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-radius:12px;background:#121214;border:1px solid #26262a;font-size:15px}
   .stSeg{display:flex;gap:6px}.stSeg button{font:inherit;font-size:12px;padding:6px 9px;border-radius:8px;border:1px solid #3a3a40;background:#1c1c20;color:#bbb}.stSeg button.on{background:#e8e2d4;color:#111;border-color:#e8e2d4}
@@ -15790,7 +15790,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '1.0.5';
+const VERSION = '1.0.6';
 const SHOOT = BETA && /[?&]shoot\b/.test(location.search);   /* 2026-11-20 動画撮影の素材用（?shoot）：「試し版」の表示を出さない */
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA && !SHOOT ? '（試し版）' : '');
 if (BETA && !SHOOT) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
@@ -17194,7 +17194,7 @@ const RANKPOP = {
 $('#rpOk').addEventListener('click', e => { e.stopPropagation(); RANKPOP.close(); setTimeout(() => { try { SHOP.notify(); } catch (er) { } }, 250); });
 for (const t of ['pointerdown', 'touchstart']) $('#rankPop').addEventListener(t, e => e.stopPropagation(), { passive: true });
 try { PERM.rankSync(Math.min(ACH.load().rk || 0, yrankIdx(ACH.load().total))); } catch (e) { }   // 2026-11-14 すでにランクが上がっている人にも機材を渡す
-function RANKTAG() { try { SHOP.title(); } catch (e) { } try { const g = document.querySelector('#start .tSub'); if (g) { g.classList.add('tGoal'); g.innerHTML = LANG === 'en' ? '<span>Shoot viral ghost videos</span> <span>while you uncover <b>the truth</b></span> <span>behind the vanished ghost-tuber!</span>' : '<span>バズる心霊動画を撮りながら、</span><span>消えた幽tuberの<b>真相</b>を追え！</span>'; } } catch (e) { }   /* 2026-11-20 198番：タイトルの下の文を、ゲームのゴールの1文に */ const el = $('#rankTag'); if (!el) return; const d = ACH.load(), q = (TEST || BETA || DEV) && location.search.match(/[?&]rank=(\d)/); el.textContent = yrankName(q ? Math.min(5, +q[1]) : Math.min(d.rk || 0, yrankIdx(d.total))); }   /* 確認用 ?rank= の時は表示もそのランクに */
+function RANKTAG() { try { SHOP.title(); } catch (e) { } try { const g = document.querySelector('#start .tSub'); if (g) { g.classList.add('tGoal'); g.innerHTML = LANG === 'en' ? '<span>Make your name as a ghost-tuber with viral ghost videos</span><span>and uncover <b>the truth</b> behind the vanished ghost channel!</span>' : '<span>バズる心霊動画で幽tuberとして名を上げて</span><span>消えた心霊チャンネルの<b>真相</b>を追え！</span>'; g.style.fontSize = ''; requestAnimationFrame(() => { try { const pr = g.parentElement, W = Math.min(pr ? pr.clientWidth : 1e9, document.documentElement.clientWidth) - 28; if (!(W > 0)) return; let f = parseFloat(getComputedStyle(g).fontSize); for (let i = 0; i < 12 && [...g.children].some(c => c.scrollWidth > W + 0.5); i++) { f *= 0.94; g.style.fontSize = f + 'px'; } } catch (e) { } }); } } catch (e) { }   /* 2026-11-20 198番：タイトルの下の文を、ゲームのゴールの1文に */ const el = $('#rankTag'); if (!el) return; const d = ACH.load(), q = (TEST || BETA || DEV) && location.search.match(/[?&]rank=(\d)/); el.textContent = yrankName(q ? Math.min(5, +q[1]) : Math.min(d.rk || 0, yrankIdx(d.total))); }   /* 確認用 ?rank= の時は表示もそのランクに */
 RANKTAG();
 // コメントでの呼び名（任意）：空欄ならチャンネル名
 { const c = $('#callName'); if (c) { c.placeholder = cui('nick'); $('#callSum').textContent = cui('nick') + ' ›'; $('#callHint').textContent = cui('nickHint'); try { c.value = localStorage.getItem('yt_callName') || ''; } catch (e) { } c.addEventListener('input', () => { try { localStorage.setItem('yt_callName', c.value); } catch (e) { } }); } }
