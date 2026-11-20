@@ -15687,7 +15687,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '0.18.75';
+const VERSION = '0.18.76';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -22747,7 +22747,7 @@ const ENDING = {
   credits() {   /* 2026-11-17 クレジットは文章だけ。順番：制作 → 使用したもの → 効果音 → スペシャルサンクス → 挿入歌・楽曲アレンジ */
     const en = LANG === 'en', P = (h, b) => `<div class="enH">${h}</div><div class="enL">${b}</div>`;
     return [P(en ? 'Created by' : '制作', `<span class="enS">${en ? 'Concept / Game design / Scenario / Direction' : '企画・ゲームデザイン・シナリオ・ディレクション'}</span><br><span style="font-size:22px;letter-spacing:.12em">まんま mamma</span><br><span class="enS" style="display:inline-block;margin-top:4px;opacity:.8">X (@_mamma09_)　YouTube (まんまチューン)</span><img class="enCat" src="${this.cat()}" alt="">`),   /* 2026-11-17 猫のアイコンは制作のページの名前の下に */
-      P(en ? 'Made with' : '使用したもの', 'three.js / Google Fonts / Wikimedia Commons<br>Mediabunny / FFmpeg<br>Adobe / Studio One<br>Claude / ChatGPT'),
+      P(en ? 'Made with' : '使用したもの', 'three.js / Google Fonts / Wikimedia Commons<br>Mediabunny / FFmpeg<br>Adobe / Studio One<br>Claude / ChatGPT / ElevenLabs'),   /* 2026-11-20 179番：声の生成に使った ElevenLabs を足す */
       P(en ? 'Sound' : '効果音', 'Freesound / BigSoundBank / Pixabay<br>OpenTracks / 効果音ラボ / MFLASH<br>Envato / 音人 / OtoLogic<br>ポケットサウンド / 効果音工房<br><span class="enS">OtoLogic (CC BY 4.0)<br>Scream: FreqMan (CC BY 4.0)<br>Piano: Salamander Grand Piano, Alexander Holm (CC BY 3.0)</span>'),
       `<div class="enH">${en ? 'Special Thanks' : 'スペシャルサンクス'}</div><img class="enLogo" src="${ENDING_THX}" alt="平成末期">`,
       P(en ? 'Featured song' : '挿入歌', en ? 'Clair de Lune<br>Claude Debussy' : '月の光<br>ドビュッシー') + '<div style="height:22px"></div>' + P(en ? 'Arrangement' : '楽曲アレンジ', '「月の光 Chiptune ver」<br>mammaTune')]; },
