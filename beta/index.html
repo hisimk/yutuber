@@ -15788,7 +15788,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '1.0.1';
+const VERSION = '1.0.2';
 const SHOOT = BETA && /[?&]shoot\b/.test(location.search);   /* 2026-11-20 動画撮影の素材用（?shoot）：「試し版」の表示を出さない */
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA && !SHOOT ? '（試し版）' : '');
 if (BETA && !SHOOT) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
@@ -24874,7 +24874,7 @@ Object.assign(EN, { 'ぬいぐるみに話しかける': 'Talking to the plush',
 /* =========================================================
    2026-11-18 スマホの通知（指示：メッセージ・さくこ）と、写真の共有イベント
    ・1周に起きるのは「着信」「写真の共有」「メッセージ（ふつう／さくこ）」のどれか1つだけ（重ならない）
-     着信の周（CALL.plan）は何も起きない。それ以外は、さくこ（条件を満たした時）→ 写真の共有 12% → ふつうのメッセージ 35%
+     着信の周（CALL.plan）は何も起きない。それ以外は、さくこ（条件を満たした時）→ 写真の共有 8% → ふつうのメッセージ 39%
    ・ふつうのメッセージ：1周に1通だけ。上に出る通知。横か上へスワイプで消せる。さわらなければ6秒で消える
    ・ふつうのメッセージを3通受け取ると「さくこ」が来るようになる（逆さ女が出ている周だけ）
      さくこ1件 → 消す → しばらくして2〜3件続けて → 少し間をおいて「うしろ」。その瞬間、逆さ女はもう真後ろにいる。振り返ると通常の追跡
@@ -24941,7 +24941,7 @@ const SPH = {
     const d = this.load(), fm = this.q('smsg'), fp = this.q('sphoto'), fs = this.q('sakuko');
     if (fs) { this.kind = 'saku'; world.womanUp = true; world.sealedWoman = false; }
     else if (fp) this.kind = 'photo'; else if (fm) this.kind = 'msg';
-    else if (!CALL.plan && !world.phanRun && !world.mannRun) { const sk = d.n >= this.FLAG_N && SHOP.wing() && (d.saku ? chance(0.06) : chance(0.6));   /* 189番：バリケードを壊したことがある時だけ（yt_bar1_open・yt_bar2_open・yt_wing_open のどれか） */ this.kind = sk ? 'saku' : pickW([['photo', 0.12], ['msg', 0.35], [null, 0.53]]); }
+    else if (!CALL.plan && !world.phanRun && !world.mannRun) { const sk = d.n >= this.FLAG_N && SHOP.wing() && (d.saku ? chance(0.06) : chance(0.6));   /* 189番：バリケードを壊したことがある時だけ（yt_bar1_open・yt_bar2_open・yt_wing_open のどれか） */ this.kind = sk ? 'saku' : pickW([['photo', 0.08], ['msg', 0.39], [null, 0.53]]); }   /* 2026-11-20 本人の希望：写真の共有 12%→8%、ふつうのメッセージ 35%→39% */
     const fast = !!(fm || fp || fs); this.at = world.t + (fast ? 6 : this.kind === 'photo' ? rnd(50, 180) : rnd(40, 160)); this.warpF = fp && fp[1] === 'warp';
     if (TEST || DEV) console.log('SPH plan', this.kind);
   },
