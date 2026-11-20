@@ -5421,7 +5421,7 @@ const WD = {
         const fwd = V(Math.sin(this.heading + SG.ovYaw), 0, Math.cos(this.heading + SG.ovYaw)); const to = V(player.x - this.pos.x, 0, player.z - this.pos.z).normalize();
         ok = fwd.dot(to) > Math.cos(world.bneko ? 1.15 : 0.95) || dd < 1.6 || (NOISE.own && NOISE.fresh(this.pos)) || (PHAN.on && -fwd.dot(to) > Math.cos(0.95));   // 2026-11-15 ナカヨシは背中の頭（人体模型）でも見る   // 2026-11-14 鈴や笛の音が聞こえたら、向きに関係なく気づく（見通せる時だけ）
       } else if (!NOISE.used && NOISE.fresh(this.pos, 0.8) && !this.scripted && !this.borrowed && this.wait <= 0) { NOISE.used = true; if (chance(0.35)) this.goTo(V(NOISE.x, NOISE.y, NOISE.z)); }   // 見えない所の音：ときどき様子を見に来る
-      this.detect = ok ? this.detect + dt * TORCH.k(head) : Math.max(0, this.detect - dt * 0.5);   /* 109番：懐中電灯の光が当たっていると早く気づく */
+      this.detect = ok ? this.detect + dt * TORCH.k(head) * (world.t < (world.herbUntil || 0) ? 0.8 : 1) : Math.max(0, this.detect - dt * 0.5);   /* 2026-11-20 162番：緑のハーブ（約1分、見つかるまで少し長く） */   /* 109番：懐中電灯の光が当たっていると早く気づく */
       if (this.detect > 0.6) { this.detect = 0; CH.start(); }
     }
   },
@@ -8834,7 +8834,7 @@ SP.legsToFace = function (t) {
 SP.hiddenNow = function () { return player.hidden || HIDE.lk || world.maskOn || (world.inStall && world.inStall.locked); };
 SP.spotted = function (dH) {
   if (world.chkNoChase || this.lv !== player.lv || world.t < (this.noChaseUntil || 0) || world.t - this.spawnT < 4 || this.hiddenNow() || CAP.on || world.outro > 0 || stairZone(player.x, player.z)) return false;
-  if (dH > (world.bneko ? 10 : 8)) return false;   /* 2026-11-20 160番：黒い招き猫 */
+  if (dH > (world.bneko ? 10 : 8) * (world.t < (world.herbUntil || 0) ? 0.85 : 1)) return false;   /* 2026-11-20 160番：黒い招き猫／162番：緑のハーブ */
   const p = V(this.pos.x, this.pos.y - 0.35, this.pos.z);
   return enemySees(p, [this.wrap]);
 };
@@ -11375,7 +11375,7 @@ const MANN = {
         }
         if (!this.path.length) { const ds0 = URAV.far(WD.dests.filter(k => NAV[k]), k => nodePos(k)), ds1 = ds0.filter(k => !saltNear(nodePos(k))); this.walkTo(pick(ds1.length ? ds1 : ds0)); }
         this.stepTick(dt, 1.7); this.apply();
-        this.seeT = this.seesPlayer((world.dark ? 20 : 14) * (world.bneko ? 1.25 : 1)) ?   /* 2026-11-20 160番：黒い招き猫で見つかりやすい */ (this.seeT || 0) + dt * TORCH.k(this.head()) : 0;
+        this.seeT = this.seesPlayer((world.dark ? 20 : 14) * (world.bneko ? 1.25 : 1) * (world.t < (world.herbUntil || 0) ? 0.85 : 1)) ?   /* 2026-11-20 160番：黒い招き猫で見つかりやすい */ (this.seeT || 0) + dt * TORCH.k(this.head()) : 0;
         if (this.seeT > 0.4) { this.seeT = 0; this.spot(); }
         break;
       }
@@ -13422,7 +13422,7 @@ function tick(now) {
   if (KB.down('up')) my = -1; if (KB.down('down')) my = 1; if (KB.down('left')) mx = -1; if (KB.down('right')) mx = 1;
   if (world.outro > 0 || world.capture || player.hidden || REVIVE.on || KOK.k > 0 || SCIRM.scope || world.jyK > 0 || world.ptK > 0) { mx = 0; my = 0; }   /* 2026-11-18 じゆうちょうをのぞいている間も歩けない */
   const fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw), rx = Math.cos(player.yaw), rz = -Math.sin(player.yaw);
-  const wsp = CONFIG.walkSpeed * PERM.speedMul() * CROUCH.spd() * (typeof CHBLOOD !== 'undefined' ? CHBLOOD.slow() * NWX.stag() : 1) * (typeof REDHAND !== 'undefined' ? REDHAND.slow() : 1) * (typeof DRINK !== 'undefined' ? DRINK.k() : 1);   /* 2026-11-15 赤い手に触れると一瞬遅くなる */   // シュン足：1.08倍。しゃがむと半分
+  const wsp = CONFIG.walkSpeed * PERM.speedMul() * CROUCH.spd() * (typeof CHBLOOD !== 'undefined' ? CHBLOOD.slow() * NWX.stag() : 1) * (typeof REDHAND !== 'undefined' ? REDHAND.slow() : 1) * (typeof DRINK !== 'undefined' ? DRINK.k() : 1) * (world.elixir ? 1.2 : 1);   /* 2026-11-20 163番：古の秘薬（その周の間ずっと1.2倍） */   /* 2026-11-15 赤い手に触れると一瞬遅くなる */   // シュン足：1.08倍。しゃがむと半分
   /* 2026-11-15 斜めでも前より速くならない（入力の大きさは1まで）。後ろへ歩く時は CONFIG.backMul 倍（前・横は1。間はなめらかに） */
   { const m = Math.hypot(mx, my); if (m > 1) { mx /= m; my /= m; } }
   const dirMul = 1 - (1 - CONFIG.backMul) * Math.max(0, my) / Math.max(1e-6, Math.hypot(mx, my));
@@ -15648,7 +15648,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.64';
+const VERSION = '0.18.65';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -19300,7 +19300,7 @@ const URAH = {
   stallP() { return world.inStall || (typeof stallOf === 'function' && Math.abs(player.y || 0) < 1 ? stallOf(player.x, player.z) : null) || null; },
   sees(from) {
     if (player.hidden || this.stallP() || world.maskOn || world.state !== 'play' || this.blind) return false;   /* 2026-11-19 88番：個室の中も隠れ場所 */ const dy = Math.abs(player.y - this.pos.y); if (dy > 1.2) return false;
-    const d = Math.hypot(player.x - this.pos.x, player.z - this.pos.z); if (d > (world.dark ? 20 : 15) * (world.bneko ? 1.25 : 1)) return false;   /* 2026-11-20 160番：黒い招き猫 */
+    const d = Math.hypot(player.x - this.pos.x, player.z - this.pos.z); if (d > (world.dark ? 20 : 15) * (world.bneko ? 1.25 : 1) * (world.t < (world.herbUntil || 0) ? 0.85 : 1)) return false;   /* 2026-11-20 160番：黒い招き猫 */
     const e = from || this.head(); return clearLine(camera.position.clone(), [], e);   /* 前にも後ろにも顔があるので、向きは問わない */
   },
   /* 主人公が能面を見ているか（能面の顔が画面に入り、さえぎる物がない） */
@@ -27212,6 +27212,63 @@ addAw('torchLit', 'C', 20, '暗闇を照らすライト', 'Light in the dark', [
 addAw('memcardAw', 'C', 15, 'メモカで増える撮影時間', 'More time with a memory card', ['メモリーカードを差して、撮れる時間が少しだけ増えた。まだ、撮れる。', 'You put in the memory card, and got a little more recording time. You can still film.'], ['メモリーカードを使う', 'use a memory card'], ['■■で増える撮影時間', 'メモリーカードを■して、撮れる時間が少しだけ■えた。まだ、撮れる。'], null);
 try { AWT.R.push({ t: '追加の撮れ高（ラジカセ・懐中電灯・メモカ）', mon: '逆さ女', q: 'enemy=woman&enemyat=0&carry=torch,memcard&perm=radio', items: ['torch', 'memcard'], catch: 0, force: [], list: [['radioRec', 'c1', 'ラジカセを鳴らしながら録画5秒'], ['torchLit', 'c1', '懐中電灯をつけて、怪異を光の中で0.5秒映す'], ['memcardAw', 'c1', 'メモリーカードを使う']] }); } catch (e) { }
 try { AWT.R.push({ t: '追加の撮れ高（道具・逆さ女とクモ女）', mon: '逆さ女・クモ女', q: 'enemy=woman&enemyat=0&carry=beads,drink,omamori,hoken,salt,chem', items: ['beads', 'drink', 'omamori', 'hoken', 'salt', 'chem'], catch: 0, force: [], list: [['beadsEsc', 'c1', '数珠を持って追われ、追ってくる姿を1秒撮って逃げ切る'], ['dopeEsc', 'c1', '栄養ドリンクを飲んで追われ、逃げ切る'], ['omaSaved', 'c1', 'おまもりを持ったまま捕まる（近くで映っていること）'], ['saltWard', 'c1', '部屋の入口に盛り塩をして、入れずに止まる所を撮る'], ['chemLureAw', 'c1', 'ケミカルライトを投げ、寄ってくる怪異を撮る'], ['hokenPaid', 'c1', '保険証を持ったまま捕まる（最後に。捕まる設定をONに）']] }, { t: '追加の撮れ高（クモ女・非常口）', mon: 'クモ女', q: 'enemy=spider&enemyat=0&carry=spray,bkey&bar2open', items: ['spray', 'bkey'], catch: 0, force: [], list: [['sprayMet', 'c1', '虫よけスプレーを使ってから、クモ女を0.5秒映す'], ['bkeyEscape', 'exit', '壊れかけの鍵で非常口を開け、録画しながら出る']] }); } catch (e) { }
+
+/* =========================================================
+   2026-11-20 162番：緑のハーブ（校舎で拾える使い切り。食べると約1分、ほんの少し見つかりにくい）
+   2026-11-20 163番：古の秘薬（大物以降の激レア。飲むとその周の間ずっと足が1.2倍）
+   ========================================================= */
+ITEM.defs.herb = { name: '緑のハーブ', desc: '食べると心が落ち着いて、ほんの少し怪異に見つかりにくくなる気がする。', size: 0.18, act: '食べる' };
+ITEM.defs.elixir = { name: '古の秘薬', desc: 'どこの誰が作ったのか分からない、古びた小瓶の薬。飲むと、その周の間ずっと足が速くなる。', size: 0.18, act: '飲む' };
+ITEM_ICON2.herb = ITEM_IMG.herb = ITEM_ICON2.herb || ITEM_IMG.drink;   /* アイコンは仮（ITEM_ICON2.herb・ITEM_ICON2.elixir に画像を入れれば差し替わる） */
+ITEM_ICON2.elixir = ITEM_IMG.elixir = ITEM_ICON2.elixir || ITEM_IMG.drink;
+ECON.items.push(['herb', 0, 99, 'use'], ['elixir', 0, 99, 'use']); INV.ids.push('herb', 'elixir'); YTAG.USE.push('herb'); YTAG.RUN.push('elixir'); ITEM_TIER.ultra.push('elixir');
+LOCKX.TIER.n.push('herb'); LOCKX.WT.herb = 0.7; LOCKX.WT.elixir = 0.25; ITEM.LK_IDS.push('herb', 'elixir');
+Object.assign(EN, { '緑のハーブ': 'Green herb', '食べると心が落ち着いて、ほんの少し怪異に見つかりにくくなる気がする。': 'Eating it calms you down. Spirits seem a little less likely to notice you.', '古の秘薬': 'Ancient elixir', 'どこの誰が作ったのか分からない、古びた小瓶の薬。飲むと、その周の間ずっと足が速くなる。': 'An old vial of medicine. No one knows who made it. Drink it and you move faster for the rest of the run.', '食べる': 'Eat', '心が落ち着いた': 'You feel calmer', '足が軽くなった…ずっと': 'Your legs feel light… and it lasts' });
+{ const U0 = ITEM.use.bind(ITEM); ITEM.use = function (id) {
+    if (id === 'herb' && this.have.herb) { this.have.herb = false; world.herbUntil = world.t + 60; toast(TR('心が落ち着いた'), 1500); try { SND.breath && SND.breath(0.3); } catch (e) { } if (rec.active) try { XCHAT.log('herbEat'); } catch (e) { } return true; }
+    if (id === 'elixir' && this.have.elixir) { this.have.elixir = false; world.elixir = true; toast(TR('足が軽くなった…ずっと'), 1800); try { this.seCharge && this.seCharge(); } catch (e) { } return true; }
+    return U0.apply(this, arguments); }; }
+XCHAT.LIST.herbEat = ['xa.herb.0', 'xa.herb.1', 'xa.herb.2']; Object.assign(CHAT_DICT.t, { 'xa.herb.0': ['見たやつ', 'seen that before'], 'xa.herb.1': ['ハーブ食ってるｗ', 'eating herbs lol'], 'xa.herb.2': ['回復した？', 'did that heal you?'] });
+/* 古の秘薬は、ランクが大物（4）以上の時だけロッカーの激レア枠に入る。1周に1本まで（同じ周に2つは置かない：ITEM の作りで1つだけ） */
+{ const R0 = ITEM.reset.bind(ITEM); ITEM.reset = function () { try { const r = SHOP.rank(), u = LOCKX.TIER.u, i = u.indexOf('elixir'); if (r >= 4 || /[?&]lkitem=elixir/.test(location.search)) { if (i < 0) u.push('elixir'); } else if (i >= 0) u.splice(i, 1); } catch (e) { } return R0.apply(this, arguments); }; }
+/* =========================================================
+   2026-11-20 165・166番：招き猫
+   ・かくれた効果：白か黒を1つ持ち込むと猫又が40%、両方なら必ず出る（説明文には書かない）
+   ・白：投げ銭の安い分が2倍・上限も2倍・高い投げ銭の確率1.5倍。中堅より下でも少し出る
+   ・黒：レアな現象（撮れ高がS・SSの現象）が1.5倍起きやすい
+   ========================================================= */
+const WNEKO = () => XAW.carried('wneko');
+{ const B0 = SHOP.beginRun.bind(SHOP); SHOP.beginRun = function () { const r = B0.apply(this, arguments); try { const w = this.carried.includes('wneko'), b = this.carried.includes('bneko'); if (w && b) NEKO.chosen = true; else if ((w || b) && !NEKO.chosen) NEKO.chosen = Math.random() < 0.25;   /* 20%で外れた周を引き直す → 合わせて約40% */
+      if (w && (this.runRank ?? 0) >= ECON.tipFrom) { const rk = this.runRank; if (!TIPS.pend.includes(10000) && Math.random() < ECON.tipP10000[rk] * 0.5) TIPS.pend.push(10000); if (!TIPS.pend.includes(5000) && Math.random() < ECON.tipP5000[rk] * 0.5) TIPS.pend.push(5000); } } catch (e) { } return r; }; }
+{ const ok0 = TIPS.ok.bind(TIPS), rate0 = TIPS.rate.bind(TIPS), cap0 = TIPS.cap.bind(TIPS);
+  TIPS.ok = function () { if (ok0()) return true; try { return this.mode() !== 'off' && world.state === 'play' && rec.active && WNEKO(); } catch (e) { return false; } };
+  TIPS.rate = function () { const low = (SHOP.runRank ?? 0) < ECON.tipFrom; return rate0() * (WNEKO() ? (low ? 0.6 : 2) : 1); };
+  TIPS.cap = function () { const c = cap0(); return WNEKO() ? Math.max(c * 2, 1500) : c; }; }
+{ const P0 = DIR.planRun.bind(DIR); DIR.planRun = function () { const keep = []; try { if (BNEKO_PRE()) { const rare = new Set(); for (const k in AWT.EVK) { const a = AW_TABLE[k]; if (a && (a[0] === 'S' || a[0] === 'SS')) rare.add(AWT.EVK[k]); } for (const id of rare) if (EV[id]) { keep.push([id, EV[id].weight]); EV[id].weight = Math.min(1, EV[id].weight * 1.5); } } } catch (e) { } const r = P0.apply(this, arguments); for (const [id, w] of keep) EV[id].weight = w; return r; }; }
+try { ITEM.defs.wneko.desc = '商売繁盛のご利益があるらしい。持ち込むと、収益と投げ銭が増える。持ち込んでもなくならない（捕まると失う）。'; ITEM.defs.bneko.desc = '何かを招き寄せるらしい。持ち込むと、怪奇現象が起きやすくなり、めずらしい現象も起きやすくなる。そのかわり怪異にも見つかりやすくなる。持ち込んでもなくならない（捕まると失う）。';
+  Object.assign(EN, { '商売繁盛のご利益があるらしい。持ち込むと、収益と投げ銭が増える。持ち込んでもなくならない（捕まると失う）。': 'Said to bring good business. Bring it in to earn more revenue and tips. It is not used up (you lose it if caught).', '何かを招き寄せるらしい。持ち込むと、怪奇現象が起きやすくなり、めずらしい現象も起きやすくなる。そのかわり怪異にも見つかりやすくなる。持ち込んでもなくならない（捕まると失う）。': 'Said to beckon something in. Bring it in and strange things happen more often, including rare ones — but spirits also notice you more easily. It is not used up (you lose it if caught).' }); } catch (e) { }
+/* =========================================================
+   2026-11-20 167番：撮れ高5つ（弾き語り・命の充電・跳ね返した！・ひと口のやすらぎ・秘薬の脚力）
+   ========================================================= */
+const XAW3 = {
+  reset() { this.sing = 0; this.herb = null; world.elixir = false; world.herbUntil = 0; },
+  update(dt) {
+    if (world.state !== 'play') return;
+    try { if (rec.active && PIANO.on && VOICE.ok && VOICE.sp && MICLV.live()) { this.sing += dt; if (this.sing >= 5) award('pianoSing', '弾き語り', 40); } } catch (e) { }
+    /* ひと口のやすらぎ：ハーブが効いている間に、怪異が5m以内まで来て、追われないまま離れた（その怪異が録画に映った） */
+    if (world.t < (world.herbUntil || 0)) { const ch = XITEM.chaser(); if (ch) this.herb = null; else { let nd = 99, vis = false; for (const k of ['woman', 'spider', 'mann', 'urah']) { const h = XITEM.head(k); if (!h) continue; if (k === 'woman' && !((SG.opacity ?? 0) > 0.3)) continue; if (k === 'urah' && !(URAH.on && URAH.root.visible)) continue; if (k === 'mann' && !MANN.root.visible) continue; if (k === 'spider' && SP.st === 'none') continue; const d = Math.hypot(h.x - player.x, h.z - player.z); if (d < nd) nd = d; if (d < 8 && seen(h, { maxD: 12 })) vis = true; }
+        if (nd < 5) { this.herb = this.herb || { v: false }; if (vis && rec.active) this.herb.v = true; } else if (this.herb && nd > 7) { if (this.herb.v) award('herbCalm', 'ひと口のやすらぎ', 10); this.herb = null; } } }
+  },
+};
+{ const U0 = CMX.update.bind(CMX), R0 = CMX.reset.bind(CMX); CMX.update = function (dt) { U0(dt); try { XAW3.update(dt); } catch (e) { if (TEST) console.warn('XAW3', e); } }; CMX.reset = function () { R0(); try { XAW3.reset(); } catch (e) { } }; }
+{ const T0 = CAPE.try.bind(CAPE); CAPE.try = function (kind) { const r = T0.apply(this, arguments); try { if (r && rec.active) { const h = XITEM.head(kind); if (h && camera.position.distanceTo(h) < 3.2 && onScreen(h, 1.0)) award('capeBounce', '跳ね返した！', 60); } } catch (e) { } return r; }; }
+{ const U0 = ITEM.use.bind(ITEM); ITEM.use = function (id) { const r = U0.apply(this, arguments); try { if (r && ['battery', 'battery2', 'sparebat'].includes(id) && rec.active && XITEM.chaser()) award('lifeCharge', '命の充電', 20); } catch (e) { } return r; }; }
+addAw('pianoSing', 'B', 40, '弾き語り', 'Singing at the piano', ['夜の音楽室で、ピアノを弾きながら歌った。聴いているのは、たぶん視聴者だけではない。', 'You sang while playing the piano in the music room at night. The viewers are probably not the only ones listening.'], ['ピアノを弾きながら、声を出す', 'use your voice while playing the piano'], ['■■■り', '夜の■■室で、ピアノを■きながら■った。■いているのは、たぶん■■■だけではない。'], [['弾き語りきた', 'singing and playing!'], ['うまいじゃん', "you're good"], ['誰か聴いてる…', 'someone is listening…']]);
+addAw('lifeCharge', 'C', 20, '命の充電', 'Charging for dear life', ['追われながら、震える手でスマホを充電した。電池が切れたら、もう撮れない。', 'With trembling hands you charged your phone mid-chase. If the battery dies, you can not film anymore.'], ['追われている時に、充電する', 'charge your phone while being chased'], ['■の充電', '追われながら、ふるえる手でスマホを■■した。■■が切れたら、もう撮れない。'], [['今充電！？', 'charging NOW?!'], ['電池大事', 'battery matters']]);
+addAw('capeBounce', 'A', 60, '跳ね返した！', 'Repelled!', ['襲いかかってきた怪異を、赤いマントがはね返した。', 'The red cape threw back the spirit that lunged at you.'], ['赤いマントを着て、襲われる', 'get attacked while wearing the red cape'], ['■■■した！', '■いかかってきた■■を、■いマントがはね■した。'], [['マントつよ', 'the cape is strong'], ['はね返した！', 'bounced it!']]);
+addAw('herbCalm', 'D', 10, 'ひと口のやすらぎ', 'A moment of calm', ['ハーブを食べて落ち着いたら、怪異はこちらに気づかず通り過ぎた。…効いたのかもしれない。', 'After eating the herb and calming down, the spirit passed by without noticing you. …Maybe it worked.'], ['緑のハーブを食べて、怪異をやり過ごす', 'eat the green herb and let a spirit pass by'], ['ひと口の■■■ぎ', 'ハーブを食べて落ち着いたら、■■はこちらに気づかず■り過ぎた。…■いたのかもしれない。'], [['ハーブ効いた？', 'did the herb work?'], ['気づかれてない', "it didn't notice"]]);
+addAw('elixirEsc', 'B', 40, '秘薬の脚力', 'Elixir legs', ['古の秘薬で軽くなった足で、追ってくる怪異を置き去りにした。', 'With legs made light by the ancient elixir, you left the chasing spirit behind.'], ['古の秘薬を飲んで、逃げ切る', 'drink the ancient elixir and get away'], ['■■の脚力', '■の■■で軽くなった足で、追ってくる■■を置き去りにした。'], [['足はっや', 'so fast'], ['置き去りで草', 'left it in the dust lol']]);
+try { AWT.R.push({ t: '追加の撮れ高（ピアノ・道具）', mon: '逆さ女', q: 'enemy=woman&enemyat=0&carry=herb,elixir,battery&perm=cape&mic30', items: ['herb', 'elixir', 'battery'], catch: 0, force: [], list: [['pianoSing', 'mus', 'マイクをオンにして、ピアノを弾きながら合計5秒声を出す'], ['lifeCharge', 'c1', '追われている時に、モバイルバッテリーで充電する'], ['capeBounce', 'c1', '赤いマントを着て、襲われる（近くで映っていること）'], ['herbCalm', 'c1', '緑のハーブを食べて、怪異が5m以内に来て、追われずに離れていく'], ['elixirEsc', 'c1', '古の秘薬を飲んで、追われて逃げ切る']] }); } catch (e) { }
 var AWFIX = {
   barBreak: { name: 'バリケードの破壊', en: 'Breaking the barricade', rk: 'S', pts: 150, hint: ['人体模型を誘って、バリケードを壊させる', 'lure the mannequin into the barricade'], desc: ['人体模型の内田くんをうまく誘導して、バリケードを破壊させた。', 'You lured the mannequin Uchida-kun into smashing the barricade.'], tk: ['バリケードの■■', '■■■■の■■くんをうまく■■して、バリケードを■■させた。'] },
   tenteki: { name: '天敵から逃げるクモ女', en: 'The Spider Woman fleeing her natural enemy', desc: ['クモ女がオフタリサマを見て、悲鳴をあげて逃げていった。…異様に怖がっているようだ。', 'The Spider Woman saw Ofutari-sama, shrieked, and fled. …She seems strangely terrified.'], tk: ['天敵から逃げる■■■', '■■■がオフタリサマを見て、■■をあげて逃げていった。…■■に怖がっているようだ。'] },
