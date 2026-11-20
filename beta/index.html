@@ -15790,7 +15790,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '1.0.4';
+const VERSION = '1.0.5';
 const SHOOT = BETA && /[?&]shoot\b/.test(location.search);   /* 2026-11-20 動画撮影の素材用（?shoot）：「試し版」の表示を出さない */
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA && !SHOOT ? '（試し版）' : '');
 if (BETA && !SHOOT) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
@@ -18402,8 +18402,8 @@ const WING = {
     if (world.state !== 'play') return;
     if (player.lv === 1) {
       const fw = camFwd(), B1 = this.B[0], B2 = this.B[1];
-      if (!B1.open && Math.abs(player.x) < 1.3 && player.z < -31.8 && player.z > -33 && fw.z < -0.5) wOffer(TR('調べる'), () => toast(TR('内側から何かが積んである…人の力ではどうにもならなさそう。'), 3200), barTouchCm());   /* 2026-11-18 美術室の扉① */
-      if (!B2.open && Math.abs(player.z + 31.5) < 1.5 && ((player.x > 10.2 && player.x < 11.4 && fw.x > 0.5) || (player.x > 12.2 && player.x < 13.4 && fw.x < -0.5))) wOffer(TR('調べる'), () => toast(TR('怪しいバリケード。自分の力では突進してもビクともしなそうだ。'), 3200), barTouchCm());   /* 2026-11-18 バリケード② */
+      if (!B1.open && Math.abs(player.x) < 1.3 && player.z < -31.8 && player.z > -33 && fw.z < -0.5) wOffer(TR('調べる'), () => INNERV.bar(), barTouchCm());   /* 200番 */   /* 2026-11-18 美術室の扉① */
+      if (!B2.open && Math.abs(player.z + 31.5) < 1.5 && ((player.x > 10.2 && player.x < 11.4 && fw.x > 0.5) || (player.x > 12.2 && player.x < 13.4 && fw.x < -0.5))) wOffer(TR('調べる'), () => INNERV.bar(), barTouchCm());   /* 200番 */   /* 2026-11-18 バリケード② */
     }
     const z = playerZone(); if (['2D', 'ART', 'SCI'].includes(z)) { if (!this.inWing) { this.inWing = true; let first = false; try { first = localStorage.getItem('yt_wing_in') !== '1'; localStorage.setItem('yt_wing_in', '1'); } catch (e) { } if (first || !this.inLogged) { this.inLogged = true; if (first) XCHAT.log('wingIn'); } } } else this.inWing = false;
   },
@@ -23874,8 +23874,28 @@ Object.assign(SMEMO, {
     h.textContent = TR(FRAME.on ? 'クリックで閉じる' : 'タップで閉じる'); setTimeout(() => { if (this.hold) h.style.opacity = '1'; }, 700); },
   resume() { if (!this.hold || performance.now() - this.at < 700) return false; this.hold = false; const h = $('#smHint'); if (h) h.style.opacity = '0'; if (world.state === 'paused') { world.state = 'play'; lastT = performance.now(); } return true; },
 });
+/* 2026-11-20 200番：主人公の「心の声」。画面の真ん中に出して、時間を止める。タップ（クリック・キー）で進む。DOMなので録画には入らない */
+const INNERV = {
+  hold: false, at: 0,
+  chasing() { try { return (typeof CH !== 'undefined' && CH.state !== 'off') || (typeof SP !== 'undefined' && SP.st === 'chase') || (typeof MANN !== 'undefined' && (MANN.st === 'run' || MANN.st === 'dash')) || (typeof URAH !== 'undefined' && URAH.st && !['off', 'wait'].includes(URAH.st)); } catch (e) { return false; } },
+  bar() { const L = [TR('この先に撮れ高がありそうだ。'), TR('壊す方法を探ってもいいかもしれない。')]; if (this.chasing()) { toast(L.join(LANG === 'en' ? ' ' : ''), 3200); return; } this.show(L); },
+  show(lines) {
+    if (this.hold || world.state !== 'play') return;
+    let el = $('#innerV'); if (!el) { el = document.createElement('div'); el.id = 'innerV'; document.body.appendChild(el); }
+    el.innerHTML = `<div class="ivBand">${lines.map((t, i) => `<div class="ivL" style="animation-delay:${i * 0.7}s">${t}</div>`).join('')}</div><div class="ivHint">${TR(FRAME.on ? 'クリックで進む' : 'タップで進む')}</div>`;
+    el.classList.add('show'); this.hold = true; this.at = performance.now(); world.state = 'paused'; input.sx = input.sy = 0; try { $('#actBtn').classList.remove('show'); } catch (e) { }
+  },
+  close() { if (!this.hold || performance.now() - this.at < 900) return false; this.hold = false; const el = $('#innerV'); if (el) el.classList.remove('show'); if (world.state === 'paused') { world.state = 'play'; lastT = performance.now(); } return true; },
+};
+{ const st = document.createElement('style'); st.textContent = `#innerV{position:fixed;inset:0;z-index:61;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity .35s}#innerV.show{opacity:1;pointer-events:auto}
+#innerV .ivBand{width:100%;max-width:560px;padding:22px 18px;background:linear-gradient(90deg,transparent,rgba(8,8,10,.82) 14%,rgba(8,8,10,.82) 86%,transparent);text-align:center;animation:ivWob 3.2s ease-in-out infinite}
+#innerV .ivL{color:#ecebe6;font:600 min(16px,calc(var(--vw, 1vw) * 4.1)) system-ui,sans-serif;letter-spacing:.05em;line-height:1.9;text-shadow:0 0 6px rgba(160,200,255,.35),1px 0 0 rgba(255,60,60,.25),-1px 0 0 rgba(60,160,255,.25);opacity:0;animation:ivIn .9s ease forwards}
+#innerV .ivHint{margin-top:16px;color:#bdbab2;font:600 12px system-ui,sans-serif;text-shadow:0 1px 4px #000;opacity:0;animation:ivIn .6s ease 1.3s forwards}
+@keyframes ivIn{from{opacity:0;filter:blur(3px)}to{opacity:1;filter:blur(0)}}@keyframes ivWob{0%,100%{transform:translateX(0)}50%{transform:translateX(.6px)}}`; document.head.appendChild(st); }
+for (const ev of ['pointerup', 'keydown']) addEventListener(ev, e => { if (!INNERV.hold) return; if (ev === 'keydown' && ['Escape', 'Tab'].includes(e.code)) return; if (INNERV.close() || true) { e.stopPropagation(); ev === 'keydown' && e.preventDefault(); } }, true);
+Object.assign(EN, { 'この先に撮れ高がありそうだ。': 'There might be good footage beyond here.', '壊す方法を探ってもいいかもしれない。': 'Maybe I should look for a way to break through.', 'タップで進む': 'Tap to continue', 'クリックで進む': 'Click to continue' });
 for (const ev of ['pointerup', 'keydown']) addEventListener(ev, e => { if (!SMEMO.hold) return; if (ev === 'keydown' && ['Escape', 'Tab'].includes(e.code)) return; if (SMEMO.resume()) { e.stopPropagation(); e.preventDefault && ev === 'keydown' && e.preventDefault(); } }, true);
-{ const P0 = PAD.press.bind(PAD); PAD.press = function (a) { if (SMEMO.hold) { SMEMO.resume(); return; } return P0(a); }; }
+{ const P0 = PAD.press.bind(PAD); PAD.press = function (a) { if (SMEMO.hold) { SMEMO.resume(); return; } if (INNERV.hold) { INNERV.close(); return; } return P0(a); }; }   /* 200番：心の声もコントローラーで進める */
 Object.assign(EN, { 'タップで閉じる': 'Tap to close', 'クリックで閉じる': 'Click to close' });
 if (TEST && window.__G) Object.assign(window.__G, { HAND, POP, DRIFT, KBALL, CEIL, FIXCAM, avatar, SMEMO, ENDING, IDLEC, CURTF, DARKK, TIPS, CHAT, escape, evidence, award, SHOP, ECON, ACH, ITEM, INV, BUZZ, CHEM, CANDLE, DRINK, STICK, PAINT, WING, CH, WD, SP, nodePos, clearLine, segBlocked, MINOR, HP, EV, DIR, URINT, URPREY, URAV, HANDS, HAND_SPOTS, POLT, MOVERS, UWA, GG_SPOTS, ABYSS, BUSTX, DOLLX, nearLook, setZoom(z) { zoom = zoomTarget = z; }, SCIRM, ARTRM, PMASK, COL, NAKA, TALLY, BROOMEV, AW_TABLE, CHIP_DESC, AW_HINT, GEAR, FIXCAM, RING, PERM, KANA, VO, PACALL, SPV, EV, seen, A, CH, HEART, CVOICE, wdScream, WARP, WD, ITEM, F2, PAD, QUALITY, opt, MP4FIX, rec, resultBlobs: () => resultBlobs, LOGOANIM, CHIP, VTITLE, NOISE, SNAKE, ACC, ACC_ICON, ACC_VIEW, award, CHATLOG, CHAT, CHATGEN, RES_CHAT, RANKPOP, yrankIdx, GOD, VDB, ACH, PERM, REVIVE, RESET, COL, escape, caught, DIR, SP, OFUDA, LUM, TRACE, HAZURE, seen, SFX_CREDITS, AW_TABLE, RANK_FIX, rankOf, MICLV, MIC, rec, opt, VED, RES_CHAT_: () => RES_CHAT, _attach: b => attachVideo(b), GODV: GOD, _blobs: () => resultBlobs, EVENTS: () => EV });
 /* 2026-11-14 PC：ウィンドウ／全画面（全画面はボタンを押した時と、旧校舎に入る時に切り替える。Escで戻したらウィンドウに） */
