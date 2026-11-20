@@ -1146,7 +1146,7 @@
     m.innerHTML = (en ? "Couldn't load the game. Please reload where your connection is good." : nb('読み込めませんでした。|通信のよい所で、|もう一度|読み込んでください。')) + '<br><button type="button" style="margin-top:16px;padding:12px 22px;border-radius:999px;border:1px solid #e9e4da;background:#e9e4da;color:#111;font:700 15px system-ui;letter-spacing:normal">' + (en ? 'Reload' : 'もう一度読み込む') + '</button>';
     m.querySelector('button').addEventListener('click', function () { location.reload(); }); d.appendChild(m); };
   window.__ytBootFail = fail;
-  setTimeout(slow, 10000); document.addEventListener('DOMContentLoaded', function () { setTimeout(function () { if (el()) fail(); }, 20000); });   // 20秒は、ページ全体が届いてから数える（通信が遅いだけの時に「読み込めませんでした」を出さない。それまでは「時間がかかっています」）
+  setTimeout(slow, 10000); document.addEventListener('DOMContentLoaded', function () { setTimeout(function () { if (el()) fail(); }, 20000); }); setTimeout(function () { if (el()) fail(); }, 60000);   // 2026-11-20 184番の直し：通信が止まったまま（エラーにもならない）の時も、開いてから60秒で案内を出す   // 20秒は、ページ全体が届いてから数える（通信が遅いだけの時に「読み込めませんでした」を出さない。それまでは「時間がかかっています」）
   addEventListener('error', function (e) { if (!el()) return; var t = e.target; if (t && t !== window && t.tagName !== 'SCRIPT') return; setTimeout(function () { if (el()) fail(); }, 3000); }, true);   // three.js などの script が読めない時・起動中のエラー（3秒たってもまだ LOADING の時だけ）
 })();
 </script>
@@ -15703,7 +15703,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '0.18.82';
+const VERSION = '0.18.83';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
