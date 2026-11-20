@@ -15208,7 +15208,7 @@ function ensureAudio() { if (!A.ctx) { initAudio(); if (A.ctx && opt.sink) AUDIO
 const TSE = { src: null, g: null, timer: 0, tok: 0 }; if (TEST) window.__TSE = TSE;
 function titleSePlay() {
   TSE.timer = 0;
-  if (world.state !== 'title' || !A.ctx || TSE.src || document.hidden) return;
+  if (world.state !== 'title' || world.prolog || !A.ctx || TSE.src || document.hidden) return;
   if (A.ctx.state !== 'running' || !hasSfx('title_se')) { TSE.timer = setTimeout(titleSePlay, 300); return; }
   const s = A.ctx.createBufferSource(); s.buffer = A.buf.title_se; s.loop = true; /* 2026-11-16 途切れずに鳴らし続ける（つなぎ目は重ねてある） */ const g = A.ctx.createGain(); g.gain.value = SFX_GAIN.title_se || 1; s.connect(g); g.connect(VOLX.fxSpk());   /* 2026-11-18 虫の声は効果音（環境音）の音量で */
   const tok = ++TSE.tok;
@@ -15220,7 +15220,7 @@ function titleSeStop(fade = 0.35) {
   if (TSE.src && A.ctx) { const t = A.ctx.currentTime; TSE.g.gain.cancelScheduledValues(t); TSE.g.gain.setValueAtTime(TSE.g.gain.value, t); TSE.g.gain.linearRampToValueAtTime(0.0001, t + fade); try { TSE.src.stop(t + fade + 0.05); } catch (e) { } }
   TSE.src = null; TSE.g = null;
 }
-function titleSeKick() { if (world.state === 'title' && !TSE.src && !TSE.timer) titleSePlay(); }
+function titleSeKick() { if (world.state === 'title' && !world.prolog && !TSE.src && !TSE.timer) titleSePlay(); }   /* 190番：プロローグの間は鳴らさない */
 for (const ev of ['touchend', 'click']) $('#start').addEventListener(ev, e => { if (world.state !== 'title' || e.target.closest('#goBtn')) return; ensureAudio(); titleSeKick(); }, { passive: true });
 document.addEventListener('visibilitychange', () => { if (document.hidden) return; if (world.state === 'title' && A.ctx) { ensureAudio(); titleSeKick(); } });
 /* 2026-11-13 記録（撮れ高コレクションなど）が消えにくいように
@@ -15311,7 +15311,8 @@ setInterval(() => { if (world.state !== 'title') return; let f = null; try { f =
   try { startRowInit(); } catch (e) { } toast(TR('新しい出入り口が開放されました！') + '\n' + TR('次の探索から、入る場所を「玄関」か「2階の非常口」から選べます（スタート地点）'), 6000); }, 700);
 Object.assign(EN, { '新しい出入り口が開放されました！': 'A new entrance has opened!', '次の探索から、入る場所を「玄関」か「2階の非常口」から選べます（スタート地点）': 'From your next visit, you can choose to enter from the front door or the 2F emergency exit (Start point).' });
 // 「旧校舎に入る」：初めての時だけ、先にマイク・ジャイロの説明を出す（ほかの処理より先に止める）
-$('#goBtn').addEventListener('click', e => { if (!NOTICE.needAsk()) return; e.stopImmediatePropagation(); e.preventDefault(); NOTICE.ask(() => $('#goBtn').click()); }, true);
+$('#goBtn').addEventListener('click', e => { if (world.prolog) { e.stopImmediatePropagation(); e.preventDefault(); return; } if (PROLOGUE.need()) { e.stopImmediatePropagation(); e.preventDefault(); PROLOGUE.run(() => $('#goBtn').click()); return; }   /* 2026-11-20 190番：初めての時は、先にプロローグ */
+  if (!NOTICE.needAsk()) return; e.stopImmediatePropagation(); e.preventDefault(); NOTICE.ask(() => $('#goBtn').click()); }, true);
 $('#setNotice').addEventListener('click', e => { e.stopPropagation(); NOTICE.info(); });
 $('#goBtn').addEventListener('click', () => {
   PACALL.unlock();   // 校内放送の読み上げを、iPhoneでも鳴らせるように
@@ -15396,7 +15397,7 @@ const INTRO = {
       if (fin) return;
       const s = (now - t0) / 1000;
       cx.globalCompositeOperation = 'source-over'; cx.globalAlpha = 1; cx.fillStyle = '#000'; cx.fillRect(0, 0, W, H);
-      if (!tapped && s >= T_SHOW) { cx.globalAlpha = Math.random() < 0.03 ? 0.75 : 1; cx.drawImage(tx, 0, 0, W, H); if (!hint.classList.contains('on')) hint.classList.add('on'); requestAnimationFrame(frame); return; }   /* タップを待つ */
+      if (!tapped && s >= T_SHOW) { cx.globalAlpha = Math.random() < 0.03 ? 0.75 : 1; cx.drawImage(tx, 0, 0, W, H); if (!hint.classList.contains('on')) hint.classList.add('on'); CRTFX.draw(cx, W, H, 1); requestAnimationFrame(frame); return; }   /* 190番：ブラウン管のようなノイズを重ねる */   /* タップを待つ */
       if (s < T_SHOW) {   // 静かに浮かび上がる
         cx.globalAlpha = Math.min(1, s / 0.45) * (Math.random() < 0.03 ? 0.75 : 1); cx.drawImage(tx, 0, 0, W, H);
       } else if (s < T_SHOW + T_GLITCH + T_OUT) {
@@ -15425,10 +15426,78 @@ const INTRO = {
         for (let i = 0; i < 4; i++) { cx.globalAlpha = rnd(0.06, 0.22) * fade; cx.fillStyle = '#ddd'; cx.fillRect(0, Math.random() * H, W, rnd(1, 6)); }
         if (Math.random() < 0.12 * k) { cx.globalAlpha = 0.18 * fade; cx.fillStyle = '#fff'; cx.fillRect(0, 0, W, H); }
       } else { finish(); return; }
+      CRTFX.draw(cx, W, H, 1);   // 190番：ブラウン管のようなノイズ
       requestAnimationFrame(frame);
     };
     requestAnimationFrame(frame);
     /* 念のための自動終了はやめた（タップで進む） */
+  },
+};
+/* =========================================================
+   2026-11-20 190番：プロローグ（あらすじ）。初めて「撮影をはじめる」を押した時だけ（?first の時は毎回）
+   流れ：プロローグ → マイク・ジャイロの説明（NOTICE.ask） → INTRO → 遊び始め
+   ・黒い画面に、タップ（クリック）ごとに1行ずつ、にじんで揺らぎながら浮かび上がる（1行目は自動）。ときどきチカッと暗くなる
+   ・3行出たあとのタップで、INTRO の終わりと同じ乱れ（帯のずれ・色ずれ・砂嵐の音）で消える
+   ・右上の「スキップ」で飛ばせる（飛ばしても次からは出さない）
+   ・記録 yt_story1（チャンネル爆破で消す＝最初から遊び直す時にまた出る。引き継ぎには入れない）
+   ・環境音は、ゲームの環境音（startAmbience）をそのまま使うので、プロローグ → 説明 → INTRO と途切れずにつながる
+   ========================================================= */
+const CRTFX = {   /* ブラウン管のような荒いノイズ（プロローグと INTRO で共通）。砂嵐の粒は先に4枚作って使い回す */
+  tiles: null, scanP: null, vig: null, vk: '', band: 0,
+  init() { if (this.tiles) return; this.tiles = [];
+    for (let i = 0; i < 4; i++) { const c = document.createElement('canvas'); c.width = c.height = 160; const g = c.getContext('2d'), im = g.createImageData(160, 160), d = im.data; for (let p = 0; p < d.length; p += 4) { const v = Math.random() * 255 | 0; d[p] = d[p + 1] = d[p + 2] = v; d[p + 3] = Math.random() < 0.45 ? 0 : 50 + Math.random() * 110 | 0; } g.putImageData(im, 0, 0); this.tiles.push(c); }
+    const s = document.createElement('canvas'); s.width = 4; s.height = 3; const sg = s.getContext('2d'); sg.fillStyle = 'rgba(0,0,0,0.5)'; sg.fillRect(0, 2, 4, 1); this.scan = s; },
+  draw(cx, W, H, a = 1) { try { this.init(); cx.save(); cx.globalCompositeOperation = 'source-over';
+    const t = this.tiles[Math.random() * 4 | 0], ts = 240, ox = -Math.random() * ts, oy = -Math.random() * ts; cx.globalAlpha = 0.11 * a; for (let y = oy; y < H; y += ts) for (let x = ox; x < W; x += ts) cx.drawImage(t, x, y, ts, ts);   // 細かい砂嵐の粒
+    cx.globalAlpha = 0.55 * a; if (!this.scanP || this.scanC !== cx) { this.scanP = cx.createPattern(this.scan, 'repeat'); this.scanC = cx; } cx.fillStyle = this.scanP; cx.fillRect(0, 0, W, H);   // 横の走査線
+    this.band = (this.band + H * 0.004) % (H * 1.6); const by = this.band - H * 0.3; const bg = cx.createLinearGradient(0, by - 40, 0, by + 40); bg.addColorStop(0, 'rgba(255,255,255,0)'); bg.addColorStop(0.5, 'rgba(255,255,255,0.05)'); bg.addColorStop(1, 'rgba(255,255,255,0)'); cx.globalAlpha = a; cx.fillStyle = bg; cx.fillRect(0, by - 40, W, 80);   // ゆっくり流れる明るい帯
+    if (Math.random() < 0.06) { cx.globalAlpha = 0.25 * a; cx.fillStyle = '#ccc'; cx.fillRect(0, Math.random() * H, W, 1 + Math.random() * 3); }   // ときどき横に走るノイズ
+    const k = W + 'x' + H; if (this.vk !== k) { this.vk = k; const r = Math.hypot(W, H) / 2; this.vig = cx.createRadialGradient(W / 2, H / 2, r * 0.45, W / 2, H / 2, r); this.vig.addColorStop(0, 'rgba(0,0,0,0)'); this.vig.addColorStop(1, 'rgba(0,0,0,0.7)'); } cx.globalAlpha = a; cx.fillStyle = this.vig; cx.fillRect(0, 0, W, H);   // ふちを暗く
+    cx.restore(); } catch (e) { } },
+};
+const PROLOGUE = {
+  KEY: 'yt_story1', answered: false,
+  need() { if (this.answered) return false; if (/[?&](first|story)\b/.test(location.search)) return true; if (TEST) return false;   /* 確認モード（?test）では ?first・?story の時だけ出す（自動の確かめを止めないように） */ try { return localStorage.getItem(this.KEY) !== '1'; } catch (e) { return false; } },
+  mark() { this.answered = true; try { localStorage.setItem(this.KEY, '1'); } catch (e) { } },
+  LINES: [['大好きな心霊チャンネルの更新が止まった。', 'My favorite ghost-hunting channel stopped updating.'], ['最後の動画は、取り壊し前のとある校舎。', 'The last video was filmed at a certain school, about to be torn down.'], ['あの人が見たものを、私も撮りに行く。', "I'm going to film what she saw."]],
+  run(done) {
+    const en = LANG === 'en', pc = FRAME.on; this.mark(); world.prolog = true;
+    try { ensureAudio(); titleSeStop(0.6); } catch (e) { }
+    if (!document.getElementById('prologSt')) { const st = document.createElement('style'); st.id = 'prologSt'; st.textContent = '#prolog{position:fixed;inset:0;z-index:150;background:#000;touch-action:none}#prolog canvas{position:absolute;inset:0;width:100%;height:100%}#prolog .plHint{position:absolute;left:0;right:0;bottom:calc(var(--sab) + 9%);text-align:center;font-size:12px;letter-spacing:.18em;color:rgba(255,255,255,.75);opacity:0;transition:opacity .5s;pointer-events:none}#prolog .plHint.on{opacity:1;animation:plBlink 2.2s ease-in-out infinite}@keyframes plBlink{50%{opacity:.3}}#prolog .plSkip{position:absolute;right:14px;top:calc(var(--sat) + 14px);padding:7px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.4);color:rgba(255,255,255,.8);font:600 12px system-ui;letter-spacing:.08em}'; document.head.appendChild(st); }
+    const el = document.createElement('div'); el.id = 'prolog'; el.innerHTML = `<canvas></canvas><div class="plHint">${en ? (pc ? 'Click to continue' : 'Tap to continue') : (pc ? 'クリックして進む' : '画面をタップして進む')}</div><button class="plSkip" type="button">${en ? 'Skip' : 'スキップ'}</button>`; document.body.appendChild(el);
+    const cv = el.querySelector('canvas'), cx = cv.getContext('2d'), hint = el.querySelector('.plHint'), W = vpW(), H = vpH(), dpr = Math.min(2, devicePixelRatio || 1) * (pc ? Math.max(1, FRAME.k) : 1);
+    cv.width = W * dpr; cv.height = H * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const F = s => `700 ${s}px "Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif`, lines = this.LINES.map(l => en ? l[1] : l[0]);
+    let fs = 21; { cx.font = F(1); const mw = Math.max(...lines.map(l => cx.measureText(l).width)); fs = Math.min(en ? 17 : 21, (W * 0.88) / mw); }   // 1行が折り返さずに入る大きさ（文は変えない）
+    const gap = fs * 2.6, y0 = H / 2 - gap;
+    const txt = document.createElement('canvas'); txt.width = W * dpr; txt.height = H * dpr; const tg = txt.getContext('2d'); tg.setTransform(dpr, 0, 0, dpr, 0, 0);   // 出し終わった行（最後の乱れに使う）
+    const sh = []; let n = 0, fin = false, out = 0, noise = null; const T_IN = 1.4;
+    const show = () => { if (n >= lines.length) return; sh.push({ i: n, t: performance.now() }); n++; hint.classList.remove('on'); };
+    const drawLine = (g, i, a, blur, dx) => { g.save(); g.font = F(fs); g.textAlign = 'center'; g.textBaseline = 'middle'; g.globalAlpha = a; if (blur > 0.3) g.filter = `blur(${blur.toFixed(1)}px)`; g.shadowColor = 'rgba(255,240,220,.25)'; g.shadowBlur = 12; g.fillStyle = '#e9e4da'; g.fillText(lines[i], W / 2 + dx, y0 + i * gap); g.restore(); };
+    const end = () => { if (fin) return; fin = true; el.removeEventListener('pointerdown', tap); try { if (noise) noise.s.stop(); } catch (e) { } el.remove(); world.prolog = false; try { done(); } catch (e) { console.warn('プロローグのあと', e); } };
+    const goOut = () => { if (out) return; out = performance.now(); hint.classList.remove('on'); sh.forEach(s => drawLine(tg, s.i, 1, 0, 0));
+      try { noise = A.ctx && playSfx('static_cam', { gain: 0.35, offset: Math.random() * 1.5 }); if (noise) { noise.s.loop = true; const c = A.ctx.currentTime, G = noise.g.gain, v = G.value; G.setValueAtTime(v, c + 0.32); G.linearRampToValueAtTime(0.0001, c + 0.5); noise.s.stop(c + 0.55); } } catch (e) { } };
+    const tap = e => { if (fin || out) return; const now = performance.now(), last = sh[sh.length - 1]; if (last && now - last.t < T_IN * 1000) { last.t = now - T_IN * 1000; return; } if (n < lines.length) show(); else goOut(); };   // 浮かび上がっている途中なら、先に出しきる
+    el.addEventListener('pointerdown', tap);
+    el.querySelector('.plSkip').addEventListener('pointerdown', e => { e.stopPropagation(); end(); });
+    const frame = now => { if (fin) return;
+      cx.globalCompositeOperation = 'source-over'; cx.globalAlpha = 1; cx.fillStyle = '#000'; cx.fillRect(0, 0, W, H);
+      if (out) { const g = (now - out) / 1000, k = Math.min(1, g / 0.3), fade = g > 0.32 ? Math.max(0, 1 - (g - 0.32) / 0.18) : 1; if (g > 0.5) { end(); return; }
+        let y = 0; const bands = 18 + (Math.random() * 10 | 0); while (y < H) { const bh = rnd(2, H / bands * 1.6), off = (Math.random() < 0.45 ? rnd(-1, 1) * 38 * k : rnd(-1, 1) * 3) * (1 + g);
+          for (const [c, dx] of [['r', -5 * k], ['b', 5 * k], ['w', 0]]) { cx.globalCompositeOperation = c === 'w' ? 'source-over' : 'lighter'; cx.globalAlpha = fade * (c === 'w' ? 0.85 : 0.55); cx.drawImage(txt, 0, y * dpr, W * dpr, bh * dpr, off + dx, y, W, bh); } y += bh; }
+        cx.globalCompositeOperation = 'source-over'; for (let i = 0; i < 260 * k; i++) { cx.globalAlpha = rnd(0.05, 0.35) * fade; cx.fillStyle = Math.random() < 0.5 ? '#fff' : '#888'; cx.fillRect(Math.random() * W, Math.random() * H, rnd(1, 3), rnd(1, 2)); }
+        if (Math.random() < 0.15) { cx.globalAlpha = 0.18 * fade; cx.fillStyle = '#fff'; cx.fillRect(0, 0, W, H); }
+      } else {
+        const flick = Math.random() < 0.03 ? 0.6 : 1; let waiting = true;
+        for (const s of sh) { const p = Math.min(1, (now - s.t) / 1000 / T_IN); if (p < 1) waiting = false; const e2 = 1 - Math.pow(1 - p, 2);
+          drawLine(cx, s.i, e2 * flick, (1 - e2) * 7, (1 - e2) * Math.sin(now / 90 + s.i) * 5 + (Math.random() < 0.02 ? rnd(-3, 3) : 0));   // にじんで揺らぎながら浮かび上がる
+          if (p < 1) { cx.save(); cx.globalCompositeOperation = 'lighter'; drawLine(cx, s.i, 0.25 * (1 - e2), 2, -4 * (1 - e2)); cx.restore(); } }   // 出始めは少し色がずれて二重に見える
+        if (waiting && !hint.classList.contains('on')) hint.classList.add('on');
+        if (Math.random() < 0.012) { cx.globalAlpha = 0.5; cx.fillStyle = '#000'; cx.fillRect(0, 0, W, H); }   // ときどきチカッと暗く
+      }
+      CRTFX.draw(cx, W, H, 1);
+      requestAnimationFrame(frame); };
+    el.classList.add('show'); setTimeout(show, 500); requestAnimationFrame(frame);
   },
 };
 function setupMic() {
@@ -15705,7 +15774,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '0.18.86';
+const VERSION = '0.18.87';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -20890,7 +20959,7 @@ if (TEST && window.__G) Object.assign(window.__G, { PHAN, ITEM, OFUDA, CAP, SG, 
 const RESET = {
   keys() { return ['yt_stats_v1', 'yt_fuda1000', 'yt_pa_first', COL.KEY, ACH.KEY, PERM.KEY, 'yt_mann_unlock', 'yt_tut', 'yt_keyuse', PHAN.KEY, 'yt_wing_open', 'yt_bar1_open', 'yt_bar2_open', 'yt_start',
     /* 2026-11-20 175番の4：お金・持ち物・エンディングの記録も含めて、プレイの記録は全部消す（設定・言語・キー・難しさ・ハードの解放などの「設定」は残す） */
-    SHOP.KEY, ENDING.KEY, 'yt_vidTitle', 'yt_newarea_aw', 'yt_wing_in', 'yt_exit_news', 'yt_ouma_seen', 'yt_hmemo_v1', 'yt_smemo_v1', 'yt_sph_v1', 'yt_plog_v1', 'yt_urah_v1', 'yt_mannran', 'yt_clear_note', 'yt_intro_cm', 'yt_denki_cm', 'yt_ban_v1', 'yt_ks_bar', 'yt_clipped']; },   // 2026-11-15 ナカヨシの段階も0に
+    SHOP.KEY, ENDING.KEY, 'yt_vidTitle', 'yt_newarea_aw', 'yt_wing_in', 'yt_exit_news', 'yt_ouma_seen', 'yt_hmemo_v1', 'yt_smemo_v1', 'yt_sph_v1', 'yt_plog_v1', 'yt_urah_v1', 'yt_mannran', 'yt_clear_note', 'yt_intro_cm', 'yt_denki_cm', 'yt_story1', 'yt_ban_v1', 'yt_ks_bar', 'yt_clipped']; },   // 2026-11-15 ナカヨシの段階も0に
   nb(t) { return t.split('|').map(x => '<span style="display:inline-block">' + x + '</span>').join(''); },   /* 2026-11-20 175番：スマホの縦画面で言葉の途中で折り返さないよう、まとまりごとに区切る */
   ask() { const en = LANG === 'en', b = document.querySelector('#resetAsk .raBox'); this.keepCol = undefined; $('#resetAsk').classList.remove('step2'); b.querySelector('.raT').textContent = en ? 'Nuke your channel?' : 'チャンネルを爆破しますか？'; $('#resetYes').textContent = en ? 'Nuke it' : '爆破する'; $('#resetNo').textContent = en ? 'Never mind' : 'やめておく';   /* 175番の続き：「やめる」で閉じたあとに開き直しても、最初の画面から */
     if (LANG === 'en') document.querySelector('#resetAsk .raD').textContent = 'Your play data will be erased, including total likes, rank, money, items, and your all-time best videos. On the next screen, you can choose whether to keep your capture collection.'; else document.querySelector('#resetAsk .raD').innerHTML = this.nb('累計いいね数・|ランク・|お金・|持ち物・|歴代の神回など、|これまでのプレイデータが|消えます。|撮れ高のコレクションは、|次の画面で|残すかを選べます。'); $('#resetAsk').classList.add('show'); },
