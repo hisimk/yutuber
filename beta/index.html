@@ -14642,7 +14642,20 @@ function micOn() {
     MIC.src.connect(rec.micGain); rec.micGain.connect(A.rec);
     MIC.an = A.ctx.createAnalyser(); MIC.an.fftSize = 512; MIC.src.connect(MIC.an);
     note.textContent = TR('話すとメーターが動きます');
-  }).catch(() => { opt.mic = false; saveOpts(); SET.sync(); note.textContent = TR('マイクの許可がないため、ゲーム音だけを録ります'); toast(TR('マイクの許可がないため、ゲーム音だけを録ります')); });
+  }).catch(err => { opt.mic = false; saveOpts(); SET.sync(); note.textContent = TR('マイクの許可がないため、ゲーム音だけを録ります');
+    /* 2026-11-20 192番：許可されていない時・マイクが見つからない時は、理由と直し方をお知らせで出す（タイトル・設定の画面の時だけ。同じページでは1回だけ。2回目からは短い知らせだけ） */
+    const nm = err && err.name, en = LANG === 'en', deny = nm === 'NotAllowedError' || nm === 'SecurityError' || nm === 'PermissionDeniedError', none = nm === 'NotFoundError' || nm === 'DevicesNotFoundError' || nm === 'OverconstrainedError';
+    const canPop = !micOn.popped && (world.state === 'title' || (typeof SET !== 'undefined' && SET.open)) && (deny || none);
+    if (!canPop) { toast(none ? (en ? 'No microphone found' : 'マイクが見つかりません') : TR('マイクの許可がないため、ゲーム音だけを録ります')); return; }
+    micOn.popped = true; const ua = navigator.userAgent, ios = /iP(hone|ad|od)/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1), andr = /Android/.test(ua), saf = /Safari/.test(ua) && !/Chrome|Chromium|Edg|CriOS|FxiOS|OPR/.test(ua), chr = /Chrome|Chromium|Edg|CriOS/.test(ua);
+    let how; const nb = t => t.split('|').map(x => '<span style="display:inline-block">' + x + '</span>').join('');   // 言葉の途中で折り返さないように
+    if (none) how = en ? 'Connect a microphone, then turn it on again.' : nb('つないでから、|もう一度オンにしてください。');
+    else if (ios) how = en ? 'In the Settings app, go to "Safari" → "Microphone" and choose "Allow", or allow it from "aA" in the address bar. Then reload the page.' : nb('設定アプリの|「Safari」→「マイク」を|「許可」にするか、|アドレスバーの「ぁあ」から|許可してから、|読み込み直してください。');
+    else if (andr) how = en ? 'Tap the icon at the left of the address bar, allow the microphone, then reload the page.' : nb('アドレスバーの|左のマークを押して、|マイクを許可してから、|読み込み直してください。');
+    else if (saf) how = en ? 'In Safari\'s menu, open "Settings" → "Websites" → "Microphone", set this page to "Allow", then reload.' : nb('Safari のメニューの|「設定」→「Webサイト」→|「マイク」で、|このページを「許可」にしてから、|読み込み直してください。');
+    else if (chr) how = en ? 'Click the icon at the left of the address bar, set the microphone to "Allow", then reload the page.' : nb('アドレスバーの|左のマークを押して、|マイクを「許可」にしてから、|ページを読み込み直してください。');
+    else how = en ? 'Allow the microphone for this page in your browser settings, then reload.' : nb('ブラウザの設定で、|このページのマイクを|許可してから、|読み込み直してください。');
+    NOTE.show({ sub: none ? (en ? 'No microphone found' : 'マイクが見つかりません') : (en ? 'The microphone is not allowed' : 'マイクが許可されていません'), body: [how, en ? 'You can still play without a mic.' : 'マイクなしでも遊べます。'] }); });
 }
 function micOff() {
   if (rec.mic) { rec.mic.getTracks().forEach(t => t.stop()); }
@@ -15774,7 +15787,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '0.18.87';
+const VERSION = '0.18.88';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
