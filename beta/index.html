@@ -15,7 +15,7 @@
   try { if (g.call(localStorage, P + '__init') !== '2' || /[?&]play5reset\b/.test(q)) { var old = []; for (var i0 = 0; i0 < localStorage.length; i0++) { var k0 = localStorage.key(i0); if (k0.indexOf(P) === 0) old.push(k0); } for (var i1 = 0; i1 < old.length; i1++) r.call(localStorage, old[i1]);
       var ks = []; for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k.indexOf(P) !== 0) ks.push(k); } for (var j = 0; j < ks.length; j++) try { var v = g.call(localStorage, ks[j]); if (/(^|:)yutuber_achieve_v1$/.test(ks[j])) { try { var a = JSON.parse(v); if (a) { a.best = []; v = JSON.stringify(a); } } catch (e) { } } s.call(localStorage, P + ks[j], v); } catch (e) { } s.call(localStorage, P + '__init', '2'); } } catch (e) { }
   S.getItem = function (k) { return g.call(this, this === localStorage ? P + k : k); }; S.setItem = function (k, v) { return s.call(this, this === localStorage ? P + k : k, v); }; S.removeItem = function (k) { return r.call(this, this === localStorage ? P + k : k); };
-  if (!/[?&]rank=/.test(q)) { q = q + '&rank=5&shopall&perm=all&wingopen&ownall' + (SHOOT ? '&yen=9999999' : ''); var mon = (q.match(/[?&]shootmon=(\w+)/) || [])[1]; if (SHOOT && mon === 'woman') q += '&enemy=woman&enemyat=0&nourah'; if (SHOOT && mon === 'urah') q += '&urah&urahat=0&enemyat=999'; history.replaceState(null, '', location.pathname + q + location.hash); }
+  if (!/[?&]rank=/.test(q)) { q = q + '&rank=5&shopall&perm=all&wingopen&ownall' + (SHOOT ? '&yen=9999999' : ''); var mon = (q.match(/[?&]shootmon=(\w+)/) || [])[1]; if (SHOOT && mon === 'woman') q += '&enemy=woman&enemyat=0&nourah'; if (SHOOT && mon === 'urah') q += '&urah&urahat=0&enemyat=999&nophan'; history.replaceState(null, '', location.pathname + q + location.hash); }
   window.PLAY5 = true; })();
 </script>
 <meta charset="utf-8">
@@ -15789,7 +15789,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '0.18.91';
+const VERSION = '0.18.92';
 const SHOOT = BETA && /[?&]shoot\b/.test(location.search);   /* 2026-11-20 動画撮影の素材用（?shoot）：「試し版」の表示を出さない */
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA && !SHOOT ? '（試し版）' : '');
 if (BETA && !SHOOT) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
