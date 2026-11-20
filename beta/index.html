@@ -15755,6 +15755,7 @@ const CHIP = {
     if (show && d) dsp(d[en ? 1 : 0]);
     { const hm = !show && typeof HMEMO !== 'undefined' && HMEMO.of(x.key); if (hm) { $('#chipT').textContent = en ? hm.te : hm.t; dsp(en ? hm.de : hm.d); how('', en ? 'From a faded memo' : 'かすれたメモより'); } }
     if (show && typeof AW_HINT !== 'undefined' && AW_HINT[x.key]) how(en ? 'How to film: ' : '撮り方：', AW_HINT[x.key][en ? 1 : 0]);   // 2026-11-16 メモで知った撮れ高は伏せ字で
+    if (show && (x.key === 'close' || x.key === 'near')) how(en ? 'Bonus: ' : '効果：', x.key === 'close' ? (en ? 'likes from highlights filmed within 3m are ×1.5' : '3m以内で撮れた撮れ高のいいねが1.5倍') : (en ? 'likes from highlights filmed within 6m are ×1.2' : '6m以内で撮れた撮れ高のいいねが1.2倍'));   /* 2026-11-20 本人の希望：接写・超接写のいいねの上乗せを、チップにひと言 */
     $('#chipOk').textContent = en ? 'Close' : '閉じる'; $('#chipPop').classList.add('show');
   },
   close() { $('#chipPop').classList.remove('show'); },
@@ -15792,7 +15793,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '0.18.98';
+const VERSION = '0.18.99';
 const SHOOT = BETA && /[?&]shoot\b/.test(location.search);   /* 2026-11-20 動画撮影の素材用（?shoot）：「試し版」の表示を出さない */
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA && !SHOOT ? '（試し版）' : '');
 if (BETA && !SHOOT) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
