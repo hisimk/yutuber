@@ -15650,7 +15650,17 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.68';
+/* =========================================================
+   作業の決まり（2026-11-20 176番。これからの作業で守る）
+   1. 関数をこれ以上何重にも包まない：あとから「元の関数を bind して新しい関数で包む」形の追加は増やさない。
+      元の関数（または、すでにある包みの中のどれか1つ）の中に直接書く。どうしても包む時は、理由を報告に書く。
+      今ある包みを1つにまとめる作業は、今はしない（完成後に本人が決める）。
+   2. 新しい保存を足す時は、消去と引き継ぎの一覧にも足す：localStorage・IndexedDB に保存を足したら、同じ作業の中で
+      ・チャンネル爆破（RESET.keys）で消すか、わざと残すか ・引き継ぎ（XFER）で引き継ぐか
+      ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
+      保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
+   ========================================================= */
+const VERSION = '0.18.69';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
