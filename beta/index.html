@@ -8834,7 +8834,7 @@ SP.legsToFace = function (t) {
 SP.hiddenNow = function () { return player.hidden || HIDE.lk || world.maskOn || (world.inStall && world.inStall.locked); };
 SP.spotted = function (dH) {
   if (world.chkNoChase || this.lv !== player.lv || world.t < (this.noChaseUntil || 0) || world.t - this.spawnT < 4 || this.hiddenNow() || CAP.on || world.outro > 0 || stairZone(player.x, player.z)) return false;
-  if (dH > 8) return false;
+  if (dH > (world.bneko ? 10 : 8)) return false;   /* 2026-11-20 160番：黒い招き猫 */
   const p = V(this.pos.x, this.pos.y - 0.35, this.pos.z);
   return enemySees(p, [this.wrap]);
 };
@@ -9596,7 +9596,7 @@ const ITEM = {
     for (const a of this.anim) { a.t += dt; const k = smooth(0, 1, a.t / a.dur); a.o.rotation.y = a.from + (a.to - a.from) * k; }
     this.anim = this.anim.filter(a => a.t < a.dur);
     // 開けた非常口から外へ
-    if (this.fireOpen && world.state === 'play' && player.lv === 0 && player.x > 21.3 && Math.abs(player.z + 6.5) < 0.5 && !player.hidden && !world.capture) { if (rec.active) award('fireExit', '非常口からの脱出', 50); escape(); }   // 2026-11-13 鍵で開けた非常口から出るところを撮ったら
+    if (this.fireOpen && world.state === 'play' && player.lv === 0 && player.x > 21.3 && Math.abs(player.z + 6.5) < 0.5 && !player.hidden && !world.capture) { if (rec.active && world.bkeyFire) award('bkeyEscape', '壊れかけの鍵で脱出', 20); escape(); }   // 2026-11-13 鍵で開けた非常口から出るところを撮ったら
   },
   // 拾う・開けるの操作
   offer() {
@@ -9637,6 +9637,7 @@ const ITEM = {
     }
     playSfx('stall_unlock', { pos, ref: 0.8, gain: 0.9 }) || SND.latch(pos);
     if (bk) setTimeout(() => BKEY.snap(pos), 380);
+    if (what === 'fire' && bk) world.bkeyFire = true;   /* 2026-11-20 161番：壊れかけの鍵で非常口を開けた */
     if (what === 'fire') {
       this.fireOpen = true; this.fireHole.visible = true; this.anim.push({ o: this.firePv, from: 0, to: -1.75, t: -0.35, dur: 1.3 });
       setTimeout(() => playSfx('locker_open', { pos, ref: 1.0, gain: 0.8 }), 320);
@@ -9708,7 +9709,7 @@ const ITEM = {
   use(id) {
     if (!this.have[id]) return false;
     if (id === 'pmask') { if (typeof PMASK === 'undefined' || !PMASK.use()) return false; this.have.pmask = false; return true; }   // 2026-11-15 石膏のお面
-    if (id === 'memcard') { CONFIG.recMaxSec += 15; this.have.memcard = false; this.seCharge(); toast(TR('録画できる時間が15秒増えた'), 2000); syncRecUI(); return true; }
+    if (id === 'memcard') { CONFIG.recMaxSec += 15; this.have.memcard = false; this.seCharge(); toast(TR('録画できる時間が15秒増えた'), 2000); syncRecUI(); try { award('memcardAw', 'メモカで増える撮影時間', 15); } catch (e) { }   /* 2026-11-20 170番：録画していなくても取れる */ return true; }
     if (id === 'battery2') { if (world.battery >= 99.5) { toast(TR('電池はもう満タン'), 1600); return false; } world.battery = Math.min(100, world.battery + 15); this.have.battery2 = false; this.seCharge(); CHATLOG.add('useBat'); return true; }
     return false;
   },
@@ -9790,13 +9791,15 @@ const ITEM = {
   // おまもり：捕まった瞬間に一度だけ身代わりになる
   charm(kind) {
     if (world.state !== 'play') return false;
-    if (kind === 'woman' && PHAN.on) { if (!(this.have.ofuda > 0)) return false; this.have.ofuda = (this.have.ofuda | 0) - 1; PHAN.seal(); return true; }   // 2026-11-15 化け物の周：お札だけが効く
+    if (kind === 'woman' && PHAN.on) { if (this.have.ofuda > 0) { this.have.ofuda = (this.have.ofuda | 0) - 1; PHAN.seal(); return true; } if (!this.have.omamori) return false;   /* 2026-11-20 159番：ナカヨシにも、お札がない時はおまもりが効く（追い払って、しばらく近寄らない） */
+      this.have.omamori = false; const fl = $('#itemFlash'); fl.style.transition = 'none'; fl.style.opacity = '0.85'; void fl.offsetWidth; fl.style.transition = 'opacity 1.1s'; fl.style.opacity = '0'; this.seCharm(); toast(TR('おまもりが身代わりになった'), 2600);
+      try { XITEM.saved('woman'); } catch (e) { } try { CH.stop(); WD.borrow(); PHAN.mode = 'retreat'; PHAN.rt = 0; PHAN.moaned = false; world.invUntil = Math.max(world.invUntil || 0, world.t + 4); } catch (e) { } return true; }
     if (this.have.ofuda) { this.have.ofuda = (this.have.ofuda | 0) - 1; OFUDA.start(kind); return true; }   // 封印のお札：顔に貼って、点滅しながら消す
     if (!this.have.omamori) return false;
     this.have.omamori = false;
     const fl = $('#itemFlash'); fl.style.transition = 'none'; fl.style.opacity = '0.85'; void fl.offsetWidth; fl.style.transition = 'opacity 1.1s'; fl.style.opacity = '0';
     this.seCharm();
-    toast(TR('おまもりが身代わりになった'), 2600);
+    toast(TR('おまもりが身代わりになった'), 2600); try { XITEM.saved(kind); } catch (e) { }
     return true;
   },
   banishWoman() {   // 女子高生を遠くへ
@@ -11372,7 +11375,7 @@ const MANN = {
         }
         if (!this.path.length) { const ds0 = URAV.far(WD.dests.filter(k => NAV[k]), k => nodePos(k)), ds1 = ds0.filter(k => !saltNear(nodePos(k))); this.walkTo(pick(ds1.length ? ds1 : ds0)); }
         this.stepTick(dt, 1.7); this.apply();
-        this.seeT = this.seesPlayer(world.dark ? 20 : 14) ? (this.seeT || 0) + dt * TORCH.k(this.head()) : 0;
+        this.seeT = this.seesPlayer((world.dark ? 20 : 14) * (world.bneko ? 1.25 : 1)) ?   /* 2026-11-20 160番：黒い招き猫で見つかりやすい */ (this.seeT || 0) + dt * TORCH.k(this.head()) : 0;
         if (this.seeT > 0.4) { this.seeT = 0; this.spot(); }
         break;
       }
@@ -11454,7 +11457,7 @@ const MANN = {
         const sees = this.seesPlayer(world.dark ? 20 : 14, 3.2);
         this.lostT = (sees || (this.prog && this.prog.t === 0) || stairZone(this.pos.x, this.pos.z)) ? 0 : (this.lostT || 0) + dt;
         if (this.hph !== 'rest' && this.canCharge()) { this.procOff(); this.face(this.toPlayer(), 1, 50); this.windup(0); }   /* 開けた所で距離があれば猛ダッシュ */
-        else if (this.lostT > 12 || this.t > 60 || player.hidden) { this.creepOff(); this.st = 'walk'; this.bonked = false; this.rattleStop(); this.play('Walk', 1); this.walkTo(pick(WD.dests)); }
+        else if (this.lostT > 12 * beadsK() || this.t > 60 || player.hidden) { this.creepOff();   /* 2026-11-20 160番：数珠は内田くんにも */ this.st = 'walk'; this.bonked = false; this.rattleStop(); this.play('Walk', 1); this.walkTo(pick(WD.dests)); }
         break;
       }
       case 'stun': {   // 2026-11-14 壁に激突：のけぞって跳ね返り、首が1回転半してから、すごい勢いで追う相手を向く
@@ -15645,7 +15648,7 @@ const VTITLE = {
     $('#ttlPop').classList.add('show'); setTimeout(() => inp.focus(), 50);
   },
 };
-const VERSION = '0.18.63';
+const VERSION = '0.18.64';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -19297,7 +19300,7 @@ const URAH = {
   stallP() { return world.inStall || (typeof stallOf === 'function' && Math.abs(player.y || 0) < 1 ? stallOf(player.x, player.z) : null) || null; },
   sees(from) {
     if (player.hidden || this.stallP() || world.maskOn || world.state !== 'play' || this.blind) return false;   /* 2026-11-19 88番：個室の中も隠れ場所 */ const dy = Math.abs(player.y - this.pos.y); if (dy > 1.2) return false;
-    const d = Math.hypot(player.x - this.pos.x, player.z - this.pos.z); if (d > (world.dark ? 20 : 15)) return false;
+    const d = Math.hypot(player.x - this.pos.x, player.z - this.pos.z); if (d > (world.dark ? 20 : 15) * (world.bneko ? 1.25 : 1)) return false;   /* 2026-11-20 160番：黒い招き猫 */
     const e = from || this.head(); return clearLine(camera.position.clone(), [], e);   /* 前にも後ろにも顔があるので、向きは問わない */
   },
   /* 主人公が能面を見ているか（能面の顔が画面に入り、さえぎる物がない） */
@@ -27148,6 +27151,67 @@ addAw('nomeMirror', 'A', 60, 'なんで私だけ', 'Why only me', ['トイレの
 addAw('reflectBack', 'S', 120, '反射の中だけに', 'Only in the reflection', ['鏡に映った自分の背中に、逆さまの女がぴったりついていた。振り返っても、誰もいない。', 'In the reflection, an upside-down woman clung to your back. You turned around — no one was there.'], ['鏡やガラスに映る、自分の後ろ', 'what is behind you in mirrors and glass'], ['■■の中だけに', '鏡に映った■■の背中に、逆さまの■がぴったりついていた。ふり返っても、■もいない。'], [['後ろ！', 'behind you!'], ['鏡見て', 'look at the mirror'], ['背中に何かいる', "something's on your back"]]);
 XCHAT.LIST.rfxGone = ['xa.rfx.0', 'xa.rfx.1']; Object.assign(CHAT_DICT.t, { 'xa.rfx.0': ['いない…', "she's gone…"], 'xa.rfx.1': ['え、今いたよね', 'wait, she was just there'] });
 try { AWT.R.push({ t: '追加の撮れ高（鏡・美術室）', mon: 'なし', q: 'enemyat=999&nourah&wingopen&scaryport&nome&mirrorback', items: [], catch: 0, force: [], list: [['nomeMirror', 'toilet', '鏡に近づいて映す。自分が消えたら、ズーム・二度見・インカメラのどれか'], ['reflectBack', 'toilet', '録画しながら鏡（または昇降口のガラス）を映す。背中の逆さ女を1秒。振り返ると消える'], ['scaryPort', 'art', '美術室の自画像の壁から目を離してから、目の黒い1枚を近く（2.5m）で1秒']] }); } catch (e) { }
+
+/* =========================================================
+   2026-11-20 160番：道具をすべての怪異に効かせる（クモ女・内田くん）
+   ・防犯ブザー・ケミカルライト：クモ女は天井をつたって近くへ、内田くんは歩き回り・探している時に向かう
+   ・鈴・リコーダーなどの音（NOISE）：クモ女・内田くんも音の方へ寄ってくる
+   ========================================================= */
+const XLURE = {
+  spider(p, r) { try { if (!SP.ready || !['crawl', 'hang'].includes(SP.st) || SP.lv !== (p.y > 1.6 ? 1 : 0) || world.t < (SP.noChaseUntil || 0) && false) return false; if (Math.hypot(SP.pos.x - p.x, SP.pos.z - p.z) > r) return false; const R = SP.web.def.rect;
+      SP.tgt = V(clamp(p.x, Math.min(R[0], SP.web.touch.x), Math.max(R[1], SP.web.touch.x)), spCeil(SP.lv), clamp(p.z, Math.min(R[2], SP.web.touch.z), Math.max(R[3], SP.web.touch.z))); SP.toWeb = false; if (SP.st === 'hang') { SP.st = 'crawl'; SP.armDrop = false; } if (TEST || DEV) console.log('XLURE spider'); return true; } catch (e) { return false; } },
+  mann(p, r) { try { if (!world.mannRun || !['walk'].includes(MANN.st) || Math.abs(MANN.pos.y - p.y) > 1.5 || Math.hypot(MANN.pos.x - p.x, MANN.pos.z - p.z) > r) return false; MANN.walkTo(nearestNode(p.x, p.z, undefined, p.y)); if (TEST || DEV) console.log('XLURE mann'); return true; } catch (e) { return false; } },
+  both(p, r) { const a = this.spider(p, r), b = this.mann(p, r); return a || b; },
+  nt: -99,
+  update() { if (world.state !== 'play' || NOISE.t === this.nt) return; this.nt = NOISE.t; if (world.t - NOISE.t > 0.2) return; const p = V(NOISE.x, NOISE.y, NOISE.z); this.both(p, NOISE.r * 1.1); },
+};
+{ const L0 = BUZZ.lure.bind(BUZZ); BUZZ.lure = function () { const r = L0.apply(this, arguments); try { if (this.on && this.on.p) XLURE.both(this.on.p, 16); } catch (e) { } return r; }; }
+{ const L0 = CHEM.lure.bind(CHEM); CHEM.lure = function (p) { const r = L0.apply(this, arguments); try { if (chance(0.7) && XLURE.both(p, 10)) { try { SHOT.watch('it_chemLure', () => SP.st === 'crawl' && Math.hypot(SP.pos.x - p.x, SP.pos.z - p.z) < 10 ? spFacePos(V()) : MANN.root.visible ? MANN.head() : null, { maxD: 16, margin: 0.85, win: 5, hold: 0.4 }); } catch (e) { } XLURE.chemT = world.t; XLURE.chemP = p.clone(); } } catch (e) { } return r; }; }
+{ const U0 = CMX.update.bind(CMX); CMX.update = function (dt) { U0(dt); try { XLURE.update(); } catch (e) { } }; }
+
+/* =========================================================
+   2026-11-20 159・161番：道具を使う撮れ高（と、167番の秘薬の逃げ切り）
+   ========================================================= */
+const XITEM = {
+  reset() { this.radio = 0; this.torch = 0; this.ch = false; this.film = 0; this.drink = false; this.spray = 0; this.chemW = null; this.chemF = 0; world.bkeyFire = false; },
+  head(kind) { try { if (kind === 'woman') return sgHead(V()); if (kind === 'spider') return spFacePos(V()); if (kind === 'mann') return MANN.head(); if (kind === 'urah') return URAH.head(); } catch (e) { } return null; },
+  chaser() { try { if (CH.state && CH.state !== 'off' && (SG.opacity ?? 0) > 0.3) return 'woman'; if (SP.st === 'chase') return 'spider'; if (world.mannRun && ['spot', 'windup', 'dash', 'skid', 'hunt'].includes(MANN.st)) return 'mann'; if (URAH.on && URAH.chasing()) return 'urah'; } catch (e) { } return null; },
+  saved(kind) { const h = this.head(kind); if (rec.active && h && camera.position.distanceTo(h) < 3.2) award('omaSaved', 'おまもりに救われた', 60); },
+  update(dt) {
+    if (world.state !== 'play') return;
+    /* 効いてる効いてる：虫よけスプレーの周にクモ女 */
+    try { if (rec.active && world.spray && SP.ready && SP.st !== 'none' && seen(spFacePos(V()), { maxD: 16 })) { this.spray += dt; if (this.spray >= 0.5) award('sprayMet', '効いてる効いてる', 20); } } catch (e) { }
+    /* 追跡：逃げ切った時（捕まらずに追跡が終わった） */
+    const k = this.chaser();
+    if (k) { this.ch = true; const h = this.head(k); if (rec.active && h && seen(h, { maxD: 16 })) this.film += dt; if (DRINK.k() > 1) this.drink = true; }
+    else if (this.ch) { this.ch = false; if (!world.capture && !CAP.on && this.film >= 1) { if (ITEM.have.beads) award('beadsEsc', '数珠の力で逃げ切った', 40); if (this.drink) award('dopeEsc', 'ドーピング走法', 20); if (world.elixir) award('elixirEsc', '秘薬の脚力', 40); } this.film = 0; this.drink = DRINK.k() > 1; }
+    /* 170番：ノリノリで撮影（ラジカセを鳴らしながら録画5秒）／暗闇を照らすライト（懐中電灯の光の中の怪異を0.5秒） */
+    if (rec.active && RADIO.on) { this.radio = (this.radio || 0) + dt; if (this.radio >= 5) award('radioRec', 'ノリノリで撮影', 15); }
+    if (rec.active) { let lit = false; for (const kk of ['woman', 'spider', 'mann', 'urah']) { const h = this.head(kk); if (!h) continue; if (kk === 'woman' && !((SG.opacity ?? 0) > 0.3)) continue; if (kk === 'urah' && !(URAH.on && URAH.root.visible)) continue; if (kk === 'mann' && !(MANN.root.visible && world.mannRun)) continue; if (kk === 'spider' && SP.st === 'none') continue; try { if (TORCH.k(h) > 1 && seen(h, { maxD: 14 })) lit = true; } catch (e) { } }
+      if (lit) { this.torch = (this.torch || 0) + dt; if (this.torch >= 0.5) award('torchLit', '暗闇を照らすライト', 20); } }
+    /* 光に誘われて：投げたケミカルライトの近くへ来た怪異を映す */
+    if (this.chemW && world.t < this.chemW.until) { const p = this.chemW.p; let hit = false; for (const kk of ['woman', 'spider', 'mann', 'urah']) { const h = this.head(kk); if (!h) continue; if (kk === 'woman' && !((SG.opacity ?? 0) > 0.3)) continue; if (kk === 'urah' && !(URAH.on && URAH.root.visible)) continue; if (kk === 'mann' && !MANN.root.visible) continue; if (kk === 'spider' && SP.st === 'none') continue; if (Math.hypot(h.x - p.x, h.z - p.z) < 7 && seen(h, { maxD: 16 })) hit = true; }
+      if (hit && rec.active) { this.chemF += dt; if (this.chemF >= 0.4) award('chemLureAw', '光に誘われて', 20); } }
+  },
+};
+{ const L0 = CHEM.lure.bind(CHEM); CHEM.lure = function (p) { try { XITEM.chemW = { p: p.clone(), until: world.t + 12 }; XITEM.chemF = 0; } catch (e) { } return L0.apply(this, arguments); }; }
+{ const R0 = REVIVE.tryRevive.bind(REVIVE); REVIVE.tryRevive = function (kind) { const r = R0.apply(this, arguments); try { if (!r && ITEM.have.hoken && rec.active) award('hokenPaid', '保険がおりた', 10); } catch (e) { } return r; }; }
+{ const R0 = OMA.try.bind(OMA); OMA.try = function (kind) { const r = R0.apply(this, arguments); try { if (r) XITEM.saved(kind); } catch (e) { } return r; }; }
+{ const R0 = SALT2.repel.bind(SALT2); SALT2.repel = function (kind, p) { const c0 = (this.cool || {})[kind] || 0, r = R0.apply(this, arguments); try { if (world.t >= c0 && rec.active && p && seen(V(p.x, (p.y || 0) + 1.2, p.z), { maxD: 14, margin: 0.95 })) award('saltWard', '塩の結界師', 60); } catch (e) { } return r; }; }
+{ const U0 = CMX.update.bind(CMX), R0 = CMX.reset.bind(CMX); CMX.update = function (dt) { U0(dt); try { XITEM.update(dt); } catch (e) { if (TEST) console.warn('XITEM', e); } }; CMX.reset = function () { R0(); try { XITEM.reset(); } catch (e) { } }; }
+addAw('sprayMet', 'C', 20, '効いてる効いてる', 'Is it working?', ['虫よけスプレーをまいた周に、クモ女があらわれた。効いている…はず。', 'You sprayed the bug spray, and the Spider Woman showed up anyway. It should be working…'], ['虫よけスプレーをまいて、クモ女に会う', 'use bug spray, then meet the Spider Woman'], ['■いてる■いてる', '■■よけスプレーをまいた周に、■■■があらわれた。■いている…はず。'], [['効いてないｗ', 'not working lol'], ['スプレーの意味', "what was the spray for"]]);
+addAw('hokenPaid', 'D', 10, '保険がおりた', 'Insurance paid out', ['保険証を持ったまま捕まった。医療費は半分ですんだ。', 'You got caught while carrying your insurance card. The medical bill was cut in half.'], ['保険証を持ったまま、捕まる', 'get caught while carrying the insurance card'], ['■■がおりた', '■■■を持ったまま■まった。■■■は半分ですんだ。'], [['保険大事', 'insurance matters'], ['半額でよかった', 'at least it was half off']]);
+addAw('beadsEsc', 'B', 40, '数珠の力で逃げ切った', 'Escaped with the prayer beads', ['数珠を握りしめて逃げた。怪異は、いつの間にか見失っていた。', 'You ran clutching the prayer beads. Before you knew it, it had lost you.'], ['数珠を持って、追われて逃げ切る', 'carry the prayer beads and get away from a chase'], ['■■の力で逃げ切った', '■■をにぎりしめて逃げた。■■は、いつの間にか■■っていた。'], [['数珠つよい', 'the beads work'], ['逃げ切った！', 'got away!']]);
+addAw('dopeEsc', 'C', 20, 'ドーピング走法', 'Doping dash', ['栄養ドリンクで速くなった足で、追ってくる怪異を振り切った。', 'Boosted by the energy drink, you outran the thing chasing you.'], ['栄養ドリンクを飲んで、逃げ切る', 'drink an energy drink and get away'], ['■■■■■走法', '■■ドリンクで速くなった足で、追ってくる■■をふり切った。'], [['ドーピングｗ', 'doping lol'], ['足はっや', 'so fast']]);
+addAw('omaSaved', 'A', 60, 'おまもりに救われた', 'Saved by the charm', ['捕まったと思った瞬間、おまもりが身代わりになった。', 'Just as you were caught, the charm took the hit for you.'], ['おまもりを持って、捕まる', 'get caught while carrying the charm'], ['■■■■に救われた', '■まったと思った瞬間、■■■■が■■■りになった。'], [['おまもり！', 'the charm!'], ['あぶなかった…', 'that was close…']]);
+addAw('saltWard', 'A', 60, '塩の結界師', 'Salt barrier master', ['塩の結界で怪異を退けた。…これでアヤカシNIGHTも怖くない。', 'You drove it back with a salt barrier. …Now even Ayakashi NIGHT is nothing to fear.'], ['盛り塩の前で、怪異を追い返す', 'turn a spirit away at the salt pile'], ['■の結界師', '■の■■で■■を退けた。…これでアヤカシNIGHTも怖くない。'], [['塩つよ', 'salt is strong'], ['入ってこれない', "it can't get in"]]);
+addAw('chemLureAw', 'C', 20, '光に誘われて', 'Drawn to the light', ['投げたケミカルライトの緑の光に、怪異が吸い寄せられていった。', 'The spirit was drawn toward the green glow of the light stick you threw.'], ['ケミカルライトを投げて、寄ってくる怪異を撮る', 'throw a light stick and film what comes to it'], ['■に誘われて', '投げたケミカルライトの■の■に、■■が■い寄せられていった。'], [['光に寄ってった', 'it went for the light'], ['虫みたい', 'like a moth']]);
+addAw('bkeyEscape', 'C', 20, '壊れかけの鍵で脱出', 'Escape with the broken key', ['壊れかけの脱出口の鍵で非常口を開け、外へ逃げ出した。鍵は折れたが、扉は開いた。', 'You opened the emergency exit with the worn key and escaped. The key snapped, but the door opened.'], ['壊れかけの脱出口の鍵を使って、非常口から出る', 'use the worn exit key and leave by the emergency exit'], ['壊れかけの■で■■', '壊れかけの■■■の■で■■■を開け、外へ逃げ出した。■は折れたが、■は開いた。'], [['あ鍵持ってたのか！', 'oh you had the key!'], ['ナイスー！', 'nice!']]);
+addAw('radioRec', 'C', 15, 'ノリノリで撮影', 'Filming with the beat', ['ラジカセで曲をかけながらノリノリで撮影した。…怪異が寄ってこないといいが', 'You filmed with the boombox playing, totally in the groove. …Hopefully nothing comes to listen.'], ['ラジカセで曲をかけながら撮る', 'film with the boombox playing'], ['■■■■で撮影', 'ラジカセで■をかけながら■■■■で撮影した。…■■が寄ってこないといいが'], [['BGMつきｗ', 'with BGM lol'], ['月の光じゃん', "that's Clair de Lune"], ['ノリノリで草', 'vibing lol']]);
+addAw('torchLit', 'C', 20, '暗闇を照らすライト', 'Light in the dark', ['懐中電灯を向けた先に、怪異が浮かび上がった。照らさなければ、気づかなかった。', 'Where you pointed the flashlight, a spirit emerged from the dark. Without the light, you would never have noticed.'], ['懐中電灯で、怪異を照らす', 'light up a spirit with the flashlight'], ['■■を照らすライト', '■■■■を向けた先に、■■が浮かび上がった。照らさなければ、気づかなかった。'], [['照らしちゃった', 'you lit it up'], ['いたーー', "it's there!!"], ['ライト向けんなｗ', "don't point the light at it lol"]]);
+addAw('memcardAw', 'C', 15, 'メモカで増える撮影時間', 'More time with a memory card', ['メモリーカードを差して、撮れる時間が少しだけ増えた。まだ、撮れる。', 'You put in the memory card, and got a little more recording time. You can still film.'], ['メモリーカードを使う', 'use a memory card'], ['■■で増える撮影時間', 'メモリーカードを■して、撮れる時間が少しだけ■えた。まだ、撮れる。'], null);
+try { AWT.R.push({ t: '追加の撮れ高（ラジカセ・懐中電灯・メモカ）', mon: '逆さ女', q: 'enemy=woman&enemyat=0&carry=torch,memcard&perm=radio', items: ['torch', 'memcard'], catch: 0, force: [], list: [['radioRec', 'c1', 'ラジカセを鳴らしながら録画5秒'], ['torchLit', 'c1', '懐中電灯をつけて、怪異を光の中で0.5秒映す'], ['memcardAw', 'c1', 'メモリーカードを使う']] }); } catch (e) { }
+try { AWT.R.push({ t: '追加の撮れ高（道具・逆さ女とクモ女）', mon: '逆さ女・クモ女', q: 'enemy=woman&enemyat=0&carry=beads,drink,omamori,hoken,salt,chem', items: ['beads', 'drink', 'omamori', 'hoken', 'salt', 'chem'], catch: 0, force: [], list: [['beadsEsc', 'c1', '数珠を持って追われ、追ってくる姿を1秒撮って逃げ切る'], ['dopeEsc', 'c1', '栄養ドリンクを飲んで追われ、逃げ切る'], ['omaSaved', 'c1', 'おまもりを持ったまま捕まる（近くで映っていること）'], ['saltWard', 'c1', '部屋の入口に盛り塩をして、入れずに止まる所を撮る'], ['chemLureAw', 'c1', 'ケミカルライトを投げ、寄ってくる怪異を撮る'], ['hokenPaid', 'c1', '保険証を持ったまま捕まる（最後に。捕まる設定をONに）']] }, { t: '追加の撮れ高（クモ女・非常口）', mon: 'クモ女', q: 'enemy=spider&enemyat=0&carry=spray,bkey&bar2open', items: ['spray', 'bkey'], catch: 0, force: [], list: [['sprayMet', 'c1', '虫よけスプレーを使ってから、クモ女を0.5秒映す'], ['bkeyEscape', 'exit', '壊れかけの鍵で非常口を開け、録画しながら出る']] }); } catch (e) { }
 var AWFIX = {
   barBreak: { name: 'バリケードの破壊', en: 'Breaking the barricade', rk: 'S', pts: 150, hint: ['人体模型を誘って、バリケードを壊させる', 'lure the mannequin into the barricade'], desc: ['人体模型の内田くんをうまく誘導して、バリケードを破壊させた。', 'You lured the mannequin Uchida-kun into smashing the barricade.'], tk: ['バリケードの■■', '■■■■の■■くんをうまく■■して、バリケードを■■させた。'] },
   tenteki: { name: '天敵から逃げるクモ女', en: 'The Spider Woman fleeing her natural enemy', desc: ['クモ女がオフタリサマを見て、悲鳴をあげて逃げていった。…異様に怖がっているようだ。', 'The Spider Woman saw Ofutari-sama, shrieked, and fled. …She seems strangely terrified.'], tk: ['天敵から逃げる■■■', '■■■がオフタリサマを見て、■■をあげて逃げていった。…■■に怖がっているようだ。'] },
