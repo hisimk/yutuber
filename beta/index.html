@@ -15787,7 +15787,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '0.18.89';
+const VERSION = '0.18.90';
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA ? '（試し版）' : '');
 if (BETA) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
 /* 2026-11-14 神回ランキング上位3位の動画の保存先（端末の中のデータベース。リセットで消す） */
@@ -20550,24 +20550,26 @@ const PHAN = {
   onBan() {
     const d = this.load();
     if (d.st === 9) d.won = true;   /* 2026-11-17 一度倒したことがある（再戦は1回きりにするため） */
-    if (d.st === 0) d.rs = false;
+    if (d.st === 0) { d.rs = false; d.uf = 0; d.ufN = 0; }   /* 194番：1回でもBANしたら、失敗のあとの増え方は使わない */
     if (d.st === 0 || d.st === 9) { d.st = 1; d.bans = 0; }   // 倒した後（済）も、まれに出る荒らしをBANするとまた始まる
     else if (d.st === 1) { d.bans = (d.bans || 0) + 1; if (d.bans >= 3) { d.st = 2; d.bans = 0; } }
     else if (d.st === 2) { d.bans = (d.bans || 0) + 1; if (d.bans >= 20) { d.st = 3; d.bans = 0; d.tries = 0; } }   // 2026-11-15 段階2：通算20件BANで段階3（周をまたいで数える）
     this.save(); if (TEST || DEV) console.log('PHAN ban', d.st, d.bans); this.panel();
   },
   // ── 結果画面を開いた（段階2の周 → 次の周から段階3）
-  onResult() { },   // 2026-11-15 段階3へは、結果画面ではなく段階2での通算20件BANで進む
+  onResult() { try { if (this.runSt === 3 && this.on && !this.rand && !this.rematch) { const d = this.load(); if (this.mode === 'dead' || this.mode === 'done' || d.st === 9) d.cn = 0; else if (world.capBy) d.cn = (d.cn || 0) + 1; else d.cn = 0; this.save(); } } catch (e) { } },   /* 2026-11-20 193番：ナカヨシ決戦の周が、捕まって終わったら cn を1つ増やす（帰った・倒した時は0に） */   // 2026-11-15 段階3へは、結果画面ではなく段階2での通算20件BANで進む
   // ── 周のはじめ
   begin() {
     this.runSt = this.stage(); this.rand = this.runSt !== 3 && (chance(0.02) || ((TEST || BETA) && /[?&]phanrand\b/.test(location.search)));   // 2026-11-15 ごくまれに（1%）段階に関係なく出る。この周だけ（続けて挑戦はできない）
     /* 2026-11-17 再戦（一度倒した後に、また段階3まで進んだ周）は1回きり：周のはじめに「倒した後」へ戻しておく（倒せなくても、捕まっても、帰っても） */
     this.rematch = this.runSt === 3 && !!this.load().won; if (this.rematch) { const d = this.load(); d.st = 9; d.bans = 0; this.save(); }
     /* 2026-11-17 詰み防止：初めての化け物の周は倒すまで続くが、13回負けたら（13周目が終わったら）最初の段階へ戻す。戻った後の荒らしは10周に1回くらい */
-    else if (this.runSt === 3) { const d = this.load(); d.tries = (d.tries || 0) + 1; if (d.tries >= 13) { d.st = 0; d.bans = 0; d.tries = 0; d.rs = true; } this.save(); }
+    else if (this.runSt === 3) { const d = this.load(); d.tries = (d.tries || 0) + 1; if (d.tries >= 13) { d.st = 0; d.bans = 0; d.tries = 0; d.rs = true; d.cn = 0; } this.save(); }
     this.on = (this.runSt === 3 || this.rand) && !((TEST || BETA) && /[?&]nophan\b/.test(location.search)); world.phanRun = this.on;   /* 2026-11-20 確認用 ?nophan：記録はそのままで、この周だけナカヨシの周にしない */ this.partsOff(); if (this.h0 && SG.bones && SG.bones.Head) SG.bones.Head.position.copy(this.h0);
+    world.capBy = null; this.seenAt = 0; this.cmTroll = false; this.cmFuda = false;   /* 193番：この周で初めてナカヨシが映った時刻など（capBy は前の周の物が残っていたので消す） */
     this.hits = 0; this.backN = 0; this.fuN = 0; this.mode = 'idle'; this.nextHunt = 0; this.trackT = 0; this.sndT = 3; this.tintK = this.on ? 1 : 0; this.wasCh = false; this.dead = null; this.tintSlow = false; this.armsOff(); if (this.pool) { scene.remove(this.pool.grp); this.pool = null; } world.camShake = 0;
-    this.troll0 = ((this.runSt === 0 && chance(this.load().rs ? 0.1 : 0.25)) || (this.runSt === 9 && chance(0.05)) || ((TEST || BETA) && /[?&]troll\b/.test(location.search)));   // 段階0：数周に1回くらい
+    { const d = this.load(); this.trollN = 0; if (this.runSt === 0 && d.uf && !this.on) { d.ufN = (d.ufN || 0) + 1; this.save(); this.trollN = Math.min(d.ufN, 3 + Math.floor(Math.random() * 3)); } }   /* 194番：失敗の次の周から、1つ → 2つ → 3つ…（3〜5個で止める）。13回負けで戻った人（10%）より優先 */
+    this.troll0 = this.trollN > 0 || ((this.runSt === 0 && chance(this.load().rs ? 0.1 : 0.25)) || (this.runSt === 9 && chance(0.05)) || ((TEST || BETA) && /[?&]troll\b/.test(location.search)));   // 段階0：数周に1回くらい
     if (this.tag) this.tag.visible = false;
     this.tk = this.on ? 1 : 0; this.tkSet = true; postMat.uniforms.tint.value.set(1, 1, 1);
     if (TEST || DEV) console.log('PHAN run', this.runSt, this.on ? 'monster' : '', this.troll0 ? 'troll' : '');
@@ -20608,7 +20610,8 @@ const PHAN = {
     const U = Math.max(6, (d.users || []).length || 12), rnd2 = (a, b) => a + (b - a) * R(), pk = a => a[Math.floor(R() * a.length)];
     const out = [], last = new Map(), say = (t, list, id) => { if (t < 0.3 || t > maxR) return; let v, g = 0; do v = pk(list); while (list.length > 2 && v === last.get(list) && g++ < 6); last.set(list, v); const [ja, en] = v; out.push([Math.round(t * 100) / 100, Math.floor(R() * U), id, ja, en]); };
     const troll = t => { if (t < 0.3 || t > maxR) return; const [ja, en] = this.trollText(R); out.push([Math.round(t * 100) / 100, -1, 'troll', ja, en]); };
-    if ((st === 0 || st === 9) && this.troll0) troll(rnd2(0.25, 0.85) * end);
+    if (st === 0 && this.trollN > 0) { const n = this.trollN; for (let i = 0; i < n; i++) { const t = (i + rnd2(0.2, 0.8)) / n * end; troll(t); if (R() < 0.5) say(t + rnd2(1.2, 3.5), this.L.react, 'phanReact'); } }   /* 194番 */
+    else if ((st === 0 || st === 9) && this.troll0) troll(rnd2(0.25, 0.85) * end);
     else if (st === 1) { const n = 3 + Math.floor(R() * 3); for (let i = 0; i < n; i++) { const t = (i + rnd2(0.2, 0.8)) / n * end; troll(t); if (R() < 0.75) say(t + rnd2(1.2, 3.5), this.L.react, 'phanReact'); if (R() < 0.3) say(t + rnd2(3.5, 6), this.L.react, 'phanReact'); } }
     else if (st === 2) {   // ほぼ荒らしで埋まる。ゲームの内容のコメントは1割くらい
       for (let t = rnd2(0.5, 1.5); t < maxR; t += rnd2(0.55, 1.3)) troll(t);
@@ -20669,6 +20672,10 @@ const PHAN = {
       if (world.t > (this.thT || 0) && distTo(WD.pos.x, WD.pos.z) < 14 && Math.abs(WD.pos.y - player.y) < 1.2) { this.thT = world.t + rnd(25, 45); this.thanks(); } return; }   /* 2026-11-16 復讐のあと：襲わず、たまにアリガトウ */
     if (this.mode === 'retreat') return this.retreatUpd(dt);
     if (this.mode === 'gone') { if (world.t >= this.retAt) { this.mode = 'idle'; WD.release(true); this.hunt(); this.backN = this.hits; } return; }   /* backN：また現れた（映ったらコメント） */
+    if (this.on && rec.active && this.runSt === 3 && !this.rand && !this.rematch && SG.root.visible && (SG.opacity ?? 1) > 0.5) { const d = this.load();   /* 2026-11-20 193番：ナカヨシ決戦の周で、動画に映った時のヒントのコメント */
+      if (!this.seenAt && (!d.tcm || ((d.cn || 0) >= 3 && !this.fuN)) && SHOT.now(sgHead(V()), { maxD: 16, margin: 0.8 })) this.seenAt = world.t;
+      if (this.seenAt && !this.cmTroll && !d.tcm && world.t > this.seenAt + 2.5) { this.cmTroll = true; d.tcm = 1; this.save(); try { XCHAT.log('phTroll'); } catch (e) { } }   // 初めて映った時（一生に1回）
+      if (this.seenAt && !this.cmFuda && (d.cn || 0) >= 3 && !this.fuN && world.t > this.seenAt + 9) { this.cmFuda = true; try { XCHAT.log('phFuda'); } catch (e) { } } }   // 3回続けて捕まったあと、お札をまだ拾っていない周
     if (this.backN && this.mode === 'idle' && rec.active && SG.root.visible && (SG.opacity ?? 1) > 0.5 && SHOT.now(sgHead(V()), { maxD: 16, margin: 0.8 })) { try { XCHAT.log('phBack' + Math.min(2, this.backN)); } catch (e) { } this.backN = 0; }   /* 2026-11-17 また現れたナカヨシが画面に映った時だけ */
     if (this.mode === 'dead') return this.deadUpd(dt);
     if (this.mode === 'done') { this.poolTick(dt); return; }
@@ -20955,7 +20962,8 @@ Object.assign(EN, { '人知れぬ怪異「継ぎ接ぎのナカヨシ」を倒�
 { const J = { phPick1: [['お！', 'oh!'], ['キターー！', 'here it is!'], ['お札だ！', 'a charm!'], ['勝つる', 'we can win this']], phPick2: [['2枚目！', 'second one!'], ['これで戦える', 'now we can fight'], ['集まってきた', 'they’re adding up']], phPick3: [['これで戦える', 'now we can fight'], ['集まってきた', 'they’re adding up']],
     phPick4: [['もう十分じゃない？', 'isn’t that enough?'], ['集めすぎｗ', 'hoarding lol'], ['全部貼る気だ', 'gonna slap them all on']],
     phHit1: [['やったか…?!', 'did we get it…?!'], ['勝った？', 'did we win?'], ['消えた…！', 'it vanished…!'], ['フラグ立てんなｗ', 'don’t jinx it lol']], phHit2: [['今度こそ…！', 'this time for sure…!'], ['効いてる効いてる', 'it’s working, it’s working'], ['あと1枚？', 'one more?']],
-    phBack1: [['なんで！？', 'WHY!?'], ['倒せてないじゃん', 'it’s not dead'], ['戻ってきた！！', 'it’s BACK!!']], phBack2: [['しつこい', 'so persistent'], ['まだ来るの…', 'still coming…'], ['次で決めて', 'finish it next time']] };
+    phBack1: [['なんで！？', 'WHY!?'], ['倒せてないじゃん', 'it’s not dead'], ['戻ってきた！！', 'it’s BACK!!']], phBack2: [['しつこい', 'so persistent'], ['まだ来るの…', 'still coming…'], ['次で決めて', 'finish it next time']],
+    phTroll: [['あの荒らしソイツだったんじゃ？', 'was that troll actually this thing?']], phFuda: [['校内にお札落ちてないかな？', 'any charms lying around the school?']] };   /* 2026-11-20 193番 */
   for (const w in J) { XCHAT.LIST[w] = J[w].map((x, i) => 'phx.' + w + '.' + i); J[w].forEach((x, i) => { CHAT_DICT.t['phx.' + w + '.' + i] = x; }); } }   /* 2026-11-17 ナカヨシの周：お札を拾った・貼った・また現れた時のコメント */
 { const K0 = ITEM.pick.bind(ITEM); ITEM.pick = function (it) { if (it && it.ph && !it.taken && world.state === 'play') { const n = PHAN.fuN = (PHAN.fuN || 0) + 1; try { XCHAT.log(n === 1 ? 'phPick1' : n === 2 ? 'phPick2' : n === 3 ? 'phPick3' : 'phPick4'); } catch (e) { } } return K0(it); }; }
 CHIP_DESC.phantom = ['荒らしコメントの向こうから現れた人知れぬ怪異「継ぎ接ぎのナカヨシ」を封じ、赤い手が連れ去っていった。', 'You sealed away Nakayoshi the Patchwork, the unknown horror that came through the spam, and red hands dragged it away.'];
@@ -21896,7 +21904,7 @@ const URFUDA = {
       if (S.t > 3.3 && !N.sc) { N.sc = 1; wdScreamLong(0, 0.7); }
       if (S.t > 2.2 && !N.sc2) { N.sc2 = 1; URAH.scream('hannya', true); jumpSting('jump_b', 0.8, 3); }
       if (rec.active && S.t > 1.0) award('urahSummon', 'ナカヨシ召喚の瞬間', 150);   /* 2026-11-16 召喚の瞬間に録画していればよい（映っているかは問わない） */
-      if (S.t > 4.5) { if (this.revOk()) this.revStart(); else this.summonEnd(); }
+      if (S.t > 4.5) { if (this.revOk()) this.revStart(); else { try { const d = PHAN.load(); if (d.st !== 9 && !d.won) { d.uf = 1; d.ufN = 0; PHAN.save(); } } catch (e) { } this.summonEnd(); } }   /* 2026-11-20 194番：ナカヨシを倒す前にお札2枚目で呼んで失敗した記録（PHAN の uf） */
     }
   },
   /* 2026-11-19 ひるんでいる時の動き（1枚目・2枚目・はじかれた時）：体を斜めに傾け、首から上がくるくる回って、般若と能面が入れ替わり続ける。少し後ろへ下がる */
@@ -23342,7 +23350,7 @@ const ENDCM = {
   add('ending_capture', 'context.ending_capture.v117_', [['お大事に…', 'take care...'], ['無茶しすぎ', 'you pushed it too far'], ['次はちゃんと帰ってこよう', 'come back safe next time'], ['救急車呼ぶ？', 'should we call an ambulance?'], ['最後まで撮っててえらい…', 'respect for filming till the end...'], ['見てて痛かった', 'that hurt to watch']]); }
 /* 2026-11-19 115番：動画の始めの「本編と関係ないコメント」（あいさつ・こん○○・1コメ争い・その返し・前回〜系）を減らす */
 const OPENCM = {
-  CFG: { nick: 0.5, nameHello: 0.5, hello: 0.6, hello2: 0.3, c1p: [0.25, 0.04], c1n: [1, 1, 2, 2, 3, 4], c1re: 0.35,
+  CFG: { nick: 0.5, nameHello: 0.5, hello: 0.6, hello2: 0.3, c1p: [0.25 / 3, 0.04 / 3],   /* 2026-11-20 本人の判断：1コメ争い（「1」「1get」など）は今の1/3に */ c1n: [1, 1, 2, 2, 3, 4], c1re: 0.35,
     meta: { away: 1, many: 0.45, regN: 0.45, prevCap: 0.4, prevHit: 0.4, time: 0.25 }, win: 20, max: 3, maxShort: 1 },
   GREET: /^(nick_hello|short-name\.(name_)?hello|context\.start)/,
   /* 始めの win 秒に max 件まで（win 秒未満の動画は maxShort 件）。ゆかり（前回〜）→ あいさつ → 1コメ争いの順に残す */
@@ -25683,7 +25691,7 @@ VPLAY.init();
 /* 2026-11-18 新しい棟が開く前に、バリケード・美術室の扉を調べた瞬間を録画していたら、確定でコメント（1本の動画で1回） */
 { const T = CHAT_DICT.t; T['xc.bar.01'] = ['人体模型の突進なら壊せそうw', 'a charge from the anatomy model could break it lol']; XCHAT.LIST.barTouch = ['xc.bar.01']; }
 var barTouchRun = -1;
-function barTouchCm() { try { if (!rec.active || barTouchRun === world.runId) return; barTouchRun = world.runId; XCHAT.log('barTouch'); } catch (e) { } }
+function barTouchCm() { try { if (!rec.active || barTouchRun === world.runId) return; barTouchRun = world.runId; if (Math.random() >= 0.05) return; XCHAT.log('barTouch');   /* 2026-11-20 本人の判断：ヒントになるのでなるべく出さない（確定 → 5%。1周に1回の判定のまま） */ } catch (e) { } }
 /* ===== 2026-11-18 71番：同じ道具を複数持てる・持ち込める =====
    持ち込みの一覧（d.carry）に同じ道具を何度でも入れてよい（持っている数まで）。周の中では「1つ目＝have、2つ目から＝extra」で数える（お札は have.ofuda の枚数）。
    周の終わりの数え直しは、今までの処理（持ち込みは1種類1つの前提）に「1つ持ち込んだ」形で渡し、残りの分の差をここで足し引きする */
