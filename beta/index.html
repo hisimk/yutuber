@@ -14639,15 +14639,17 @@ function micOn() {
   if (rec.mic) { note.textContent = TR('話すとメーターが動きます'); return; }
   if (!ensureAudio() || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !A.rec) { note.textContent = TR('マイクが使えないため、ゲーム音だけを録ります'); return; }
   note.textContent = TR('マイクの許可を待っています…');
-  const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);   /* 2026-11-21 203番（作り直し）：iPhone・iPadだけ、エコー消し・雑音消しを使わない。使うと通話用の音のモードに切り替わり、イヤホンなしの画面収録がノイズになるため。ほかは1.0.8のまま */
-  navigator.mediaDevices.getUserMedia({ audio: IOS ? { echoCancellation: false, noiseSuppression: false } : { echoCancellation: true, noiseSuppression: true } }).then(s => {
+  const sr0 = A.ctx.sampleRate;   /* 2026-11-21 本人の決定：ゲーム体験は今まで（1.0.8）のまま。エコー消し・雑音消しはオンに戻した */
+  navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).then(s => {
     if (!opt.mic) { s.getTracks().forEach(t => t.stop()); return; }
     rec.mic = s; MIC.src = A.ctx.createMediaStreamSource(s); rec.micGain = A.ctx.createGain(); rec.micGain.gain.value = rec.active ? 1 : 0;
     MIC.src.connect(rec.micGain); rec.micGain.connect(A.rec);
     MIC.an = A.ctx.createAnalyser(); MIC.an.fftSize = 512; MIC.src.connect(MIC.an);
+    if (/[?&]fix=a\b/.test(location.search) && (BETA || TEST || DEV) && A.ctx.state === 'running') A.ctx.suspend().then(() => A.ctx.resume()).catch(() => { });   /* 試し版：?fix=a で、マイクをつないだあとに音を一度止めて動かし直す（ノイズ直しの試し） */
+    micOn.sr = [sr0, A.ctx.sampleRate];
     if (/[?&]audiodbg\b/.test(location.search) && !micOn.dbg) { micOn.dbg = setInterval(() => { try { let d = $('#audDbg'); if (!d) { d = document.createElement('div'); d.id = 'audDbg'; d.style.cssText = 'position:fixed;left:4px;bottom:4px;z-index:99;font:10px monospace;color:#9f9;background:rgba(0,0,0,.75);padding:3px 5px;pointer-events:none;white-space:pre'; document.body.appendChild(d); }
       const m = rec.mic, t = m && m.getAudioTracks()[0], ts = t && t.getSettings ? t.getSettings() : {}; let pk = 0; if (MIC.an) { const b = new Float32Array(MIC.an.fftSize); MIC.an.getFloatTimeDomainData(b); for (const x of b) pk = Math.max(pk, Math.abs(x)); }
-      d.textContent = ['ver ' + VERSION, 'ctx ' + (A.ctx && A.ctx.state) + ' ' + (A.ctx && A.ctx.sampleRate), 'mic ' + (t ? t.readyState + (t.muted ? ' MUTED' : '') + (t.enabled ? '' : ' OFF') : 'なし'), 'micRate ' + ts.sampleRate + ' ec ' + ts.echoCancellation, 'peak ' + pk.toFixed(3)].join('\n'); } catch (e) { } }, 500); }   /* 2026-11-21 試し版で ?audiodbg を付けると、マイクの状態を左下に出す */
+      d.textContent = ['ver ' + VERSION, 'ctx ' + (A.ctx && A.ctx.state) + ' ' + (A.ctx && A.ctx.sampleRate) + ' (前 ' + (micOn.sr ? micOn.sr[0] : '?') + ')', 'fix ' + ((/[?&]fix=(\w+)/.exec(location.search) || [])[1] || 'なし'), 'mic ' + (t ? t.readyState + (t.muted ? ' MUTED' : '') + (t.enabled ? '' : ' OFF') : 'なし'), 'micRate ' + ts.sampleRate + ' ec ' + ts.echoCancellation, 'peak ' + pk.toFixed(3)].join('\n'); } catch (e) { } }, 500); }   /* 2026-11-21 試し版で ?audiodbg を付けると、マイクの状態を左下に出す */
     note.textContent = TR('話すとメーターが動きます');
   }).catch(err => { opt.mic = false; saveOpts(); SET.sync(); note.textContent = TR('マイクの許可がないため、ゲーム音だけを録ります');
     /* 2026-11-20 192番：許可されていない時・マイクが見つからない時は、理由と直し方をお知らせで出す（タイトル・設定の画面の時だけ。同じページでは1回だけ。2回目からは短い知らせだけ） */
@@ -15794,7 +15796,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '1.0.14';
+const VERSION = '1.0.15';
 const SHOOT = BETA && /[?&]shoot\b/.test(location.search);   /* 2026-11-20 動画撮影の素材用（?shoot）：「試し版」の表示を出さない */
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA && !SHOOT ? '（試し版）' : '');
 if (BETA && !SHOOT) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
