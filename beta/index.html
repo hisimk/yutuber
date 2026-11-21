@@ -1012,7 +1012,6 @@
       <div class="opt" id="setGyro"><div>ジャイロで見回す<small>スマホの向きで視点が動きます</small></div><div class="sw"></div></div>
       <div class="opt" id="setTilt"><div>傾きも反映する<small>スマホをななめにすると、画面も傾きます</small></div><div class="sw"></div></div>
       <div class="opt col" id="setMicRow"><div class="optTop" id="setMic"><div>実況マイク<small>録画中の自分の声も動画に入ります</small></div><div class="sw"></div></div><div id="micMeter"><div id="micMeterFill"></div></div><div id="micNote"></div></div>
-      <div class="opt" id="setNoVoice"><div>声を動画に入れない<small><span style="display:inline-block">ゲーム音だけを録ります。</span><span style="display:inline-block">声で取れる撮れ高はそのまま取れます</span></small></div><div class="sw"></div></div>
       <div class="opt col" id="setVolRow"><div class="optTop"><div>音量（全体）<small>ゲームの音すべて。スピーカーから出る大きさ（録画の音は変わりません）</small></div><div class="val" id="volVal">100%</div></div><input class="rng" id="volRange" type="range" min="0" max="100" step="5" value="100"></div>
       <div class="opt col volX" id="setVolBgmRow"><div class="optTop"><div>BGM<small>追跡の曲・結果画面の曲・エンディングの曲など</small></div><div class="val" id="vBgmVal">100%</div></div><input class="rng" id="vBgm" data-k="bgm" type="range" min="0" max="100" step="5" value="100"></div>
       <div class="opt col volX" id="setVolFxRow"><div class="optTop"><div>効果音<small>足音・怪異の声・物が壊れる音・環境音など</small></div><div class="val" id="vFxVal">100%</div></div><input class="rng" id="vFx" data-k="fx" type="range" min="0" max="100" step="5" value="100"></div>
@@ -1684,7 +1683,7 @@ const EN = {
   '電子ピアノ（MIDI）': 'Digital piano (MIDI)', 'USBでつないだ電子ピアノで音楽室のピアノを弾けます': 'Play the music-room piano with a USB digital piano', 'つないだ機器すべて': 'All connected devices', 'このブラウザでは使えません（Chrome・Edgeで使えます）': 'Not available in this browser (works in Chrome / Edge)',
   '許可を待っています…': 'Waiting for permission…', '許可されなかったため使えません': 'Not available because permission was denied', '音楽室のピアノの前で「ピアノを弾く」と、電子ピアノで弾けます': 'Choose “Play the piano” in the music room to play with your digital piano', '電子ピアノが見つかりません。USBでつないで電源を入れてください': 'No digital piano found. Connect it by USB and turn it on',
   '持ち物': 'Items', 'まだ何も持っていない': 'You have nothing yet', 'タップで閉じる': 'Tap to close',
-  '設定': 'Settings', '一時停止中': 'Paused', 'ジャイロで見回す': 'Look with gyro', '傾きも反映する': 'Follow phone tilt', '声を動画に入れない': 'Keep my voice out of videos', 'ゲーム音だけを録ります。': 'Records game audio only.\u00a0', '声で取れる撮れ高はそのまま取れます': 'Voice-based highlights still work', 'レティクル': 'Reticle', '画面の真ん中に小さな点を出します（録画には映りません）': 'Shows a small dot in the center of the screen (not recorded)', 'スマホをななめにすると、画面も傾きます': 'Tilting your phone tilts the view', 'スマホの向きで視点が動きます': 'Tilt your phone to look around',
+  '設定': 'Settings', '一時停止中': 'Paused', 'ジャイロで見回す': 'Look with gyro', '傾きも反映する': 'Follow phone tilt', 'レティクル': 'Reticle', '画面の真ん中に小さな点を出します（録画には映りません）': 'Shows a small dot in the center of the screen (not recorded)', 'スマホをななめにすると、画面も傾きます': 'Tilting your phone tilts the view', 'スマホの向きで視点が動きます': 'Tilt your phone to look around',
   '明るさ': 'Brightness', '入口の景色を見ながら合わせます': 'Adjust while looking at the entrance', '実況マイク': 'Commentary mic', '録画中の自分の声も動画に入ります': 'Your voice is recorded into the video',
   '効果音の大きさ': 'Sound effects volume', '遠くの物音や笑い声が聞こえにくい時は右へ': 'Slide right if distant sounds are hard to hear',
   'スタート画面にもどる': 'Back to title', 'ゲームにもどる': 'Resume', '閉じる': 'Close',
@@ -4725,7 +4724,7 @@ const SIDE = {
   ensure() {   // ゲーム音＝A.recに入る音のうちマイク以外（A.out）。マイク音＝rec.micGainの後ろ（録画中だけ1、結果カードでは0のまま）
     if (!A.ctx || !A.rec || !A.out) return false;
     if (!A.recG) { A.recG = A.ctx.createMediaStreamDestination(); (A.rtap || A.out).connect(A.recG); A.recM = A.ctx.createMediaStreamDestination(); }
-    if (rec.micGain && rec.micGain !== this.mg && !opt.novoice) { try { rec.micGain.connect(A.recM); this.mg = rec.micGain; } catch (e) { } }   /* 203番：声を動画に入れない時は、声だけの録音にも入れない */
+    if (rec.micGain && rec.micGain !== this.mg) { try { rec.micGain.connect(A.recM); this.mg = rec.micGain; } catch (e) { } }
     return true;
   },
   mk(st) { const o = { audioBitsPerSecond: 96000 }; if (this.pick()) o.mimeType = this.mime; const r = new MediaRecorder(st, o); r._chunks = []; r.ondataavailable = ev => { if (ev.data && ev.data.size) r._chunks.push(ev.data); }; r._end = new Promise(ok => { r.onstop = ok; }); return r; },
@@ -14282,9 +14281,9 @@ try {
   // 2026-11-13 ジャイロと実況マイクは最初からオン（PCにジャイロはないのでオフ）。この版より前に保存した設定も一度だけ新しい初期値にそろえる
   if (sv.v === 2) { opt.gyro = !!sv.gyro; opt.mic = !!sv.mic; } else { opt.gyro = !FRAME.on; opt.mic = true; } if (typeof sv.bright === 'number') opt.bright = sv.bv === 2 ? sv.bright : Math.max(-5, Math.min(5, sv.bright + 2));   /* 前の目盛りで保存した値は、見た目の明るさが変わらないよう+2して引き継ぐ */
   if (typeof sv.tilt === 'boolean') opt.tilt = sv.tilt; if (typeof sv.vol === 'number') opt.vol = clamp(sv.vol, 0, 1); for (const k of ['bgm', 'fx', 'ui']) if (typeof sv['v_' + k] === 'number') opt['v_' + k] = clamp(sv['v_' + k], 0, 1); if (typeof sv.sens === 'number') opt.sens = sv.sensV === 2 ? (sv.sens === 1 ? 1 : clamp(sv.sens * 0.4, 0.4, 2)) : clamp(sv.sens, 0.4, 2);   /* 2026-11-19 視点の速さは元の決まりに戻した（0.18.00〜0.18.02の数字で保存された分は、元の数字に直して引きつぐ） */ if (typeof sv.gsens === 'number') opt.gsens = clamp(sv.gsens, 0.5, 2);
-  /* 2026-11-17 音の出力先の設定はなくした（パソコン・ブラウザの設定で変える）。前に選んだ出力も使わない */ if (sv.midi) opt.midi = true; if (typeof sv.midiIn === 'string') opt.midiIn = sv.midiIn; if (sv.screen === 'full') opt.screen = 'full'; if (sv.quality === 'lite') opt.quality = 'lite'; if (sv.fps === 60) opt.fps = 60; if (sv.ret === true) opt.ret = true; if (sv.novoice === true) opt.novoice = true;   /* 203番：声を動画に入れない */
+  /* 2026-11-17 音の出力先の設定はなくした（パソコン・ブラウザの設定で変える）。前に選んだ出力も使わない */ if (sv.midi) opt.midi = true; if (typeof sv.midiIn === 'string') opt.midiIn = sv.midiIn; if (sv.screen === 'full') opt.screen = 'full'; if (sv.quality === 'lite') opt.quality = 'lite'; if (sv.fps === 60) opt.fps = 60; if (sv.ret === true) opt.ret = true;
 } catch (e) { }
-function saveOpts() { try { localStorage.setItem('yt_settings', JSON.stringify({ v: 2, bv: 2, gyro: opt.gyro, tilt: opt.tilt, mic: opt.mic, bright: opt.bright, vol: opt.vol, v_bgm: opt.v_bgm ?? 1, v_fx: opt.v_fx ?? 1, v_ui: opt.v_ui ?? 1, sens: opt.sens, sensV: 3, gsens: opt.gsens ?? 1, sink: opt.sink, midi: opt.midi, midiIn: opt.midiIn, screen: opt.screen, quality: opt.quality, fps: opt.fps, ret: !!opt.ret, novoice: !!opt.novoice })); } catch (e) { } }
+function saveOpts() { try { localStorage.setItem('yt_settings', JSON.stringify({ v: 2, bv: 2, gyro: opt.gyro, tilt: opt.tilt, mic: opt.mic, bright: opt.bright, vol: opt.vol, v_bgm: opt.v_bgm ?? 1, v_fx: opt.v_fx ?? 1, v_ui: opt.v_ui ?? 1, sens: opt.sens, sensV: 3, gsens: opt.gsens ?? 1, sink: opt.sink, midi: opt.midi, midiIn: opt.midiIn, screen: opt.screen, quality: opt.quality, fps: opt.fps, ret: !!opt.ret })); } catch (e) { } }
 const brightK = v => Math.pow(1.09, v - 2);   /* 2026-11-17 本人の判断：前の「-2」の明るさを、新しい「0」（基準）に */   // 明るさ：-5〜+5 の段階 → 画面の中間の明るさの持ち上げ量
 postMat.uniforms.bright.value = brightK(opt.bright);
 /* 2026-11-14 画質：標準／軽い（重いPC向け）。軽い＝描画の解像度を下げ、影を切り、ぼかしの回数を減らす。
@@ -14338,7 +14337,6 @@ const SET = {
     $('#setGyro').classList.toggle('on', !!opt.gyro);
     $('#setRet').classList.toggle('on', !!opt.ret);    $('#setTilt').classList.toggle('on', !!opt.tilt); $('#setTilt').style.display = opt.gyro && !FRAME.on ? '' : 'none';   /* ジャイロがオンの時だけ出す */
     $('#setMicRow').classList.toggle('on', !!opt.mic);
-    { const nv = $('#setNoVoice'), mr = $('#setMicRow'); if (nv && mr && mr.nextElementSibling !== nv) mr.after(nv); if (nv) { nv.classList.toggle('on', !!opt.novoice); nv.style.display = opt.mic ? '' : 'none'; } }   /* 203番：実況マイクがオンの時だけ出す */
     $('#brightVal').textContent = (opt.bright > 0 ? '+' : '') + opt.bright;
     $('#volRange').value = Math.round(opt.vol * 100); $('#volVal').textContent = Math.round(opt.vol * 100) + '%';
     for (const [id, k] of [['vBgm', 'bgm'], ['vFx', 'fx'], ['vUi', 'ui']]) { const v = Math.round(VOLX.get(k) * 100); $('#' + id).value = v; $('#' + id + 'Val').textContent = v + '%'; }
@@ -14641,15 +14639,11 @@ function micOn() {
   if (rec.mic) { note.textContent = TR('話すとメーターが動きます'); return; }
   if (!ensureAudio() || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !A.rec) { note.textContent = TR('マイクが使えないため、ゲーム音だけを録ります'); return; }
   note.textContent = TR('マイクの許可を待っています…');
-  const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1), plain = IOS || !!opt.novoice, sr0 = A.ctx.sampleRate;   /* 203番：iPhone・iPadと「声を動画に入れない」の時は、エコー消し・雑音消しをしない（通話用の音のモードに切り替わって、録画の音がノイズになるのを防ぐ） */
-  navigator.mediaDevices.getUserMedia({ audio: plain ? { echoCancellation: false, noiseSuppression: false } : { echoCancellation: true, noiseSuppression: true } }).then(s => {
+  const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);   /* 2026-11-21 203番（作り直し）：iPhone・iPadだけ、エコー消し・雑音消しを使わない。使うと通話用の音のモードに切り替わり、イヤホンなしの画面収録がノイズになるため。ほかは1.0.8のまま */
+  navigator.mediaDevices.getUserMedia({ audio: IOS ? { echoCancellation: false, noiseSuppression: false } : { echoCancellation: true, noiseSuppression: true } }).then(s => {
     if (!opt.mic) { s.getTracks().forEach(t => t.stop()); return; }
     rec.mic = s; MIC.src = A.ctx.createMediaStreamSource(s); rec.micGain = A.ctx.createGain(); rec.micGain.gain.value = rec.active ? 1 : 0;
-    { let into = rec.micGain; if (plain) { const bm = /[?&]micboost=([\d.]+)/.exec(location.search), k = bm && (BETA || TEST || DEV) ? +bm[1] : 8; const bo = A.ctx.createGain(); bo.gain.value = k; const cp = A.ctx.createDynamicsCompressor(); cp.threshold.value = -14; cp.knee.value = 8; cp.ratio.value = 6; cp.attack.value = 0.004; cp.release.value = 0.2; bo.connect(cp); cp.connect(rec.micGain); into = bo; MIC.boost = [bo, cp]; } MIC.src.connect(into); }   /* 2026-11-21 本人の確認：iPhoneでエコー消しを外すと録画の声がとても小さいので、録画に入れる声だけ8倍（本人の確認で6倍でも少し小さい）にして、割れないように圧縮をかける（声の聞き取り MIC.an は今のまま。試し版は ?micboost=数字 で倍率を変えられる） */
-    if (!opt.novoice) rec.micGain.connect(A.rec);   /* 203番：声を動画に入れない時は、録画につながない（聞き取りの MIC.an にはつなぐ） */
-    try { const tr = s.getAudioTracks()[0], ts = tr && tr.getSettings ? tr.getSettings() : {}; const info = { ctxBefore: sr0, ctxAfter: A.ctx.sampleRate, mic: ts.sampleRate, state: A.ctx.state, ios: IOS, plain, novoice: !!opt.novoice }; micOn.info = info; if (BETA || TEST || DEV) console.log('MICRATE', JSON.stringify(info));
-      if (/[?&]audiodbg\b/.test(location.search)) { let d = $('#audDbg'); if (!d) { d = document.createElement('div'); d.id = 'audDbg'; d.style.cssText = 'position:fixed;left:4px;bottom:4px;z-index:99;font:10px monospace;color:#9f9;background:rgba(0,0,0,.7);padding:3px 5px;pointer-events:none;white-space:pre'; document.body.appendChild(d); } d.textContent = Object.entries(info).map(([k, v]) => k + ': ' + v).join('\n'); }   /* 203番：試し版で ?audiodbg を付けると、音の細かさを画面の左下に出す */
-      /* 2026-11-21 本人の確認：iPhoneでメーターが動かず声が入らなくなったので、一度止めて動かし直す処理（A）と、自動音量（autoGainControl）を切る指定はやめた */ } catch (e) { }
+    MIC.src.connect(rec.micGain); rec.micGain.connect(A.rec);
     MIC.an = A.ctx.createAnalyser(); MIC.an.fftSize = 512; MIC.src.connect(MIC.an);
     note.textContent = TR('話すとメーターが動きます');
   }).catch(err => { opt.mic = false; saveOpts(); SET.sync(); note.textContent = TR('マイクの許可がないため、ゲーム音だけを録ります');
@@ -14669,7 +14663,7 @@ function micOn() {
 }
 function micOff() {
   if (rec.mic) { rec.mic.getTracks().forEach(t => t.stop()); }
-  for (const n of [MIC.src, rec.micGain, MIC.an, ...(MIC.boost || [])]) if (n) try { n.disconnect(); } catch (e) { } MIC.boost = null;
+  for (const n of [MIC.src, rec.micGain, MIC.an]) if (n) try { n.disconnect(); } catch (e) { }
   rec.mic = null; rec.micGain = null; MIC.src = null; MIC.an = null;
 }
 for (const id of ['#gearBtn', '#startGear']) { const el = $(id); for (const ev of ['pointerdown', 'touchstart']) el.addEventListener(ev, e => e.stopPropagation(), { passive: true }); el.addEventListener('click', e => { e.stopPropagation(); ensureAudio(); SET.show(); }); }
@@ -15071,7 +15065,6 @@ addEventListener('keydown', e => {
 addEventListener('keydown', e => { if (INV.open && e.code === 'Escape') { e.preventDefault(); if ($('#invScore').classList.contains('show')) $('#invScore').classList.remove('show'); else INV.hide(); } });
 setInterval(() => INV.badge(), 400);
 $('#setMic').addEventListener('click', () => { opt.mic = !opt.mic; saveOpts(); SET.sync(); if (opt.mic) micOn(); else micOff(); });
-$('#setNoVoice').addEventListener('click', () => { opt.novoice = !opt.novoice; saveOpts(); SET.sync(); if (opt.mic && rec.mic) { micOff(); micOn(); } });   /* 203番：切り替えたら、マイクをつなぎ直す */
 $('#setHome').addEventListener('click', () => {
   if (!SET.homeArm) { SET.homeArm = 1; $('#setHome').classList.add('warn'); if (LANG === 'en') $('#setHome').textContent = TR('もう一度押すとスタート画面にもどります（録画は消えます）'); else $('#setHome').innerHTML = 'もう一度押すとスタート画面にもどります<br>（録画は消えます）'; return; }   /* 2026-11-17 45番：補足は2行目に */
   location.reload();
@@ -15798,7 +15791,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '1.0.12';
+const VERSION = '1.0.13';
 const SHOOT = BETA && /[?&]shoot\b/.test(location.search);   /* 2026-11-20 動画撮影の素材用（?shoot）：「試し版」の表示を出さない */
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA && !SHOOT ? '（試し版）' : '');
 if (BETA && !SHOOT) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
