@@ -14645,7 +14645,7 @@ function micOn() {
   navigator.mediaDevices.getUserMedia({ audio: plain ? { echoCancellation: false, noiseSuppression: false } : { echoCancellation: true, noiseSuppression: true } }).then(s => {
     if (!opt.mic) { s.getTracks().forEach(t => t.stop()); return; }
     rec.mic = s; MIC.src = A.ctx.createMediaStreamSource(s); rec.micGain = A.ctx.createGain(); rec.micGain.gain.value = rec.active ? 1 : 0;
-    { let into = rec.micGain; if (plain) { const bm = /[?&]micboost=([\d.]+)/.exec(location.search), k = bm && (BETA || TEST || DEV) ? +bm[1] : 4; const bo = A.ctx.createGain(); bo.gain.value = k; const cp = A.ctx.createDynamicsCompressor(); cp.threshold.value = -14; cp.knee.value = 8; cp.ratio.value = 6; cp.attack.value = 0.004; cp.release.value = 0.2; bo.connect(cp); cp.connect(rec.micGain); into = bo; MIC.boost = [bo, cp]; } MIC.src.connect(into); }   /* 2026-11-21 本人の確認：iPhoneでエコー消しを外すと録画の声がとても小さいので、録画に入れる声だけ4倍にして、割れないように圧縮をかける（声の聞き取り MIC.an は今のまま。試し版は ?micboost=数字 で倍率を変えられる） */
+    { let into = rec.micGain; if (plain) { const bm = /[?&]micboost=([\d.]+)/.exec(location.search), k = bm && (BETA || TEST || DEV) ? +bm[1] : 8; const bo = A.ctx.createGain(); bo.gain.value = k; const cp = A.ctx.createDynamicsCompressor(); cp.threshold.value = -14; cp.knee.value = 8; cp.ratio.value = 6; cp.attack.value = 0.004; cp.release.value = 0.2; bo.connect(cp); cp.connect(rec.micGain); into = bo; MIC.boost = [bo, cp]; } MIC.src.connect(into); }   /* 2026-11-21 本人の確認：iPhoneでエコー消しを外すと録画の声がとても小さいので、録画に入れる声だけ8倍（本人の確認で6倍でも少し小さい）にして、割れないように圧縮をかける（声の聞き取り MIC.an は今のまま。試し版は ?micboost=数字 で倍率を変えられる） */
     if (!opt.novoice) rec.micGain.connect(A.rec);   /* 203番：声を動画に入れない時は、録画につながない（聞き取りの MIC.an にはつなぐ） */
     try { const tr = s.getAudioTracks()[0], ts = tr && tr.getSettings ? tr.getSettings() : {}; const info = { ctxBefore: sr0, ctxAfter: A.ctx.sampleRate, mic: ts.sampleRate, state: A.ctx.state, ios: IOS, plain, novoice: !!opt.novoice }; micOn.info = info; if (BETA || TEST || DEV) console.log('MICRATE', JSON.stringify(info));
       if (/[?&]audiodbg\b/.test(location.search)) { let d = $('#audDbg'); if (!d) { d = document.createElement('div'); d.id = 'audDbg'; d.style.cssText = 'position:fixed;left:4px;bottom:4px;z-index:99;font:10px monospace;color:#9f9;background:rgba(0,0,0,.7);padding:3px 5px;pointer-events:none;white-space:pre'; document.body.appendChild(d); } d.textContent = Object.entries(info).map(([k, v]) => k + ': ' + v).join('\n'); }   /* 203番：試し版で ?audiodbg を付けると、音の細かさを画面の左下に出す */
@@ -15798,7 +15798,7 @@ const VTITLE = {
       ・撮れ高テスト（?awtest）で、ふだんの試し版と分けられているか を決めて、報告に書く。
       保存のしくみをまとめて作り直す作業は、今はしない（今のセーブデータが読めなくなるおそれがあるため）。
    ========================================================= */
-const VERSION = '1.0.11';
+const VERSION = '1.0.12';
 const SHOOT = BETA && /[?&]shoot\b/.test(location.search);   /* 2026-11-20 動画撮影の素材用（?shoot）：「試し版」の表示を出さない */
 for (const el of document.querySelectorAll('.verTag')) el.textContent = 'ver ' + VERSION + (BETA && !SHOOT ? '（試し版）' : '');
 if (BETA && !SHOOT) { const b = document.createElement('div'); b.textContent = '試し版 ver ' + VERSION; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 2px);z-index:99;font-size:10px;font-weight:700;color:#111;background:#ffd34d;border-radius:8px;padding:1px 8px;pointer-events:none;opacity:.85'; document.body.appendChild(b); }
