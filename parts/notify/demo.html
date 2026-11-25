@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>通知の部品（Notify）お試し</title>
+<style>
+  body{margin:0;min-height:100vh;background:#15161a;color:#e8e8e8;font-family:-apple-system,"Hiragino Sans",sans-serif}
+  main{max-width:520px;margin:0 auto;padding:180px 18px 40px}
+  h1{font-size:18px;margin:0 0 6px}
+  p{font-size:13px;color:#aaa;line-height:1.6;margin:0 0 18px}
+  label{display:block;font-size:12px;color:#aaa;margin:12px 0 4px}
+  input,select{width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid #333;background:#22242a;color:#eee;font-size:15px}
+  .row{display:flex;gap:10px}.row>div{flex:1}
+  button{margin-top:16px;width:100%;padding:13px;border:none;border-radius:12px;background:#2f7cf6;color:#fff;font-size:15px;font-weight:700}
+  button.sub{background:#3a3c42}
+  #log{margin-top:18px;font:12px monospace;color:#8f8;white-space:pre-wrap;min-height:60px}
+</style>
+</head>
+<body>
+<main>
+  <h1>通知の部品（Notify）お試し</h1>
+  <p>「1通出す」を押すと、画面の上に通知が出ます。横か上へスワイプすると消えます。さわらなければ、決めた秒数で消えます。</p>
+  <label>差出人</label><input id="nm" value="おかあさん">
+  <label>文</label><input id="tx" value="部屋の掃除しときました。机の上の本は棚に戻したからね。">
+  <div class="row">
+    <div><label>アイコン</label><select id="ic"><option>msg</option><option>photo</option><option>point</option><option>dating</option><option>eng</option></select></div>
+    <div><label>消えるまで（秒）</label><input id="life" type="number" value="6" min="1" step="1"></div>
+  </div>
+  <label><input id="so" type="checkbox" style="width:auto"> スワイプするまで消えない（最大20秒）</label>
+  <button id="go">1通出す</button>
+  <button id="three" class="sub">3通つづけて出す（さくこ風）</button>
+  <div id="log"></div>
+</main>
+<script src="notify.js"></script>
+<script>
+  var log = function (s) { var e = document.getElementById('log'); e.textContent = (new Date().toLocaleTimeString()) + '  ' + s + '\n' + e.textContent; };
+  var n = Notify.create({
+    onShow: function (note) { log('出た：' + note.name); },
+    onHide: function (note, why) { log('消えた：' + note.name + '（' + { swipe: 'スワイプ', timeout: '時間切れ', replace: '次の通知で入れかえ', clear: 'clear()' }[why] + '）'); }
+  });
+  n.preload(['msg', 'photo', 'point', 'dating', 'eng'].map(Notify.icon));
+  document.getElementById('go').onclick = function () {
+    n.show({ name: document.getElementById('nm').value, text: document.getElementById('tx').value, icon: Notify.icon(document.getElementById('ic').value), life: +document.getElementById('life').value || 6, swipeOnly: document.getElementById('so').checked });
+  };
+  document.getElementById('three').onclick = function () {
+    var L = ['こんばんは！', 'いつも見てるよ', 'うしろ'], i = 0;
+    var next = function () { n.show({ name: 'さくこ', text: L[i++], icon: Notify.icon('msg'), life: 2.5 }); if (i < L.length) setTimeout(next, 3000); };
+    next();
+  };
+</script>
+</body>
+</html>
